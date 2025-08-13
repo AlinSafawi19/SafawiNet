@@ -1,9 +1,27 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import pino from 'pino-http';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Add Pino HTTP logging middleware
+  app.use(pino({
+    level: process.env.LOG_LEVEL || 'info',
+    customLogLevel: (req, res, err) => {
+      if (res.statusCode >= 400 && res.statusCode < 500) return 'warn';
+      if (res.statusCode >= 500) return 'error';
+      if (res.statusCode >= 300 && res.statusCode < 400) return 'silent';
+      return 'info';
+    },
+    customSuccessMessage: (req, res) => {
+      return `${req.method} ${req.url} ${res.statusCode}`;
+    },
+    customErrorMessage: (req, res, err) => {
+      return `${req.method} ${req.url} ${res.statusCode} - ${err.message}`;
+    },
+  }));
 
   // Swagger configuration (dev only)
   if (process.env.NODE_ENV === 'development') {

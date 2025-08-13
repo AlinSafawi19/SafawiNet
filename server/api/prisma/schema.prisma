@@ -13,22 +13,54 @@ datasource db {
 // User model for authentication
 model User {
   id        String   @id @default(cuid())
-  email     String   @unique
+  email     String   @unique @db.Citext
   password  String
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Relations
+  oneTimeTokens OneTimeToken[]
+  refreshSessions RefreshSession[]
+
   @@map("users")
 }
 
-// Example model for demonstration
-model Example {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// One-time tokens for various purposes (email verification, password reset, etc.)
+model OneTimeToken {
+  id        String   @id @default(cuid())
+  purpose   String   // email_verification, password_reset, etc.
+  hash      String   @unique // hashed token
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
 
-  @@map("examples")
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("one_time_tokens")
+  @@index([purpose, hash])
+  @@index([expiresAt])
+}
+
+// Refresh sessions for JWT refresh tokens
+model RefreshSession {
+  id           String   @id @default(cuid())
+  familyId     String   // for token family rotation
+  tokenId      String   @unique // unique refresh token ID
+  refreshHash  String   // hashed refresh token
+  userId       String
+  expiresAt    DateTime
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_sessions")
+  @@index([familyId])
+  @@index([expiresAt])
+  @@index([isActive])
 }

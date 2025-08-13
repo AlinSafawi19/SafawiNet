@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: safawinet
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: alin123M
     ports:
       - "5432:5432"
     volumes:
@@ -65,7 +65,7 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: development
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/safawinet
+      DATABASE_URL: postgresql://postgres:alin123M@postgres:5432/safawinet
       REDIS_URL: redis://redis:6379
       MAIL_HOST: mailhog
       MAIL_PORT: 1025
