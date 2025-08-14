@@ -1,8 +1,10 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UsePipes, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { Controller, Post, Body, HttpCode, HttpStatus, UsePipes, UseGuards, Request, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
+import { TwoFactorService } from './two-factor.service';
 import {
   RegisterSchema,
   VerifyEmailSchema,
@@ -10,19 +12,30 @@ import {
   RefreshTokenSchema,
   ForgotPasswordSchema,
   ResetPasswordSchema,
+  TwoFactorSetupSchema,
+  TwoFactorEnableSchema,
+  TwoFactorDisableSchema,
+  TwoFactorLoginSchema,
   RegisterDto,
   VerifyEmailDto,
   LoginDto,
   RefreshTokenDto,
   ForgotPasswordDto,
   ResetPasswordDto,
+  TwoFactorSetupDto,
+  TwoFactorEnableDto,
+  TwoFactorDisableDto,
+  TwoFactorLoginDto,
 } from './schemas/auth.schemas';
 
 @ApiTags('Authentication')
 @Controller('v1/auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly twoFactorService: TwoFactorService,
+  ) {}
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -278,5 +291,190 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(ResetPasswordSchema))
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @Post('2fa/setup')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ 
+    summary: 'Setup two-factor authentication',
+    description: 'Initialize 2FA setup for the authenticated user. Requires a valid JWT token in the Authorization header. The user is identified from the JWT token.'
+  })
+  @ApiBody({
+    description: 'No request body required - user is identified from JWT token',
+    examples: {
+      setup2FA: {
+        summary: 'Setup 2FA (no body required)',
+        value: {}
+      }
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: '2FA setup successful',
+    schema: {
+      type: 'object',
+      properties: {
+        secret: { type: 'string', description: 'TOTP secret (display once)' },
+        qrCode: { type: 'string', description: 'QR code data URL' },
+        otpauthUrl: { type: 'string', description: 'otpauth URL for authenticator apps' },
+        backupCodes: { 
+          type: 'array', 
+          items: { type: 'string' },
+          description: 'Backup codes (display once, store securely)' 
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: '2FA already enabled or setup not found',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing JWT token',
+  })
+  @UsePipes(new ZodValidationPipe(TwoFactorSetupSchema))
+  async setupTwoFactor(@Request() req, @Body() twoFactorSetupDto: TwoFactorSetupDto) {
+    return this.twoFactorService.setupTwoFactor(req.user.sub);
+  }
+
+  @Post('2fa/enable')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ 
+    summary: 'Enable two-factor authentication',
+    description: 'Enable 2FA for the authenticated user using a TOTP code. Requires a valid JWT token in the Authorization header.'
+  })
+  @ApiBody({
+    description: '2FA enable data',
+    examples: {
+      enable2FA: {
+        summary: 'Enable 2FA with TOTP code',
+        value: {
+          code: '123456'
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: '2FA enabled successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: '2FA already enabled or setup not found',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid TOTP code or unauthorized - Invalid or missing JWT token',
+  })
+  @UsePipes(new ZodValidationPipe(TwoFactorEnableSchema))
+  async enableTwoFactor(@Request() req, @Body() twoFactorEnableDto: TwoFactorEnableDto) {
+    return this.twoFactorService.enableTwoFactor(req.user.sub, twoFactorEnableDto.code);
+  }
+
+  @Post('2fa/disable')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ 
+    summary: 'Disable two-factor authentication',
+    description: 'Disable 2FA for the authenticated user using a TOTP or backup code. Requires a valid JWT token in the Authorization header.'
+  })
+  @ApiBody({
+    description: '2FA disable data',
+    examples: {
+      disable2FA: {
+        summary: 'Disable 2FA with TOTP or backup code',
+        value: {
+          code: '123456'
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: '2FA disabled successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: '2FA not enabled',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid code or unauthorized - Invalid or missing JWT token',
+  })
+  @UsePipes(new ZodValidationPipe(TwoFactorDisableSchema))
+  async disableTwoFactor(@Request() req, @Body() twoFactorDisableDto: TwoFactorDisableDto) {
+    return this.twoFactorService.disableTwoFactor(req.user.sub, twoFactorDisableDto.code);
+  }
+
+  @Post('2fa/login')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
+  @ApiOperation({ summary: 'Complete login with 2FA code' })
+  @ApiBody({
+    description: '2FA login data',
+    examples: {
+      twoFactorLogin: {
+        summary: 'Complete login with TOTP or backup code',
+        value: {
+          userId: 'user_id_from_previous_login',
+          code: '123456'
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Login successful with 2FA',
+    schema: {
+      type: 'object',
+      properties: {
+        tokens: {
+          type: 'object',
+          properties: {
+            accessToken: { type: 'string' },
+            refreshToken: { type: 'string' },
+            expiresIn: { type: 'number' },
+          },
+        },
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            email: { type: 'string' },
+            name: { type: 'string' },
+            isVerified: { type: 'boolean' },
+            twoFactorEnabled: { type: 'boolean' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid 2FA code',
+  })
+  @UsePipes(new ZodValidationPipe(TwoFactorLoginSchema))
+  async twoFactorLogin(@Body() twoFactorLoginDto: TwoFactorLoginDto) {
+    return this.authService.twoFactorLogin(twoFactorLoginDto.userId, twoFactorLoginDto);
   }
 }

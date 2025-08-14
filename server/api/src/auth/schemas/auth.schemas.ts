@@ -99,3 +99,32 @@ export class ResetPasswordDto extends createZodDto(ResetPasswordSchema) {
     }
   };
 }
+
+// 2FA DTOs
+export const TwoFactorSetupDto = z.object({
+  // No body required for setup - user is identified from JWT token
+}).describe('No request body required - user is identified from JWT token in Authorization header');
+
+export const TwoFactorEnableDto = z.object({
+  code: z.string().length(6, 'TOTP code must be 6 digits'),
+});
+
+export const TwoFactorDisableDto = z.object({
+  code: z.string().min(6, 'Code must be at least 6 characters'),
+});
+
+export const TwoFactorLoginDto = z.object({
+  userId: z.string().min(1, 'User ID is required'),
+  code: z.string().min(6, 'Code must be at least 6 characters'),
+});
+
+// Schema exports
+export const TwoFactorSetupSchema = TwoFactorSetupDto;
+export const TwoFactorEnableSchema = TwoFactorEnableDto;
+export const TwoFactorDisableSchema = TwoFactorDisableDto;
+export const TwoFactorLoginSchema = TwoFactorLoginDto;
+
+export type TwoFactorSetupDto = z.infer<typeof TwoFactorSetupDto>;
+export type TwoFactorEnableDto = z.infer<typeof TwoFactorEnableDto>;
+export type TwoFactorDisableDto = z.infer<typeof TwoFactorDisableDto>;
+export type TwoFactorLoginDto = z.infer<typeof TwoFactorLoginDto>;

@@ -1,7 +1,10 @@
 import * as argon2 from 'argon2';
-import { randomBytes, createHash } from 'crypto';
+import { randomBytes, createHash, createCipheriv, createDecipheriv, scryptSync } from 'crypto';
 
 export class SecurityUtils {
+  private static readonly ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-encryption-key-32-chars-long';
+  private static readonly ALGORITHM = 'aes-256-cbc';
+
   /**
    * Hash password using Argon2id
    */
@@ -47,5 +50,42 @@ export class SecurityUtils {
    */
   static hashToken(token: string): string {
     return this.sha256Hash(token);
+  }
+
+  /**
+   * Verify token against hash
+   */
+  static verifyToken(token: string, hash: string): boolean {
+    return this.sha256Hash(token) === hash;
+  }
+
+  /**
+   * Encrypt data using AES-256-CBC
+   */
+  static encryptData(data: string): string {
+    const key = scryptSync(this.ENCRYPTION_KEY, 'salt', 32);
+    const iv = randomBytes(16);
+    const cipher = createCipheriv(this.ALGORITHM, key, iv);
+    
+    let encrypted = cipher.update(data, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    
+    return iv.toString('hex') + ':' + encrypted;
+  }
+
+  /**
+   * Decrypt data using AES-256-CBC
+   */
+  static decryptData(encryptedData: string): string {
+    const key = scryptSync(this.ENCRYPTION_KEY, 'salt', 32);
+    const parts = encryptedData.split(':');
+    const iv = Buffer.from(parts[0], 'hex');
+    const encrypted = parts[1];
+    
+    const decipher = createDecipheriv(this.ALGORITHM, key, iv);
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    
+    return decrypted;
   }
 }

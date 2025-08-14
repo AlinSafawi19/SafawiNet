@@ -3,6 +3,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RegisterDto, VerifyEmailDto, LoginDto, RefreshTokenDto } from './schemas/auth.schemas';
+import { TwoFactorService } from './two-factor.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -30,6 +31,15 @@ describe('AuthController', () => {
         {
           provide: AuthService,
           useValue: mockAuthService,
+        },
+        {
+          provide: TwoFactorService,
+          useValue: {
+            setupTwoFactor: jest.fn(),
+            enableTwoFactor: jest.fn(),
+            disableTwoFactor: jest.fn(),
+            validateTwoFactorCode: jest.fn(),
+          },
         },
       ],
     }).compile();

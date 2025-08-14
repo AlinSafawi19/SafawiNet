@@ -5,7 +5,8 @@ import { PrismaService } from '../common/services/prisma.service';
 import { RedisService } from '../common/services/redis.service';
 import { EmailService } from '../common/services/email.service';
 import { SecurityUtils } from '../common/security/security.utils';
-import { RegisterDto, VerifyEmailDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto } from './schemas/auth.schemas';
+import { TwoFactorService } from './two-factor.service';
+import { RegisterDto, VerifyEmailDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto, TwoFactorLoginDto } from './schemas/auth.schemas';
 import { User } from '@prisma/client';
 import { randomUUID } from 'crypto';
 
@@ -18,6 +19,7 @@ export interface AuthTokens {
 export interface LoginResult {
   tokens?: AuthTokens;
   requiresVerification?: boolean;
+  requiresTwoFactor?: boolean;
   user?: Omit<User, 'password'>;
 }
 
@@ -34,6 +36,7 @@ export class AuthService {
     private readonly redisService: RedisService,
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
+    private readonly twoFactorService: TwoFactorService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<{ message: string; user: Omit<User, 'password'> }> {
@@ -177,6 +180,17 @@ export class AuthService {
       };
     }
 
+    // Check if 2FA is enabled
+    if (user.twoFactorEnabled) {
+      // Clear failed login attempts on successful password verification
+      await this.redisService.del(`login_attempts:${emailKey}`);
+      
+      return {
+        requiresTwoFactor: true,
+        user: this.excludePassword(user),
+      };
+    }
+
     // Clear failed login attempts on successful login
     await this.redisService.del(`login_attempts:${emailKey}`);
 
@@ -184,6 +198,41 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
 
     this.logger.log(`User ${user.email} logged in successfully`);
+    
+    return {
+      tokens,
+      user: this.excludePassword(user),
+    };
+  }
+
+  async twoFactorLogin(userId: string, twoFactorLoginDto: TwoFactorLoginDto): Promise<LoginResult> {
+    const { code } = twoFactorLoginDto;
+
+    // Validate 2FA code
+    const validationResult = await this.twoFactorService.validateTwoFactorCode(userId, code);
+    
+    if (!validationResult.isValid) {
+      throw new UnauthorizedException('Invalid 2FA code');
+    }
+
+    // If it's a backup code, mark it as used
+    if (validationResult.isBackupCode) {
+      await this.markBackupCodeAsUsed(userId, code);
+    }
+
+    // Get user
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Generate tokens
+    const tokens = await this.generateTokens(user);
+
+    this.logger.log(`User ${user.email} logged in successfully with 2FA`);
     
     return {
       tokens,
@@ -423,6 +472,21 @@ export class AuthService {
     } catch (error) {
       this.logger.error(`Failed to resend verification email to ${user.email}:`, error);
     }
+  }
+
+  private async markBackupCodeAsUsed(userId: string, code: string): Promise<void> {
+    const codeHash = SecurityUtils.hashToken(code);
+    await this.prisma.backupCode.updateMany({
+      where: {
+        userId,
+        codeHash,
+        isUsed: false,
+      },
+      data: {
+        isUsed: true,
+        usedAt: new Date(),
+      },
+    });
   }
 
   private excludePassword(user: User): Omit<User, 'password'> {

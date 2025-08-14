@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { TwoFactorService } from './two-factor.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PrismaService } from '../common/services/prisma.service';
 import { RedisService } from '../common/services/redis.service';
@@ -32,12 +33,13 @@ import { SecurityUtils } from '../common/security/security.utils';
   controllers: [AuthController],
   providers: [
     AuthService,
+    TwoFactorService,
     JwtStrategy,
     PrismaService,
     RedisService,
     EmailService,
     SecurityUtils,
   ],
-  exports: [AuthService, JwtModule],
+  exports: [AuthService, TwoFactorService, JwtModule],
 })
 export class AuthModule {}
