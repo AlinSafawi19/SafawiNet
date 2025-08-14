@@ -118,13 +118,27 @@ export const TwoFactorLoginDto = z.object({
   code: z.string().min(6, 'Code must be at least 6 characters'),
 });
 
+// Recovery DTOs
+export const RecoveryRequestDto = z.object({
+  recoveryEmail: z.string().email('Invalid recovery email format').describe('Recovery email address for account recovery'),
+});
+
+export const RecoveryConfirmDto = z.object({
+  token: z.string().min(1, 'Recovery token is required').describe('Recovery token received via email'),
+  newEmail: z.string().email('Invalid new email format').describe('New email address for the account'),
+});
+
 // Schema exports
 export const TwoFactorSetupSchema = TwoFactorSetupDto;
 export const TwoFactorEnableSchema = TwoFactorEnableDto;
 export const TwoFactorDisableSchema = TwoFactorDisableDto;
 export const TwoFactorLoginSchema = TwoFactorLoginDto;
+export const RecoveryRequestSchema = RecoveryRequestDto;
+export const RecoveryConfirmSchema = RecoveryConfirmDto;
 
 export type TwoFactorSetupDto = z.infer<typeof TwoFactorSetupDto>;
 export type TwoFactorEnableDto = z.infer<typeof TwoFactorEnableDto>;
 export type TwoFactorDisableDto = z.infer<typeof TwoFactorDisableDto>;
 export type TwoFactorLoginDto = z.infer<typeof TwoFactorLoginDto>;
+export type RecoveryRequestDto = z.infer<typeof RecoveryRequestDto>;
+export type RecoveryConfirmDto = z.infer<typeof RecoveryConfirmDto>;

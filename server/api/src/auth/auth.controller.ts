@@ -5,6 +5,7 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
+import { RecoveryService } from './recovery.service';
 import {
   RegisterSchema,
   VerifyEmailSchema,
@@ -16,6 +17,8 @@ import {
   TwoFactorEnableSchema,
   TwoFactorDisableSchema,
   TwoFactorLoginSchema,
+  RecoveryRequestSchema,
+  RecoveryConfirmSchema,
   RegisterDto,
   VerifyEmailDto,
   LoginDto,
@@ -26,6 +29,8 @@ import {
   TwoFactorEnableDto,
   TwoFactorDisableDto,
   TwoFactorLoginDto,
+  RecoveryRequestDto,
+  RecoveryConfirmDto,
 } from './schemas/auth.schemas';
 
 @ApiTags('Authentication')
@@ -35,6 +40,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly twoFactorService: TwoFactorService,
+    private readonly recoveryService: RecoveryService,
   ) {}
 
   @Post('register')
@@ -476,5 +482,83 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(TwoFactorLoginSchema))
   async twoFactorLogin(@Body() twoFactorLoginDto: TwoFactorLoginDto) {
     return this.authService.twoFactorLogin(twoFactorLoginDto.userId, twoFactorLoginDto);
+  }
+
+  @Post('recover/request')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 3, ttl: 300000 } }) // 3 requests per 5 minutes
+  @ApiOperation({ 
+    summary: 'Request account recovery via recovery email',
+    description: 'Request account recovery by sending a recovery token to the recovery email address. This is used when users lose access to their primary email or 2FA device.'
+  })
+  @ApiBody({
+    description: 'Recovery request data',
+    examples: {
+      recoveryRequest: {
+        summary: 'Request account recovery',
+        value: {
+          recoveryEmail: 'recovery@example.com'
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Recovery request processed',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        recoveryEmail: { type: 'string' },
+      },
+    },
+  })
+  @UsePipes(new ZodValidationPipe(RecoveryRequestSchema))
+  async requestRecovery(@Body() recoveryRequestDto: RecoveryRequestDto) {
+    return this.recoveryService.requestRecovery(recoveryRequestDto.recoveryEmail);
+  }
+
+  @Post('recover/confirm')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 300000 } }) // 5 requests per 5 minutes
+  @ApiOperation({ 
+    summary: 'Confirm account recovery and stage new email',
+    description: 'Confirm account recovery using the recovery token and stage a new email address. A verification email will be sent to the new email address.'
+  })
+  @ApiBody({
+    description: 'Recovery confirmation data',
+    examples: {
+      recoveryConfirm: {
+        summary: 'Confirm recovery and stage new email',
+        value: {
+          token: 'recovery_token_from_email',
+          newEmail: 'newemail@example.com'
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Recovery confirmed, verification required',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        newEmail: { type: 'string' },
+        requiresVerification: { type: 'boolean' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid recovery token or email already in use',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid or expired recovery token',
+  })
+  @UsePipes(new ZodValidationPipe(RecoveryConfirmSchema))
+  async confirmRecovery(@Body() recoveryConfirmDto: RecoveryConfirmDto) {
+    return this.recoveryService.confirmRecovery(recoveryConfirmDto.token, recoveryConfirmDto.newEmail);
   }
 }

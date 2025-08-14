@@ -1,13 +1,11 @@
 // Mock modules before importing
 jest.mock('speakeasy', () => ({
-  default: {
-    totp: {
-      verify: jest.fn(),
-    },
-    generateSecret: jest.fn().mockReturnValue({
-      base32: 'TESTSECRET',
-      otpauth_url: 'otpauth://totp/test',
-    }),
+  generateSecret: jest.fn().mockReturnValue({
+    base32: 'TESTSECRET',
+    otpauth_url: 'otpauth://totp/test',
+  }),
+  totp: {
+    verify: jest.fn(),
   },
 }));
 
@@ -132,7 +130,7 @@ describe('TwoFactorService', () => {
 
       // Mock speakeasy.totp.verify to return true
       const speakeasy = require('speakeasy');
-      speakeasy.default.totp.verify.mockReturnValue(true);
+      speakeasy.totp.verify.mockReturnValue(true);
 
       const result = await service.enableTwoFactor('user-1', '123456');
 
@@ -170,7 +168,7 @@ describe('TwoFactorService', () => {
 
       // Mock speakeasy.totp.verify to return false
       const speakeasy = require('speakeasy');
-      speakeasy.default.totp.verify.mockReturnValue(false);
+      speakeasy.totp.verify.mockReturnValue(false);
 
       await expect(service.enableTwoFactor('user-1', '123456')).rejects.toThrow(
         new UnauthorizedException('Invalid TOTP code')
@@ -202,7 +200,7 @@ describe('TwoFactorService', () => {
 
       // Mock speakeasy.totp.verify to return true
       const speakeasy = require('speakeasy');
-      speakeasy.default.totp.verify.mockReturnValue(true);
+      speakeasy.totp.verify.mockReturnValue(true);
 
       const result = await service.disableTwoFactor('user-1', '123456');
 
@@ -223,7 +221,7 @@ describe('TwoFactorService', () => {
 
       // Mock speakeasy.totp.verify to return false
       const speakeasy = require('speakeasy');
-      speakeasy.default.totp.verify.mockReturnValue(false);
+      speakeasy.totp.verify.mockReturnValue(false);
 
       const result = await service.disableTwoFactor('user-1', 'BACKUP123');
 
@@ -247,7 +245,7 @@ describe('TwoFactorService', () => {
 
       // Mock speakeasy.totp.verify to return false
       const speakeasy = require('speakeasy');
-      speakeasy.default.totp.verify.mockReturnValue(false);
+      speakeasy.totp.verify.mockReturnValue(false);
 
       await expect(service.disableTwoFactor('user-1', 'INVALID')).rejects.toThrow(
         new UnauthorizedException('Invalid code')
@@ -276,7 +274,7 @@ describe('TwoFactorService', () => {
 
       // Mock speakeasy.totp.verify to return true
       const speakeasy = require('speakeasy');
-      speakeasy.default.totp.verify.mockReturnValue(true);
+      speakeasy.totp.verify.mockReturnValue(true);
 
       const result = await service.validateTwoFactorCode('user-1', '123456');
 
@@ -288,7 +286,7 @@ describe('TwoFactorService', () => {
 
       // Mock speakeasy.totp.verify to return false
       const speakeasy = require('speakeasy');
-      speakeasy.default.totp.verify.mockReturnValue(false);
+      speakeasy.totp.verify.mockReturnValue(false);
 
       const result = await service.validateTwoFactorCode('user-1', 'BACKUP123');
 
@@ -300,7 +298,7 @@ describe('TwoFactorService', () => {
 
       // Mock speakeasy.totp.verify to return false
       const speakeasy = require('speakeasy');
-      speakeasy.default.totp.verify.mockReturnValue(false);
+      speakeasy.totp.verify.mockReturnValue(false);
 
       const result = await service.validateTwoFactorCode('user-1', 'UNKNOWN');
 

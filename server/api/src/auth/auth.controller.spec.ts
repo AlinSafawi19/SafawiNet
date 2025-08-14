@@ -4,6 +4,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RegisterDto, VerifyEmailDto, LoginDto, RefreshTokenDto } from './schemas/auth.schemas';
 import { TwoFactorService } from './two-factor.service';
+import { RecoveryService } from './recovery.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -39,6 +40,15 @@ describe('AuthController', () => {
             enableTwoFactor: jest.fn(),
             disableTwoFactor: jest.fn(),
             validateTwoFactorCode: jest.fn(),
+          },
+        },
+        {
+          provide: RecoveryService,
+          useValue: {
+            requestRecovery: jest.fn(),
+            confirmRecovery: jest.fn(),
+            completeRecovery: jest.fn(),
+            cleanupExpiredRecoveries: jest.fn(),
           },
         },
       ],

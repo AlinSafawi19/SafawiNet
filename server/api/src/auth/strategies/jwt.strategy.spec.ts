@@ -84,7 +84,7 @@ describe('JwtStrategy', () => {
       const result = await strategy.validate(mockPayload);
 
       expect(result).toEqual({
-        id: mockUser.id,
+        sub: mockUser.id,
         email: mockUser.email,
         name: mockUser.name,
         verified: mockUser.isVerified,

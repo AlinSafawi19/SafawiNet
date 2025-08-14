@@ -76,6 +76,25 @@ export class EmailService {
       text: `Password reset link: ${resetUrl}`,
     });
   }
+
+  async sendRecoveryEmail(recoveryEmail: string, token: string, currentEmail: string): Promise<void> {
+    const recoveryUrl = `${this.configService.get('FRONTEND_URL', 'http://localhost:3000')}/recover/confirm?token=${token}`;
+    
+    await this.sendEmail({
+      to: recoveryEmail,
+      subject: 'Account Recovery Request',
+      html: `
+        <h1>Account Recovery Request</h1>
+        <p>We received a request to recover your account associated with: <strong>${currentEmail}</strong></p>
+        <p>Click the link below to confirm the recovery and set a new email address:</p>
+        <a href="${recoveryUrl}">Confirm Account Recovery</a>
+        <p>This link will expire in 30 minutes.</p>
+        <p>If you didn't request this recovery, please ignore this email and ensure your account is secure.</p>
+        <p><strong>Security Note:</strong> This recovery process will invalidate all your current sessions for security.</p>
+      `,
+      text: `Account recovery link: ${recoveryUrl} - Expires in 30 minutes`,
+    });
+  }
 }
 
 // Mailhog provider for development

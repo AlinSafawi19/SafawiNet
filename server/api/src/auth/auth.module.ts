@@ -5,6 +5,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
+import { RecoveryService } from './recovery.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PrismaService } from '../common/services/prisma.service';
 import { RedisService } from '../common/services/redis.service';
@@ -34,6 +35,7 @@ import { SecurityUtils } from '../common/security/security.utils';
   providers: [
     AuthService,
     TwoFactorService,
+    RecoveryService,
     JwtStrategy,
     PrismaService,
     RedisService,
