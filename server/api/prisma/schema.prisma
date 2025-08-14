@@ -12,12 +12,13 @@ datasource db {
 
 // User model for authentication
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique @db.Citext
-  password  String
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  email       String   @unique @db.Citext
+  password    String
+  name        String?
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
   oneTimeTokens OneTimeToken[]

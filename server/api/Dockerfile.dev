@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
@@ -6,8 +6,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies with npm ci (faster and more reliable)
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies for development)
+RUN npm ci
 
 # Generate Prisma client
 RUN npx prisma generate

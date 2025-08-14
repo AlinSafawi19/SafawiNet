@@ -6,6 +6,14 @@ import pino from 'pino-http';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Enable CORS
+  app.enableCors({
+    origin: true, // Allow all origins in development
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+  });
+
   // Add Pino HTTP logging middleware
   app.use(pino({
     level: process.env.LOG_LEVEL || 'info',

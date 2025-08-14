@@ -2,7 +2,7 @@ import { Injectable, Logger, ConflictException, NotFoundException } from '@nestj
 import { PrismaService } from '../common/services/prisma.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { EmailService } from '../common/services/email.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto } from './schemas/user.schemas';
 import { User } from '@prisma/client';
 
 @Injectable()
@@ -108,11 +108,17 @@ export class UsersService {
       return false;
     }
 
-    // Mark token as used
-    await this.prisma.oneTimeToken.update({
-      where: { id: oneTimeToken.id },
-      data: { usedAt: new Date() },
-    });
+    // Update user verification status and mark token as used
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: oneTimeToken.userId },
+        data: { isVerified: true },
+      }),
+      this.prisma.oneTimeToken.update({
+        where: { id: oneTimeToken.id },
+        data: { usedAt: new Date() },
+      }),
+    ]);
 
     return true;
   }
