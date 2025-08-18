@@ -35,6 +35,7 @@ model User {
   pendingEmailChanges PendingEmailChange[]
   userSessions UserSession[]
   notifications Notification[]
+  loyaltyAccounts LoyaltyAccount[]
 
   @@map("users")
 }
@@ -189,5 +190,66 @@ model Notification {
   @@map("notifications")
   @@index([userId, isRead, createdAt])
   @@index([userId, type, createdAt])
+  @@index([expiresAt])
+}
+
+// Loyalty tier definitions
+model LoyaltyTier {
+  id          String   @id @default(cuid())
+  name        String   @unique // Bronze, Silver, Gold, Platinum, Diamond
+  minPoints   Int      @unique // Minimum points required for this tier
+  maxPoints   Int?     // Maximum points for this tier (null for highest tier)
+  benefits    Json?    // Tier benefits as JSON
+  color       String?  // Hex color for UI representation
+  icon        String?  // Icon identifier for UI
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  loyaltyAccounts LoyaltyAccount[]
+
+  @@map("loyalty_tiers")
+  @@index([minPoints])
+}
+
+// User loyalty account
+model LoyaltyAccount {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  currentTierId String
+  currentPoints Int    @default(0)
+  lifetimePoints Int   @default(0) // Total points ever earned
+  tierUpgradedAt DateTime? // When user last upgraded tier
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentTier LoyaltyTier @relation(fields: [currentTierId], references: [id])
+  transactions LoyaltyTransaction[]
+
+  @@map("loyalty_accounts")
+  @@index([currentPoints])
+  @@index([currentTierId])
+}
+
+// Loyalty transactions (read-only for this phase)
+model LoyaltyTransaction {
+  id          String   @id @default(cuid())
+  loyaltyAccountId String
+  type        String   // earn, spend, expire, adjustment
+  points      Int      // Positive for earn, negative for spend
+  description String
+  metadata    Json?    // Additional transaction details
+  orderId     String?  // Future reference to order service
+  expiresAt   DateTime? // When points expire (null for permanent)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  loyaltyAccount LoyaltyAccount @relation(fields: [loyaltyAccountId], references: [id], onDelete: Cascade)
+
+  @@map("loyalty_transactions")
+  @@index([loyaltyAccountId, createdAt])
+  @@index([type, createdAt])
   @@index([expiresAt])
 }

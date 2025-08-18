@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { LoyaltyModule } from './loyalty/loyalty.module';
 
 import { RedisService } from './common/services/redis.service';
 import { EmailService } from './common/services/email.service';
@@ -31,6 +32,7 @@ import { IdempotencyMiddleware } from './common/middleware/idempotency.middlewar
     HealthModule,
     UsersModule,
     AuthModule,
+    LoyaltyModule,
   ],
   controllers: [AppController],
   providers: [
