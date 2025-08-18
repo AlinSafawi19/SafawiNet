@@ -33,6 +33,8 @@ model User {
   backupCodes BackupCode[]
   recoveryStaging RecoveryStaging?
   pendingEmailChanges PendingEmailChange[]
+  userSessions UserSession[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -138,4 +140,54 @@ model PendingEmailChange {
   @@map("pending_email_changes")
   @@index([expiresAt])
   @@index([changeTokenHash])
+}
+
+// User sessions for device tracking and management
+model UserSession {
+  id              String   @id @default(cuid())
+  userId          String
+  refreshTokenId  String   @unique // Links to RefreshSession.tokenId
+  deviceFingerprint String? // Device fingerprint hash
+  userAgent       String?  // User agent string
+  ipAddress       String?  // IP address
+  location        String?  // Geographic location (city, country)
+  deviceType      String?  // mobile, desktop, tablet
+  browser         String?  // Browser name and version
+  os              String?  // Operating system
+  isCurrent       Boolean  @default(false) // Is this the current active session
+  lastActiveAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+  @@index([userId, isCurrent])
+  @@index([userId, lastActiveAt])
+  @@index([refreshTokenId])
+}
+
+// User notifications
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String   // security_alert, account_update, system_message, etc.
+  title       String
+  message     String
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+  metadata    Json?    // Additional data for the notification
+  priority    String   @default("normal") // low, normal, high, urgent
+  expiresAt   DateTime? // Optional expiration
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+  @@index([userId, isRead, createdAt])
+  @@index([userId, type, createdAt])
+  @@index([expiresAt])
 }

@@ -195,8 +195,8 @@ export class AuthController {
     description: 'Invalid credentials or account locked',
   })
   @UsePipes(new ZodValidationPipe(LoginSchema))
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(@Body() loginDto: LoginDto, @Request() req: any) {
+    return this.authService.login(loginDto, req);
   }
 
   @Post('refresh')
@@ -482,8 +482,8 @@ export class AuthController {
     description: 'Invalid 2FA code',
   })
   @UsePipes(new ZodValidationPipe(TwoFactorLoginSchema))
-  async twoFactorLogin(@Body() twoFactorLoginDto: TwoFactorLoginDto) {
-    return this.authService.twoFactorLogin(twoFactorLoginDto.userId, twoFactorLoginDto);
+  async twoFactorLogin(@Body() twoFactorLoginDto: TwoFactorLoginDto, @Request() req: any) {
+    return this.authService.twoFactorLogin(twoFactorLoginDto.userId, twoFactorLoginDto, req);
   }
 
   @Post('recover/request')

@@ -214,3 +214,99 @@ export type TwoFactorDisableDto = z.infer<typeof TwoFactorDisableDto>;
 export type TwoFactorLoginDto = z.infer<typeof TwoFactorLoginDto>;
 export type RecoveryRequestDto = z.infer<typeof RecoveryRequestDto>;
 export type RecoveryConfirmDto = z.infer<typeof RecoveryConfirmDto>;
+
+// Session management schemas
+export const SessionListSchema = z.object({
+  cursor: z.string().optional().describe('Cursor for pagination'),
+  limit: z.preprocess(
+    (val) => (val === undefined ? 20 : parseInt(String(val), 10)),
+    z.number().min(1).max(100)
+  ).describe('Number of sessions to return (max 100)'),
+});
+
+export const SessionDeleteSchema = z.object({
+  id: z.string().min(1, 'Session ID is required').describe('Session ID to delete'),
+});
+
+export const SessionRevokeAllSchema = z.object({
+  keepCurrent: z.boolean().default(true).describe('Whether to keep the current session'),
+});
+
+// Notification schemas
+export const NotificationListSchema = z.object({
+  cursor: z.string().optional().describe('Cursor for pagination'),
+  limit: z.preprocess(
+    (val) => (val === undefined ? 20 : parseInt(String(val), 10)),
+    z.number().min(1).max(100)
+  ).describe('Number of notifications to return (max 100)'),
+  type: z.string().optional().describe('Filter by notification type'),
+  isRead: z.preprocess(
+    (val) => val === undefined ? undefined : val === 'true',
+    z.boolean().optional()
+  ).describe('Filter by read status'),
+});
+
+export const NotificationMarkReadSchema = z.object({
+  id: z.string().min(1, 'Notification ID is required').describe('Notification ID to mark as read'),
+});
+
+// DTOs for session management
+export class SessionListDto extends createZodDto(SessionListSchema) {
+  static examples = {
+    listSessions: {
+      summary: 'List user sessions',
+      value: {
+        cursor: 'eyJpZCI6ImN1aWQxMjM0NTY3ODkwIiwidXNlcklkIjoiY3VpZGFiY2RlZmdoaSJ9',
+        limit: 20
+      }
+    }
+  };
+}
+
+export class SessionDeleteDto extends createZodDto(SessionDeleteSchema) {
+  static examples = {
+    deleteSession: {
+      summary: 'Delete a specific session',
+      value: {
+        id: 'cuidsession123456789'
+      }
+    }
+  };
+}
+
+export class SessionRevokeAllDto extends createZodDto(SessionRevokeAllSchema) {
+  static examples = {
+    revokeAllSessions: {
+      summary: 'Revoke all sessions except current',
+      value: {
+        keepCurrent: true
+      }
+    }
+  };
+}
+
+// DTOs for notifications
+export class NotificationListDto extends createZodDto(NotificationListSchema) {
+  static examples = {
+    listNotifications: {
+      summary: 'List user notifications',
+      value: {
+        cursor: 'eyJpZCI6ImN1aWQxMjM0NTY3ODkwIiwidXNlcklkIjoiY3VpZGFiY2RlZmdoaSJ9',
+        limit: 20,
+        type: 'security_alert',
+        isRead: false
+      }
+    }
+  };
+}
+
+export class NotificationMarkReadDto extends createZodDto(NotificationMarkReadSchema) {
+  static examples = {
+    markRead: {
+      summary: 'Mark notification as read',
+      value: {
+        id: 'cuidsession123456789'
+      }
+    }
+  };
+}

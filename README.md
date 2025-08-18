@@ -179,6 +179,9 @@ Swagger documentation is available at `/docs` in development mode.
 server/api/
 ├── src/
 │   ├── health/           # Health check endpoints
+│   ├── auth/             # Authentication & authorization
+│   ├── users/            # User management
+│   ├── common/           # Shared services & utilities
 │   ├── app.module.ts     # Main application module
 │   ├── main.ts          # Application bootstrap
 │   └── ...
@@ -189,6 +192,64 @@ server/api/
 ├── docker-compose.yml   # Development environment
 └── package.json         # Dependencies and scripts
 ```
+
+## 📋 Development Phases
+
+The project is developed in phases, each building upon the previous:
+
+### Phase 1: Bootstrap & Foundation
+- Basic NestJS setup with health checks
+- Docker development environment
+- CI/CD pipeline with GitHub Actions
+- **Status**: ✅ Complete
+
+### Phase 2: Core Infrastructure
+- Database setup with PostgreSQL & Prisma
+- Redis integration for caching
+- Environment configuration
+- **Status**: ✅ Complete
+
+### Phase 3: Authentication System
+- User registration and login
+- JWT-based authentication
+- Email verification system
+- **Status**: ✅ Complete
+
+### Phase 4: Password Recovery
+- Forgot password functionality
+- Secure password reset via email
+- **Status**: ✅ Complete
+
+### Phase 5: Two-Factor Authentication
+- TOTP-based 2FA setup
+- Backup codes for recovery
+- Enhanced security measures
+- **Status**: ✅ Complete
+
+### Phase 6: Account Recovery
+- Recovery email system
+- Account staging and verification
+- **Status**: ✅ Complete
+
+### Phase 7: Account Preferences
+- User preference management
+- Email change functionality
+- **Status**: ✅ Complete
+
+### Phase 8: Sessions & Notifications
+- Device session management
+- Device fingerprinting and tracking
+- Notification system with cursor pagination
+- Security alerts and account updates
+- **Status**: ✅ Complete
+
+### Upcoming Phases
+- Phase 9: Advanced Security Features
+- Phase 10: User Management & Admin
+- Phase 11: API Rate Limiting & Monitoring
+- Phase 12: Advanced Notifications
+- Phase 13: Audit Logging
+- Phase 14: UX Enhancements
 
 ## 🤝 Contributing
 

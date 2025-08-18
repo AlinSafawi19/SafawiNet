@@ -7,13 +7,13 @@ import { AppService } from './app.service';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { PrismaService } from './common/services/prisma.service';
+
 import { RedisService } from './common/services/redis.service';
 import { EmailService } from './common/services/email.service';
 import { PinoLoggerService } from './common/services/logger.service';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { IdempotencyMiddleware } from './common/middleware/idempotency.middleware';
-import { JwtStrategy } from './auth/strategies/jwt.strategy';
+
 
 @Module({
   imports: [
@@ -35,11 +35,9 @@ import { JwtStrategy } from './auth/strategies/jwt.strategy';
   controllers: [AppController],
   providers: [
     AppService, 
-    PrismaService, 
     RedisService, 
     EmailService, 
-    PinoLoggerService,
-    JwtStrategy
+    PinoLoggerService
   ],
 })
 export class AppModule {

@@ -6,9 +6,12 @@ import { RedisService } from '../common/services/redis.service';
 import { EmailService } from '../common/services/email.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { TwoFactorService } from './two-factor.service';
+import { SessionsService, DeviceInfo } from './sessions.service';
+import { NotificationsService } from './notifications.service';
 import { RegisterDto, VerifyEmailDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto, TwoFactorLoginDto } from './schemas/auth.schemas';
 import { User } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import { Request } from 'express';
 
 export interface AuthTokens {
   accessToken: string;
@@ -37,6 +40,8 @@ export class AuthService {
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
     private readonly twoFactorService: TwoFactorService,
+    private readonly sessionsService: SessionsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<{ message: string; user: Omit<User, 'password'> }> {
@@ -139,7 +144,7 @@ export class AuthService {
     return { message: 'Email verified successfully' };
   }
 
-  async login(loginDto: LoginDto): Promise<LoginResult> {
+  async login(loginDto: LoginDto, req?: Request): Promise<LoginResult> {
     const { email, password } = loginDto;
     const emailKey = email.toLowerCase();
 
@@ -195,7 +200,7 @@ export class AuthService {
     await this.redisService.del(`login_attempts:${emailKey}`);
 
     // Generate tokens
-    const tokens = await this.generateTokens(user);
+    const tokens = await this.generateTokens(user, req);
 
     this.logger.log(`User ${user.email} logged in successfully`);
     
@@ -205,7 +210,7 @@ export class AuthService {
     };
   }
 
-  async twoFactorLogin(userId: string, twoFactorLoginDto: TwoFactorLoginDto): Promise<LoginResult> {
+  async twoFactorLogin(userId: string, twoFactorLoginDto: TwoFactorLoginDto, req?: Request): Promise<LoginResult> {
     const { code } = twoFactorLoginDto;
 
     // Validate 2FA code
@@ -230,7 +235,7 @@ export class AuthService {
     }
 
     // Generate tokens
-    const tokens = await this.generateTokens(user);
+    const tokens = await this.generateTokens(user, req);
 
     this.logger.log(`User ${user.email} logged in successfully with 2FA`);
     
@@ -269,6 +274,28 @@ export class AuthService {
         where: { id: session.id },
         data: { isActive: false },
       });
+
+      // Update the user session to reflect the new refresh token
+      try {
+        const userSession = await this.prisma.userSession.findUnique({
+          where: { refreshTokenId: session.tokenId },
+        });
+
+        if (userSession) {
+          // Update the session to link to the new refresh token
+          const newRefreshToken = await this.createRefreshToken(session.user.id);
+          await this.prisma.userSession.update({
+            where: { id: userSession.id },
+            data: { 
+              refreshTokenId: newRefreshToken.tokenId,
+              lastActiveAt: new Date(),
+            },
+          });
+        }
+      } catch (error) {
+        this.logger.error('Failed to update user session during token refresh:', error);
+        // Don't fail token refresh if session update fails
+      }
 
       this.logger.log(`Tokens refreshed for user ${session.user.email}`);
       return tokens;
@@ -383,7 +410,7 @@ export class AuthService {
     return { message: 'Password reset successfully. Please log in with your new password.' };
   }
 
-  private async generateTokens(user: User): Promise<AuthTokens> {
+  private async generateTokens(user: User, req?: Request): Promise<AuthTokens> {
     const payload = {
       sub: user.id,
       email: user.email,
@@ -391,7 +418,30 @@ export class AuthService {
     };
 
     const accessToken = this.jwtService.sign(payload);
-    const refreshToken = await this.createRefreshToken(user.id);
+    const { refreshToken, tokenId } = await this.createRefreshToken(user.id);
+
+    // Create user session if request is provided
+    if (req) {
+      try {
+        const deviceInfo = this.sessionsService.extractDeviceInfo(req);
+        await this.sessionsService.createSession(user.id, tokenId, deviceInfo);
+        
+        // Create login notification
+        await this.notificationsService.createAccountUpdate(
+          user.id,
+          'New Login Detected',
+          'A new device has logged into your account.',
+          { 
+            action: 'login',
+            deviceInfo,
+            timestamp: new Date(),
+          }
+        );
+      } catch (error) {
+        this.logger.error('Failed to create user session:', error);
+        // Don't fail login if session creation fails
+      }
+    }
 
     return {
       accessToken,
@@ -400,7 +450,7 @@ export class AuthService {
     };
   }
 
-  private async createRefreshToken(userId: string): Promise<string> {
+  private async createRefreshToken(userId: string): Promise<{ refreshToken: string; tokenId: string }> {
     const familyId = randomUUID();
     const tokenId = randomUUID();
     const refreshToken = randomUUID();
@@ -419,7 +469,7 @@ export class AuthService {
       },
     });
 
-    return refreshToken;
+    return { refreshToken, tokenId };
   }
 
   private async recordFailedLoginAttempt(email: string): Promise<void> {

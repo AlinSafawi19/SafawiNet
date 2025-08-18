@@ -6,6 +6,10 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
 import { RecoveryService } from './recovery.service';
+import { SessionsController } from './sessions.controller';
+import { NotificationsController } from './notifications.controller';
+import { SessionsService } from './sessions.service';
+import { NotificationsService } from './notifications.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PrismaService } from '../common/services/prisma.service';
 import { RedisService } from '../common/services/redis.service';
@@ -31,17 +35,19 @@ import { SecurityUtils } from '../common/security/security.utils';
       },
     ]),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, SessionsController, NotificationsController],
   providers: [
     AuthService,
     TwoFactorService,
     RecoveryService,
+    SessionsService,
+    NotificationsService,
     JwtStrategy,
     PrismaService,
     RedisService,
     EmailService,
     SecurityUtils,
   ],
-  exports: [AuthService, TwoFactorService, JwtModule, JwtStrategy],
+  exports: [AuthService, TwoFactorService, SessionsService, NotificationsService, JwtModule, JwtStrategy],
 })
 export class AuthModule {}

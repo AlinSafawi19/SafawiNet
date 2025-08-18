@@ -59,6 +59,7 @@ export class JwtAuthGuard {
       
       // Attach user to request
       request.user = {
+        id: user.id,
         sub: user.id,
         email: user.email,
         name: user.name,
