@@ -42,16 +42,17 @@ export class IdempotencyMiddleware implements NestMiddleware {
 
       // Override res.json to capture the response
       const originalJson = res.json.bind(res);
+      const redisService = this.redisService;
       res.json = function(body: any) {
         // Store the actual response
-        this.redisService.set(
+        redisService.set(
           `idempotency:${idempotencyKey}`,
           JSON.stringify({ status: res.statusCode, body }),
           300 // 5 minutes
         );
         
         return originalJson(body);
-      }.bind(this);
+      };
 
       next();
     } catch (error) {

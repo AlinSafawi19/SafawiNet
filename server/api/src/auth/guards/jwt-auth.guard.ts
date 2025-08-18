@@ -68,7 +68,8 @@ export class JwtAuthGuard {
       
       return true;
     } catch (error) {
-      console.log('🛡️ JWT Guard - Token validation failed:', error.message);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.log('🛡️ JWT Guard - Token validation failed:', errorMessage);
       throw new UnauthorizedException('Invalid token');
     }
   }
