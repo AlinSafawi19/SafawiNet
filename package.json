@@ -1,0 +1,36 @@
+{
+  "name": "safawinet",
+  "version": "1.0.0",
+  "description": "Safawinet application with API and infrastructure",
+  "private": true,
+  "scripts": {
+    "start:dev": "cd server/api && npm run start:dev",
+    "test": "cd server/api && npm run test",
+    "test:e2e": "cd server/api && npm run test:e2e",
+    "prisma:generate": "cd server/api && npm run prisma:generate",
+    "db:migrate": "cd server/api && npm run db:migrate",
+    "db:migrate:deploy": "cd server/api && npm run db:migrate:deploy",
+    "db:studio": "cd server/api && npm run db:studio",
+    "db:seed": "cd server/api && npm run db:seed",
+    "build": "cd server/api && npm run build",
+    "lint": "cd server/api && npm run lint",
+    "format": "cd server/api && npm run format",
+    "install:api": "cd server/api && npm install",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:restart": "docker compose restart",
+    "k6:burst": "k6 run tests/perf/login_burst.js",
+    "k6:load": "k6 run k6-load-test.js",
+    "deploy:dev": "ts-node scripts/deploy-with-rollback.ts --env dev",
+    "deploy:staging": "ts-node scripts/deploy-with-rollback.ts --env staging",
+    "deploy:prod": "ts-node scripts/deploy-with-rollback.ts --env prod",
+    "revoke:sessions": "ts-node scripts/mass-revoke-sessions.ts",
+    "email:health": "curl -s http://localhost:3000/v1/email-monitoring/health | jq"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}

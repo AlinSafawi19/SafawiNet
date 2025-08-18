@@ -8,6 +8,7 @@ import { TwoFactorService } from './two-factor.service';
 import { RecoveryService } from './recovery.service';
 import { SessionsController } from './sessions.controller';
 import { NotificationsController } from './notifications.controller';
+import { EmailMonitoringController } from './email-monitoring.controller';
 import { SessionsService } from './sessions.service';
 import { NotificationsService } from './notifications.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -35,7 +36,7 @@ import { SecurityUtils } from '../common/security/security.utils';
       },
     ]),
   ],
-  controllers: [AuthController, SessionsController, NotificationsController],
+  controllers: [AuthController, SessionsController, NotificationsController, EmailMonitoringController],
   providers: [
     AuthService,
     TwoFactorService,

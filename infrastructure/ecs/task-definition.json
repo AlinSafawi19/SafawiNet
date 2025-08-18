@@ -1,0 +1,172 @@
+{
+  "family": "safawinet-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "safawinet-api",
+      "image": "${ECR_REPOSITORY_URI}:${IMAGE_TAG}",
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "PORT",
+          "value": "3000"
+        },
+        {
+          "name": "LOG_LEVEL",
+          "value": "warn"
+        },
+        {
+          "name": "BULLMQ_PREFIX",
+          "value": "safawinet-prod"
+        },
+        {
+          "name": "RATE_LIMIT_TTL",
+          "value": "60000"
+        },
+        {
+          "name": "RATE_LIMIT_LIMIT",
+          "value": "100"
+        },
+        {
+          "name": "LOGIN_BURST_LIMIT",
+          "value": "300"
+        },
+        {
+          "name": "EMAIL_HOST",
+          "value": "email-smtp.${SES_REGION}.amazonaws.com"
+        },
+        {
+          "name": "EMAIL_PORT",
+          "value": "587"
+        },
+        {
+          "name": "EMAIL_FROM",
+          "value": "noreply@safawinet.com"
+        },
+        {
+          "name": "EMAIL_SECURE",
+          "value": "true"
+        },
+        {
+          "name": "CORS_ORIGINS",
+          "value": "https://api.safawinet.com,https://safawinet.com"
+        },
+        {
+          "name": "SENTRY_ENVIRONMENT",
+          "value": "production"
+        },
+        {
+          "name": "OTEL_SERVICE_NAME",
+          "value": "safawinet-api-prod"
+        },
+        {
+          "name": "HEALTH_CHECK_TIMEOUT",
+          "value": "5000"
+        },
+        {
+          "name": "HEALTH_CHECK_INTERVAL",
+          "value": "30000"
+        },
+        {
+          "name": "SWAGGER_TITLE",
+          "value": "Safawinet API"
+        },
+        {
+          "name": "SWAGGER_DESCRIPTION",
+          "value": "Safawinet API Documentation"
+        },
+        {
+          "name": "SWAGGER_VERSION",
+          "value": "1.0.0"
+        },
+        {
+          "name": "SWAGGER_PATH",
+          "value": "docs"
+        },
+        {
+          "name": "API_DOMAIN",
+          "value": "api.safawinet.com"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:safawinet-secrets:DATABASE_URL::"
+        },
+        {
+          "name": "REDIS_HOST",
+          "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:safawinet-secrets:REDIS_HOST::"
+        },
+        {
+          "name": "REDIS_PORT",
+          "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:safawinet-secrets:REDIS_PORT::"
+        },
+        {
+          "name": "REDIS_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:safawinet-secrets:REDIS_PASSWORD::"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:safawinet-secrets:JWT_SECRET::"
+        },
+        {
+          "name": "JWT_REFRESH_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:safawinet-secrets:JWT_REFRESH_SECRET::"
+        },
+        {
+          "name": "ENCRYPTION_KEY",
+          "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:safawinet-secrets:ENCRYPTION_KEY::"
+        },
+        {
+          "name": "SES_ACCESS_KEY_ID",
+          "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:safawinet-secrets:SES_ACCESS_KEY_ID::"
+        },
+        {
+          "name": "SES_SECRET_ACCESS_KEY",
+          "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:safawinet-secrets:SES_SECRET_ACCESS_KEY::"
+        },
+        {
+          "name": "SENTRY_DSN",
+          "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:safawinet-secrets:SENTRY_DSN::"
+        },
+        {
+          "name": "OTEL_ENDPOINT",
+          "valueFrom": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:safawinet-secrets:OTEL_ENDPOINT::"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/safawinet-api",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:3000/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ]
+}

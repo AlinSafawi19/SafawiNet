@@ -253,3 +253,18 @@ model LoyaltyTransaction {
   @@index([type, createdAt])
   @@index([expiresAt])
 }
+
+// Email delivery logs for monitoring SES bounce/complaint rates
+model EmailLog {
+  id          String   @id @default(cuid())
+  email       String   @db.Citext
+  type        String   // verification, password_reset, notification, etc.
+  status      String   // sent, delivered, bounced, complained, rejected
+  metadata    Json?    // Additional delivery information
+  createdAt   DateTime @default(now())
+
+  @@map("email_logs")
+  @@index([email, createdAt])
+  @@index([status, createdAt])
+  @@index([type, createdAt])
+}

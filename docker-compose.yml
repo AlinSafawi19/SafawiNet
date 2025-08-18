@@ -59,14 +59,9 @@ services:
     container_name: safawinet-api
     ports:
       - "3000:3000"
-    environment:
-      NODE_ENV: development
-      DATABASE_URL: postgresql://postgres:alin123M@postgres:5432/safawinet
-      REDIS_URL: redis://redis:6379
-      MAIL_HOST: mailhog
-      MAIL_PORT: 1025
-      OTEL_ENDPOINT: http://otel-collector:4318
-      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+    env_file:
+      - .env
+    environment: {}
     depends_on:
       postgres:
         condition: service_healthy

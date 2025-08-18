@@ -31,6 +31,33 @@ A modern NestJS-based API server with comprehensive tooling, local development e
 - Node.js 18+
 - Docker & Docker Compose
 - Git
+- K6 (for performance testing)
+
+### Installing K6
+
+**Windows:**
+```bash
+# Using Chocolatey
+choco install k6
+
+# Using Scoop
+scoop install k6
+```
+
+**macOS:**
+```bash
+# Using Homebrew
+brew install k6
+```
+
+**Linux:**
+```bash
+# Using package manager
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+sudo apt-get update
+sudo apt-get install k6
+```
 
 ## 🚀 Quick Start
 
@@ -41,21 +68,22 @@ git clone <your-repo-url>
 cd safawinet
 ```
 
-### 2. Start the development environment
+### 2. Install dependencies
 
 ```bash
-# Start all services
-docker-compose up -d
-
-# Or start without the API (to run it locally)
-docker-compose up -d postgres redis mailhog otel-collector
+npm run install:api
 ```
 
-### 3. Install dependencies and run the API
+### 3. Start the development environment
 
 ```bash
-cd server/api
-npm install
+# Start all services and development server
+npm run start:dev
+
+# Or step by step:
+docker compose up -d
+npm run prisma:generate
+npm run db:migrate
 npm run start:dev
 ```
 
@@ -68,15 +96,55 @@ npm run start:dev
 - **PostgreSQL**: localhost:5432
 - **Redis**: localhost:6379
 
+## 🛠️ Development Commands
+
+### Essential Commands
+```bash
+# Start development environment
+npm run start:dev
+
+# Run tests
+npm run test
+npm run test:e2e
+
+# Database operations
+npm run prisma:generate
+npm run db:migrate
+
+# Performance testing
+k6 run tests/perf/login_burst.js
+```
+
+### Windows Users
+```bash
+# Using batch file
+dev.bat start
+dev.bat test
+dev.bat perf
+
+# Using PowerShell
+.\scripts\dev.ps1 start-dev
+.\scripts\dev.ps1 test
+```
+
+### Docker Operations
+```bash
+npm run docker:up      # Start services
+npm run docker:down    # Stop services
+npm run docker:logs    # View logs
+```
+
 ## 🔧 Development
 
 ### Environment Variables
 
-Copy `.env.example` to `.env` and configure:
+Copy `env.template` to `.env` and configure:
 
 ```bash
-cp .env.example .env
+cp env.template .env
 ```
+
+**Note**: The project uses Docker Compose for development. The `.env` file in the root directory contains all necessary environment variables for the containerized environment.
 
 ### Database Management
 

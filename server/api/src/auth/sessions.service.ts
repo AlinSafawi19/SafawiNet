@@ -371,4 +371,132 @@ export class SessionsService {
 
     return { cleanedCount: expiredSessions.length };
   }
+
+  /**
+   * Revoke all sessions for a specific token family (security incident response)
+   */
+  async revokeTokenFamily(familyId: string): Promise<{ revokedCount: number }> {
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Revoke all refresh sessions in the family
+      const revokedSessions = await tx.refreshSession.updateMany({
+        where: { familyId, isActive: true },
+        data: { isActive: false },
+      });
+
+      // Update user sessions to mark them as inactive
+      const revokedUserSessions = await tx.userSession.updateMany({
+        where: {
+          refreshTokenId: {
+            in: await tx.refreshSession.findMany({
+              where: { familyId },
+              select: { tokenId: true },
+            }).then(sessions => sessions.map(s => s.tokenId)),
+          },
+        },
+        data: { isCurrent: false },
+      });
+
+      return {
+        revokedCount: revokedSessions.count,
+      };
+    });
+
+    this.logger.warn(`Revoked token family ${familyId}: ${result.revokedCount} sessions`);
+    return result;
+  }
+
+  /**
+   * Revoke all sessions for a specific user (admin security action)
+   */
+  async revokeAllUserSessions(userId: string, reason?: string): Promise<{ revokedCount: number }> {
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Revoke all refresh sessions for the user
+      const revokedSessions = await tx.refreshSession.updateMany({
+        where: { userId, isActive: true },
+        data: { isActive: false },
+      });
+
+      // Update user sessions to mark them as inactive
+      const revokedUserSessions = await tx.userSession.updateMany({
+        where: { userId },
+        data: { isCurrent: false },
+      });
+
+      // Create security notification for the user
+      await tx.notification.create({
+        data: {
+          userId,
+          type: 'security_alert',
+          title: 'All Sessions Revoked',
+          message: reason || 'All your active sessions have been revoked for security reasons. Please log in again.',
+          priority: 'high',
+          metadata: {
+            reason,
+            revokedAt: new Date().toISOString(),
+            sessionCount: revokedSessions.count,
+          },
+        },
+      });
+
+      return {
+        revokedCount: revokedSessions.count,
+      };
+    });
+
+    this.logger.warn(`Revoked all sessions for user ${userId}: ${result.revokedCount} sessions. Reason: ${reason || 'No reason provided'}`);
+    return result;
+  }
+
+  /**
+   * Revoke sessions by user ID list (bulk admin action)
+   */
+  async revokeSessionsByUserIds(userIds: string[], reason?: string): Promise<{ [userId: string]: number }> {
+    const results: { [userId: string]: number } = {};
+
+    for (const userId of userIds) {
+      try {
+        const result = await this.revokeAllUserSessions(userId, reason);
+        results[userId] = result.revokedCount;
+      } catch (error) {
+        this.logger.error(`Failed to revoke sessions for user ${userId}:`, error);
+        results[userId] = 0;
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Get security audit information for a user
+   */
+  async getSecurityAuditInfo(userId: string): Promise<{
+    activeSessions: number;
+    totalSessions: number;
+    lastLogin: Date | null;
+    suspiciousActivity: boolean;
+  }> {
+    const [activeSessions, totalSessions, lastLogin] = await Promise.all([
+      this.prisma.refreshSession.count({
+        where: { userId, isActive: true },
+      }),
+      this.prisma.refreshSession.count({
+        where: { userId },
+      }),
+      this.prisma.userSession.findFirst({
+        where: { userId },
+        orderBy: { lastActiveAt: 'desc' },
+        select: { lastActiveAt: true },
+      }),
+    ]);
+
+    // Simple suspicious activity detection
+    const suspiciousActivity = activeSessions > 10; // More than 10 active sessions
+
+    return {
+      activeSessions,
+      totalSessions,
+      lastLogin: lastLogin?.lastActiveAt || null,
+      suspiciousActivity,
+    };
+  }
 }

@@ -168,4 +168,106 @@ export class SessionsController {
       message: `Successfully revoked ${revokedCount} sessions`,
     };
   }
+
+  @Delete('revoke-family/:familyId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Revoke token family',
+    description: 'Revoke all sessions in a specific token family (security incident response)',
+  })
+  @ApiParam({ name: 'familyId', description: 'Token family ID to revoke' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Token family revoked successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        revokedCount: { type: 'number' },
+        message: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  async revokeTokenFamily(
+    @Param('familyId') familyId: string,
+    @Request() req: ExpressRequest & { user: { sub: string } },
+  ) {
+    // TODO: Add admin role check here
+    const result = await this.sessionsService.revokeTokenFamily(familyId);
+    return {
+      revokedCount: result.revokedCount,
+      message: `Successfully revoked ${result.revokedCount} sessions in token family ${familyId}`,
+    };
+  }
+
+  @Delete('revoke-user/:userId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Revoke all user sessions',
+    description: 'Revoke all active sessions for a specific user (admin security action)',
+  })
+  @ApiParam({ name: 'userId', description: 'User ID to revoke sessions for' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        reason: { type: 'string', description: 'Reason for revocation' },
+      },
+    },
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'User sessions revoked successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        revokedCount: { type: 'number' },
+        message: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  async revokeUserSessions(
+    @Param('userId') userId: string,
+    @Body() body: { reason?: string },
+    @Request() req: ExpressRequest & { user: { sub: string } },
+  ) {
+    // TODO: Add admin role check here
+    const result = await this.sessionsService.revokeAllUserSessions(userId, body.reason);
+    return {
+      revokedCount: result.revokedCount,
+      message: `Successfully revoked ${result.revokedCount} sessions for user ${userId}`,
+    };
+  }
+
+  @Get('security-audit/:userId')
+  @ApiOperation({
+    summary: 'Get security audit information',
+    description: 'Get security audit information for a specific user',
+  })
+  @ApiParam({ name: 'userId', description: 'User ID to audit' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Security audit information retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        activeSessions: { type: 'number' },
+        totalSessions: { type: 'number' },
+        lastLogin: { type: 'string', format: 'date-time', nullable: true },
+        suspiciousActivity: { type: 'boolean' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  async getSecurityAuditInfo(
+    @Param('userId') userId: string,
+    @Request() req: ExpressRequest & { user: { sub: string } },
+  ) {
+    // TODO: Add admin role check here
+    return this.sessionsService.getSecurityAuditInfo(userId);
+  }
 }

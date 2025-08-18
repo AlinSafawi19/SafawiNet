@@ -20,17 +20,18 @@ import { QueueService } from './common/services/queue.service';
 import { CronService } from './common/services/cron.service';
 import { PerformanceService } from './common/services/performance.service';
 import { PrismaService } from './common/services/prisma.service';
+import { EmailMonitoringService } from './common/services/email-monitoring.service';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { IdempotencyMiddleware } from './common/middleware/idempotency.middleware';
 import { SecurityMiddleware } from './common/middleware/security.middleware';
 import { PerformanceMiddleware } from './common/middleware/performance.middleware';
+import { BasicAuthMiddleware } from './common/middleware/basic-auth.middleware';
 import { PerformanceController } from './common/controllers/performance.controller';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
     }),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     ThrottlerModule.forRoot([
@@ -75,6 +76,7 @@ import { PerformanceController } from './common/controllers/performance.controll
     CronService,
     PerformanceService,
     PrismaService,
+    EmailMonitoringService,
   ],
 })
 export class AppModule {
@@ -85,6 +87,8 @@ export class AppModule {
       .apply(SecurityMiddleware)
       .forRoutes('*')
       .apply(PerformanceMiddleware)
+      .forRoutes('*')
+      .apply(BasicAuthMiddleware)
       .forRoutes('*')
       .apply(IdempotencyMiddleware)
       .forRoutes({ path: '*', method: RequestMethod.POST });
