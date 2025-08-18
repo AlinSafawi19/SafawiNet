@@ -10,7 +10,7 @@ import {
   ChangeEmailDto,
   ChangePasswordDto
 } from './schemas/user.schemas';
-import { User } from '@prisma/client';
+import { User, Role } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -70,12 +70,13 @@ export class UsersService {
       }
     };
 
-    // Create user
+    // Create user with ADMIN role (this endpoint is for admin user creation)
     const user = await this.prisma.user.create({
       data: {
         email: email.toLowerCase(),
         password: hashedPassword,
         name,
+        roles: [Role.ADMIN, Role.CUSTOMER], // Admin users also get customer role for customer features
         preferences: defaultPreferences,
         notificationPreferences: defaultNotificationPreferences,
       },
@@ -376,6 +377,32 @@ export class UsersService {
     });
 
     return users.map(({ password: _, ...userWithoutPassword }) => userWithoutPassword);
+  }
+
+  async findAllAdmins(): Promise<Omit<User, 'password'>[]> {
+    const admins = await this.prisma.user.findMany({
+      where: {
+        roles: {
+          has: Role.ADMIN,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return admins.map(({ password: _, ...userWithoutPassword }) => userWithoutPassword);
+  }
+
+  async findAllCustomers(): Promise<Omit<User, 'password'>[]> {
+    const customers = await this.prisma.user.findMany({
+      where: {
+        roles: {
+          has: Role.CUSTOMER,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return customers.map(({ password: _, ...userWithoutPassword }) => userWithoutPassword);
   }
 
   async verifyEmail(token: string): Promise<boolean> {

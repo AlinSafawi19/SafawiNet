@@ -4,6 +4,8 @@ import { UsersService } from './users.service';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { RateLimitGuard, RateLimit } from '../common/guards/rate-limit.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard, Roles } from '../auth/guards/roles.guard';
+import { Role } from '@prisma/client';
 import {
   CreateUserSchema,
   CreateUserDto,
@@ -31,44 +33,72 @@ import {
 @Controller('users')
 @UseGuards(RateLimitGuard)
 export class UsersController {
+  // Note: The POST /users endpoint creates admin users with ADMIN role
+  // For regular customer registration, use POST /auth/register instead
+  // GET /users/admins - Get all admin users (admin-only)
+  // GET /users/customers - Get all customer users (admin-only)
   private readonly logger = new Logger(UsersController.name);
 
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new user' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new admin user' })
   @ApiBody({
-    description: 'User creation data',
+    description: 'Admin user creation data - creates users with ADMIN role',
     examples: {
       createUser: {
-    summary: 'Create a new user',
+    summary: 'Create a new admin user',
         value: {
-          email: 'john.doe@example.com',
+          email: 'admin@example.com',
           password: 'securePassword123',
-          name: 'John Doe'
+          name: 'Admin User'
         }
       }
     }
   })
-  @ApiResponse({ status: 201, description: 'User created successfully' })
+  @ApiResponse({ status: 201, description: 'Admin user created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
   @RateLimit({ limit: 5, windowSeconds: 300, keyPrefix: 'user_creation' })
   @UsePipes(new ZodValidationPipe(CreateUserSchema))
   async createUser(@Body() createUserDto: CreateUserDto) {
     const user = await this.usersService.createUser(createUserDto);
     return {
-      message: 'User created successfully',
+      message: 'Admin user created successfully',
       user,
     };
   }
 
-  @Get()
-  @ApiOperation({ summary: 'Get all users' })
-  @ApiResponse({ status: 200, description: 'List of users retrieved successfully' })
-  @RateLimit({ limit: 100, windowSeconds: 60, keyPrefix: 'user_listing' })
-  async findAllUsers() {
-    const users = await this.usersService.findAllUsers();
-    return { users };
+  @Get('admins')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all admin users' })
+  @ApiResponse({ status: 200, description: 'List of admin users retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @RateLimit({ limit: 100, windowSeconds: 60, keyPrefix: 'admin_listing' })
+  async findAllAdmins() {
+    const admins = await this.usersService.findAllAdmins();
+    return { admins };
+  }
+
+  @Get('customers')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all customer users' })
+  @ApiResponse({ status: 200, description: 'List of customer users retrieved successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @RateLimit({ limit: 100, windowSeconds: 60, keyPrefix: 'customer_listing' })
+  async findAllCustomers() {
+    const customers = await this.usersService.findAllCustomers();
+    return { customers };
   }
 
   @Get('me')
