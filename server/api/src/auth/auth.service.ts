@@ -415,6 +415,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       verified: user.isVerified,
+      roles: user.roles,
     };
 
     const accessToken = this.jwtService.sign(payload);

@@ -112,10 +112,6 @@ async function bootstrap() {
       .setDescription('The Safawinet API description')
       .setVersion('1.0')
       .addBearerAuth()
-      .addTag('auth', 'Authentication endpoints')
-      .addTag('users', 'User management endpoints')
-      .addTag('loyalty', 'Loyalty system endpoints')
-      .addTag('health', 'Health check endpoints')
       .build();
     
     const document = SwaggerModule.createDocument(app, config);

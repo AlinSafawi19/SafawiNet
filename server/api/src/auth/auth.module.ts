@@ -9,12 +9,18 @@ import { RecoveryService } from './recovery.service';
 import { SessionsController } from './sessions.controller';
 import { NotificationsController } from './notifications.controller';
 import { EmailMonitoringController } from './email-monitoring.controller';
+import { AdminController } from './admin.controller';
+import { CustomerController } from './customer.controller';
 import { SessionsService } from './sessions.service';
 import { NotificationsService } from './notifications.service';
+import { EmailMonitoringService } from '../common/services/email-monitoring.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { RolesGuard } from './guards/roles.guard';
 import { PrismaService } from '../common/services/prisma.service';
 import { RedisService } from '../common/services/redis.service';
 import { EmailService } from '../common/services/email.service';
+import { PinoLoggerService } from '../common/services/logger.service';
+import { SentryService } from '../common/services/sentry.service';
 import { SecurityUtils } from '../common/security/security.utils';
 
 @Module({
@@ -36,19 +42,23 @@ import { SecurityUtils } from '../common/security/security.utils';
       },
     ]),
   ],
-  controllers: [AuthController, SessionsController, NotificationsController, EmailMonitoringController],
+  controllers: [AuthController, SessionsController, NotificationsController, EmailMonitoringController, AdminController, CustomerController],
   providers: [
     AuthService,
     TwoFactorService,
     RecoveryService,
     SessionsService,
     NotificationsService,
+    EmailMonitoringService,
     JwtStrategy,
+    RolesGuard,
     PrismaService,
     RedisService,
     EmailService,
+    PinoLoggerService,
+    SentryService,
     SecurityUtils,
   ],
-  exports: [AuthService, TwoFactorService, SessionsService, NotificationsService, JwtModule, JwtStrategy],
+  exports: [AuthService, TwoFactorService, SessionsService, NotificationsService, JwtModule, JwtStrategy, RolesGuard],
 })
 export class AuthModule {}

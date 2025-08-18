@@ -21,6 +21,8 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard, Roles } from './guards/roles.guard';
+import { Role } from '@prisma/client';
 import { SessionsService } from './sessions.service';
 import { NotificationsService } from './notifications.service';
 import {
@@ -34,7 +36,7 @@ import { SessionListSchema } from './schemas/auth.schemas';
 
 @ApiTags('Sessions')
 @Controller('v1/sessions')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 export class SessionsController {
   constructor(

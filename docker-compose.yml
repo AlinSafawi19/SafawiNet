@@ -3,7 +3,7 @@ services:
     image: postgres:15-alpine
     container_name: safawinet-postgres
     environment:
-      POSTGRES_DB: safawinet
+      POSTGRES_DB: safawinet_dev
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: alin123M
     ports:

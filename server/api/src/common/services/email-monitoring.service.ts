@@ -190,23 +190,27 @@ export class EmailMonitoringService {
             },
           });
 
-          // Create notification for user
-          await tx.notification.create({
-            data: {
-              userId: (await tx.user.findUnique({
-                where: { email: bounceInfo.email },
-                select: { id: true },
-              }))?.id,
-              type: 'email_bounce',
-              title: 'Email Delivery Issue',
-              message: 'We were unable to deliver emails to your address. Please update your email address.',
-              priority: 'high',
-              metadata: {
-                bounceType: bounceInfo.bounceType,
-                bounceSubType: bounceInfo.bounceSubType,
-              },
-            },
+          // Create notification for user if found
+          const user = await tx.user.findUnique({
+            where: { email: bounceInfo.email },
+            select: { id: true },
           });
+          
+          if (user) {
+            await tx.notification.create({
+              data: {
+                userId: user.id,
+                type: 'email_bounce',
+                title: 'Email Delivery Issue',
+                message: 'We were unable to deliver emails to your address. Please update your email address.',
+                priority: 'high',
+                metadata: {
+                  bounceType: bounceInfo.bounceType,
+                  bounceSubType: bounceInfo.bounceSubType,
+                },
+              },
+            });
+          }
         }
       });
 
@@ -253,22 +257,26 @@ export class EmailMonitoringService {
           },
         });
 
-        // Create notification for user
-        await tx.notification.create({
-          data: {
-            userId: (await tx.user.findUnique({
-              where: { email: complaintInfo.email },
-              select: { id: true },
-            }))?.id,
-            type: 'email_complaint',
-            title: 'Email Preferences Updated',
-            message: 'You have been unsubscribed from email notifications due to a complaint.',
-            priority: 'normal',
-            metadata: {
-              complaintFeedbackType: complaintInfo.complaintFeedbackType,
-            },
-          },
+        // Create notification for user if found
+        const user = await tx.user.findUnique({
+          where: { email: complaintInfo.email },
+          select: { id: true },
         });
+        
+        if (user) {
+          await tx.notification.create({
+            data: {
+              userId: user.id,
+              type: 'email_complaint',
+              title: 'Email Preferences Updated',
+              message: 'You have been unsubscribed from email notifications due to a complaint.',
+              priority: 'normal',
+              metadata: {
+                complaintFeedbackType: complaintInfo.complaintFeedbackType,
+              },
+            },
+          });
+        }
       });
 
       // Clear metrics cache to force refresh

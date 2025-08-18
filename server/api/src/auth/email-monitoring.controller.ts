@@ -17,11 +17,14 @@ import {
     ApiBody,
   } from '@nestjs/swagger';
   import { JwtAuthGuard } from './guards/jwt-auth.guard';
+  import { RolesGuard, Roles } from './guards/roles.guard';
+  import { Role } from '@prisma/client';
   import { EmailMonitoringService, BounceInfo, ComplaintInfo } from '../common/services/email-monitoring.service';
   
   @ApiTags('Email Monitoring')
   @Controller('v1/email-monitoring')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @ApiBearerAuth()
   export class EmailMonitoringController {
     constructor(

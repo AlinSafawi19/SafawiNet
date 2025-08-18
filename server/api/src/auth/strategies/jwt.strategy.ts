@@ -8,6 +8,7 @@ export interface JwtPayload {
   sub: string;
   email: string;
   verified: boolean;
+  roles: string[];
   iat: number;
   exp: number;
 }
@@ -31,6 +32,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // Check if user still exists and is verified
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        isVerified: true,
+        roles: true,
+      },
     });
 
     console.log('🔐 JWT Strategy - user found:', user);
@@ -52,6 +60,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: user.email,
       name: user.name,
       verified: user.isVerified,
+      roles: user.roles,
     };
   }
 }

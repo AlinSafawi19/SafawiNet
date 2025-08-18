@@ -1,4 +1,4 @@
-import { PrismaClient, LoyaltyTier, LoyaltyTransaction, Prisma } from '@prisma/client';
+import { PrismaClient, LoyaltyTier, LoyaltyTransaction, Prisma, Role } from '@prisma/client';
 import { SecurityUtils } from '../src/common/security/security.utils';
 
 const prisma = new PrismaClient();
@@ -102,6 +102,7 @@ async function main() {
       email: 'admin@safawinet.com',
       password: 'admin123456',
       name: 'John Smith',
+      roles: ['ADMIN', 'CUSTOMER'],
       loyaltyPoints: 2500, // Silver tier
       preferences: {
         theme: 'dark',
@@ -138,6 +139,7 @@ async function main() {
       email: 'user@safawinet.com',
       password: 'user123456',
       name: 'Test User',
+      roles: ['CUSTOMER'],
       loyaltyPoints: 7500, // Gold tier
       preferences: {
         theme: 'light',
@@ -174,6 +176,7 @@ async function main() {
       email: 'developer@safawinet.com',
       password: 'dev123456',
       name: 'Developer User',
+      roles: ['MODERATOR', 'CUSTOMER'],
       loyaltyPoints: 150, // Bronze tier
       preferences: {
         theme: 'auto',
@@ -216,6 +219,7 @@ async function main() {
         email: userData.email,
         password: hashedPassword,
         name: userData.name,
+        roles: userData.roles as Role[],
         preferences: userData.preferences,
         notificationPreferences: userData.notificationPreferences,
       },
@@ -316,9 +320,9 @@ async function main() {
 
   console.log('🎉 Database seeding completed successfully!');
   console.log('\n📋 Test Accounts:');
-  console.log('   Admin: admin@safawinet.com / admin123456 (Silver tier - 2500 points)');
-  console.log('   User: user@safawinet.com / user123456 (Gold tier - 7500 points)');
-  console.log('   Developer: developer@safawinet.com / dev123456 (Bronze tier - 150 points)');
+  console.log('   Admin: admin@safawinet.com / admin123456 (ADMIN + CUSTOMER roles, Silver tier - 2500 points)');
+  console.log('   User: user@safawinet.com / user123456 (CUSTOMER role, Gold tier - 7500 points)');
+  console.log('   Developer: developer@safawinet.com / dev123456 (MODERATOR + CUSTOMER roles, Bronze tier - 150 points)');
   console.log('\n🔑 Verification tokens have been created for all users');
   console.log('⚙️  Default preferences and notification settings have been set for all users');
   console.log('🏆 Loyalty accounts with sample transactions have been created for pagination testing');

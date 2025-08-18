@@ -22,7 +22,7 @@ export interface EmailData {
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private transporter: nodemailer.Transporter;
+  private transporter!: nodemailer.Transporter;
   private templates: Map<string, handlebars.TemplateDelegate> = new Map();
 
   constructor(private configService: ConfigService) {
@@ -136,11 +136,59 @@ export class EmailService {
     });
   }
 
+  // Alias methods for backward compatibility
+  async sendVerificationEmail(to: string, verificationToken: string): Promise<void> {
+    const verificationUrl = `${this.configService.get('API_DOMAIN')}/verify-email?token=${verificationToken}`;
+    await this.sendEmailVerification(to, {
+      name: 'User',
+      verificationUrl,
+    });
+  }
+
   async sendPasswordReset(to: string, data: { name: string; resetUrl: string }): Promise<void> {
     await this.sendTemplateEmail('password-reset', to, {
       ...data,
       appName: 'Safawinet',
       supportEmail: 'support@safawinet.com',
+    });
+  }
+
+  // Alias method for backward compatibility
+  async sendPasswordResetEmail(to: string, resetToken: string): Promise<void> {
+    const resetUrl = `${this.configService.get('API_DOMAIN')}/reset-password?token=${resetToken}`;
+    await this.sendPasswordReset(to, {
+      name: 'User',
+      resetUrl,
+    });
+  }
+
+  async sendRecoveryEmail(to: string, recoveryToken: string, originalEmail: string): Promise<void> {
+    const recoveryUrl = `${this.configService.get('API_DOMAIN')}/recover?token=${recoveryToken}`;
+    await this.sendTemplateEmail('recovery-email', to, {
+      name: 'User',
+      recoveryUrl,
+      originalEmail,
+      appName: 'Safawinet',
+      supportEmail: 'support@safawinet.com',
+    });
+  }
+
+  async sendEmailChangeConfirmationEmail(to: string, changeToken: string): Promise<void> {
+    const confirmationUrl = `${this.configService.get('API_DOMAIN')}/confirm-email-change?token=${changeToken}`;
+    await this.sendTemplateEmail('email-change-confirmation', to, {
+      name: 'User',
+      confirmationUrl,
+      appName: 'Safawinet',
+      supportEmail: 'support@safawinet.com',
+    });
+  }
+
+  async sendPasswordChangeNotificationEmail(to: string): Promise<void> {
+    await this.sendTemplateEmail('password-change-notification', to, {
+      name: 'User',
+      appName: 'Safawinet',
+      supportEmail: 'support@safawinet.com',
+      timestamp: new Date().toLocaleString(),
     });
   }
 
