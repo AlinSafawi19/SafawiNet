@@ -95,6 +95,40 @@ export class EmailService {
       text: `Account recovery link: ${recoveryUrl} - Expires in 30 minutes`,
     });
   }
+
+  async sendEmailChangeConfirmationEmail(newEmail: string, token: string): Promise<void> {
+    const confirmationUrl = `${this.configService.get('FRONTEND_URL', 'http://localhost:3000')}/confirm-email-change?token=${token}`;
+    
+    await this.sendEmail({
+      to: newEmail,
+      subject: 'Confirm Email Change',
+      html: `
+        <h1>Confirm Email Change</h1>
+        <p>You have requested to change your email address to: <strong>${newEmail}</strong></p>
+        <p>Click the link below to confirm this change:</p>
+        <a href="${confirmationUrl}">Confirm Email Change</a>
+        <p>This link will expire in 1 hour.</p>
+        <p>If you didn't request this change, please ignore this email and ensure your account is secure.</p>
+        <p><strong>Security Note:</strong> After confirming, you will need to sign in with your new email address.</p>
+      `,
+      text: `Email change confirmation link: ${confirmationUrl} - Expires in 1 hour`,
+    });
+  }
+
+  async sendPasswordChangeNotificationEmail(email: string): Promise<void> {
+    await this.sendEmail({
+      to: email,
+      subject: 'Password Changed Successfully',
+      html: `
+        <h1>Password Changed Successfully</h1>
+        <p>Your password has been changed successfully.</p>
+        <p><strong>Security Note:</strong> All your active sessions have been revoked for security. You will need to sign in again.</p>
+        <p>If you didn't make this change, please contact support immediately.</p>
+        <p>Time: ${new Date().toLocaleString()}</p>
+      `,
+      text: `Your password has been changed successfully. All active sessions have been revoked.`,
+    });
+  }
 }
 
 // Mailhog provider for development

@@ -1,6 +1,7 @@
 import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { PassportModule } from '@nestjs/passport';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './health/health.module';
@@ -12,6 +13,7 @@ import { EmailService } from './common/services/email.service';
 import { PinoLoggerService } from './common/services/logger.service';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { IdempotencyMiddleware } from './common/middleware/idempotency.middleware';
+import { JwtStrategy } from './auth/strategies/jwt.strategy';
 
 @Module({
   imports: [
@@ -19,6 +21,7 @@ import { IdempotencyMiddleware } from './common/middleware/idempotency.middlewar
       isGlobal: true,
       envFilePath: '.env',
     }),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
@@ -30,7 +33,14 @@ import { IdempotencyMiddleware } from './common/middleware/idempotency.middlewar
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService, RedisService, EmailService, PinoLoggerService],
+  providers: [
+    AppService, 
+    PrismaService, 
+    RedisService, 
+    EmailService, 
+    PinoLoggerService,
+    JwtStrategy
+  ],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

@@ -32,6 +32,7 @@ import {
   RecoveryRequestDto,
   RecoveryConfirmDto,
 } from './schemas/auth.schemas';
+import { z } from 'zod';
 
 @ApiTags('Authentication')
 @Controller('v1/auth')
@@ -275,7 +276,8 @@ export class AuthController {
         summary: 'Reset password with token',
         value: {
           token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-          password: 'newSecurePassword123'
+          password: 'newSecurePassword123',
+          confirmPassword: 'newSecurePassword123'
         }
       }
     }
@@ -560,5 +562,46 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(RecoveryConfirmSchema))
   async confirmRecovery(@Body() recoveryConfirmDto: RecoveryConfirmDto) {
     return this.recoveryService.confirmRecovery(recoveryConfirmDto.token, recoveryConfirmDto.newEmail);
+  }
+
+  @Post('recover/complete')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 300000 } }) // 5 requests per 5 minutes
+  @ApiOperation({ 
+    summary: 'Complete account recovery and update email',
+    description: 'Complete account recovery by verifying the new email address and updating the user account. This finalizes the email change process.'
+  })
+  @ApiBody({
+    description: 'Recovery completion data',
+    examples: {
+      recoveryComplete: {
+        summary: 'Complete recovery with verification token',
+        value: {
+          token: 'verification_token_from_new_email'
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Account recovery completed successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid or expired verification token',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'No recovery staging found or new email not set',
+  })
+  @UsePipes(new ZodValidationPipe(z.object({ token: z.string() })))
+  async completeRecovery(@Body() body: { token: string }) {
+    return this.recoveryService.completeRecovery(body.token);
   }
 }

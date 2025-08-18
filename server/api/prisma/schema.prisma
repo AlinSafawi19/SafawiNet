@@ -10,6 +10,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// @seed="ts-node prisma/seed.ts"
+
 // User model for authentication
 model User {
   id          String   @id @default(cuid())
@@ -19,6 +21,8 @@ model User {
   name        String?
   isVerified  Boolean  @default(false)
   twoFactorEnabled Boolean @default(false)
+  preferences Json?    // UI settings and preferences
+  notificationPreferences Json? // Notification preferences
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -28,6 +32,7 @@ model User {
   twoFactorSecret TwoFactorSecret?
   backupCodes BackupCode[]
   recoveryStaging RecoveryStaging?
+  pendingEmailChanges PendingEmailChange[]
 
   @@map("users")
 }
@@ -116,4 +121,21 @@ model RecoveryStaging {
 
   @@map("recovery_staging")
   @@index([expiresAt])
+}
+
+// Pending email changes
+model PendingEmailChange {
+  id            String   @id @default(cuid())
+  userId        String
+  newEmail      String   @db.Citext // New email being staged
+  changeTokenHash String // Hashed change token
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("pending_email_changes")
+  @@index([expiresAt])
+  @@index([changeTokenHash])
 }

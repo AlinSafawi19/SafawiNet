@@ -1,19 +1,24 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { PrismaService } from '../common/services/prisma.service';
 import { EmailService } from '../common/services/email.service';
 import { RedisService } from '../common/services/redis.service';
 import { RateLimitGuard } from '../common/guards/rate-limit.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
+  imports: [AuthModule, JwtModule],
   controllers: [UsersController],
   providers: [
     UsersService, 
     PrismaService, 
     EmailService, 
     RedisService,
-    RateLimitGuard
+    RateLimitGuard,
+    JwtAuthGuard
   ],
   exports: [UsersService],
 })

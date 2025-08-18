@@ -11,22 +11,112 @@ async function main() {
   await prisma.oneTimeToken.deleteMany();
   await prisma.user.deleteMany();
 
-  // Create test users
+  // Create test users with preferences
   const testUsers = [
     {
       email: 'admin@safawinet.com',
       password: 'admin123456',
-      name: 'Admin User',
+      name: 'John Smith',
+      preferences: {
+        theme: 'dark',
+        language: 'en',
+        timezone: 'America/New_York',
+        dateFormat: 'MM/DD/YYYY',
+        timeFormat: '12h',
+        notifications: {
+          sound: true,
+          desktop: true
+        }
+      },
+      notificationPreferences: {
+        email: {
+          marketing: false,
+          security: true,
+          updates: true,
+          weeklyDigest: true
+        },
+        push: {
+          enabled: true,
+          marketing: false,
+          security: true,
+          updates: true
+        },
+        sms: {
+          enabled: false,
+          security: true,
+          twoFactor: true
+        }
+      }
     },
     {
       email: 'user@safawinet.com',
       password: 'user123456',
       name: 'Test User',
+      preferences: {
+        theme: 'light',
+        language: 'en',
+        timezone: 'UTC',
+        dateFormat: 'YYYY-MM-DD',
+        timeFormat: '24h',
+        notifications: {
+          sound: false,
+          desktop: true
+        }
+      },
+      notificationPreferences: {
+        email: {
+          marketing: true,
+          security: true,
+          updates: false,
+          weeklyDigest: false
+        },
+        push: {
+          enabled: true,
+          marketing: true,
+          security: true,
+          updates: false
+        },
+        sms: {
+          enabled: true,
+          security: true,
+          twoFactor: true
+        }
+      }
     },
     {
       email: 'developer@safawinet.com',
       password: 'dev123456',
       name: 'Developer User',
+      preferences: {
+        theme: 'auto',
+        language: 'en',
+        timezone: 'Europe/London',
+        dateFormat: 'DD/MM/YYYY',
+        timeFormat: '24h',
+        notifications: {
+          sound: true,
+          desktop: false
+        }
+      },
+      notificationPreferences: {
+        email: {
+          marketing: false,
+          security: true,
+          updates: true,
+          weeklyDigest: false
+        },
+        push: {
+          enabled: false,
+          marketing: false,
+          security: true,
+          updates: true
+        },
+        sms: {
+          enabled: false,
+          security: true,
+          twoFactor: false
+        }
+      }
     },
   ];
 
@@ -38,6 +128,8 @@ async function main() {
         email: userData.email,
         password: hashedPassword,
         name: userData.name,
+        preferences: userData.preferences,
+        notificationPreferences: userData.notificationPreferences,
       },
     });
 
@@ -65,6 +157,7 @@ async function main() {
   console.log('   User: user@safawinet.com / user123456');
   console.log('   Developer: developer@safawinet.com / dev123456');
   console.log('\n🔑 Verification tokens have been created for all users');
+  console.log('⚙️  Default preferences and notification settings have been set for all users');
 }
 
 main()

@@ -26,19 +26,27 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
+    console.log('🔐 JWT Strategy - validate called with payload:', payload);
+    
     // Check if user still exists and is verified
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
     });
 
+    console.log('🔐 JWT Strategy - user found:', user);
+
     if (!user) {
+      console.log('❌ JWT Strategy - User not found for ID:', payload.sub);
       throw new UnauthorizedException('User not found');
     }
 
     if (!user.isVerified) {
+      console.log('❌ JWT Strategy - User not verified:', user.email);
       throw new UnauthorizedException('Email not verified');
     }
 
+    console.log('✅ JWT Strategy - User validated successfully:', user.email);
+    
     return {
       sub: user.id,
       email: user.email,

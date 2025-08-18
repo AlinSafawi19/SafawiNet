@@ -42,6 +42,6 @@ import { SecurityUtils } from '../common/security/security.utils';
     EmailService,
     SecurityUtils,
   ],
-  exports: [AuthService, TwoFactorService, JwtModule],
+  exports: [AuthService, TwoFactorService, JwtModule, JwtStrategy],
 })
 export class AuthModule {}

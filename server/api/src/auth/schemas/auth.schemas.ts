@@ -27,6 +27,10 @@ export const ForgotPasswordSchema = z.object({
 export const ResetPasswordSchema = z.object({
   token: z.string().min(1, 'Token is required').describe('Password reset token received via email'),
   password: z.string().min(8, 'Password must be at least 8 characters').describe('New password (minimum 8 characters)'),
+  confirmPassword: z.string().min(1, 'Password confirmation is required').describe('Confirm new password'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "New password and confirmation password don't match",
+  path: ["confirmPassword"],
 });
 
 // DTOs for Swagger documentation
@@ -94,7 +98,8 @@ export class ResetPasswordDto extends createZodDto(ResetPasswordSchema) {
       summary: 'Reset password with token',
       value: {
         token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        password: 'newSecurePassword123'
+        password: 'newSecurePassword123',
+        confirmPassword: 'newSecurePassword123'
       }
     }
   };
@@ -135,6 +140,73 @@ export const TwoFactorDisableSchema = TwoFactorDisableDto;
 export const TwoFactorLoginSchema = TwoFactorLoginDto;
 export const RecoveryRequestSchema = RecoveryRequestDto;
 export const RecoveryConfirmSchema = RecoveryConfirmDto;
+
+// DTO classes with examples
+export class RecoveryRequestDtoClass extends createZodDto(RecoveryRequestDto) {
+  static examples = {
+    recoveryRequest: {
+      summary: 'Request account recovery',
+      value: {
+        recoveryEmail: 'recovery@example.com'
+      }
+    }
+  };
+}
+
+export class RecoveryConfirmDtoClass extends createZodDto(RecoveryConfirmDto) {
+  static examples = {
+    recoveryConfirm: {
+      summary: 'Confirm account recovery and stage new email',
+      value: {
+        token: 'recovery_token_from_email',
+        newEmail: 'newemail@example.com'
+      }
+    }
+  };
+}
+
+export class TwoFactorSetupDtoClass extends createZodDto(TwoFactorSetupDto) {
+  static examples = {
+    twoFactorSetup: {
+      summary: 'Setup 2FA (no body required)',
+      value: {}
+    }
+  };
+}
+
+export class TwoFactorEnableDtoClass extends createZodDto(TwoFactorEnableDto) {
+  static examples = {
+    twoFactorEnable: {
+      summary: 'Enable 2FA with TOTP code',
+      value: {
+        code: '123456'
+      }
+    }
+  };
+}
+
+export class TwoFactorDisableDtoClass extends createZodDto(TwoFactorDisableDto) {
+  static examples = {
+    twoFactorDisable: {
+      summary: 'Disable 2FA with TOTP code',
+      value: {
+        code: '123456'
+      }
+    }
+  };
+}
+
+export class TwoFactorLoginDtoClass extends createZodDto(TwoFactorLoginDto) {
+  static examples = {
+    twoFactorLogin: {
+      summary: 'Login with 2FA code',
+      value: {
+        userId: 'user_id_here',
+        code: '123456'
+      }
+    }
+  };
+}
 
 export type TwoFactorSetupDto = z.infer<typeof TwoFactorSetupDto>;
 export type TwoFactorEnableDto = z.infer<typeof TwoFactorEnableDto>;
