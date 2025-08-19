@@ -228,6 +228,215 @@ model EmailLog {
   @@map("email_logs")
 }
 
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique @db.Citext
+  description String?
+  parentId    String?
+  imageUrl    String?
+  isActive    Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  products    Product[]
+
+  @@index([parentId])
+  @@index([slug])
+  @@index([isActive])
+  @@map("categories")
+}
+
+model Product {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique @db.Citext
+  description String?
+  categoryId  String
+  isActive    Boolean          @default(true)
+  sortOrder   Int              @default(0)
+  metadata    Json?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  media       ProductMedia[]
+  variants    ProductVariant[]
+  category    Category         @relation(fields: [categoryId], references: [id])
+
+  @@index([categoryId])
+  @@index([slug])
+  @@index([isActive])
+  @@map("products")
+}
+
+model ProductVariant {
+  id          String               @id @default(cuid())
+  productId   String
+  sku         String               @unique
+  name        String
+  description String?
+  weight      Float?
+  dimensions  Json?
+  isActive    Boolean              @default(true)
+  sortOrder   Int                  @default(0)
+  metadata    Json?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  costs       Cost[]
+  prices      Price[]
+  media       ProductMedia[]
+  product     Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
+  taxMappings TaxCategoryMapping[]
+
+  @@index([productId])
+  @@index([sku])
+  @@index([isActive])
+  @@map("product_variants")
+}
+
+model ProductMedia {
+  id        String          @id @default(cuid())
+  productId String
+  variantId String?
+  url       String
+  altText   String?
+  type      String          @default("image")
+  sortOrder Int             @default(0)
+  isActive  Boolean         @default(true)
+  metadata  Json?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([variantId])
+  @@index([isActive])
+  @@map("product_media")
+}
+
+model ChartOfAccount {
+  id          String               @id @default(cuid())
+  code        String               @unique
+  name        String
+  type        String
+  parentId    String?
+  isActive    Boolean              @default(true)
+  description String?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  parent      ChartOfAccount?      @relation("AccountHierarchy", fields: [parentId], references: [id])
+  children    ChartOfAccount[]     @relation("AccountHierarchy")
+  taxMappings TaxCategoryMapping[]
+
+  @@index([parentId])
+  @@index([code])
+  @@index([type])
+  @@index([isActive])
+  @@map("chart_of_accounts")
+}
+
+model TaxCategory {
+  id          String               @id @default(cuid())
+  name        String               @unique
+  description String?
+  isActive    Boolean              @default(true)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  mappings    TaxCategoryMapping[]
+  rates       TaxRate[]
+
+  @@index([isActive])
+  @@map("tax_categories")
+}
+
+model TaxRate {
+  id            String      @id @default(cuid())
+  taxCategoryId String
+  rate          Float
+  effectiveFrom DateTime    @default(now())
+  effectiveTo   DateTime?
+  isActive      Boolean     @default(true)
+  description   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  taxCategory   TaxCategory @relation(fields: [taxCategoryId], references: [id])
+
+  @@index([taxCategoryId])
+  @@index([effectiveFrom, effectiveTo])
+  @@index([isActive])
+  @@map("tax_rates")
+}
+
+model TaxCategoryMapping {
+  id            String         @id @default(cuid())
+  variantId     String
+  taxCategoryId String
+  glAccountId   String
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  glAccount     ChartOfAccount @relation(fields: [glAccountId], references: [id])
+  taxCategory   TaxCategory    @relation(fields: [taxCategoryId], references: [id])
+  variant       ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([variantId, taxCategoryId])
+  @@index([variantId])
+  @@index([taxCategoryId])
+  @@index([glAccountId])
+  @@index([isActive])
+  @@map("tax_category_mappings")
+}
+
+model Price {
+  id            String         @id @default(cuid())
+  variantId     String
+  amount        Float
+  currency      String         @default("USD")
+  type          String         @default("retail")
+  effectiveFrom DateTime       @default(now())
+  effectiveTo   DateTime?
+  isActive      Boolean        @default(true)
+  version       Int            @default(1)
+  createdBy     String?
+  metadata      Json?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  variant       ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([variantId])
+  @@index([type])
+  @@index([effectiveFrom, effectiveTo])
+  @@index([isActive])
+  @@index([currency])
+  @@map("prices")
+}
+
+model Cost {
+  id            String         @id @default(cuid())
+  variantId     String
+  amount        Float
+  currency      String         @default("USD")
+  type          String         @default("standard")
+  effectiveFrom DateTime       @default(now())
+  effectiveTo   DateTime?
+  isActive      Boolean        @default(true)
+  notes         String?
+  createdBy     String?
+  metadata      Json?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  variant       ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@index([variantId])
+  @@index([type])
+  @@index([effectiveFrom, effectiveTo])
+  @@index([isActive])
+  @@index([currency])
+  @@map("costs")
+}
+
 enum Role {
   CUSTOMER
   ADMIN

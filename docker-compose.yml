@@ -6,6 +6,7 @@ services:
       POSTGRES_DB: safawinet_dev
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: alin123M
+      POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "5432:5432"
     volumes:
@@ -59,9 +60,20 @@ services:
     container_name: safawinet-api
     ports:
       - "3000:3000"
-    env_file:
-      - .env
-    environment: {}
+    environment:
+      - DATABASE_URL=postgresql://postgres:alin123M@postgres:5432/safawinet_dev
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - JWT_ACCESS_EXPIRES_IN=15m
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - NODE_ENV=development
+      - PORT=3000
+      - RATE_LIMIT_TTL=60000
+      - RATE_LIMIT_LIMIT=100
+      - LOGIN_BURST_LIMIT=300
+      - BULLMQ_PREFIX=safawinet
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       postgres:
         condition: service_healthy

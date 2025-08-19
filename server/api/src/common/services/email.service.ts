@@ -34,16 +34,14 @@ export class EmailService {
     const isDevelopment = this.configService.get('NODE_ENV') === 'development';
     
     if (isDevelopment) {
-      // Use Mailhog for development
+      // Use Mailhog for development - no authentication required
       this.transporter = nodemailer.createTransport({
-        host: this.configService.get('EMAIL_HOST', 'localhost'),
+        host: this.configService.get('EMAIL_HOST', 'mailhog'),
         port: this.configService.get('EMAIL_PORT', 1025),
         secure: false,
-        auth: {
-          user: this.configService.get('EMAIL_USER'),
-          pass: this.configService.get('EMAIL_PASS'),
-        },
-      });
+        ignoreTLS: true,
+        auth: false, // Mailhog doesn't require authentication
+      } as any);
     } else {
       // Use SES for production
       this.transporter = nodemailer.createTransport({
@@ -54,7 +52,7 @@ export class EmailService {
           user: this.configService.get('SES_ACCESS_KEY_ID'),
           pass: this.configService.get('SES_SECRET_ACCESS_KEY'),
         },
-      });
+      } as any);
     }
 
     // Verify connection
@@ -67,24 +65,71 @@ export class EmailService {
   }
 
   private async loadTemplates() {
-    const templatesDir = path.join(__dirname, '../../../templates/emails');
+    // Try multiple possible template directories
+    const possiblePaths = [
+      path.join(__dirname, '../../../templates/emails'),
+      path.join(__dirname, '../../templates/emails'),
+      path.join(process.cwd(), 'templates/emails'),
+      path.join(process.cwd(), 'src/templates/emails'),
+    ];
     
-    try {
-      const templateFiles = await fs.readdir(templatesDir);
-      
-      for (const file of templateFiles) {
-        if (file.endsWith('.hbs')) {
-          const templateName = path.basename(file, '.hbs');
-          const templatePath = path.join(templatesDir, file);
-          const templateContent = await fs.readFile(templatePath, 'utf-8');
+    let templatesLoaded = false;
+    
+    for (const templatesDir of possiblePaths) {
+      try {
+        if (await fs.access(templatesDir).then(() => true).catch(() => false)) {
+          const templateFiles = await fs.readdir(templatesDir);
           
-          this.templates.set(templateName, handlebars.compile(templateContent));
-          this.logger.log(`Loaded email template: ${templateName}`);
+          for (const file of templateFiles) {
+            if (file.endsWith('.hbs')) {
+              const templateName = path.basename(file, '.hbs');
+              const templatePath = path.join(templatesDir, file);
+              const templateContent = await fs.readFile(templatePath, 'utf-8');
+              
+              this.templates.set(templateName, handlebars.compile(templateContent));
+              this.logger.log(`Loaded email template: ${templateName}`);
+            }
+          }
+          templatesLoaded = true;
+          this.logger.log(`Email templates loaded from: ${templatesDir}`);
+          break;
         }
+      } catch (error) {
+        // Continue to next path
+        continue;
       }
-    } catch (error) {
-      this.logger.warn('No email templates found or error loading templates:', error);
     }
+    
+    if (!templatesLoaded) {
+      this.logger.warn('No email templates found in any of the expected directories. Using fallback templates.');
+      // Create fallback templates
+      this.createFallbackTemplates();
+    }
+  }
+
+  private createFallbackTemplates() {
+    // Create basic fallback templates
+    const emailVerificationTemplate = `
+      <h2>Email Verification</h2>
+      <p>Hello {{name}},</p>
+      <p>Please verify your email address by clicking the link below:</p>
+      <a href="{{verificationUrl}}">Verify Email</a>
+      <p>If you didn't create an account, please ignore this email.</p>
+      <p>Best regards,<br>{{appName}} Team</p>
+    `;
+    
+    const passwordResetTemplate = `
+      <h2>Password Reset</h2>
+      <p>Hello {{name}},</p>
+      <p>You requested a password reset. Click the link below to reset your password:</p>
+      <a href="{{resetUrl}}">Reset Password</a>
+      <p>If you didn't request this, please ignore this email.</p>
+      <p>Best regards,<br>{{appName}} Team</p>
+    `;
+    
+    this.templates.set('email-verification', handlebars.compile(emailVerificationTemplate));
+    this.templates.set('password-reset', handlebars.compile(passwordResetTemplate));
+    this.logger.log('Fallback email templates created');
   }
 
   async sendEmail(emailData: EmailData): Promise<void> {
