@@ -29,6 +29,9 @@ model User {
   refreshSessions         RefreshSession[]
   twoFactorSecret         TwoFactorSecret?
   userSessions            UserSession[]
+  productReviews          ProductReview[]
+  wishlistItems           WishlistItem[]
+  moderatedReviews        ProductReview[] @relation("ReviewModeration")
 
   @@map("users")
 }
@@ -263,6 +266,8 @@ model Product {
   media       ProductMedia[]
   variants    ProductVariant[]
   category    Category         @relation(fields: [categoryId], references: [id])
+  reviews     ProductReview[]
+  wishlistItems WishlistItem[]
 
   @@index([categoryId])
   @@index([slug])
@@ -435,6 +440,45 @@ model Cost {
   @@index([isActive])
   @@index([currency])
   @@map("costs")
+}
+
+model ProductReview {
+  id          String   @id @default(cuid())
+  productId   String
+  userId      String
+  rating      Int      @db.SmallInt
+  title       String?
+  content     String
+  isApproved  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  approvedBy  String?
+  approvedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moderator   User?   @relation("ReviewModeration", fields: [approvedBy], references: [id])
+
+  @@index([productId])
+  @@index([userId])
+  @@index([isApproved])
+  @@index([isActive])
+  @@index([rating])
+  @@map("product_reviews")
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+  @@map("wishlist_items")
 }
 
 enum Role {

@@ -11,6 +11,10 @@ import { MediaController } from './media/media.controller';
 import { MediaService } from './media/media.service';
 import { StorefrontController } from './storefront/storefront.controller';
 import { StorefrontService } from './storefront/storefront.service';
+import { ReviewsController, AdminReviewsController } from './products/reviews.controller';
+import { ReviewsService } from './products/reviews.service';
+import { WishlistController } from './products/wishlist.controller';
+import { WishlistService } from './products/wishlist.service';
 import { PrismaService } from '../common/services/prisma.service';
 
 @Module({
@@ -32,6 +36,9 @@ import { PrismaService } from '../common/services/prisma.service';
     VariantsController,
     MediaController,
     StorefrontController,
+    ReviewsController,
+    AdminReviewsController,
+    WishlistController,
   ],
   providers: [
     CategoriesService,
@@ -39,6 +46,8 @@ import { PrismaService } from '../common/services/prisma.service';
     VariantsService,
     MediaService,
     StorefrontService,
+    ReviewsService,
+    WishlistService,
     PrismaService,
   ],
   exports: [
@@ -47,6 +56,8 @@ import { PrismaService } from '../common/services/prisma.service';
     VariantsService,
     MediaService,
     StorefrontService,
+    ReviewsService,
+    WishlistService,
   ],
 })
 export class CatalogModule {}
