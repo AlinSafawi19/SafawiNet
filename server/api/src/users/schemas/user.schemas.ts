@@ -85,9 +85,9 @@ export class CreateUserDto extends createZodDto(CreateUserSchema) {
     createUser: {
       summary: 'Create a new user',
       value: {
-        email: 'john.doe@example.com',
-        password: 'securePassword123',
-        name: 'John Doe'
+        email: 'admin@safawinet.com',
+        password: 'admin123456',
+        name: 'John Smith'
       }
     }
   };
@@ -98,7 +98,7 @@ export class VerifyEmailDto extends createZodDto(VerifyEmailSchema) {
     verifyEmail: {
       summary: 'Verify email with token',
       value: {
-        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
       }
     }
   };
@@ -109,7 +109,7 @@ export class RequestPasswordResetDto extends createZodDto(RequestPasswordResetSc
     requestReset: {
       summary: 'Request password reset',
       value: {
-        email: 'john.doe@example.com'
+        email: 'user@safawinet.com'
       }
     }
   };
@@ -120,7 +120,7 @@ export class ResetPasswordDto extends createZodDto(ResetPasswordSchema) {
     resetPassword: {
       summary: 'Reset password with token',
       value: {
-        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
         newPassword: 'newSecurePassword123',
         confirmNewPassword: 'newSecurePassword123'
       }
@@ -134,7 +134,7 @@ export class UpdateProfileDto extends createZodDto(UpdateProfileSchema) {
       summary: 'Update user profile',
       value: {
         name: 'John Smith',
-        recoveryEmail: 'john.recovery@example.com'
+        recoveryEmail: 'john.recovery@safawinet.com'
       }
     }
   };
@@ -191,7 +191,7 @@ export class ChangeEmailDto extends createZodDto(ChangeEmailSchema) {
     changeEmail: {
       summary: 'Request email change',
       value: {
-        newEmail: 'john.newemail@example.com'
+        newEmail: 'newemail@safawinet.com'
       }
     }
   };
@@ -202,7 +202,7 @@ export class ChangePasswordDto extends createZodDto(ChangePasswordSchema) {
     changePassword: {
       summary: 'Change password',
       value: {
-        currentPassword: 'currentPassword123',
+        currentPassword: 'user123456',
         newPassword: 'newSecurePassword123',
         confirmNewPassword: 'newSecurePassword123'
       }
@@ -215,7 +215,7 @@ export class ConfirmEmailChangeDto extends createZodDto(ConfirmEmailChangeSchema
     confirmEmailChange: {
       summary: 'Confirm email change',
       value: {
-        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
       }
     }
   };

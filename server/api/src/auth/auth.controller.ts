@@ -54,9 +54,9 @@ export class AuthController {
       register: {
         summary: 'Register a new user',
         value: {
-          email: 'john.doe@example.com',
-          password: 'securePassword123',
-          name: 'John Doe'
+          email: 'user@safawinet.com',
+          password: 'user123456',
+          name: 'Test User'
         }
       }
     }
@@ -101,7 +101,7 @@ export class AuthController {
       verifyEmail: {
         summary: 'Verify email with token',
         value: {
-          token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+          token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
         }
       }
     }
@@ -135,8 +135,8 @@ export class AuthController {
       login: {
         summary: 'Login with email and password',
         value: {
-          email: 'john.doe@example.com',
-          password: 'securePassword123'
+          email: 'user@safawinet.com',
+          password: 'user123456'
         }
       }
     }
@@ -209,7 +209,7 @@ export class AuthController {
       refreshToken: {
         summary: 'Refresh access token',
         value: {
-          refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+          refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
         }
       }
     }
@@ -245,7 +245,7 @@ export class AuthController {
       forgotPassword: {
         summary: 'Request password reset',
         value: {
-          email: 'john.doe@example.com'
+          email: 'user@safawinet.com'
         }
       }
     }
@@ -275,7 +275,7 @@ export class AuthController {
       resetPassword: {
         summary: 'Reset password with token',
         value: {
-          token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+          token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
           password: 'newSecurePassword123',
           confirmPassword: 'newSecurePassword123'
         }
@@ -499,7 +499,7 @@ export class AuthController {
       recoveryRequest: {
         summary: 'Request account recovery',
         value: {
-          recoveryEmail: 'recovery@example.com'
+          recoveryEmail: 'recovery@safawinet.com'
         }
       }
     }
@@ -534,7 +534,7 @@ export class AuthController {
         summary: 'Confirm recovery and stage new email',
         value: {
           token: 'recovery_token_from_email',
-          newEmail: 'newemail@example.com'
+          newEmail: 'newemail@safawinet.com'
         }
       }
     }
