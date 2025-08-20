@@ -12,6 +12,7 @@ import { AuthModule } from './auth/auth.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { FinanceModule } from './finance/finance.module';
+import { CartModule } from './cart/cart.module';
 
 import { RedisService } from './common/services/redis.service';
 import { EmailService } from './common/services/email.service';
@@ -67,6 +68,7 @@ import { PerformanceController } from './common/controllers/performance.controll
     LoyaltyModule,
     CatalogModule,
     FinanceModule,
+    CartModule,
   ],
   controllers: [AppController, PerformanceController],
   providers: [

@@ -28,6 +28,12 @@ async function main() {
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
   
+  // Clean cart data
+  await prisma.cartItem.deleteMany();
+  await prisma.cart.deleteMany();
+  await prisma.shippingMethod.deleteMany();
+  await prisma.shippingZone.deleteMany();
+  
 
 
   // Create loyalty tiers
@@ -633,6 +639,126 @@ async function main() {
       data: mappingData,
     });
     console.log(`✅ Created tax mapping for variant ${createdVariants.find(v => v.id === mapping.variantId)?.sku}`);
+  }
+
+  // Create Shipping Zones
+  console.log('🚚 Creating Shipping Zones...');
+  const shippingZones = [
+    {
+      name: 'United States',
+      description: 'Domestic shipping within the United States',
+      countries: ['US'],
+      postalCodes: ['^\\d{5}$', '^\\d{5}-\\d{4}$'], // 5-digit and 9-digit ZIP codes
+      isActive: true,
+    },
+    {
+      name: 'Canada',
+      description: 'Shipping to Canada',
+      countries: ['CA'],
+      postalCodes: ['^[A-Za-z]\\d[A-Za-z] \\d[A-Za-z]\\d$'], // Canadian postal code format
+      isActive: true,
+    },
+    {
+      name: 'Europe',
+      description: 'Shipping to European countries',
+      countries: ['DE', 'FR', 'GB', 'IT', 'ES', 'NL', 'BE', 'AT', 'CH'],
+      postalCodes: [],
+      isActive: true,
+    },
+    {
+      name: 'International',
+      description: 'International shipping to other countries',
+      countries: ['AU', 'JP', 'SG', 'KR', 'MX', 'BR'],
+      postalCodes: [],
+      isActive: true,
+    },
+  ];
+
+  const createdShippingZones: any[] = [];
+  for (const zoneData of shippingZones) {
+    const zone = await prisma.shippingZone.create({
+      data: zoneData,
+    });
+    createdShippingZones.push(zone);
+    console.log(`✅ Created shipping zone: ${zone.name}`);
+  }
+
+  // Create Shipping Methods
+  console.log('📦 Creating Shipping Methods...');
+  const shippingMethods = [
+    {
+      zoneId: createdShippingZones[0].id, // US
+      name: 'Standard Shipping',
+      description: '5-7 business days',
+      price: 5.99,
+      currency: 'USD',
+      minOrderValue: 0,
+      maxOrderValue: null,
+      deliveryTime: '5-7 business days',
+      sortOrder: 1,
+    },
+    {
+      zoneId: createdShippingZones[0].id, // US
+      name: 'Express Shipping',
+      description: '2-3 business days',
+      price: 12.99,
+      currency: 'USD',
+      minOrderValue: 0,
+      maxOrderValue: null,
+      deliveryTime: '2-3 business days',
+      sortOrder: 2,
+    },
+    {
+      zoneId: createdShippingZones[0].id, // US
+      name: 'Overnight Shipping',
+      description: 'Next business day',
+      price: 24.99,
+      currency: 'USD',
+      minOrderValue: 0,
+      maxOrderValue: null,
+      deliveryTime: 'Next business day',
+      sortOrder: 3,
+    },
+    {
+      zoneId: createdShippingZones[1].id, // Canada
+      name: 'Standard Shipping',
+      description: '7-10 business days',
+      price: 9.99,
+      currency: 'USD',
+      minOrderValue: 0,
+      maxOrderValue: null,
+      deliveryTime: '7-10 business days',
+      sortOrder: 1,
+    },
+    {
+      zoneId: createdShippingZones[2].id, // Europe
+      name: 'Standard Shipping',
+      description: '7-14 business days',
+      price: 14.99,
+      currency: 'USD',
+      minOrderValue: 0,
+      maxOrderValue: null,
+      deliveryTime: '7-14 business days',
+      sortOrder: 1,
+    },
+    {
+      zoneId: createdShippingZones[3].id, // International
+      name: 'Standard Shipping',
+      description: '10-21 business days',
+      price: 19.99,
+      currency: 'USD',
+      minOrderValue: 0,
+      maxOrderValue: null,
+      deliveryTime: '10-21 business days',
+      sortOrder: 1,
+    },
+  ];
+
+  for (const methodData of shippingMethods) {
+    const method = await prisma.shippingMethod.create({
+      data: methodData,
+    });
+    console.log(`✅ Created shipping method: ${method.name} - $${method.price}`);
   }
 
   console.log('🎉 Database seeding completed successfully!');
