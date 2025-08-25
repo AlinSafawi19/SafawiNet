@@ -183,7 +183,8 @@ export class EmailService {
 
   // Alias methods for backward compatibility
   async sendVerificationEmail(to: string, verificationToken: string): Promise<void> {
-    const verificationUrl = `${this.configService.get('API_DOMAIN')}/verify-email?token=${verificationToken}`;
+    const frontendDomain = this.configService.get('FRONTEND_DOMAIN', 'localhost:3001');
+    const verificationUrl = `http://${frontendDomain}/verify-email?token=${verificationToken}`;
     await this.sendEmailVerification(to, {
       name: 'User',
       verificationUrl,

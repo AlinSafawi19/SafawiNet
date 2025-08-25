@@ -1,0 +1,367 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply bg-white text-gray-900;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  /* Prevent horizontal scroll on all elements */
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Ensure images don't overflow */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-red-500 hover:bg-red-600 text-white font-light py-3 px-6 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply bg-transparent border border-gray-300 hover:border-red-500 text-gray-900 font-light py-3 px-6 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-300 font-light;
+  }
+
+  .card {
+    @apply bg-white border border-gray-100 p-8 transition-all duration-300 hover:shadow-lg;
+  }
+
+  .mobile-menu {
+    top: var(--header-height, 0px);
+  }
+}
+
+/* Luxury animations */
+@keyframes fadeInLeft {
+  0% {
+    transform: translateX(-30px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInRight {
+  0% {
+    transform: translateX(30px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in-left {
+  animation: fadeInLeft 0.8s ease-out forwards;
+}
+
+.animate-fade-in-right {
+  animation: fadeInRight 0.8s ease-out forwards;
+}
+
+.hero-background-pattern {
+  background-image: url('./assets/hero.jpg');
+  background-size: cover;
+  background-position: center 50%;
+  background-repeat: no-repeat;
+}
+
+.hero-bg-slide-1 {
+  background-image: url('../assets/mmm.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(2px);
+}
+
+.hero-bg-slide-2 {
+  background-image: url('../assets/sss.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(2px);
+}
+
+.hero-bg-slide-3 {
+  background-image: url('../assets/ppp.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(2px);
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.6s ease-out forwards;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+/* Focus states */
+.focus-visible:focus {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+
+/* Selection styling */
+::selection {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+/* Smooth image loading */
+img {
+  transition: opacity 0.3s ease-in-out;
+}
+
+img[loading] {
+  opacity: 0;
+}
+
+img.loaded {
+  opacity: 1;
+}
+
+/* React Select Custom Styles */
+.react-select__control {
+  border: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  cursor: pointer !important;
+  min-height: 48px !important;
+  max-width: 160px !important;
+  width: 160px !important;
+}
+
+.react-select__control--is-focused {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.react-select__control:hover {
+  border: none !important;
+}
+
+.react-select__indicator-separator {
+  display: none !important;
+}
+
+.react-select__dropdown-indicator {
+  color: #6B7280 !important;
+  cursor: pointer !important;
+}
+
+.react-select__menu {
+  border: 1px solid #F3F4F6 !important;
+  border-radius: 0 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+  margin-top: 0.5rem !important;
+  z-index: 99999 !important;
+  position: absolute !important;
+  background-color: white !important;
+  min-width: 200px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+.react-select__option {
+  font-size: 0.875rem !important;
+  font-weight: 300 !important;
+  padding: 0.75rem 1rem !important;
+  cursor: pointer !important;
+}
+
+.react-select__option--is-focused {
+  background-color: #F9FAFB !important;
+  color: #374151 !important;
+}
+
+.react-select__option--is-selected {
+  background-color: #FEF2F2 !important;
+  color: #DC2626 !important;
+}
+
+.react-select__single-value {
+  color: #374151 !important;
+  font-size: 0.875rem !important;
+  font-weight: 300 !important;
+}
+
+.react-select__value-container {
+  padding: 0 16px !important;
+  max-width: 160px !important;
+  overflow: hidden !important;
+}
+
+/* Ensure menu list is visible */
+.react-select__menu-list {
+  background-color: white !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  max-height: 300px !important;
+  overflow-y: auto !important;
+}
+
+/* Ensure options are visible and clickable */
+.react-select__option {
+  font-size: 0.875rem !important;
+  font-weight: 300 !important;
+  padding: 0.75rem 1rem !important;
+  cursor: pointer !important;
+  background-color: white !important;
+  color: #374151 !important;
+  border-bottom: 1px solid #F3F4F6 !important;
+}
+
+.react-select__option:last-child {
+  border-bottom: none !important;
+}
+
+.react-select__option:hover {
+  background-color: #F9FAFB !important;
+}
+
+.react-select__option--is-focused {
+  background-color: #F9FAFB !important;
+  color: #374151 !important;
+}
+
+.react-select__option--is-selected {
+  background-color: #FEF2F2 !important;
+  color: #DC2626 !important;
+}
+
+/* Ensure the container has proper positioning */
+.react-select-container {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Force React Select to have proper positioning context */
+.react-select__control {
+  position: relative !important;
+}
+
+/* Ensure the menu portal is properly positioned */
+.react-select__menu-portal {
+  z-index: 99999 !important;
+}
+
+/* Additional positioning fixes */
+.react-select__menu {
+  position: absolute !important;
+  z-index: 99999 !important;
+  background-color: white !important;
+  border: 1px solid #F3F4F6 !important;
+  border-radius: 0 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+  margin-top: 0.5rem !important;
+  min-width: 150px !important;
+  max-width: 180px !important;
+}
+
+.language-dropdown {
+  right: -2rem;
+}
+
+.currency-dropdown {
+  right: -2rem;
+}

@@ -177,7 +177,7 @@ export class AuthService {
     // Check if user is verified
     if (!user.isVerified) {
       // Resend verification email if not verified
-      await this.resendVerificationEmail(user);
+      await this.resendVerificationEmailInternal(user);
       
       return {
         requiresVerification: true,
@@ -488,7 +488,60 @@ export class AuthService {
     }
   }
 
-  private async resendVerificationEmail(user: User): Promise<void> {
+  async resendVerificationEmail(email: string): Promise<{ message: string }> {
+    try {
+      // Find user by email
+      const user = await this.prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      if (user.isVerified) {
+        throw new BadRequestException('User is already verified');
+      }
+
+      // Invalidate any existing verification tokens for this user
+      await this.prisma.oneTimeToken.updateMany({
+        where: {
+          userId: user.id,
+          purpose: 'email_verification',
+          usedAt: null,
+        },
+        data: {
+          usedAt: new Date(),
+        },
+      });
+
+      // Generate new verification token
+      const verificationToken = SecurityUtils.generateSecureToken(32);
+      const tokenHash = SecurityUtils.hashToken(verificationToken);
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+
+      // Store new verification token
+      await this.prisma.oneTimeToken.create({
+        data: {
+          purpose: 'email_verification',
+          hash: tokenHash,
+          userId: user.id,
+          expiresAt,
+        },
+      });
+
+      // Send verification email
+      await this.emailService.sendVerificationEmail(user.email, verificationToken);
+      this.logger.log(`Verification email resent to ${user.email}`);
+      
+      return { message: 'Verification email sent successfully' };
+    } catch (error) {
+      this.logger.error(`Failed to resend verification email to ${email}:`, error);
+      throw error;
+    }
+  }
+
+  private async resendVerificationEmailInternal(user: User): Promise<void> {
     try {
       // Invalidate any existing verification tokens for this user
       await this.prisma.oneTimeToken.updateMany({

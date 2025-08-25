@@ -125,6 +125,43 @@ export class AuthController {
     return this.authService.verifyEmail(verifyEmailDto);
   }
 
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 3, ttl: 300000 } }) // 3 requests per 5 minutes
+  @ApiOperation({ summary: 'Resend email verification' })
+  @ApiBody({
+    description: 'Resend verification email data',
+    examples: {
+      resendVerification: {
+        summary: 'Resend verification email',
+        value: {
+          email: 'user@safawinet.com'
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Verification email sent successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid email or user not found',
+  })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many requests',
+  })
+  async resendVerification(@Body() body: { email: string }) {
+    return this.authService.resendVerificationEmail(body.email);
+  }
+
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
