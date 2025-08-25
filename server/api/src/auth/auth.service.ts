@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, ConflictException, BadRequestException, NotFoundException, Res } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/services/prisma.service';
@@ -11,7 +11,7 @@ import { NotificationsService } from './notifications.service';
 import { RegisterDto, VerifyEmailDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto, TwoFactorLoginDto } from './schemas/auth.schemas';
 import { User } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 
 export interface AuthTokens {
   accessToken: string;
@@ -488,6 +488,41 @@ export class AuthService {
     }
   }
 
+  async invalidateRefreshToken(refreshToken: string): Promise<void> {
+    try {
+      const refreshHash = SecurityUtils.hashToken(refreshToken);
+      
+      // Find and deactivate the refresh session
+      await this.prisma.refreshSession.updateMany({
+        where: {
+          refreshHash,
+          isActive: true,
+        },
+        data: {
+          isActive: false,
+        },
+      });
+
+      // Also deactivate any associated user sessions
+      const session = await this.prisma.refreshSession.findFirst({
+        where: { refreshHash },
+        select: { tokenId: true },
+      });
+
+      if (session) {
+        await this.prisma.userSession.updateMany({
+          where: { refreshTokenId: session.tokenId },
+          data: { isCurrent: false },
+        });
+      }
+
+      this.logger.log('Refresh token invalidated successfully');
+    } catch (error) {
+      this.logger.error('Failed to invalidate refresh token:', error);
+      // Don't throw error as logout should succeed even if token invalidation fails
+    }
+  }
+
   async resendVerificationEmail(email: string): Promise<{ message: string }> {
     try {
       // Find user by email
@@ -596,5 +631,51 @@ export class AuthService {
   private excludePassword(user: User): Omit<User, 'password'> {
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
+  }
+
+  setAuthCookies(res: Response, tokens: AuthTokens): void {
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    const domain = this.configService.get<string>('COOKIE_DOMAIN');
+    
+    // Set access token cookie (HTTP-only, secure in production)
+    res.cookie('accessToken', tokens.accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax',
+      domain: domain || undefined,
+      maxAge: tokens.expiresIn * 1000, // Convert seconds to milliseconds
+      path: '/',
+    });
+
+    // Set refresh token cookie (HTTP-only, secure in production)
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax',
+      domain: domain || undefined,
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      path: '/',
+    });
+  }
+
+  clearAuthCookies(res: Response): void {
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    const domain = this.configService.get<string>('COOKIE_DOMAIN');
+    
+    res.clearCookie('accessToken', {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax',
+      domain: domain || undefined,
+      path: '/',
+    });
+
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax',
+      domain: domain || undefined,
+      path: '/',
+    });
   }
 }

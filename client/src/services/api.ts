@@ -17,11 +17,6 @@ export interface RefreshTokenRequest {
 
 export interface AuthResponse {
   message?: string;
-  tokens?: {
-    accessToken: string;
-    refreshToken: string;
-    expiresIn: number;
-  };
   user: {
     id: string;
     email: string;
@@ -57,34 +52,14 @@ export interface VerifyEmailResponse {
 }
 
 class ApiService {
-  private accessToken: string | null = null;
-  private refreshToken: string | null = null;
-
-  // Set tokens (called after successful login/register)
-  setTokens(accessToken: string, refreshToken: string) {
-    this.accessToken = accessToken;
-    this.refreshToken = refreshToken;
-  }
-
-  // Clear tokens (called on logout)
-  clearTokens() {
-    this.accessToken = null;
-    this.refreshToken = null;
-  }
-
-  // Get current access token
-  getAccessToken(): string | null {
-    return this.accessToken;
-  }
-
-  // Get current refresh token
-  getRefreshToken(): string | null {
-    return this.refreshToken;
-  }
-
-  // Check if user is authenticated
-  isAuthenticated(): boolean {
-    return !!this.accessToken;
+  // Check if user is authenticated by making a request to get current user
+  async isAuthenticated(): Promise<boolean> {
+    try {
+      await this.getCurrentUser();
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   // Make authenticated request with automatic token refresh
@@ -92,48 +67,46 @@ class ApiService {
     url: string,
     options: RequestInit = {}
   ): Promise<T> {
-    if (!this.accessToken) {
-      throw new Error('No access token available');
-    }
-
     const response = await fetch(url, {
       ...options,
+      credentials: 'include', // Include cookies in requests
       headers: {
         ...options.headers,
-        'Authorization': `Bearer ${this.accessToken}`,
         'Content-Type': 'application/json',
       },
     });
 
     if (response.status === 401) {
-      // Token expired, try to refresh
-      if (this.refreshToken) {
-        try {
-          const refreshResponse = await this.refreshAccessToken();
-          if (refreshResponse) {
-            // Retry the original request with new token
-            const retryResponse = await fetch(url, {
-              ...options,
-              headers: {
-                ...options.headers,
-                'Authorization': `Bearer ${this.accessToken}`,
-                'Content-Type': 'application/json',
-              },
-            });
-            
-            if (retryResponse.ok) {
-              return await retryResponse.json();
-            }
+      // Try to refresh token
+      try {
+        const refreshResponse = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (refreshResponse.ok) {
+          // Retry the original request with new token
+          const retryResponse = await fetch(url, {
+            ...options,
+            credentials: 'include',
+            headers: {
+              ...options.headers,
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (retryResponse.ok) {
+            return await retryResponse.json();
           }
-        } catch (error) {
-          // Refresh failed, clear tokens
-          this.clearTokens();
-          throw new Error('Authentication failed');
         }
+      } catch (error) {
+        // Refresh failed, redirect to login
+        throw new Error('Authentication failed');
       }
       
-      // No refresh token or refresh failed
-      this.clearTokens();
       throw new Error('Authentication failed');
     }
 
@@ -149,6 +122,7 @@ class ApiService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     const response = await fetch(`${API_BASE_URL}/v1/auth/login`, {
       method: 'POST',
+      credentials: 'include', // Include cookies in requests
       headers: {
         'Content-Type': 'application/json',
       },
@@ -160,20 +134,14 @@ class ApiService {
       throw new Error(errorData.message || `Login failed: ${response.status}`);
     }
 
-    const data = await response.json();
-    
-    // Only set tokens if login was successful, user is verified, and tokens are provided
-    if (data.tokens && !data.requiresVerification && !data.requiresTwoFactor) {
-      this.setTokens(data.tokens.accessToken, data.tokens.refreshToken);
-    }
-    
-    return data;
+    return await response.json();
   }
 
   // Register user
   async register(userData: RegisterRequest): Promise<AuthResponse> {
     const response = await fetch(`${API_BASE_URL}/v1/auth/register`, {
       method: 'POST',
+      credentials: 'include', // Include cookies in requests
       headers: {
         'Content-Type': 'application/json',
       },
@@ -185,71 +153,36 @@ class ApiService {
       throw new Error(errorData.message || `Registration failed: ${response.status}`);
     }
 
-    const data = await response.json();
-    
-    // Only set tokens if they are present in the response
-    if (data.tokens && data.tokens.accessToken && data.tokens.refreshToken) {
-      this.setTokens(data.tokens.accessToken, data.tokens.refreshToken);
-    }
-    
-    return data;
+    return await response.json();
   }
 
-  // Refresh access token
-  async refreshAccessToken(): Promise<boolean> {
-    if (!this.refreshToken) {
-      return false;
-    }
-
+  // Logout user
+  async logout(): Promise<void> {
     try {
-      const response = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
+      await fetch(`${API_BASE_URL}/v1/auth/logout`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ refreshToken: this.refreshToken }),
       });
-
-      if (!response.ok) {
-        return false;
-      }
-
-      const data = await response.json();
-      this.setTokens(data.tokens.accessToken, data.tokens.refreshToken);
-      return true;
     } catch (error) {
-      return false;
+      // Don't throw error on logout failure
+      console.error('Logout error:', error);
     }
   }
 
-  // Get current user profile
+  // Get current user
   async getCurrentUser(): Promise<UserProfile> {
-    return this.makeAuthenticatedRequest<UserProfile>(`${API_BASE_URL}/users/me`);
+    const response = await this.makeAuthenticatedRequest<{ user: UserProfile }>(`${API_BASE_URL}/users/me`);
+    return response.user;
   }
 
-  // Logout user (revoke tokens on server side)
-  async logout(): Promise<void> {
-    if (this.accessToken) {
-      try {
-        await fetch(`${API_BASE_URL}/v1/sessions`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${this.accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        });
-      } catch (error) {
-        // Ignore logout errors, still clear local tokens
-      }
-    }
-    
-    this.clearTokens();
-  }
-
-  // Verify email with token
+  // Verify email
   async verifyEmail(token: string): Promise<VerifyEmailResponse> {
     const response = await fetch(`${API_BASE_URL}/v1/auth/verify-email`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -268,6 +201,7 @@ class ApiService {
   async resendVerificationEmail(email: string): Promise<{ message: string }> {
     const response = await fetch(`${API_BASE_URL}/v1/auth/resend-verification`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -281,8 +215,44 @@ class ApiService {
 
     return await response.json();
   }
+
+  // Forgot password
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/v1/auth/forgot-password`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to send password reset email: ${response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  // Reset password
+  async resetPassword(token: string, password: string, confirmPassword: string): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/v1/auth/reset-password`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token, password, confirmPassword }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Password reset failed: ${response.status}`);
+    }
+
+    return await response.json();
+  }
 }
 
-// Export singleton instance
 export const apiService = new ApiService();
-export default apiService;

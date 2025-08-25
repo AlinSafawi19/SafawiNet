@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UsePipes, UseGuards, Request, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, UsePipes, UseGuards, Request, BadRequestException, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
@@ -6,6 +6,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
 import { RecoveryService } from './recovery.service';
+import { Response } from 'express';
 import {
   RegisterSchema,
   VerifyEmailSchema,
@@ -184,14 +185,6 @@ export class AuthController {
     schema: {
       type: 'object',
       properties: {
-        tokens: {
-          type: 'object',
-          properties: {
-            accessToken: { type: 'string' },
-            refreshToken: { type: 'string' },
-            expiresIn: { type: 'number' },
-          },
-        },
         user: {
           type: 'object',
           properties: {
@@ -232,34 +225,31 @@ export class AuthController {
     description: 'Invalid credentials or account locked',
   })
   @UsePipes(new ZodValidationPipe(LoginSchema))
-  async login(@Body() loginDto: LoginDto, @Request() req: any) {
-    return this.authService.login(loginDto, req);
+  async login(@Body() loginDto: LoginDto, @Request() req: any, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.login(loginDto, req);
+    
+    // If login was successful and tokens were generated, set them as HTTP-only cookies
+    if (result.tokens) {
+      this.authService.setAuthCookies(res, result.tokens);
+      // Remove tokens from response body for security
+      const { tokens, ...responseWithoutTokens } = result;
+      return responseWithoutTokens;
+    }
+    
+    return result;
   }
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 20, ttl: 60000 } }) // 20 requests per minute
   @ApiOperation({ summary: 'Refresh access token' })
-  @ApiBody({
-    description: 'Refresh token data',
-    examples: {
-      refreshToken: {
-        summary: 'Refresh access token',
-        value: {
-          refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
-        }
-      }
-    }
-  })
   @ApiResponse({
     status: 200,
     description: 'Token refreshed successfully',
     schema: {
       type: 'object',
       properties: {
-        accessToken: { type: 'string' },
-        refreshToken: { type: 'string' },
-        expiresIn: { type: 'number' },
+        message: { type: 'string', example: 'Token refreshed successfully' },
       },
     },
   })
@@ -267,9 +257,17 @@ export class AuthController {
     status: 401,
     description: 'Invalid refresh token',
   })
-  @UsePipes(new ZodValidationPipe(RefreshTokenSchema))
-  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshToken(refreshTokenDto);
+  async refreshToken(@Request() req: any, @Res({ passthrough: true }) res: Response) {
+    const refreshToken = req.cookies?.refreshToken;
+    
+    if (!refreshToken) {
+      throw new BadRequestException('No refresh token provided');
+    }
+    
+    const tokens = await this.authService.refreshToken({ refreshToken });
+    this.authService.setAuthCookies(res, tokens);
+    
+    return { message: 'Token refreshed successfully' };
   }
 
   @Post('forgot-password')
@@ -599,6 +597,35 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(RecoveryConfirmSchema))
   async confirmRecovery(@Body() recoveryConfirmDto: RecoveryConfirmDto) {
     return this.recoveryService.confirmRecovery(recoveryConfirmDto.token, recoveryConfirmDto.newEmail);
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Logout successful',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'Logged out successfully' },
+      },
+    },
+  })
+  async logout(@Request() req: any, @Res({ passthrough: true }) res: Response) {
+    const refreshToken = req.cookies?.refreshToken;
+    
+    if (refreshToken) {
+      // Invalidate the refresh token
+      await this.authService.invalidateRefreshToken(refreshToken);
+    }
+    
+    // Clear cookies
+    this.authService.clearAuthCookies(res);
+    
+    return { message: 'Logged out successfully' };
   }
 
   @Post('recover/complete')

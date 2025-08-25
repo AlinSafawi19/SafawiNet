@@ -3,9 +3,13 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import pino from 'pino-http';
 import helmet from 'helmet';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Cookie parser middleware for HTTP-only cookies
+  app.use(cookieParser());
 
   // Security headers with Helmet
   app.use(helmet({

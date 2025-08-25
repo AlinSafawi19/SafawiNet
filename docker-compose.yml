@@ -74,6 +74,7 @@ services:
       - BULLMQ_PREFIX=safawinet
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - COOKIE_DOMAIN=localhost
     depends_on:
       postgres:
         condition: service_healthy

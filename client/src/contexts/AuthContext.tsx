@@ -1,27 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { apiService, UserProfile, AuthResponse } from '../services/api';
+import { apiService, UserProfile } from '../services/api';
 
 interface AuthContextType {
   user: UserProfile | null;
-  isAuthenticated: boolean;
   isLoading: boolean;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<AuthResponse>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
   resendVerificationEmail: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -37,13 +28,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        if (apiService.isAuthenticated()) {
+        const authenticated = await apiService.isAuthenticated();
+        if (authenticated) {
           const userProfile = await apiService.getCurrentUser();
           setUser(userProfile);
         }
       } catch (error) {
         // User not authenticated or token expired
-        apiService.clearTokens();
+        console.log('User not authenticated:', error);
       } finally {
         setIsLoading(false);
       }
@@ -69,7 +61,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(response.user);
         // Don't set tokens, user needs to complete 2FA first
         throw new Error('Two-factor authentication required');
-      } else if (response.tokens) {
+      } else if (response.user) {
         // Full login successful - user is verified and authenticated
         setUser(response.user);
       }
@@ -84,9 +76,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       const response = await apiService.register({ name, email, password });
-      // Don't set user as authenticated until email is verified
-      // setUser(response.user);
-      return response; // Return the response to access the message
+      
+      // Handle different registration responses
+      if (response.requiresVerification) {
+        // User registered but needs email verification
+        setUser(response.user);
+        throw new Error('Registration successful! Please check your email for a verification link.');
+      } else if (response.user) {
+        // Registration successful and user is verified
+        setUser(response.user);
+      }
     } catch (error) {
       throw error;
     } finally {
@@ -97,20 +96,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     try {
       await apiService.logout();
-    } finally {
-      setUser(null);
-    }
-  };
-
-  const refreshUser = async () => {
-    try {
-      if (apiService.isAuthenticated()) {
-        const userProfile = await apiService.getCurrentUser();
-        setUser(userProfile);
-      }
     } catch (error) {
-      // User not authenticated or token expired
-      apiService.clearTokens();
+      console.error('Logout error:', error);
+    } finally {
       setUser(null);
     }
   };
@@ -118,8 +106,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const verifyEmail = async (token: string) => {
     try {
       await apiService.verifyEmail(token);
-      // Refresh user data to get updated verification status
-      await refreshUser();
+      // After successful verification, check if user is now authenticated
+      const authenticated = await apiService.isAuthenticated();
+      if (authenticated) {
+        const userProfile = await apiService.getCurrentUser();
+        setUser(userProfile);
+      }
     } catch (error) {
       throw error;
     }
@@ -135,19 +127,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const value: AuthContextType = {
     user,
-    isAuthenticated,
     isLoading,
+    isAuthenticated,
     login,
     register,
     logout,
-    refreshUser,
     verifyEmail,
     resendVerificationEmail,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

@@ -288,36 +288,14 @@ const Header: React.FC = () => {
               <HiShoppingBag className="w-4 h-4" />
               <span className="font-light hidden lg:inline">Shop</span>
             </AnimatedLink>
-            <div className="w-px h-4 bg-gray-200"></div>
-            {isAuthenticated ? (
-              <div className="relative group">
-                <button className="flex items-center space-x-2 hover:text-red-500 transition-colors duration-200">
-                  <span className="font-light hidden lg:inline">{user?.name || 'My Account'}</span>
-                  <HiChevronDown className="w-3 h-3" />
-                </button>
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-none shadow-lg border border-gray-100 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <div className="py-1">
-                    <Link
-                      to="/account-settings"
-                      className="block w-full text-left px-4 py-3 text-sm text-gray-600 hover:text-red-500 hover:bg-gray-50 transition-colors duration-200 font-light"
-                    >
-                      Account Settings
-                    </Link>
-                    <button
-                      onClick={logout}
-                      className="block w-full text-left px-4 py-3 text-sm text-gray-600 hover:text-red-500 hover:bg-gray-50 transition-colors duration-200 font-light flex items-center"
-                    >
-                      <HiLogout className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <AnimatedLink to="/my-account" className="flex items-center space-x-2 hover:text-red-500 transition-colors duration-200">
-                <HiUser className="w-4 h-4" />
-                <span className="font-light hidden lg:inline">My Account</span>
-              </AnimatedLink>
+            {!isAuthenticated && (
+              <>
+                <div className="w-px h-4 bg-gray-200"></div>
+                <AnimatedLink to="/my-account" className="flex items-center space-x-2 hover:text-red-500 transition-colors duration-200">
+                  <HiUser className="w-4 h-4" />
+                  <span className="font-light hidden lg:inline">My Account</span>
+                </AnimatedLink>
+              </>
             )}
           </div>
         </div>
@@ -602,14 +580,41 @@ const Header: React.FC = () => {
               >
                 <HiHeart className="w-5 h-5 lg:w-6 lg:h-6" />
               </button>
-              <Link
-                to={isAuthenticated ? "/account-settings" : "/my-account"}
-                className="p-3 text-white hover:text-red-400 transition-colors duration-200"
-                aria-label={isAuthenticated ? "Account settings" : "User account"}
-                title={isAuthenticated ? "Account Settings" : "My Account"}
-              >
-                <HiUser className="w-5 h-5 lg:w-6 lg:h-6" />
-              </Link>
+              {isAuthenticated ? (
+                <div className="relative group">
+                  <button className="flex items-center space-x-2 p-3 text-white hover:text-red-400 transition-colors duration-200">
+                    <HiUser className="w-5 h-5 lg:w-6 lg:h-6" />
+                    <span className="text-sm font-light hidden lg:inline">{user?.name || 'User'}</span>
+                    <HiChevronDown className="w-3 h-3" />
+                  </button>
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-none shadow-lg border border-gray-100 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                    <div className="py-1">
+                      <Link
+                        to="/account-settings"
+                        className="block w-full text-left px-4 py-3 text-sm text-gray-600 hover:text-red-500 hover:bg-gray-50 transition-colors duration-200 font-light"
+                      >
+                        Account Settings
+                      </Link>
+                      <button
+                        onClick={logout}
+                        className="block w-full text-left px-4 py-3 text-sm text-gray-600 hover:text-red-500 hover:bg-gray-50 transition-colors duration-200 font-light flex items-center"
+                      >
+                        <HiLogout className="w-4 h-4 mr-2" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  to="/my-account"
+                  className="p-3 text-white hover:text-red-400 transition-colors duration-200"
+                  aria-label="User account"
+                  title="My Account"
+                >
+                  <HiUser className="w-5 h-5 lg:w-6 lg:h-6" />
+                </Link>
+              )}
               <button
                 className="relative p-3 text-white hover:text-red-400 transition-colors duration-200"
                 aria-label="Shopping cart"

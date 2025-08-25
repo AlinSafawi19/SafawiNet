@@ -7,6 +7,7 @@ import { PrismaService } from '../../common/services/prisma.service';
 export interface JwtPayload {
   sub: string;
   email: string;
+  name: string;
   verified: boolean;
   roles: string[];
   iat: number;
@@ -20,7 +21,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly prisma: PrismaService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        // First try to extract from cookies
+        (request) => {
+          if (request?.cookies?.accessToken) {
+            return request.cookies.accessToken;
+          }
+          return null;
+        },
+        // Fallback to Authorization header for backward compatibility
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
       ignoreExpiration: false,
       secretOrKey: configService.get<string>('JWT_SECRET'),
     });

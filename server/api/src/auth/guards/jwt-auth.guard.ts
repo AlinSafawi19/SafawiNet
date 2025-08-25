@@ -1,37 +1,22 @@
-import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../common/services/prisma.service';
 
 @Injectable()
-export class JwtAuthGuard {
+export class JwtAuthGuard implements CanActivate {
   constructor(
-    private reflector: Reflector,
-    private jwtService: JwtService,
-    private prisma: PrismaService,
+    private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     console.log('🛡️ JWT Guard - canActivate called');
-    
-    // Check if route is marked as public
-    const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
-      context.getHandler(),
-      context.getClass(),
-    ]);
 
-    if (isPublic) {
-      console.log('🛡️ JWT Guard - Route is public, allowing access');
-      return true;
-    }
-
-    console.log('🛡️ JWT Guard - Route requires authentication');
-    
     const request = context.switchToHttp().getRequest();
-    const token = this.extractTokenFromHeader(request);
-    
+    const token = this.extractTokenFromRequest(request);
+
     if (!token) {
-      console.log('🛡️ JWT Guard - No token found, throwing UnauthorizedException');
+      console.log('🛡️ JWT Guard - No token provided');
       throw new UnauthorizedException('No token provided');
     }
 
@@ -74,7 +59,13 @@ export class JwtAuthGuard {
     }
   }
 
-  private extractTokenFromHeader(request: any): string | undefined {
+  private extractTokenFromRequest(request: any): string | undefined {
+    // First try to extract from cookies
+    if (request?.cookies?.accessToken) {
+      return request.cookies.accessToken;
+    }
+    
+    // Fallback to Authorization header
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     return type === 'Bearer' ? token : undefined;
   }
