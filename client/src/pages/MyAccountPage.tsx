@@ -245,75 +245,75 @@ const MyAccountPage: React.FC = () => {
     // If user is authenticated, show account dashboard
     if (isAuthenticated && user) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white py-16 px-4 sm:px-6 lg:px-8">
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 py-16 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
                 <div className="max-w-7xl mx-auto">
                     {/* Breadcrumb */}
                     <nav className="mb-12">
-                        <ol className="flex items-center space-x-3 text-sm text-gray-500 font-light">
+                        <ol className="flex items-center space-x-3 text-sm text-gray-500 dark:text-gray-400 font-light">
                             <li>
                                 <a href="/" className="hover:text-red-500 transition-colors duration-300 relative group">
                                     Home
                                     <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-500 transition-all duration-300 ease-out group-hover:w-full"></span>
                                 </a>
                             </li>
-                            <li className="text-gray-300"><HiChevronRight className="w-4 h-4" /></li>
-                            <li className="text-gray-900 font-light">My Account</li>
+                            <li className="text-gray-300 dark:text-gray-500"><HiChevronRight className="w-4 h-4" /></li>
+                            <li className="text-gray-900 dark:text-white font-light">My Account</li>
                         </ol>
                     </nav>
 
                     {/* Account Dashboard */}
-                    <div className="bg-white border border-gray-100 rounded-none shadow-sm overflow-hidden">
+                    <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-none shadow-sm overflow-hidden transition-colors duration-200">
                         <div className="p-12 lg:p-16">
                             <div className="max-w-4xl mx-auto">
                                 <div className="mb-12">
                                     <div className="inline-block mb-4">
-                                        <span className="text-red-500 text-sm font-light tracking-widest uppercase border-b border-red-200 pb-2">
+                                        <span className="text-red-500 text-sm font-light tracking-widest uppercase border-b border-red-200 dark:border-red-800 pb-2">
                                             Welcome Back
                                         </span>
                                     </div>
-                                    <h2 className="text-4xl lg:text-5xl font-extralight text-gray-900 leading-tight tracking-wide mb-4">
+                                    <h2 className="text-4xl lg:text-5xl font-extralight text-gray-900 dark:text-white leading-tight tracking-wide mb-4">
                                         {user.name}
                                     </h2>
-                                    <p className="text-gray-600 font-light leading-relaxed">
+                                    <p className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">
                                         Manage your account settings and preferences.
                                     </p>
                                 </div>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                                    <div className="bg-gray-50 p-8">
+                                    <div className="bg-gray-50 dark:bg-gray-700 p-8 transition-colors duration-200">
                                         <div className="flex items-center mb-4">
                                             <HiUser className="w-6 h-6 text-red-500 mr-3" />
-                                            <h3 className="text-xl font-light text-gray-900">Account Information</h3>
+                                            <h3 className="text-xl font-light text-gray-900 dark:text-white">Account Information</h3>
                                         </div>
                                         <div className="space-y-3">
                                             <div>
-                                                <span className="text-sm text-gray-500 font-light">Email:</span>
-                                                <p className="text-gray-900 font-light">{user.email}</p>
+                                                <span className="text-sm text-gray-500 dark:text-gray-400 font-light">Email:</span>
+                                                <p className="text-gray-900 dark:text-white font-light">{user.email}</p>
                                             </div>
                                             <div>
-                                                <span className="text-sm text-gray-500 font-light">Member Since:</span>
-                                                <p className="text-gray-900 font-light">
+                                                <span className="text-sm text-gray-500 dark:text-gray-400 font-light">Member Since:</span>
+                                                <p className="text-gray-900 dark:text-white font-light">
                                                     {new Date(user.createdAt).toLocaleDateString()}
                                                 </p>
                                             </div>
                                             <div>
-                                                <span className="text-sm text-gray-500 font-light">Status:</span>
-                                                <p className="text-gray-900 font-light">
+                                                <span className="text-sm text-gray-500 dark:text-gray-400 font-light">Status:</span>
+                                                <p className="text-gray-900 dark:text-white font-light">
                                                     {user.isVerified ? 'Verified' : 'Pending Verification'}
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="bg-gray-50 p-8">
+                                    <div className="bg-gray-50 dark:bg-gray-700 p-8 transition-colors duration-200">
                                         <div className="flex items-center mb-4">
                                             <HiLogout className="w-6 h-6 text-red-500 mr-3" />
-                                            <h3 className="text-xl font-light text-gray-900">Account Actions</h3>
+                                            <h3 className="text-xl font-light text-gray-900 dark:text-white">Account Actions</h3>
                                         </div>
                                         <div className="space-y-4">
                                             <button
                                                 onClick={logout}
-                                                className="w-full bg-transparent border border-gray-300 text-gray-900 py-3 px-6 font-light tracking-wide hover:border-red-500 hover:text-red-500 transition-all duration-300"
+                                                className="w-full bg-transparent border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white py-3 px-6 font-light tracking-wide hover:border-red-500 hover:text-red-500 transition-all duration-300"
                                             >
                                                 Sign Out
                                             </button>
@@ -329,51 +329,51 @@ const MyAccountPage: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white py-16 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 py-16 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
             <div className="max-w-7xl mx-auto">
                 {/* Breadcrumb */}
                 <nav className="mb-12">
-                    <ol className="flex items-center space-x-3 text-sm text-gray-500 font-light">
+                    <ol className="flex items-center space-x-3 text-sm text-gray-500 dark:text-gray-400 font-light">
                         <li>
                             <a href="/" className="hover:text-red-500 transition-colors duration-300 relative group">
                                 Home
                                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-500 transition-all duration-300 ease-out group-hover:w-full"></span>
                             </a>
                         </li>
-                        <li className="text-gray-300"><HiChevronRight className="w-4 h-4" /></li>
-                        <li className="text-gray-900 font-light">My Account</li>
+                        <li className="text-gray-300 dark:text-gray-500"><HiChevronRight className="w-4 h-4" /></li>
+                        <li className="text-gray-900 dark:text-white font-light">My Account</li>
                     </ol>
                 </nav>
 
                 {/* Main Content */}
-                <div className="bg-white border border-gray-100 rounded-none shadow-sm overflow-hidden">
+                <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-none shadow-sm overflow-hidden transition-colors duration-200">
                     <div className="flex flex-col lg:flex-row">
                         {/* Login Section */}
                         <div className="flex-1 p-12 lg:p-16">
                             <div className="max-w-md mx-auto">
                                 <div className="mb-12">
                                     <div className="inline-block mb-4">
-                                        <span className="text-red-500 text-sm font-light tracking-widest uppercase border-b border-red-200 pb-2">
+                                        <span className="text-red-500 text-sm font-light tracking-widest uppercase border-b border-red-200 dark:border-red-800 pb-2">
                                             Welcome Back
                                         </span>
                                     </div>
-                                    <h2 className="text-4xl lg:text-5xl font-extralight text-gray-900 leading-tight tracking-wide mb-4">
+                                    <h2 className="text-4xl lg:text-5xl font-extralight text-gray-900 dark:text-white leading-tight tracking-wide mb-4">
                                         Sign In
                                     </h2>
-                                    <p className="text-gray-600 font-light leading-relaxed">
+                                    <p className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">
                                         Access your personalized shopping experience with ease and elegance.
                                     </p>
                                 </div>
 
                                 {loginSuccess && (
-                                    <div className="text-green-600 text-sm bg-green-50 p-4 border border-green-100 font-light mb-6">
+                                    <div className="text-green-600 text-sm bg-green-50 dark:bg-green-900/20 p-4 border border-green-100 dark:border-green-800 font-light mb-6">
                                         {loginSuccess}
                                     </div>
                                 )}
 
                                 <form onSubmit={handleLoginSubmit} className="space-y-8">
                                     <div>
-                                        <label htmlFor="login-email" className="block text-sm font-light text-gray-700 mb-3 tracking-wide">
+                                        <label htmlFor="login-email" className="block text-sm font-light text-gray-700 dark:text-gray-300 mb-3 tracking-wide">
                                             Email Address
                                         </label>
                                         <div className="relative">
@@ -382,11 +382,11 @@ const MyAccountPage: React.FC = () => {
                                                 type="email"
                                                 value={loginForm.email}
                                                 onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                                                className={`w-full px-6 py-4 pr-12 border rounded-none focus:outline-none transition-all duration-300 font-light placeholder-gray-400 ${showLoginValidation && loginForm.email.length > 0
+                                                className={`w-full px-6 py-4 pr-12 border rounded-none focus:outline-none transition-all duration-300 font-light placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${showLoginValidation && loginForm.email.length > 0
                                                     ? loginValidation.email
-                                                        ? 'border-red-300 focus:border-red-500'
-                                                        : 'border-green-300 focus:border-green-500'
-                                                    : 'border-gray-200 focus:border-gray-400'
+                                                        ? 'border-red-300 dark:border-red-600 focus:border-red-500'
+                                                        : 'border-green-300 dark:border-green-600 focus:border-green-500'
+                                                    : 'border-gray-200 dark:border-gray-600 focus:border-gray-400 dark:focus:border-gray-500'
                                                     }`}
                                                 placeholder="Enter your email"
                                             />
@@ -396,7 +396,7 @@ const MyAccountPage: React.FC = () => {
                                     </div>
 
                                     <div>
-                                        <label htmlFor="login-password" className="block text-sm font-light text-gray-700 mb-3 tracking-wide">
+                                        <label htmlFor="login-password" className="block text-sm font-light text-gray-700 dark:text-gray-300 mb-3 tracking-wide">
                                             Password
                                         </label>
                                         <div className="relative">
@@ -405,18 +405,18 @@ const MyAccountPage: React.FC = () => {
                                                 type={showPassword ? 'text' : 'password'}
                                                 value={loginForm.password}
                                                 onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                                                className={`w-full px-6 py-4 pr-20 border rounded-none focus:outline-none transition-all duration-300 font-light placeholder-gray-400 ${showLoginValidation && loginForm.password.length > 0
+                                                className={`w-full px-6 py-4 pr-20 border rounded-none focus:outline-none transition-all duration-300 font-light placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${showLoginValidation && loginForm.password.length > 0
                                                     ? loginValidation.password
-                                                        ? 'border-red-300 focus:border-red-500'
-                                                        : 'border-green-300 focus:border-green-500'
-                                                    : 'border-gray-200 focus:border-gray-400'
+                                                        ? 'border-red-300 dark:border-red-600 focus:border-red-500'
+                                                        : 'border-green-300 dark:border-green-600 focus:border-green-500'
+                                                    : 'border-gray-200 dark:border-gray-600 focus:border-gray-400 dark:focus:border-gray-500'
                                                     }`}
                                                 placeholder="Enter your password"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={togglePasswordVisibility}
-                                                className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors duration-300"
+                                                className="absolute inset-y-0 right-4 flex items-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors duration-300"
                                             >
                                                 {showPassword ? (
                                                     <HiEyeOff className="h-5 w-5" />
@@ -430,7 +430,7 @@ const MyAccountPage: React.FC = () => {
                                     </div>
 
                                     {loginError && (
-                                        <div className="text-red-500 text-sm bg-red-50 p-4 border border-red-100 font-light">
+                                        <div className="text-red-500 text-sm bg-red-50 dark:bg-red-900/20 p-4 border border-red-100 dark:border-red-800 font-light">
                                             {loginError}
                                         </div>
                                     )}
@@ -438,7 +438,7 @@ const MyAccountPage: React.FC = () => {
                                     <button
                                         type="submit"
                                         disabled={isLoading}
-                                        className="group relative w-full bg-transparent border border-gray-300 text-gray-900 py-4 px-6 font-light tracking-wide hover:border-red-500 transition-all duration-300 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="group relative w-full bg-transparent border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white py-4 px-6 font-light tracking-wide hover:border-red-500 transition-all duration-300 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <span className="relative z-10 group-hover:text-white transition-colors duration-300">
                                             {isLoading ? 'Signing In...' : 'Sign In'}
@@ -447,7 +447,7 @@ const MyAccountPage: React.FC = () => {
                                     </button>
 
                                     <div className="text-center">
-                                        <a href="#" className="text-sm text-gray-500 hover:text-red-500 transition-colors duration-300 font-light relative group">
+                                        <a href="#" className="text-sm text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors duration-300 font-light relative group">
                                             Forgot your password?
                                             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-500 transition-all duration-300 ease-out group-hover:w-full"></span>
                                         </a>
@@ -459,38 +459,38 @@ const MyAccountPage: React.FC = () => {
                         {/* Divider */}
                         <div className="hidden lg:flex items-center justify-center px-6">
                             <div className="relative">
-                                <div className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-white border border-gray-200 rounded-full w-12 h-12 flex items-center justify-center">
-                                    <span className="text-sm text-gray-400 font-light tracking-wide">or</span>
+                                <div className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-full w-12 h-12 flex items-center justify-center">
+                                    <span className="text-sm text-gray-400 dark:text-gray-500 font-light tracking-wide">or</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Register Section */}
-                        <div className="flex-1 p-12 lg:p-16 bg-gray-50">
+                        <div className="flex-1 p-12 lg:p-16 bg-gray-50 dark:bg-gray-700 transition-colors duration-200">
                             <div className="max-w-md mx-auto">
                                 <div className="mb-12">
                                     <div className="inline-block mb-4">
-                                        <span className="text-red-500 text-sm font-light tracking-widest uppercase border-b border-red-200 pb-2">
+                                        <span className="text-red-500 text-sm font-light tracking-widest uppercase border-b border-red-200 dark:border-red-800 pb-2">
                                             New Customer
                                         </span>
                                     </div>
-                                    <h2 className="text-4xl lg:text-5xl font-extralight text-gray-900 leading-tight tracking-wide mb-4">
+                                    <h2 className="text-4xl lg:text-5xl font-extralight text-gray-900 dark:text-white leading-tight tracking-wide mb-4">
                                         Create Account
                                     </h2>
-                                    <p className="text-gray-600 font-light leading-relaxed">
+                                    <p className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">
                                         Join our community and unlock exclusive benefits and personalized experiences.
                                     </p>
                                 </div>
 
                                 {registerSuccess && (
-                                    <div className="text-green-600 text-sm bg-green-50 p-4 border border-green-100 font-light mb-6">
+                                    <div className="text-green-600 text-sm bg-green-50 dark:bg-green-900/20 p-4 border border-green-100 dark:border-green-800 font-light mb-6">
                                         {registerSuccess}
                                     </div>
                                 )}
 
                                 <form onSubmit={handleRegisterSubmit} className="space-y-8">
                                     <div>
-                                        <label htmlFor="register-name" className="block text-sm font-light text-gray-700 mb-3 tracking-wide">
+                                        <label htmlFor="register-name" className="block text-sm font-light text-gray-700 dark:text-gray-300 mb-3 tracking-wide">
                                             Full Name
                                         </label>
                                         <div className="relative">
@@ -499,11 +499,11 @@ const MyAccountPage: React.FC = () => {
                                                 type="text"
                                                 value={registerForm.username}
                                                 onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })}
-                                                className={`w-full px-6 py-4 pr-12 border rounded-none focus:outline-none transition-all duration-300 font-light placeholder-gray-400 ${showRegisterValidation && registerForm.username.length > 0
+                                                className={`w-full px-6 py-4 pr-12 border rounded-none focus:outline-none transition-all duration-300 font-light placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white ${showRegisterValidation && registerForm.username.length > 0
                                                     ? registerValidation.username
-                                                        ? 'border-red-300 focus:border-red-500'
-                                                        : 'border-green-300 focus:border-green-500'
-                                                    : 'border-gray-200 focus:border-gray-400'
+                                                        ? 'border-red-300 dark:border-red-600 focus:border-red-500'
+                                                        : 'border-green-300 dark:border-green-600 focus:border-green-500'
+                                                    : 'border-gray-200 dark:border-gray-500 focus:border-gray-400 dark:focus:border-gray-400'
                                                     }`}
                                                 placeholder="Enter your full name"
                                             />
@@ -513,7 +513,7 @@ const MyAccountPage: React.FC = () => {
                                     </div>
 
                                     <div>
-                                        <label htmlFor="register-email" className="block text-sm font-light text-gray-700 mb-3 tracking-wide">
+                                        <label htmlFor="register-email" className="block text-sm font-light text-gray-700 dark:text-gray-300 mb-3 tracking-wide">
                                             Email Address
                                         </label>
                                         <div className="relative">
@@ -522,11 +522,11 @@ const MyAccountPage: React.FC = () => {
                                                 type="email"
                                                 value={registerForm.email}
                                                 onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-                                                className={`w-full px-6 py-4 pr-12 border rounded-none focus:outline-none transition-all duration-300 font-light placeholder-gray-400 ${showRegisterValidation && registerForm.email.length > 0
+                                                className={`w-full px-6 py-4 pr-12 border rounded-none focus:outline-none transition-all duration-300 font-light placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white ${showRegisterValidation && registerForm.email.length > 0
                                                     ? registerValidation.email
-                                                        ? 'border-red-300 focus:border-red-500'
-                                                        : 'border-green-300 focus:border-green-500'
-                                                    : 'border-gray-200 focus:border-gray-400'
+                                                        ? 'border-red-300 dark:border-red-600 focus:border-red-500'
+                                                        : 'border-green-300 dark:border-green-600 focus:border-green-500'
+                                                    : 'border-gray-200 dark:border-gray-500 focus:border-gray-400 dark:focus:border-gray-400'
                                                     }`}
                                                 placeholder="Enter your email"
                                             />
@@ -536,7 +536,7 @@ const MyAccountPage: React.FC = () => {
                                     </div>
 
                                     <div>
-                                        <label htmlFor="register-password" className="block text-sm font-light text-gray-700 mb-3 tracking-wide">
+                                        <label htmlFor="register-password" className="block text-sm font-light text-gray-700 dark:text-gray-300 mb-3 tracking-wide">
                                             Password
                                         </label>
                                         <div className="relative">
@@ -545,18 +545,18 @@ const MyAccountPage: React.FC = () => {
                                                 type={showConfirmPassword ? 'text' : 'password'}
                                                 value={registerForm.password}
                                                 onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-                                                className={`w-full px-6 py-4 pr-20 border rounded-none focus:outline-none transition-all duration-300 font-light placeholder-gray-400 ${showRegisterValidation && registerForm.password.length > 0
+                                                className={`w-full px-6 py-4 pr-20 border rounded-none focus:outline-none transition-all duration-300 font-light placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white ${showRegisterValidation && registerForm.password.length > 0
                                                     ? registerValidation.password
-                                                        ? 'border-red-300 focus:border-red-500'
-                                                        : 'border-green-300 focus:border-green-500'
-                                                    : 'border-gray-200 focus:border-gray-400'
+                                                        ? 'border-red-300 dark:border-red-600 focus:border-red-500'
+                                                        : 'border-green-300 dark:border-green-600 focus:border-green-500'
+                                                    : 'border-gray-200 dark:border-gray-500 focus:border-gray-400 dark:focus:border-gray-400'
                                                     }`}
                                                 placeholder="Create a password"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={toggleConfirmPasswordVisibility}
-                                                className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors duration-300"
+                                                className="absolute inset-y-0 right-4 flex items-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400 transition-colors duration-300"
                                             >
                                                 {showConfirmPassword ? (
                                                     <HiEyeOff className="h-5 w-5" />
@@ -570,7 +570,7 @@ const MyAccountPage: React.FC = () => {
                                     </div>
 
                                     <div>
-                                        <label htmlFor="register-confirm-password" className="block text-sm font-light text-gray-700 mb-3 tracking-wide">
+                                        <label htmlFor="register-confirm-password" className="block text-sm font-light text-gray-700 dark:text-gray-300 mb-3 tracking-wide">
                                             Confirm Password
                                         </label>
                                         <div className="relative">
@@ -579,11 +579,11 @@ const MyAccountPage: React.FC = () => {
                                                 type="password"
                                                 value={registerForm.confirmPassword}
                                                 onChange={(e) => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
-                                                className={`w-full px-6 py-4 pr-12 border rounded-none focus:outline-none transition-all duration-300 font-light placeholder-gray-400 ${showRegisterValidation && registerForm.confirmPassword.length > 0
+                                                className={`w-full px-6 py-4 pr-12 border rounded-none focus:outline-none transition-all duration-300 font-light placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-600 text-gray-900 dark:text-white ${showRegisterValidation && registerForm.confirmPassword.length > 0
                                                     ? registerValidation.confirmPassword
-                                                        ? 'border-red-300 focus:border-red-500'
-                                                        : 'border-green-300 focus:border-green-500'
-                                                    : 'border-gray-200 focus:border-gray-400'
+                                                        ? 'border-red-300 dark:border-red-600 focus:border-red-500'
+                                                        : 'border-green-300 dark:border-red-600 focus:border-green-500'
+                                                    : 'border-gray-200 dark:border-gray-500 focus:border-gray-400 dark:focus:border-gray-400'
                                                     }`}
                                                 placeholder="Confirm your password"
                                             />
@@ -592,12 +592,12 @@ const MyAccountPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <p className="text-xs text-gray-500 leading-relaxed font-light">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-light">
                                         By creating an account, you agree to our terms of service and privacy policy. Your personal data will be handled with the utmost care and security.
                                     </p>
 
                                     {registerError && (
-                                        <div className="text-red-500 text-sm bg-red-50 p-4 border border-red-100 font-light">
+                                        <div className="text-red-500 text-sm bg-red-50 dark:bg-red-900/20 p-4 border border-red-100 dark:border-red-800 font-light">
                                             {registerError}
                                         </div>
                                     )}
@@ -605,7 +605,7 @@ const MyAccountPage: React.FC = () => {
                                     <button
                                         type="submit"
                                         disabled={isLoading}
-                                        className="group relative w-full bg-transparent border border-gray-300 text-gray-900 py-4 px-6 font-light tracking-wide hover:border-red-500 transition-all duration-300 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="group relative w-full bg-transparent border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white py-4 px-6 font-light tracking-wide hover:border-red-500 transition-all duration-300 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <span className="relative z-10 group-hover:text-white transition-colors duration-300">
                                             {isLoading ? 'Creating Account...' : 'Create Account'}
@@ -613,26 +613,26 @@ const MyAccountPage: React.FC = () => {
                                         <div className="absolute inset-0 bg-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                                     </button>
 
-                                    <div className="mt-12 pt-8 border-t border-gray-200">
-                                        <h3 className="text-xl font-light text-gray-900 mb-6 tracking-wide">
+                                    <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-600">
+                                        <h3 className="text-xl font-light text-gray-900 dark:text-white mb-6 tracking-wide">
                                             Exclusive Benefits
                                         </h3>
                                         <ul className="space-y-4">
                                             <li className="flex items-start">
                                                 <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                                <span className="text-gray-600 font-light leading-relaxed">Expedited checkout process for seamless shopping</span>
+                                                <span className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">Expedited checkout process for seamless shopping</span>
                                             </li>
                                             <li className="flex items-start">
                                                 <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                                <span className="text-gray-600 font-light leading-relaxed">Comprehensive order tracking and management</span>
+                                                <span className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">Comprehensive order tracking and management</span>
                                             </li>
                                             <li className="flex items-start">
                                                 <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                                <span className="text-gray-600 font-light leading-relaxed">Personalized recommendations and exclusive offers</span>
+                                                <span className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">Personalized recommendations and exclusive offers</span>
                                             </li>
                                             <li className="flex items-start">
                                                 <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                                <span className="text-gray-600 font-light leading-relaxed">Complete purchase history and warranty tracking</span>
+                                                <span className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">Complete purchase history and warranty tracking</span>
                                             </li>
                                         </ul>
                                     </div>

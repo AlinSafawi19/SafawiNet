@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { apiService, UserProfile } from '../services/api';
+import { apiService, UserProfile, AuthResponse } from '../services/api';
 
 interface AuthContextType {
   user: UserProfile | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
   resendVerificationEmail: (email: string) => Promise<void>;
@@ -81,11 +81,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.requiresVerification) {
         // User registered but needs email verification
         setUser(response.user);
-        throw new Error('Registration successful! Please check your email for a verification link.');
+        // Return the response instead of throwing an error
+        return response;
       } else if (response.user) {
         // Registration successful and user is verified
         setUser(response.user);
+        return response;
       }
+      
+      return response;
     } catch (error) {
       throw error;
     } finally {

@@ -36,6 +36,17 @@ export interface UserProfile {
   isVerified: boolean;
   createdAt: string;
   updatedAt: string;
+  preferences?: {
+    theme?: 'light' | 'dark' | 'auto';
+    language?: string;
+    timezone?: string;
+    dateFormat?: string;
+    timeFormat?: string;
+    notifications?: {
+      sound?: boolean;
+      desktop?: boolean;
+    };
+  };
 }
 
 export interface ApiError {
@@ -252,6 +263,16 @@ class ApiService {
     }
 
     return await response.json();
+  }
+
+  // Update user preferences
+  async updatePreferences(preferences: Partial<UserProfile['preferences']>): Promise<{ message: string }> {
+    const response = await this.makeAuthenticatedRequest<{ message: string }>(`${API_BASE_URL}/users/me/preferences`, {
+      method: 'PUT',
+      body: JSON.stringify(preferences),
+    });
+
+    return response;
   }
 }
 
