@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HiChevronRight, HiEye, HiEyeOff, HiUser, HiLogout } from 'react-icons/hi';
+import { useTranslation } from 'react-i18next';
+import { HiChevronRight, HiEye, HiEyeOff } from 'react-icons/hi';
 import { useAuth } from '../contexts/AuthContext';
+import { useBackendMessageTranslator } from '../utils/backendMessageTranslator';
 
 // Validation interfaces
 interface ValidationErrors {
@@ -17,6 +19,8 @@ interface FieldValidation {
 }
 
 const MyAccountPage: React.FC = () => {
+    const { t } = useTranslation();
+    const { translateBackendMessage } = useBackendMessageTranslator();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -48,49 +52,49 @@ const MyAccountPage: React.FC = () => {
     const [registerSuccess, setRegisterSuccess] = useState('');
 
     const navigate = useNavigate();
-    const { user, isAuthenticated, login, register, logout } = useAuth();
+    const { user, isAuthenticated, login, register } = useAuth();
 
     // Validation functions
     const validateEmail = (email: string): FieldValidation => {
         if (!email) {
-            return { isValid: false, message: 'Email is required' };
+            return { isValid: false, message: t('auth.validation.emailRequired') };
         }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            return { isValid: false, message: 'Invalid email format' };
+            return { isValid: false, message: t('auth.validation.emailInvalid') };
         }
         return { isValid: true, message: '' };
     };
 
     const validatePassword = (password: string): FieldValidation => {
         if (!password) {
-            return { isValid: false, message: 'Password is required' };
+            return { isValid: false, message: t('auth.validation.passwordRequired') };
         }
         if (password.length < 8) {
-            return { isValid: false, message: 'Password must be at least 8 characters' };
+            return { isValid: false, message: t('auth.validation.passwordMinLength') };
         }
         return { isValid: true, message: '' };
     };
 
     const validateUsername = (username: string): FieldValidation => {
         if (!username) {
-            return { isValid: false, message: 'Full name is required' };
+            return { isValid: false, message: t('auth.validation.usernameRequired') };
         }
         if (username.length > 100) {
-            return { isValid: false, message: 'Name too long (max 100 characters)' };
+            return { isValid: false, message: t('auth.validation.usernameTooLong') };
         }
         if (username.trim().length === 0) {
-            return { isValid: false, message: 'Name cannot be empty' };
+            return { isValid: false, message: t('auth.validation.usernameEmpty') };
         }
         return { isValid: true, message: '' };
     };
 
     const validateConfirmPassword = (password: string, confirmPassword: string): FieldValidation => {
         if (!confirmPassword) {
-            return { isValid: false, message: 'Please confirm your password' };
+            return { isValid: false, message: t('auth.validation.confirmPasswordRequired') };
         }
         if (password !== confirmPassword) {
-            return { isValid: false, message: 'Passwords do not match' };
+            return { isValid: false, message: t('auth.validation.passwordsDoNotMatch') };
         }
         return { isValid: true, message: '' };
     };
@@ -129,19 +133,19 @@ const MyAccountPage: React.FC = () => {
         }));
     };
 
-    // Effect to validate forms when inputs change
+    // Effect to validate forms when inputs change or language changes
     useEffect(() => {
         validateLoginForm();
-    }, [loginForm]);
+    }, [loginForm, t]);
 
     useEffect(() => {
         validateRegisterForm();
-    }, [registerForm]);
+    }, [registerForm, t]);
 
     // Redirect if already authenticated
     useEffect(() => {
-        if (isAuthenticated && user?.isVerified) {
-            navigate('/');
+        if (isAuthenticated && user) {
+            navigate('/my-account');
         }
     }, [isAuthenticated, user, navigate]);
 
@@ -163,13 +167,13 @@ const MyAccountPage: React.FC = () => {
 
         try {
             await login(loginForm.email, loginForm.password);
-            setLoginSuccess('Login successful! Redirecting to your account...');
+            setLoginSuccess(translateBackendMessage('Login successful! Redirecting to your account...'));
             // Clear validation display on successful login
             setShowLoginValidation(false);
             setTimeout(() => navigate('/my-account'), 1000);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Login failed';
-            setLoginError(errorMessage);
+            setLoginError(translateBackendMessage(errorMessage));
 
             // Clear any previous register messages when login fails
             setRegisterSuccess('');
@@ -199,9 +203,9 @@ const MyAccountPage: React.FC = () => {
             const response = await register(registerForm.username, registerForm.email, registerForm.password);
             // Display the message from the API response
             if (response && response.message) {
-                setRegisterSuccess(response.message);
+                setRegisterSuccess(translateBackendMessage(response.message));
             } else {
-                setRegisterSuccess('Registration successful! Please check your email for verification.');
+                setRegisterSuccess(translateBackendMessage('Registration successful! Please check your email for verification.'));
             }
 
             // Clear the registration form after successful registration
@@ -223,7 +227,7 @@ const MyAccountPage: React.FC = () => {
             // Don't redirect unverified users - they need to verify email first
             // setTimeout(() => navigate('/my-account'), 2000);
         } catch (error) {
-            setRegisterError(error instanceof Error ? error.message : 'Registration failed');
+            setRegisterError(translateBackendMessage(error instanceof Error ? error.message : 'Registration failed'));
         } finally {
             setIsLoading(false);
         }
@@ -242,92 +246,6 @@ const MyAccountPage: React.FC = () => {
         );
     };
 
-    // If user is authenticated, show account dashboard
-    if (isAuthenticated && user) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 py-16 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
-                <div className="max-w-7xl mx-auto">
-                    {/* Breadcrumb */}
-                    <nav className="mb-12">
-                        <ol className="flex items-center space-x-3 text-sm text-gray-500 dark:text-gray-400 font-light">
-                            <li>
-                                <a href="/" className="hover:text-red-500 transition-colors duration-300 relative group">
-                                    Home
-                                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-500 transition-all duration-300 ease-out group-hover:w-full"></span>
-                                </a>
-                            </li>
-                            <li className="text-gray-300 dark:text-gray-500"><HiChevronRight className="w-4 h-4" /></li>
-                            <li className="text-gray-900 dark:text-white font-light">My Account</li>
-                        </ol>
-                    </nav>
-
-                    {/* Account Dashboard */}
-                    <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-none shadow-sm overflow-hidden transition-colors duration-200">
-                        <div className="p-12 lg:p-16">
-                            <div className="max-w-4xl mx-auto">
-                                <div className="mb-12">
-                                    <div className="inline-block mb-4">
-                                        <span className="text-red-500 text-sm font-light tracking-widest uppercase border-b border-red-200 dark:border-red-800 pb-2">
-                                            Welcome Back
-                                        </span>
-                                    </div>
-                                    <h2 className="text-4xl lg:text-5xl font-extralight text-gray-900 dark:text-white leading-tight tracking-wide mb-4">
-                                        {user.name}
-                                    </h2>
-                                    <p className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">
-                                        Manage your account settings and preferences.
-                                    </p>
-                                </div>
-
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                                    <div className="bg-gray-50 dark:bg-gray-700 p-8 transition-colors duration-200">
-                                        <div className="flex items-center mb-4">
-                                            <HiUser className="w-6 h-6 text-red-500 mr-3" />
-                                            <h3 className="text-xl font-light text-gray-900 dark:text-white">Account Information</h3>
-                                        </div>
-                                        <div className="space-y-3">
-                                            <div>
-                                                <span className="text-sm text-gray-500 dark:text-gray-400 font-light">Email:</span>
-                                                <p className="text-gray-900 dark:text-white font-light">{user.email}</p>
-                                            </div>
-                                            <div>
-                                                <span className="text-sm text-gray-500 dark:text-gray-400 font-light">Member Since:</span>
-                                                <p className="text-gray-900 dark:text-white font-light">
-                                                    {new Date(user.createdAt).toLocaleDateString()}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <span className="text-sm text-gray-500 dark:text-gray-400 font-light">Status:</span>
-                                                <p className="text-gray-900 dark:text-white font-light">
-                                                    {user.isVerified ? 'Verified' : 'Pending Verification'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-gray-50 dark:bg-gray-700 p-8 transition-colors duration-200">
-                                        <div className="flex items-center mb-4">
-                                            <HiLogout className="w-6 h-6 text-red-500 mr-3" />
-                                            <h3 className="text-xl font-light text-gray-900 dark:text-white">Account Actions</h3>
-                                        </div>
-                                        <div className="space-y-4">
-                                            <button
-                                                onClick={logout}
-                                                className="w-full bg-transparent border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white py-3 px-6 font-light tracking-wide hover:border-red-500 hover:text-red-500 transition-all duration-300"
-                                            >
-                                                Sign Out
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 py-16 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
             <div className="max-w-7xl mx-auto">
@@ -336,12 +254,12 @@ const MyAccountPage: React.FC = () => {
                     <ol className="flex items-center space-x-3 text-sm text-gray-500 dark:text-gray-400 font-light">
                         <li>
                             <a href="/" className="hover:text-red-500 transition-colors duration-300 relative group">
-                                Home
+                                {t('myAccount.breadcrumbHome')}
                                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-500 transition-all duration-300 ease-out group-hover:w-full"></span>
                             </a>
                         </li>
                         <li className="text-gray-300 dark:text-gray-500"><HiChevronRight className="w-4 h-4" /></li>
-                        <li className="text-gray-900 dark:text-white font-light">My Account</li>
+                        <li className="text-gray-900 dark:text-white font-light">{t('myAccount.breadcrumbMyAccount')}</li>
                     </ol>
                 </nav>
 
@@ -354,14 +272,14 @@ const MyAccountPage: React.FC = () => {
                                 <div className="mb-12">
                                     <div className="inline-block mb-4">
                                         <span className="text-red-500 text-sm font-light tracking-widest uppercase border-b border-red-200 dark:border-red-800 pb-2">
-                                            Welcome Back
+                                            {t('myAccount.welcomeBack')}
                                         </span>
                                     </div>
                                     <h2 className="text-4xl lg:text-5xl font-extralight text-gray-900 dark:text-white leading-tight tracking-wide mb-4">
-                                        Sign In
+                                        {t('myAccount.signIn')}
                                     </h2>
                                     <p className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">
-                                        Access your personalized shopping experience with ease and elegance.
+                                        {t('myAccount.signInDescription')}
                                     </p>
                                 </div>
 
@@ -374,7 +292,7 @@ const MyAccountPage: React.FC = () => {
                                 <form onSubmit={handleLoginSubmit} className="space-y-8">
                                     <div>
                                         <label htmlFor="login-email" className="block text-sm font-light text-gray-700 dark:text-gray-300 mb-3 tracking-wide">
-                                            Email Address
+                                            {t('myAccount.emailAddress')}
                                         </label>
                                         <div className="relative">
                                             <input
@@ -388,7 +306,7 @@ const MyAccountPage: React.FC = () => {
                                                         : 'border-green-300 dark:border-green-600 focus:border-green-500'
                                                     : 'border-gray-200 dark:border-gray-600 focus:border-gray-400 dark:focus:border-gray-500'
                                                     }`}
-                                                placeholder="Enter your email"
+                                                placeholder={t('myAccount.enterEmail')}
                                             />
 
                                             {renderValidationMessage(loginValidation.email || '', !loginValidation.email, showLoginValidation)}
@@ -397,7 +315,7 @@ const MyAccountPage: React.FC = () => {
 
                                     <div>
                                         <label htmlFor="login-password" className="block text-sm font-light text-gray-700 dark:text-gray-300 mb-3 tracking-wide">
-                                            Password
+                                            {t('myAccount.password')}
                                         </label>
                                         <div className="relative">
                                             <input
@@ -411,7 +329,7 @@ const MyAccountPage: React.FC = () => {
                                                         : 'border-green-300 dark:border-green-600 focus:border-green-500'
                                                     : 'border-gray-200 dark:border-gray-600 focus:border-gray-400 dark:focus:border-gray-500'
                                                     }`}
-                                                placeholder="Enter your password"
+                                                placeholder={t('myAccount.enterPassword')}
                                             />
                                             <button
                                                 type="button"
@@ -441,14 +359,14 @@ const MyAccountPage: React.FC = () => {
                                         className="group relative w-full bg-transparent border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white py-4 px-6 font-light tracking-wide hover:border-red-500 transition-all duration-300 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <span className="relative z-10 group-hover:text-white transition-colors duration-300">
-                                            {isLoading ? 'Signing In...' : 'Sign In'}
+                                            {isLoading ? t('myAccount.signingIn') : t('myAccount.signIn')}
                                         </span>
                                         <div className="absolute inset-0 bg-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                                     </button>
 
                                     <div className="text-center">
                                         <a href="#" className="text-sm text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors duration-300 font-light relative group">
-                                            Forgot your password?
+                                            {t('myAccount.forgotPassword')}
                                             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-red-500 transition-all duration-300 ease-out group-hover:w-full"></span>
                                         </a>
                                     </div>
@@ -460,7 +378,7 @@ const MyAccountPage: React.FC = () => {
                         <div className="hidden lg:flex items-center justify-center px-6">
                             <div className="relative">
                                 <div className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-full w-12 h-12 flex items-center justify-center">
-                                    <span className="text-sm text-gray-400 dark:text-gray-500 font-light tracking-wide">or</span>
+                                    <span className="text-sm text-gray-400 dark:text-gray-500 font-light tracking-wide">{t('myAccount.or')}</span>
                                 </div>
                             </div>
                         </div>
@@ -471,14 +389,14 @@ const MyAccountPage: React.FC = () => {
                                 <div className="mb-12">
                                     <div className="inline-block mb-4">
                                         <span className="text-red-500 text-sm font-light tracking-widest uppercase border-b border-red-200 dark:border-red-800 pb-2">
-                                            New Customer
+                                            {t('myAccount.newCustomer')}
                                         </span>
                                     </div>
                                     <h2 className="text-4xl lg:text-5xl font-extralight text-gray-900 dark:text-white leading-tight tracking-wide mb-4">
-                                        Create Account
+                                        {t('myAccount.createAccount')}
                                     </h2>
                                     <p className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">
-                                        Join our community and unlock exclusive benefits and personalized experiences.
+                                        {t('myAccount.createAccountDescription')}
                                     </p>
                                 </div>
 
@@ -491,7 +409,7 @@ const MyAccountPage: React.FC = () => {
                                 <form onSubmit={handleRegisterSubmit} className="space-y-8">
                                     <div>
                                         <label htmlFor="register-name" className="block text-sm font-light text-gray-700 dark:text-gray-300 mb-3 tracking-wide">
-                                            Full Name
+                                            {t('myAccount.fullName')}
                                         </label>
                                         <div className="relative">
                                             <input
@@ -505,7 +423,7 @@ const MyAccountPage: React.FC = () => {
                                                         : 'border-green-300 dark:border-green-600 focus:border-green-500'
                                                     : 'border-gray-200 dark:border-gray-500 focus:border-gray-400 dark:focus:border-gray-400'
                                                     }`}
-                                                placeholder="Enter your full name"
+                                                placeholder={t('myAccount.enterFullName')}
                                             />
 
                                             {renderValidationMessage(registerValidation.username || '', !registerValidation.username, showRegisterValidation)}
@@ -514,7 +432,7 @@ const MyAccountPage: React.FC = () => {
 
                                     <div>
                                         <label htmlFor="register-email" className="block text-sm font-light text-gray-700 dark:text-gray-300 mb-3 tracking-wide">
-                                            Email Address
+                                            {t('myAccount.emailAddress')}
                                         </label>
                                         <div className="relative">
                                             <input
@@ -528,7 +446,7 @@ const MyAccountPage: React.FC = () => {
                                                         : 'border-green-300 dark:border-green-600 focus:border-green-500'
                                                     : 'border-gray-200 dark:border-gray-500 focus:border-gray-400 dark:focus:border-gray-400'
                                                     }`}
-                                                placeholder="Enter your email"
+                                                placeholder={t('myAccount.enterEmail')}
                                             />
 
                                             {renderValidationMessage(registerValidation.email || '', !registerValidation.email, showRegisterValidation)}
@@ -537,7 +455,7 @@ const MyAccountPage: React.FC = () => {
 
                                     <div>
                                         <label htmlFor="register-password" className="block text-sm font-light text-gray-700 dark:text-gray-300 mb-3 tracking-wide">
-                                            Password
+                                            {t('myAccount.password')}
                                         </label>
                                         <div className="relative">
                                             <input
@@ -551,7 +469,7 @@ const MyAccountPage: React.FC = () => {
                                                         : 'border-green-300 dark:border-green-600 focus:border-green-500'
                                                     : 'border-gray-200 dark:border-gray-500 focus:border-gray-400 dark:focus:border-gray-400'
                                                     }`}
-                                                placeholder="Create a password"
+                                                placeholder={t('myAccount.createPassword')}
                                             />
                                             <button
                                                 type="button"
@@ -571,7 +489,7 @@ const MyAccountPage: React.FC = () => {
 
                                     <div>
                                         <label htmlFor="register-confirm-password" className="block text-sm font-light text-gray-700 dark:text-gray-300 mb-3 tracking-wide">
-                                            Confirm Password
+                                            {t('myAccount.confirmPassword')}
                                         </label>
                                         <div className="relative">
                                             <input
@@ -585,7 +503,7 @@ const MyAccountPage: React.FC = () => {
                                                         : 'border-green-300 dark:border-red-600 focus:border-green-500'
                                                     : 'border-gray-200 dark:border-gray-500 focus:border-gray-400 dark:focus:border-gray-400'
                                                     }`}
-                                                placeholder="Confirm your password"
+                                                placeholder={t('myAccount.confirmYourPassword')}
                                             />
 
                                             {renderValidationMessage(registerValidation.confirmPassword || '', !registerValidation.confirmPassword, showRegisterValidation)}
@@ -593,7 +511,7 @@ const MyAccountPage: React.FC = () => {
                                     </div>
 
                                     <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-light">
-                                        By creating an account, you agree to our terms of service and privacy policy. Your personal data will be handled with the utmost care and security.
+                                        {t('myAccount.termsAgreement')}
                                     </p>
 
                                     {registerError && (
@@ -608,31 +526,31 @@ const MyAccountPage: React.FC = () => {
                                         className="group relative w-full bg-transparent border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white py-4 px-6 font-light tracking-wide hover:border-red-500 transition-all duration-300 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <span className="relative z-10 group-hover:text-white transition-colors duration-300">
-                                            {isLoading ? 'Creating Account...' : 'Create Account'}
+                                            {isLoading ? t('myAccount.creatingAccount') : t('myAccount.createAccount')}
                                         </span>
                                         <div className="absolute inset-0 bg-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                                     </button>
 
                                     <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-600">
                                         <h3 className="text-xl font-light text-gray-900 dark:text-white mb-6 tracking-wide">
-                                            Exclusive Benefits
+                                            {t('myAccount.exclusiveBenefits')}
                                         </h3>
                                         <ul className="space-y-4">
                                             <li className="flex items-start">
                                                 <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                                <span className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">Expedited checkout process for seamless shopping</span>
+                                                <span className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">{t('myAccount.benefit1')}</span>
                                             </li>
                                             <li className="flex items-start">
                                                 <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                                <span className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">Comprehensive order tracking and management</span>
+                                                <span className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">{t('myAccount.benefit2')}</span>
                                             </li>
                                             <li className="flex items-start">
                                                 <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                                <span className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">Personalized recommendations and exclusive offers</span>
+                                                <span className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">{t('myAccount.benefit3')}</span>
                                             </li>
                                             <li className="flex items-start">
                                                 <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-4 flex-shrink-0"></div>
-                                                <span className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">Complete purchase history and warranty tracking</span>
+                                                <span className="text-gray-600 dark:text-gray-300 font-light leading-relaxed">{t('myAccount.benefit4')}</span>
                                             </li>
                                         </ul>
                                     </div>

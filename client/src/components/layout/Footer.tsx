@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   HiPhone,
   HiMail,
@@ -8,6 +9,8 @@ import {
 } from 'react-icons/hi';
 
 const Footer: React.FC = () => {
+  const { t } = useTranslation();
+  
   return (
     <footer className="bg-gray-50 dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 w-full overflow-x-hidden relative transition-colors duration-200">
       {/* Background overlay for opacity */}
@@ -22,14 +25,13 @@ const Footer: React.FC = () => {
               SafawiNet
             </div>
             <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed font-light">
-              Premium electronics and technology solutions for the modern world.
-              Delivering innovation, quality, and exceptional service since 2010.
+              {t('footer.companyDescription')}
             </p>
             <div className="pt-4">
               <div className="flex items-center space-x-3">
                 <HiLocationMarker className="w-5 h-5 text-red-500 flex-shrink-0" />
                 <span className="text-sm text-gray-600 dark:text-gray-300 font-light">
-                  Riyadh, Saudi Arabia
+                  {t('footer.riyadhSaudiArabia')}
                 </span>
               </div>
             </div>
@@ -37,31 +39,31 @@ const Footer: React.FC = () => {
 
           {/* Quick Links */}
           <div className="space-y-6">
-            <h3 className="text-lg font-light text-gray-900 dark:text-white tracking-wide uppercase relative before:content-[''] before:absolute before:left-0 before:-bottom-1 before:w-8 before:h-0.5 before:bg-red-500 before:rounded-full">Quick Links</h3>
+            <h3 className="text-lg font-light text-gray-900 dark:text-white tracking-wide uppercase relative before:content-[''] before:absolute before:left-0 before:-bottom-1 before:w-8 before:h-0.5 before:bg-red-500 before:rounded-full">{t('footer.quickLinks')}</h3>
             <ul className="space-y-3">
               <li>
                 <Link to="/" className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors duration-200 text-sm font-light">
-                  Home
+                  {t('navigation.home')}
                 </Link>
               </li>
               <li>
                 <Link to="/about" className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors duration-200 text-sm font-light">
-                  About Us
+                  {t('navigation.about')}
                 </Link>
               </li>
               <li>
                 <Link to="/products" className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors duration-200 text-sm font-light">
-                  Products
+                  {t('navigation.products')}
                 </Link>
               </li>
               <li>
                 <Link to="/services" className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors duration-200 text-sm font-light">
-                  Services
+                  {t('navigation.services')}
                 </Link>
               </li>
               <li>
                 <Link to="/contact" className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors duration-200 text-sm font-light">
-                  Contact
+                  {t('navigation.contact')}
                 </Link>
               </li>
             </ul>
@@ -69,31 +71,31 @@ const Footer: React.FC = () => {
 
           {/* Customer Service */}
           <div className="space-y-6">
-            <h3 className="text-lg font-light text-gray-900 dark:text-white tracking-wide uppercase relative before:content-[''] before:absolute before:left-0 before:-bottom-1 before:w-8 before:h-0.5 before:bg-red-500 before:rounded-full">Support</h3>
+            <h3 className="text-lg font-light text-gray-900 dark:text-white tracking-wide uppercase relative before:content-[''] before:absolute before:left-0 before:-bottom-1 before:w-8 before:h-0.5 before:bg-red-500 before:rounded-full">{t('footer.customerService')}</h3>
             <ul className="space-y-3">
               <li>
                 <Link to="/support" className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors duration-200 text-sm font-light">
-                  Support Center
+                  {t('footer.supportCenter')}
                 </Link>
               </li>
               <li>
                 <Link to="/track-order" className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors duration-200 text-sm font-light">
-                  Track Order
+                  {t('footer.trackOrder')}
                 </Link>
               </li>
               <li>
                 <Link to="/returns" className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors duration-200 text-sm font-light">
-                  Returns & Exchanges
+                  {t('footer.returnsExchanges')}
                 </Link>
               </li>
               <li>
                 <Link to="/shipping" className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors duration-200 text-sm font-light">
-                  Shipping Information
+                  {t('footer.shippingInformation')}
                 </Link>
               </li>
               <li>
                 <Link to="/faq" className="text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors duration-200 text-sm font-light">
-                  Frequently Asked Questions
+                  {t('footer.frequentlyAskedQuestions')}
                 </Link>
               </li>
             </ul>
@@ -101,13 +103,13 @@ const Footer: React.FC = () => {
 
           {/* Contact Information */}
           <div className="space-y-6">
-            <h3 className="text-lg font-light text-gray-900 dark:text-white tracking-wide uppercase relative before:content-[''] before:absolute before:left-0 before:-bottom-1 before:w-8 before:h-0.5 before:bg-red-500 before:rounded-full">Contact</h3>
+            <h3 className="text-lg font-light text-gray-900 dark:text-white tracking-wide uppercase relative before:content-[''] before:absolute before:left-0 before:-bottom-1 before:w-8 before:h-0.5 before:bg-red-500 before:rounded-full">{t('navigation.contact')}</h3>
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <HiPhone className="w-5 h-5 text-red-500 flex-shrink-0" />
                 <a
                   href="tel:+966112345678"
-                  className="text-sm text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors duration-200 font-light"
+                  className="text-sm text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors duration-200 font-light ltr"
                 >
                   +966 11 234 5678
                 </a>
@@ -124,7 +126,7 @@ const Footer: React.FC = () => {
               <div className="flex items-center space-x-3">
                 <HiClock className="w-5 h-5 text-red-500 flex-shrink-0" />
                 <div className="text-sm text-gray-600 dark:text-gray-300 font-light">
-                  Mon-Sat: 9:00 AM - 6:00 PM
+                  {t('footer.businessHours')}
                 </div>
               </div>
             </div>
@@ -137,17 +139,17 @@ const Footer: React.FC = () => {
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 lg:py-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-gray-500 dark:text-gray-400 font-light text-center md:text-left">
-              © {new Date().getFullYear()} SafawiNet. All rights reserved.
+              © {new Date().getFullYear()} SafawiNet. {t('footer.allRightsReserved')}
             </div>
             <div className="flex flex-wrap justify-center md:justify-end space-x-4 lg:space-x-8 text-sm">
               <Link to="/privacy" className="text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors duration-200 font-light">
-                Privacy Policy
+                {t('footer.privacyPolicy')}
               </Link>
               <Link to="/terms" className="text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors duration-200 font-light">
-                Terms of Service
+                {t('footer.termsOfService')}
               </Link>
               <Link to="/sitemap" className="text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors duration-200 font-light">
-                Sitemap
+                {t('footer.sitemap')}
               </Link>
             </div>
           </div>

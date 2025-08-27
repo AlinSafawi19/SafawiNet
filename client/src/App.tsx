@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { LanguageProvider } from './contexts/LanguageContext'
 import { Layout } from './components/layout'
 import HomePage from './pages/HomePage'
 import MyAccountPage from './pages/MyAccountPage'
@@ -12,21 +13,23 @@ function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <Layout>
-          <Routes>
-            {/* Public routes */}
-            <Route index element={<HomePage />} />
-            <Route path="/my-account" element={<MyAccountPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
-            
-            {/* Error pages */}
-            <Route path="/403" element={<ForbiddenPage />} />
-            <Route path="/404" element={<NotFoundPage />} />
-            
-            {/* Catch-all route for 404 */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Layout>
+        <LanguageProvider>
+          <Layout>
+            <Routes>
+              {/* Public routes */}
+              <Route index element={<HomePage />} />
+              <Route path="/my-account" element={<MyAccountPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
+              
+              {/* Error pages */}
+              <Route path="/403" element={<ForbiddenPage />} />
+              <Route path="/404" element={<NotFoundPage />} />
+              
+              {/* Catch-all route for 404 */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Layout>
+        </LanguageProvider>
       </ThemeProvider>
     </AuthProvider>
   )

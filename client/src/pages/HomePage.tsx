@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import mmmImage from '../assets/mmm.png';
 import ssImage from '../assets/sss.png';
 import pppImage from '../assets/ppp.png';
@@ -17,48 +18,49 @@ interface Slide {
     };
 }
 
-const slides: Slide[] = [
-    {
-        id: 1,
-        leftContent: {
-            tag: "Premium Technology",
-            headline: "Innovative Electronics for the Modern World",
-            ctaText: "Explore Collection"
-        },
-        rightContent: {
-            image: mmmImage,
-            alt: "Premium Electronics Collection"
-        }
-    },
-    {
-        id: 2,
-        leftContent: {
-            tag: "Smart Solutions",
-            headline: "Intelligent Devices That Enhance Your Life",
-            ctaText: "Discover More"
-        },
-        rightContent: {
-            image: ssImage,
-            alt: "Smart Technology Collection"
-        }
-    },
-    {
-        id: 3,
-        leftContent: {
-            tag: "Future Forward",
-            headline: "Cutting-Edge Technology for Tomorrow",
-            ctaText: "Shop Now"
-        },
-        rightContent: {
-            image: pppImage,
-            alt: "Future Technology"
-        }
-    }
-];
-
 const HomePage: React.FC = () => {
+    const { t } = useTranslation();
     const [currentSlide, setCurrentSlide] = useState(0);
     const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
+
+    const slides: Slide[] = [
+        {
+            id: 1,
+            leftContent: {
+                tag: t('home.premiumTechnology'),
+                headline: t('home.innovativeElectronics'),
+                ctaText: t('home.exploreCollection')
+            },
+            rightContent: {
+                image: mmmImage,
+                alt: t('home.premiumTechnology')
+            }
+        },
+        {
+            id: 2,
+            leftContent: {
+                tag: t('home.smartSolutions'),
+                headline: t('home.intelligentDevices'),
+                ctaText: t('home.discoverMore')
+            },
+            rightContent: {
+                image: ssImage,
+                alt: t('home.smartSolutions')
+            }
+        },
+        {
+            id: 3,
+            leftContent: {
+                tag: t('home.futureForward'),
+                headline: t('home.cuttingEdgeTechnology'),
+                ctaText: t('home.shopNow')
+            },
+            rightContent: {
+                image: pppImage,
+                alt: t('home.futureForward')
+            }
+        }
+    ];
 
     // Auto-advance slides every 6 seconds
     useEffect(() => {
@@ -68,7 +70,7 @@ const HomePage: React.FC = () => {
         }, 6000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [slides.length]);
 
     const goToSlide = (slideIndex: number) => {
         const direction = slideIndex > currentSlide ? 'right' : 'left';
