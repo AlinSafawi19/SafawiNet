@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify Your Email - {{appName}}</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #fafafa;
@@ -22,7 +23,7 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
-        
+
         .email-wrapper {
             min-height: 100vh;
             display: flex;
@@ -30,7 +31,7 @@
             justify-content: center;
             padding: 20px;
         }
-        
+
         .email-container {
             max-width: 600px;
             width: 100%;
@@ -39,13 +40,13 @@
             overflow: hidden;
             position: relative;
         }
-        
+
         .header {
             padding: 60px 50px 40px;
             text-align: center;
             background: #ffffff;
         }
-        
+
         .brand {
             font-size: 28px;
             font-weight: 600;
@@ -53,7 +54,7 @@
             letter-spacing: -0.02em;
             margin-bottom: 12px;
         }
-        
+
         .tagline {
             font-size: 14px;
             color: #666;
@@ -61,19 +62,19 @@
             text-transform: uppercase;
             letter-spacing: 0.1em;
         }
-        
+
         .content {
             padding: 50px;
             background: #ffffff;
         }
-        
+
         .greeting {
             font-size: 18px;
             color: #666;
             margin-bottom: 30px;
             font-weight: 300;
         }
-        
+
         .title {
             font-size: 32px;
             font-weight: 500;
@@ -82,22 +83,22 @@
             letter-spacing: -0.01em;
             line-height: 1.3;
         }
-        
+
         .description {
             font-size: 16px;
             color: #666;
             margin-bottom: 50px;
             line-height: 1.6;
         }
-        
+
         .cta-section {
             text-align: center;
             margin-bottom: 50px;
         }
-        
+
         .cta-button {
             display: inline-block;
-            background: #1a1a1a;
+            background: #000000;
             color: #ffffff;
             text-decoration: none;
             padding: 20px 40px;
@@ -106,16 +107,17 @@
             letter-spacing: 0.05em;
             text-transform: uppercase;
             border: none;
+            border-radius: 25px;
             transition: all 0.2s ease;
             position: relative;
             overflow: hidden;
         }
-        
+
         .cta-button:hover {
-            background: #000000;
+            background: #1a1a1a;
             transform: translateY(-2px);
         }
-        
+
         .fallback-link {
             background: #f8f8f8;
             padding: 20px;
@@ -126,7 +128,7 @@
             word-break: break-all;
             line-height: 1.5;
         }
-        
+
         .security-notice {
             background: #f8f8f8;
             padding: 25px;
@@ -135,49 +137,51 @@
             color: #666;
             line-height: 1.5;
         }
-        
+
         .security-notice strong {
             color: #1a1a1a;
             font-weight: 500;
         }
-        
+
         .footer {
             padding: 40px 50px;
             background: #1a1a1a;
             text-align: center;
         }
-        
+
         .footer-text {
             font-size: 13px;
             color: #ffffff;
             margin-bottom: 8px;
             font-weight: 300;
         }
-        
+
         .footer-link {
             color: #ffffff;
             text-decoration: none;
             font-weight: 400;
         }
-        
+
         .footer-link:hover {
             text-decoration: underline;
         }
-        
+
         @media (max-width: 600px) {
             .email-container {
                 margin: 0;
                 box-shadow: none;
             }
-            
-            .header, .content, .footer {
+
+            .header,
+            .content,
+            .footer {
                 padding: 40px 30px;
             }
-            
+
             .title {
                 font-size: 24px;
             }
-            
+
             .cta-button {
                 padding: 18px 32px;
                 font-size: 13px;
@@ -185,6 +189,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="email-wrapper">
         <div class="email-container">
@@ -192,32 +197,36 @@
                 <div class="brand">{{appName}}</div>
                 <div class="tagline">Premium Networking Solutions</div>
             </div>
-            
+
             <div class="content">
                 <div class="greeting">Hello {{name}},</div>
-                
+
                 <h1 class="title">Verify Your Email Address</h1>
-                
+
                 <p class="description">
-                    Welcome to {{appName}}. To complete your registration and access our premium networking services, please verify your email address.
+                    Welcome to {{appName}}. To complete your registration and access our premium networking services,
+                    please verify your email address.
                 </p>
-                
+
                 <div class="cta-section">
                     <a href="{{verificationUrl}}" class="cta-button">Verify Email</a>
                 </div>
-                
+
                 <div class="fallback-link">{{verificationUrl}}</div>
-                
+
                 <div class="security-notice">
-                    <strong>Security Note:</strong> This verification link expires in 1 hour. If you didn't create an account, please ignore this email.
+                    <strong>Security Note:</strong> This verification link expires in 1 hour. If you didn't create an
+                    account, please ignore this email.
                 </div>
             </div>
-            
+
             <div class="footer">
-                <div class="footer-text">Need assistance? <a href="mailto:{{supportEmail}}" class="footer-link">Contact Support</a></div>
+                <div class="footer-text">Need assistance? <a href="mailto:{{supportEmail}}" class="footer-link">Contact
+                        Support</a></div>
                 <div class="footer-text">&copy; {{appName}}. All rights reserved.</div>
             </div>
         </div>
     </div>
 </body>
+
 </html>

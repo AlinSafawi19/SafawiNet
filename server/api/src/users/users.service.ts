@@ -1,4 +1,5 @@
 import { Injectable, Logger, ConflictException, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/services/prisma.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { EmailService } from '../common/services/email.service';
@@ -19,6 +20,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
+    private readonly configService: ConfigService,
   ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
@@ -38,9 +40,9 @@ export class UsersService {
 
     // Default preferences
     const defaultPreferences = {
-      theme: 'light',
+      theme: 'auto',
       language: 'en',
-      timezone: 'UTC',
+      timezone: 'Asia/Beirut',
       dateFormat: 'MM/DD/YYYY',
       timeFormat: '12h',
       notifications: {
@@ -98,7 +100,12 @@ export class UsersService {
 
     // Send verification email
     try {
-      await this.emailService.sendVerificationEmail(user.email, verificationToken);
+      const frontendDomain = this.configService.get('FRONTEND_DOMAIN', 'localhost:3001');
+      const verificationUrl = `http://${frontendDomain}/verify-email?token=${verificationToken}`;
+      await this.emailService.sendEmailVerification(user.email, {
+        name: user.name || 'User',
+        verificationUrl,
+      });
     } catch (error) {
       this.logger.error(`Failed to send verification email to ${user.email}:`, error);
       // Don't fail user creation if email fails
@@ -262,7 +269,11 @@ export class UsersService {
       where: { id: userId },
     });
 
-    if (currentUser?.email.toLowerCase() === newEmail.toLowerCase()) {
+    if (!currentUser) {
+      throw new NotFoundException('User not found');
+    }
+    
+    if (currentUser.email.toLowerCase() === newEmail.toLowerCase()) {
       throw new BadRequestException('New email must be different from current email');
     }
 
@@ -287,7 +298,13 @@ export class UsersService {
 
     // Send email change confirmation email
     try {
-      await this.emailService.sendEmailChangeConfirmationEmail(newEmail, changeToken);
+      const confirmationUrl = `${this.configService.get('API_DOMAIN')}/confirm-email-change?token=${changeToken}`;
+      await this.emailService.sendTemplateEmail('email-change-confirmation', newEmail, {
+        name: currentUser.name || 'User',
+        confirmationUrl,
+        appName: 'Safawinet',
+        supportEmail: 'support@safawinet.com',
+      });
     } catch (error) {
       this.logger.error(`Failed to send email change confirmation to ${newEmail}:`, error);
       throw new BadRequestException('Failed to send confirmation email');
@@ -371,7 +388,12 @@ export class UsersService {
 
     // Send password change notification email
     try {
-      await this.emailService.sendPasswordChangeNotificationEmail(user.email);
+      await this.emailService.sendTemplateEmail('password-change-notification', user.email, {
+        name: user.name || 'User',
+        appName: 'Safawinet',
+        supportEmail: 'support@safawinet.com',
+        timestamp: new Date().toLocaleString(),
+      });
     } catch (error) {
       this.logger.error(`Failed to send password change notification to ${user.email}:`, error);
       // Don't fail password change if email fails
@@ -493,7 +515,11 @@ export class UsersService {
     });
 
     // Send reset email
-    await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+    const resetUrl = `${this.configService.get('API_DOMAIN')}/reset-password?token=${resetToken}`;
+    await this.emailService.sendPasswordReset(user.email, {
+      name: user.name || 'User',
+      resetUrl,
+    });
   }
 
   async resetPassword(token: string, newPassword: string): Promise<boolean> {

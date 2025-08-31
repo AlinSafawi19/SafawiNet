@@ -72,7 +72,14 @@ export class RecoveryService {
     });
 
     // Send recovery email
-    await this.emailService.sendRecoveryEmail(recoveryEmail, recoveryToken, user.email);
+    const recoveryUrl = `${this.configService.get('API_DOMAIN')}/recover?token=${recoveryToken}`;
+    await this.emailService.sendTemplateEmail('recovery-email', recoveryEmail, {
+      name: user.name || 'User',
+      recoveryUrl,
+      originalEmail: user.email,
+      appName: 'Safawinet',
+      supportEmail: 'support@safawinet.com',
+    });
 
     this.logger.log(`Recovery requested for user ${user.email} via recovery email ${recoveryEmail}`);
 
@@ -127,7 +134,12 @@ export class RecoveryService {
     });
 
     // Send verification email to new email
-    await this.emailService.sendVerificationEmail(newEmail, verificationToken);
+    const frontendDomain = this.configService.get('FRONTEND_DOMAIN', 'localhost:3001');
+    const verificationUrl = `http://${frontendDomain}/verify-email?token=${verificationToken}`;
+    await this.emailService.sendEmailVerification(newEmail, {
+      name: recoveryStaging.user.name || 'User',
+      verificationUrl,
+    });
 
     this.logger.log(`Recovery confirmed for user ${recoveryStaging.user.email}, new email staged: ${newEmail}`);
 

@@ -61,9 +61,9 @@ export class AuthService {
 
     // Default preferences
     const defaultPreferences = {
-      theme: 'light',
+      theme: 'auto',
       language: 'en',
-      timezone: 'UTC',
+      timezone: 'Asia/Beirut',
       dateFormat: 'MM/DD/YYYY',
       timeFormat: '12h',
       notifications: {
@@ -127,7 +127,12 @@ export class AuthService {
 
     // Send verification email
     try {
-      await this.emailService.sendVerificationEmail(result.user.email, result.verificationToken);
+      const frontendDomain = this.configService.get('FRONTEND_DOMAIN', 'localhost:3001');
+      const verificationUrl = `http://${frontendDomain}/verify-email?token=${result.verificationToken}`;
+      await this.emailService.sendEmailVerification(result.user.email, {
+        name: result.user.name || 'User',
+        verificationUrl,
+      });
       this.logger.log(`Verification email sent to ${result.user.email}`);
     } catch (error) {
       this.logger.error(`Failed to send verification email to ${result.user.email}:`, error);
@@ -386,7 +391,11 @@ export class AuthService {
 
     // Send password reset email
     try {
-      await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+      const resetUrl = `${this.configService.get('API_DOMAIN')}/reset-password?token=${resetToken}`;
+      await this.emailService.sendPasswordReset(user.email, {
+        name: user.name || 'User',
+        resetUrl,
+      });
       this.logger.log(`Password reset email sent to ${user.email}`);
     } catch (error) {
       this.logger.error(`Failed to send password reset email to ${user.email}:`, error);
@@ -602,7 +611,12 @@ export class AuthService {
       });
 
       // Send verification email
-      await this.emailService.sendVerificationEmail(user.email, verificationToken);
+      const frontendDomain = this.configService.get('FRONTEND_DOMAIN', 'localhost:3001');
+      const verificationUrl = `http://${frontendDomain}/verify-email?token=${verificationToken}`;
+      await this.emailService.sendEmailVerification(user.email, {
+        name: user.name || 'User',
+        verificationUrl,
+      });
       this.logger.log(`Verification email resent to ${user.email}`);
       
       return { message: 'Verification email sent successfully' };
@@ -642,7 +656,12 @@ export class AuthService {
       });
 
       // Send verification email
-      await this.emailService.sendVerificationEmail(user.email, verificationToken);
+      const frontendDomain = this.configService.get('FRONTEND_DOMAIN', 'localhost:3001');
+      const verificationUrl = `http://${frontendDomain}/verify-email?token=${verificationToken}`;
+      await this.emailService.sendEmailVerification(user.email, {
+        name: user.name || 'User',
+        verificationUrl,
+      });
       this.logger.log(`Verification email resent to ${user.email}`);
     } catch (error) {
       this.logger.error(`Failed to resend verification email to ${user.email}:`, error);
