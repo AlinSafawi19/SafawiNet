@@ -179,7 +179,7 @@ async function main() {
       roles: ['MODERATOR', 'CUSTOMER'],
       loyaltyPoints: 150, // Bronze tier
       preferences: {
-        theme: 'auto',
+        theme: 'light',
         language: 'en',
         timezone: 'Europe/London',
         dateFormat: 'DD/MM/YYYY',

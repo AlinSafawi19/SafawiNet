@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { buildApiUrl, API_CONFIG } from '../config/api';
 
 interface User {
   id: string;
@@ -50,7 +51,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuthStatus = async () => {
     try {
       // Check if user is logged in by calling the /users/me endpoint
-      const response = await fetch('http://localhost:3000/users/me', {
+      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME), {
         method: 'GET',
         credentials: 'include', // Include cookies for session management
       });
@@ -78,7 +79,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     try {
-      const response = await fetch('http://localhost:3000/v1/auth/login', {
+      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -105,7 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (name: string, email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     try {
-      const response = await fetch('http://localhost:3000/v1/auth/register', {
+      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.REGISTER), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,7 +136,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       setIsRefreshing(true);
-      const response = await fetch('http://localhost:3000/v1/auth/refresh', {
+      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.REFRESH), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,7 +199,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     try {
       // Call the logout endpoint to invalidate the session on the server
-      await fetch('http://localhost:3000/v1/auth/logout', {
+      await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGOUT), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -65,7 +65,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
 
             {isOpen && (
                 <div
-                    className={`dropdown-menu absolute right-0 bg-white z-50 overflow-hidden min-w-[200px] ${isAnimating
+                    className={`dropdown-menu absolute right-0 bg-white dark:bg-dark-surface z-50 overflow-hidden min-w-[200px] border border-gray-200 dark:border-dark-border shadow-lg ${isAnimating
                             ? 'animate-dropdownClose'
                             : 'animate-dropdownOpen'
                         }`}
@@ -74,14 +74,14 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                     <div className="py-1">
                         <button
                             onClick={() => closeDropdown()}
-                            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-all duration-200 font-medium font-helvetica"
+                            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-700 dark:hover:text-purple-400 transition-all duration-200 font-medium font-helvetica"
                         >
                             {HiUser({ className: "w-4 h-4 mr-3" })}
                             My Account
                         </button>
                         <button
                             onClick={handleLogout}
-                            className="w-full flex items-center px-4 py-2 text-sm text-purple-600 hover:bg-purple-50 hover:text-purple-700 transition-all duration-200 font-medium font-helvetica"
+                            className="w-full flex items-center px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-700 dark:hover:text-purple-500 transition-all duration-200 font-medium font-helvetica"
                         >
                             {HiArrowRightOnRectangle({ className: "w-4 h-4 mr-3" })}
                             Logout

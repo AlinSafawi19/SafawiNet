@@ -31,7 +31,7 @@ export const UpdateProfileSchema = z.object({
 });
 
 export const UpdatePreferencesSchema = z.object({
-  theme: z.enum(['light', 'dark', 'auto']).optional(),
+  theme: z.enum(['light', 'dark']).optional(),
   language: z.string().min(2, 'Language code must be at least 2 characters').max(5, 'Language code too long').optional(),
   timezone: z.string().min(1, 'Timezone must not be empty if provided').optional(),
   dateFormat: z.enum(['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD']).optional(),

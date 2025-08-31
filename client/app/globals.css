@@ -84,9 +84,10 @@ body {
   margin: 0;
   font: normal normal normal 18px/1.4em avenir-lt-w01_35-light1475496,
     sans-serif;
-  @apply text-black;
+  @apply text-black dark:text-white;
   @apply font-helvetica;
   overflow-x: hidden;
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
 a {
@@ -528,4 +529,27 @@ div::-moz-selection {
 .dropdown-menu {
   top: 100%;
   margin-top: 0;
+}
+
+/* Dark mode utility classes */
+@layer utilities {
+  .dark-mode-transition {
+    @apply transition-all duration-200 ease-in-out;
+  }
+  
+  .dark-mode-text {
+    @apply text-black dark:text-white;
+  }
+  
+  .dark-mode-bg {
+    @apply bg-white dark:bg-dark-bg;
+  }
+  
+  .dark-mode-border {
+    @apply border-gray-200 dark:border-dark-border;
+  }
+  
+  .dark-mode-input {
+    @apply bg-white dark:bg-dark-surface text-black dark:text-white border-gray-300 dark:border-dark-border;
+  }
 }

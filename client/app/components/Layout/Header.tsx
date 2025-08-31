@@ -11,6 +11,7 @@ import {
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import UserDropdown from './UserDropdown';
+import ThemeToggle from '../ThemeToggle';
 
 const Header = () => {
     const { user, logout } = useAuth();
@@ -116,7 +117,7 @@ const Header = () => {
 
     return (
         <>
-            <header className="h-header z-40 w-full bg-white shadow-sm">
+            <header className="h-header z-40 w-full bg-white dark:bg-dark-surface shadow-sm dark:shadow-gray-900/20 transition-colors duration-200">
                 <div className="flex justify-between px-4 sm:px-6 lg:px-14 h-header items-center">
                     {/* Left - Logo */}
                     <div className="flex justify-start">
@@ -127,16 +128,16 @@ const Header = () => {
 
                     {/* Center - Main Navigation */}
                     <nav className="hidden lg:flex items-center space-x-8">
-                        <a href="/" className="text-gray-700 hover:text-purple-500 transition-colors font-medium text-lg">
+                        <a href="/" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
                             Home
                         </a>
-                        <a href="/products" className="text-gray-700 hover:text-purple-500 transition-colors font-medium text-lg">
+                        <a href="/products" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
                             All Products
                         </a>
-                        <a href="/deals" className="text-gray-700 hover:text-purple-500 transition-colors font-medium text-lg">
+                        <a href="/deals" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
                             Deals & Offers
                         </a>
-                        <a href="/about" className="text-gray-700 hover:text-purple-500 transition-colors font-medium text-lg">
+                        <a href="/about" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
                             About
                         </a>
                     </nav>
@@ -166,7 +167,7 @@ const Header = () => {
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                             onBlur={handleSearchBlur}
                                             placeholder="Search..."
-                                            className="w-64 px-4 py-2 text-base border-b-2 border-purple-500 focus:border-purple-600 transition-all duration-300 ease-in-out bg-transparent"
+                                            className="w-64 px-4 py-2 text-base border-b-2 border-purple-500 focus:border-purple-600 transition-all duration-300 ease-in-out bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                                             autoFocus
                                         />
                                         <button
@@ -203,14 +204,8 @@ const Header = () => {
                             <span className="text-base font-medium">{currentLanguage}</span>
                         </button>
 
-                        {/* Mobile User Info - Always Visible */}
-                        {user && (
-                            <div className="lg:hidden flex items-center space-x-2">
-                                <span className="text-sm font-medium text-gray-700 truncate max-w-24">
-                                    {user.name}
-                                </span>
-                            </div>
-                        )}
+                        {/* Theme Toggle Button */}
+                        <ThemeToggle />
 
                         {/* Login/Register or User Dropdown */}
                         {user ? (
@@ -268,7 +263,7 @@ const Header = () => {
                     </button>
 
                     {/* Full Screen Menu Content */}
-                    <div className={`flex flex-col h-full text-white px-6 transition-all duration-500 ease-out ${isMobileMenuOpen
+                    <div className={`flex flex-col h-full text-white px-6 transition-all duration-500 ease-out overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/40 ${isMobileMenuOpen
                         ? 'opacity-100 translate-x-0'
                         : 'opacity-0 translate-x-full'
                         }`}>
@@ -286,7 +281,7 @@ const Header = () => {
                         </div>
 
                         {/* Bottom Section - Navigation & Actions */}
-                        <div className="flex-1 flex flex-col justify-center">
+                        <div className="flex-1 flex flex-col justify-center pb-8">
                             {/* Mobile Search Input */}
                             <div className={`mb-8 transition-all duration-700 ease-out delay-300 ${isMobileMenuOpen
                                 ? 'opacity-100 translate-x-0'
@@ -397,7 +392,7 @@ const Header = () => {
                                 ? 'opacity-100 translate-x-0'
                                 : 'opacity-0 translate-x-full'
                                 }`}>
-                                <div className="flex justify-center space-x-4">
+                                <div className="flex flex-col items-center space-y-4">
                                     {user ? (
                                         <div className="flex flex-col items-center space-y-3">
                                             <div className="flex items-center space-x-2 text-white">
@@ -422,12 +417,25 @@ const Header = () => {
                                             Login/Register
                                         </a>
                                     )}
+                                    
+                                    {/* Language & Theme Section */}
+                                    <div className="flex flex-col items-center space-y-3">
+                                        <h4 className="text-white/60 text-sm font-medium uppercase tracking-wider">
+                                            Language & Theme
+                                        </h4>
+                                        <div className="flex space-x-3">
                                     <button
                                         onClick={toggleLanguage}
                                         className="px-4 py-2 rounded-full border border-white/30 hover:border-white/50 text-white font-medium transition-all duration-300 text-base"
                                     >
                                         {currentLanguage}
                                     </button>
+                                            {/* Theme Toggle for Mobile */}
+                                            <div className="px-4 py-2 rounded-full border border-white/30 hover:border-white/50 transition-all duration-300">
+                                                <ThemeToggle variant="mobile" />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

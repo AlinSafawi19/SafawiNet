@@ -2,6 +2,7 @@ import './globals.css';
 import Footer from '@app/components/Layout/Footer';
 import Header from '@app/components/Layout/Header';
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 /**
  * Using force dynamic so changes in business assets (e.g. services) are immediately reflected.
@@ -54,13 +55,15 @@ export default function RootLayout({
           `
         }} />
       </head>
-      <body className="text-black bg-site">
+      <body className="text-black bg-site dark:text-white dark:bg-dark-bg transition-colors duration-200">
         <AuthProvider>
-          <Header />
-          <main className="bg-site">{children}</main>
-          <div className="mt-10 sm:mt-20">
-            <Footer />
-          </div>
+          <ThemeProvider>
+            <Header />
+            <main className="bg-site dark:bg-dark-bg">{children}</main>
+            <div className="mt-10 sm:mt-20">
+              <Footer />
+            </div>
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

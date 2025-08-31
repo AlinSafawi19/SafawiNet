@@ -5,6 +5,7 @@ module.exports = {
     './pages/**/*.{js,ts,jsx,tsx}',
     './components/**/*.{js,ts,jsx,tsx}',
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -13,6 +14,11 @@ module.exports = {
         'white-15': 'rgba(255,255,255,0.15)',
         'custom-1': '#FFF9F6',
         site: 'rgb(255,249,246)',
+        // Dark mode colors
+        'dark-bg': '#1A1A1A',
+        'dark-surface': '#000000',
+        'dark-card': '#333333',
+        'dark-border': '#444444',
       },
       fontSize: {
         12: '12px',

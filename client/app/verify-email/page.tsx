@@ -89,19 +89,19 @@ export default function VerifyEmailPage() {
                     {getStatusIcon()}
                 </div>
 
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
                     {verificationState.status === 'verifying' && 'Verifying Email...'}
                     {verificationState.status === 'success' && 'Verification Successful!'}
                     {verificationState.status === 'error' && 'Verification Failed'}
                     {verificationState.status === 'invalid' && 'Invalid Link'}
                 </h1>
 
-                <p className="text-gray-600 mb-8">
+                <p className="text-gray-600 dark:text-gray-300 mb-8">
                     {verificationState.message}
                 </p>
 
                 {verificationState.status === 'success' && (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                         Redirecting to login page in 3 seconds...
                     </p>
                 )}
@@ -109,7 +109,7 @@ export default function VerifyEmailPage() {
                 {verificationState.status === 'error' && (
                     <button
                         onClick={() => window.location.reload()}
-                        className="bg-black text-white font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base"
+                        className="bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base"
                     >
                         Try Again
                     </button>
@@ -118,7 +118,7 @@ export default function VerifyEmailPage() {
                 {verificationState.status === 'invalid' && (
                     <a
                         href="/auth"
-                        className="inline-block bg-black text-white font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base"
+                        className="inline-block bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base"
                     >
                         Go to Login
                     </a>
