@@ -40,9 +40,10 @@ export default function VerifyEmailPage() {
                 });
 
                 if (response.ok) {
+                    const successData = await response.json();
                     setVerificationState({
                         status: 'success',
-                        message: 'Email verified successfully! You can now log in to your account.'
+                        message: successData.message || 'Email verified successfully! You can now log in to your account.'
                     });
 
                     // Redirect to login page after 3 seconds

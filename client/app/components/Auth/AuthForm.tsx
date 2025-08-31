@@ -165,24 +165,24 @@ export function AuthForm() {
 
     try {
       if (isLogin) {
-        const success = await login(formData.email, formData.password);
-        if (success) {
+        const result = await login(formData.email, formData.password);
+        if (result.success) {
           router.push('/');
         } else {
-          setError('Invalid email or password');
+          setError(result.message || 'Invalid email or password');
         }
       } else {
-        const success = await register(formData.name, formData.email, formData.password);
-        if (success) {
-          // Show success message and switch to login mode
+        const result = await register(formData.name, formData.email, formData.password);
+        if (result.success) {
+          // Show server success message and switch to login mode
           setError('');
-          setSuccessMessage('Registration successful! Please sign in with your new account.');
+          setSuccessMessage(result.message || 'Registration successful! Please check your email to verify your account before signing in.');
           setIsLogin(true);
           setFormData({ name: '', email: '', password: '', confirmPassword: '' });
           setValidationErrors({});
           setTouched({ name: false, email: false, password: false, confirmPassword: false });
         } else {
-          setError('Registration failed. Please try again.');
+          setError(result.message || 'Registration failed. Please try again.');
         }
       }
     } catch (error) {

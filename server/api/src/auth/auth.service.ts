@@ -59,6 +59,40 @@ export class AuthService {
     // Hash password using Argon2id
     const hashedPassword = await SecurityUtils.hashPassword(password);
 
+    // Default preferences
+    const defaultPreferences = {
+      theme: 'light',
+      language: 'en',
+      timezone: 'UTC',
+      dateFormat: 'MM/DD/YYYY',
+      timeFormat: '12h',
+      notifications: {
+        sound: true,
+        desktop: true,
+      },
+    };
+
+    // Default notification preferences
+    const defaultNotificationPreferences = {
+      email: {
+        marketing: false,
+        security: true,
+        updates: true,
+        weeklyDigest: false
+      },
+      push: {
+        enabled: true,
+        marketing: false,
+        security: true,
+        updates: true
+      },
+      sms: {
+        enabled: false,
+        security: true,
+        twoFactor: true
+      }
+    };
+
     // Create user and verification token in a transaction
     const result = await this.prisma.$transaction(async (tx) => {
       // Create user
@@ -68,6 +102,8 @@ export class AuthService {
           password: hashedPassword,
           name,
           isVerified: false,
+          preferences: defaultPreferences,
+          notificationPreferences: defaultNotificationPreferences,
         },
       });
 

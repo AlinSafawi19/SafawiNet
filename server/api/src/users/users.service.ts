@@ -125,7 +125,42 @@ export class UsersService {
 
     console.log('✅ UsersService - User retrieved successfully:', user.email);
     
-    const { password: _, ...userWithoutPassword } = user;
+    // Provide default values for preferences and notificationPreferences if they are null
+    const userWithDefaults = {
+      ...user,
+      preferences: user.preferences || {
+        theme: 'light',
+        language: 'en',
+        timezone: 'UTC',
+        dateFormat: 'MM/DD/YYYY',
+        timeFormat: '12h',
+        notifications: {
+          sound: true,
+          desktop: true,
+        },
+      },
+      notificationPreferences: user.notificationPreferences || {
+        email: {
+          marketing: false,
+          security: true,
+          updates: true,
+          weeklyDigest: false
+        },
+        push: {
+          enabled: true,
+          marketing: false,
+          security: true,
+          updates: true
+        },
+        sms: {
+          enabled: false,
+          security: true,
+          twoFactor: true
+        }
+      }
+    };
+    
+    const { password: _, ...userWithoutPassword } = userWithDefaults;
     return userWithoutPassword;
   }
 

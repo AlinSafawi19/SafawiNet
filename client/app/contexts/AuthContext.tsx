@@ -21,8 +21,8 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  register: (name: string, email: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   checkAuthStatus: () => void;
   refreshToken: () => Promise<boolean>;
@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     try {
       const response = await fetch('http://localhost:3000/v1/auth/login', {
         method: 'POST',
@@ -93,16 +93,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         // Set user in state (no localStorage needed with cookie-based auth)
         setUser(userData);
-        return true;
+        return { success: true };
       } else {
-        return false;
+        const errorData = await response.json();
+        return { success: false, message: errorData.message || 'Login failed' };
       }
     } catch (error) {
-      return false;
+      return { success: false, message: 'An unexpected error occurred during login.' };
     }
   };
 
-  const register = async (name: string, email: string, password: string): Promise<boolean> => {
+  const register = async (name: string, email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     try {
       const response = await fetch('http://localhost:3000/v1/auth/register', {
         method: 'POST',
@@ -114,13 +115,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (response.ok) {
-        // Don't set user in state after registration - user needs to login separately
-        return true;
+        // Get the success message from the server response
+        const responseData = await response.json();
+        return { success: true, message: responseData.message };
       } else {
-        return false;
+        const errorData = await response.json();
+        return { success: false, message: errorData.message || 'Registration failed' };
       }
     } catch (error) {
-      return false;
+      return { success: false, message: 'An unexpected error occurred during registration.' };
     }
   };
 
