@@ -494,3 +494,38 @@ div::-moz-selection {
     @apply leading-5;
   }
 }
+
+@keyframes dropdownOpen {
+  0% {
+      max-height: 0;
+      opacity: 0;
+  }
+  100% {
+      max-height: 200px;
+      opacity: 1;
+  }
+}
+
+@keyframes dropdownClose {
+  0% {
+      max-height: 200px;
+      opacity: 1;
+  }
+  100% {
+      max-height: 0;
+      opacity: 0;
+  }
+}
+
+.animate-dropdownOpen {
+  animation: dropdownOpen 0.3s ease-out forwards;
+}
+
+.animate-dropdownClose {
+  animation: dropdownClose 0.3s ease-out forwards;
+}
+
+.dropdown-menu {
+  top: 100%;
+  margin-top: 0;
+}

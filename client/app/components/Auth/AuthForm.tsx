@@ -39,10 +39,10 @@ export function AuthForm() {
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
   // Consistent input styling for all form fields
-  const inputClassName = "w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-purple-500 focus:bg-white/15 transition-all duration-300 autofill:bg-white/10 autofill:text-white";
+  const inputClassName = "w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-purple-500 focus:bg-white/15 transition-all duration-300 autofill:bg-white/10 autofill:text-white text-sm sm:text-base";
 
   // Error input styling
-  const errorInputClassName = "w-full px-4 py-3 bg-white/10 border border-red-500/50 rounded-lg text-white placeholder-white/50 focus:border-red-500 focus:bg-white/15 transition-all duration-300 autofill:bg-white/10 autofill:text-white";
+  const errorInputClassName = "w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-red-500/50 rounded-lg text-white placeholder-white/50 focus:border-red-500 focus:bg-white/15 transition-all duration-300 autofill:bg-white/10 autofill:text-white text-sm sm:text-base";
 
   // Validation functions
   const validateEmail = (email: string): string | undefined => {
@@ -277,16 +277,16 @@ export function AuthForm() {
   }, []);
 
   return (
-    <div className="min-h-screen flex bg-zinc-900">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-zinc-900">
       {/* Left side - Form */}
-      <div className="basis-1/2 flex items-center justify-center px-6 sm:px-10 lg:px-14 py-2 sm:py-6 lg:py-10">
-        <div className="w-full max-w-md">
+      <div className="flex-1 lg:basis-1/2 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-3 sm:py-4 md:py-6 lg:py-8 xl:py-10">
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-2">
+          <div className="text-center mb-4 sm:mb-6 md:mb-8">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-2">
               {isLogin ? 'WELCOME BACK' : 'JOIN US'}
             </h1>
-            <p className="text-white/70 text-sm sm:text-base">
+            <p className="text-white/70 text-xs sm:text-sm md:text-base">
               {isLogin
                 ? 'Sign in to your account'
                 : 'Create your account to get started'
@@ -296,23 +296,23 @@ export function AuthForm() {
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
-              <p className="text-red-400 text-sm">{error}</p>
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
+              <p className="text-red-400 text-xs sm:text-sm">{error}</p>
             </div>
           )}
 
           {/* Success Message */}
           {successMessage && (
-            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4">
-              <p className="text-green-400 text-sm">{successMessage}</p>
+            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
+              <p className="text-green-400 text-xs sm:text-sm">{successMessage}</p>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 md:space-y-6">
             {!isLogin && (
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-white/80 mb-2">
+                <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2">
                   Full Name
                 </label>
                 <input
@@ -333,7 +333,7 @@ export function AuthForm() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
+              <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2">
                 Email Address
               </label>
               <input
@@ -353,7 +353,7 @@ export function AuthForm() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
+              <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2">
                 Password
               </label>
               <input
@@ -377,7 +377,7 @@ export function AuthForm() {
 
             {!isLogin && (
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/80 mb-2">
+                <label htmlFor="confirmPassword" className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2">
                   Confirm Password
                 </label>
                 <input
@@ -400,19 +400,19 @@ export function AuthForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-base disabled:cursor-not-allowed"
+              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[44px] sm:min-h-[48px]"
             >
               {isLoading ? 'PLEASE WAIT...' : (isLogin ? 'SIGN IN' : 'CREATE ACCOUNT')}
             </button>
           </form>
 
           {/* Toggle mode */}
-          <div className="text-center mt-6">
-            <p className="text-white/70 text-sm">
+          <div className="text-center mt-3 sm:mt-4 md:mt-6">
+            <p className="text-white/70 text-xs sm:text-sm">
               {isLogin ? "Don't have an account?" : "Already have an account?"}
               <button
                 onClick={toggleMode}
-                className="ml-2 text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200"
+                className="ml-1 sm:ml-2 text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200 min-h-[32px] px-2 py-1 rounded"
               >
                 {isLogin ? 'Sign up' : 'Sign in'}
               </button>
@@ -422,7 +422,7 @@ export function AuthForm() {
       </div>
 
       {/* Right side - Image */}
-      <div className="basis-1/2 relative hidden sm:block">
+      <div className="flex-1 lg:basis-1/2 relative hidden sm:block">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 to-pink-900/80 z-10"></div>
         <Image
           src="https://static.wixstatic.com/media/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg/v1/fill/w_918,h_585,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg"
@@ -431,10 +431,10 @@ export function AuthForm() {
           width={1000}
           height={800}
         />
-        <div className="absolute inset-0 z-20 flex items-center justify-center">
+        <div className="absolute inset-0 z-20 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="text-center text-white">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">NETWORKING MADE SIMPLE</h2>
-            <p className="text-lg text-white/80 max-w-md">
+            <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 md:mb-4">NETWORKING MADE SIMPLE</h2>
+            <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/80 max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md">
               Join the community of professionals and discover premium networking solutions
             </p>
           </div>

@@ -203,6 +203,15 @@ const Header = () => {
                             <span className="text-base font-medium">{currentLanguage}</span>
                         </button>
 
+                        {/* Mobile User Info - Always Visible */}
+                        {user && (
+                            <div className="lg:hidden flex items-center space-x-2">
+                                <span className="text-sm font-medium text-gray-700 truncate max-w-24">
+                                    {user.name}
+                                </span>
+                            </div>
+                        )}
+
                         {/* Login/Register or User Dropdown */}
                         {user ? (
                             <UserDropdown user={user} />
