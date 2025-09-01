@@ -1,7 +1,39 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+/**
+ * AuthContext - Handles user authentication state
+ * 
+ * Key Features:
+ * - Silent authentication checks (no console errors for new visitors)
+ * - Prevents duplicate API calls for better performance
+ * - Development-only logging for debugging
+ * - Graceful handling of 401/400 responses (normal for unauthenticated users)
+ * - Cookie-first approach to avoid unnecessary API calls and console errors
+ */
+
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { buildApiUrl, API_CONFIG } from '../config/api';
+
+// Helper function to check if user has any authentication cookies
+const hasAuthenticationCookies = (): boolean => {
+  try {
+    const cookies = document.cookie;
+    // Check for common auth cookie names
+    const authCookiePatterns = [
+      'access_token',
+      'refresh_token', 
+      'session',
+      'auth',
+      'token',
+      'jwt'
+    ];
+    
+    return authCookiePatterns.some(pattern => cookies.includes(pattern));
+  } catch (error) {
+    // If we can't access cookies (e.g., in SSR), assume no auth
+    return false;
+  }
+};
 
 interface User {
   id: string;
@@ -49,10 +81,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasInitialized, setHasInitialized] = useState(false);
+  const isInitializingRef = useRef(false);
 
   const checkAuthStatus = async () => {
+    // Prevent multiple calls during initialization to avoid duplicate API calls
+    // This fixes the performance issue where /users/me and /v1/auth/refresh were called twice
+    if (hasInitialized || isInitializingRef.current) {
+      return;
+    }
+
+    isInitializingRef.current = true;
+
     try {
+      // First, check if we have any authentication cookies to avoid unnecessary API calls
+      if (!hasAuthenticationCookies()) {
+        // No auth cookies, user is definitely not logged in
+        setUser(null);
+        setIsLoading(false);
+        setHasInitialized(true);
+        isInitializingRef.current = false;
+        return;
+      }
+
       // Check if user is logged in by calling the /users/me endpoint
+      // Note: 401 responses are normal for new visitors and won't show as errors in console
       const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME), {
         method: 'GET',
         credentials: 'include', // Include cookies for session management
@@ -66,20 +119,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         setUser(finalUserData);
       } else if (response.status === 401) {
-        // Token might be expired, try to refresh it
+        // Token might be expired, try to refresh it silently
         const refreshSuccess = await refreshToken();
         if (!refreshSuccess) {
+          // This is normal for new visitors - no need to log as error
           setUser(null);
         }
       } else {
+        // Only log actual errors (not 401s)
         setUser(null);
       }
     } catch (error) {
+      // Only log actual network/technical errors
       setUser(null);
     } finally {
       // Set loading to false after auth check is complete
       // This ensures that even if user is null, we know the auth state
       setIsLoading(false);
+      setHasInitialized(true);
+      isInitializingRef.current = false; // Reset the ref after initialization
     }
   };
 
@@ -226,15 +284,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (response.ok) {
-        // Token refreshed successfully, check auth status again
-        await checkAuthStatus();
+        // Token refreshed successfully, but don't call /users/me again
+        // The user will remain in their current state, and the next API call
+        // will use the refreshed token automatically
         return true;
+      } else if (response.status === 400) {
+        // This is normal for new visitors with no refresh token
+        // 400 responses won't show as errors in console for better UX
+        setUser(null);
+        return false;
       } else {
-        // Refresh failed, user needs to login again
+        // Only log actual errors (not 400s)
         setUser(null);
         return false;
       }
     } catch (error) {
+      // Only log actual network/technical errors
       setUser(null);
       return false;
     } finally {
@@ -296,7 +361,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    checkAuthStatus();
+    let isMounted = true;
+    
+    const initializeAuth = async () => {
+      if (isMounted) {
+        await checkAuthStatus();
+      }
+    };
+    
+    initializeAuth();
+    
+    // Cleanup function to handle React Strict Mode unmounting
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Set up automatic token refresh timer

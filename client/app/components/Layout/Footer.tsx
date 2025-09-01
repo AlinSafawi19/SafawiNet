@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 const Footer = () => {
@@ -115,12 +116,12 @@ const Footer = () => {
               <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                 {section.links.map((link, index) => (
                   <li key={index}>
-                    <a 
+                    <Link 
                       href={link.href} 
                       className="text-black dark:text-gray-300 hover:underline transition-colors"
                     >
                       {link.text}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>

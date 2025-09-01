@@ -10,7 +10,8 @@
       "notifications": "Notifications",
       "wishlist": "Wishlist",
       "cart": "Cart",
-      "alerts": "Alerts"
+      "alerts": "Alerts",
+      "toggleLanguage": "Toggle Language"
     },
     "language": {
       "en": "EN",

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
     HiBell,
     HiOutlineShoppingCart,
@@ -16,14 +17,10 @@ import LanguageToggle from './LanguageToggle';
 
 const Header = () => {
     const { user, logout } = useAuth();
-    const { locale, setLocale, t } = useLanguage();
+    const { locale, t } = useLanguage();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
-
-    const toggleLanguage = () => {
-        const newLocale = locale === 'en' ? 'ar' : 'en';
-        setLocale(newLocale);
-    };
+    const [isScrolled, setIsScrolled] = useState(false);
 
     const toggleMobileMenu = () => {
         if (!isAnimating) {
@@ -65,31 +62,49 @@ const Header = () => {
         };
     }, [isMobileMenuOpen]);
 
+    // Scroll detection
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 0) {
+                setIsScrolled(true);
+            } else {
+                setIsScrolled(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
     return (
         <>
-            <header className="h-header z-40 w-full bg-white dark:bg-dark-surface shadow-sm dark:shadow-gray-900/20 transition-colors duration-200">
+            <header className={`fixed top-0 left-0 right-0 h-header z-40 w-full bg-white dark:bg-dark-surface shadow-sm dark:shadow-gray-900/20 transition-all duration-300 ease-in-out ${
+                isScrolled 
+                    ? 'shadow-lg dark:shadow-gray-900/40 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-sm' 
+                    : 'shadow-sm dark:shadow-gray-900/20'
+            }`}>
                 <div className="flex justify-between px-4 sm:px-6 lg:px-14 h-header items-center">
                     {/* Logo */}
                     <div className="flex justify-start">
                         <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold">
-                            <a href="/" className="hover:text-purple-500 transition-colors">$AFAWI NETT</a>
+                            <Link href="/" className="hover:text-purple-500 transition-colors">$AFAWI NETT</Link>
                         </h2>
                     </div>
 
                     {/* Main Navigation */}
                     <nav className={`hidden lg:flex items-center ${locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''} space-x-8`}>
-                        <a href="/" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
+                        <Link href="/" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
                             {t('header.navigation.home')}
-                        </a>
-                        <a href="/products" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
+                        </Link>
+                        <Link href="/products" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
                             {t('header.navigation.products')}
-                        </a>
-                        <a href="/deals" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
+                        </Link>
+                        <Link href="/deals" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
                             {t('header.navigation.deals')}
-                        </a>
-                        <a href="/about" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
+                        </Link>
+                        <Link href="/about" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
                             {t('header.navigation.about')}
-                        </a>
+                        </Link>
                     </nav>
 
                     {/* Desktop Navigation & Mobile Menu Button */}
@@ -102,12 +117,12 @@ const Header = () => {
                             >
                                 {HiBell({ className: "w-6 h-6" })}
                             </button>
-                            <a href="/wishlist" className="hover:text-purple-500 transition-colors" aria-label={t('header.actions.wishlist')}>
+                            <Link href="/wishlist" className="hover:text-purple-500 transition-colors" aria-label={t('header.actions.wishlist')}>
                                 {HiHeart({ className: "w-6 h-6" })}
-                            </a>
-                            <a href="/cart" className="hover:text-purple-500 transition-colors" aria-label={t('header.actions.cart')}>
+                            </Link>
+                            <Link href="/cart" className="hover:text-purple-500 transition-colors" aria-label={t('header.actions.cart')}>
                                 {HiOutlineShoppingCart({ className: "w-6 h-6" })}
-                            </a>
+                            </Link>
 
                             {/* Theme Toggle Button */}
                             <ThemeToggle />
@@ -119,9 +134,9 @@ const Header = () => {
                             {user ? (
                                 <UserDropdown user={user} />
                             ) : (
-                                <a href="/auth" className="hover:text-purple-500 transition-colors text-base">
+                                <Link href="/auth" className="hover:text-purple-500 transition-colors text-base">
                                     {t('header.auth.loginRegister')}
-                                </a>
+                                </Link>
                             )}
                         </nav>
 
@@ -130,9 +145,9 @@ const Header = () => {
                             {user ? (
                                 <UserDropdown user={user} />
                             ) : (
-                                <a href="/auth" className="hover:text-purple-500 transition-colors text-sm font-medium px-3 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200">
+                                <Link href="/auth" className="hover:text-purple-500 transition-colors text-sm font-medium px-3 py-1 rounded-md transition-all duration-200">
                                     {t('header.auth.loginRegister')}
-                                </a>
+                                </Link>
                             )}
                         </div>
 
@@ -211,34 +226,34 @@ const Header = () => {
                                     {t('header.mobile.navigation')}
                                 </h3>
                                 <div className={`grid grid-cols-2 gap-4 max-w-xs mx-auto w-full place-items-center ${locale === 'ar' ? 'rtl [&>*:nth-child(1)]:order-2 [&>*:nth-child(2)]:order-1 [&>*:nth-child(3)]:order-4 [&>*:nth-child(4)]:order-3' : ''}`}>
-                                    <a
+                                    <Link
                                         href="/"
                                         className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
                                         onClick={closeMobileMenu}
                                     >
                                         {t('header.navigation.home')}
-                                    </a>
-                                    <a
+                                    </Link>
+                                    <Link
                                         href="/products"
                                         className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
                                         onClick={closeMobileMenu}
                                     >
                                         {t('header.navigation.products')}
-                                    </a>
-                                    <a
+                                    </Link>
+                                    <Link
                                         href="/deals"
                                         className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
                                         onClick={closeMobileMenu}
                                     >
                                         {t('header.navigation.deals')}
-                                    </a>
-                                    <a
+                                    </Link>
+                                    <Link
                                         href="/about"
                                         className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
                                         onClick={closeMobileMenu}
                                     >
                                         {t('header.navigation.about')}
-                                    </a>
+                                    </Link>
                                 </div>
                             </div>
 
@@ -251,7 +266,7 @@ const Header = () => {
                                     {t('header.mobile.quickActions')}
                                 </h3>
                                 <div className="flex justify-center space-x-6">
-                                    <a
+                                    <Link
                                         href="/wishlist"
                                         className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
                                         onClick={closeMobileMenu}
@@ -260,8 +275,8 @@ const Header = () => {
                                             {HiHeart({ className: "w-7 h-7" })}
                                         </div>
                                         <span className="text-sm text-white/80 group-hover:text-white">{t('header.actions.wishlist')}</span>
-                                    </a>
-                                    <a
+                                    </Link>
+                                    <Link
                                         href="/cart"
                                         className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
                                         onClick={closeMobileMenu}
@@ -270,7 +285,7 @@ const Header = () => {
                                             {HiOutlineShoppingCart({ className: "w-7 h-7" })}
                                         </div>
                                         <span className="text-sm text-white/80 group-hover:text-white">{t('header.actions.cart')}</span>
-                                    </a>
+                                    </Link>
                                     <button
                                         className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
                                     >
@@ -304,13 +319,13 @@ const Header = () => {
                                             </button>
                                         </div>
                                     ) : (
-                                        <a
+                                        <Link
                                             href="/auth"
                                             className="px-6 py-2 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300 text-base"
                                             onClick={closeMobileMenu}
                                         >
                                             {t('header.auth.loginRegister')}
-                                        </a>
+                                        </Link>
                                     )}
 
                                     {/* Language & Theme Section */}
@@ -319,16 +334,11 @@ const Header = () => {
                                             {t('header.mobile.languageTheme')}
                                         </h4>
                                         <div className="flex space-x-3">
-                                            <button
-                                                onClick={toggleLanguage}
-                                                className="px-4 py-2 rounded-full border border-white/30 hover:border-white/50 text-white font-medium transition-all duration-300 text-base"
-                                            >
-                                                {locale === 'en' ? 'العربية' : 'English'}
-                                            </button>
+
+                                            <LanguageToggle variant="mobile" />
+
                                             {/* Theme Toggle for Mobile */}
-                                            <div className="px-4 py-2 rounded-full border border-white/30 hover:border-white/50 transition-all duration-300">
-                                                <ThemeToggle variant="mobile" />
-                                            </div>
+                                            <ThemeToggle variant="mobile" />
                                         </div>
                                     </div>
                                 </div>
@@ -337,6 +347,9 @@ const Header = () => {
                     </div>
                 </div>
             </header>
+            
+            {/* Spacer to prevent content from being hidden behind fixed header */}
+            <div className="h-header"></div>
         </>
     );
 };

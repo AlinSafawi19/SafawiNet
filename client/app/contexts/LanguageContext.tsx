@@ -85,21 +85,35 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
 
   // Set locale and update backend preferences
   const setLocale = async (newLocale: Locale) => {
+    // Update local state immediately for responsive UI
     setLocaleState(newLocale);
+    
+    // Store in localStorage for persistence across sessions
     localStorage.setItem('locale', newLocale);
 
-    // Update backend preferences if user is logged in
+    // Update user preferences in database if user is logged in
     if (user) {
       try {
-        await authenticatedFetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.PREFERENCES), {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ language: newLocale }),
-        });
+        const response = await authenticatedFetch(
+          buildApiUrl(API_CONFIG.ENDPOINTS.USERS.PREFERENCES),
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ language: newLocale }),
+          }
+        );
+
+        if (!response.ok) {
+          console.error('Failed to update language preference:', response.statusText);
+          // Optionally revert the locale if the backend update fails
+          // setLocaleState(locale);
+        }
       } catch (error) {
-        console.error('Failed to update language preference:', error);
+        console.error('Error updating language preference:', error);
+        // Optionally revert the locale if the backend update fails
+        // setLocaleState(locale);
       }
     }
   };

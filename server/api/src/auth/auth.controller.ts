@@ -601,8 +601,6 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({
     status: 200,
@@ -615,17 +613,27 @@ export class AuthController {
     },
   })
   async logout(@Request() req: any, @Res({ passthrough: true }) res: Response) {
-    const refreshToken = req.cookies?.refreshToken;
-    
-    if (refreshToken) {
-      // Invalidate the refresh token
-      await this.authService.invalidateRefreshToken(refreshToken);
+    try {
+      const refreshToken = req.cookies?.refreshToken;
+      
+      if (refreshToken) {
+        // Invalidate the refresh token
+        await this.authService.invalidateRefreshToken(refreshToken);
+      }
+      
+      // Clear cookies regardless of whether refresh token exists
+      this.authService.clearAuthCookies(res);
+      
+      return { message: 'Logged out successfully' };
+    } catch (error) {
+      // Log the error but don't fail the logout
+      console.error('Error during logout:', error);
+      
+      // Still clear cookies even if token invalidation fails
+      this.authService.clearAuthCookies(res);
+      
+      return { message: 'Logged out successfully' };
     }
-    
-    // Clear cookies
-    this.authService.clearAuthCookies(res);
-    
-    return { message: 'Logged out successfully' };
   }
 
   @Post('recover/complete')

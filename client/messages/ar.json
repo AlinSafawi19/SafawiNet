@@ -10,7 +10,8 @@
       "notifications": "الإشعارات",
       "wishlist": "المفضلة",
       "cart": "السلة",
-      "alerts": "التنبيهات"
+      "alerts": "التنبيهات",
+      "toggleLanguage": "تبديل اللغة"
     },
     "language": {
       "en": "EN",

@@ -33,7 +33,7 @@ import { PerformanceController } from './common/controllers/performance.controll
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    PassportModule.register({ defaultStrategy: 'jwt' }),
+    PassportModule.register({}),
     ThrottlerModule.forRoot([
       {
         ttl: parseInt(process.env.RATE_LIMIT_TTL || '60000'),

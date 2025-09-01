@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { HiCheckCircle, HiXCircle, HiExclamationTriangle } from 'react-icons/hi2';
 import { useLanguage } from '../contexts/LanguageContext';
+import Link from 'next/link';
 
 interface VerificationState {
     status: 'verifying' | 'success' | 'error' | 'invalid';
@@ -135,12 +136,12 @@ export default function VerifyEmailPage() {
                 )}
 
                 {verificationState.status === 'invalid' && (
-                    <a
+                    <Link
                         href="/auth"
                         className="inline-block bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base"
                     >
                         {t('verifyEmail.goToLogin')}
-                    </a>
+                    </Link>
                 )}
 
                 {verificationState.status === 'verifying' && (
