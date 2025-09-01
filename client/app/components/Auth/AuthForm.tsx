@@ -175,7 +175,10 @@ export function AuthForm() {
         if (result.success) {
           router.push('/');
         } else {
-          if (result.message) {
+          if (result.messageKey) {
+            setErrorKey(result.messageKey);
+            setError('');
+          } else if (result.message) {
             setError(result.message);
             setErrorKey('');
           } else {
@@ -189,7 +192,10 @@ export function AuthForm() {
           // Show server success message and switch to login mode
           setError('');
           setErrorKey('');
-          if (result.message) {
+          if (result.messageKey) {
+            setSuccessKey(result.messageKey);
+            setSuccessMessage('');
+          } else if (result.message) {
             setSuccessMessage(result.message);
             setSuccessKey('');
           } else {
@@ -201,7 +207,10 @@ export function AuthForm() {
           setValidationErrors({});
           setTouched({ name: false, email: false, password: false, confirmPassword: false });
         } else {
-          if (result.message) {
+          if (result.messageKey) {
+            setErrorKey(result.messageKey);
+            setError('');
+          } else if (result.message) {
             setError(result.message);
             setErrorKey('');
           } else {

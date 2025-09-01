@@ -23,8 +23,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
-  register: (name: string, email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string; messageKey?: string }>;
+  register: (name: string, email: string, password: string) => Promise<{ success: boolean; message?: string; messageKey?: string }>;
   logout: () => Promise<void>;
   checkAuthStatus: () => void;
   refreshToken: () => Promise<boolean>;
@@ -83,7 +83,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; message?: string; messageKey?: string }> => {
     try {
       const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN), {
         method: 'POST',
@@ -103,14 +103,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return { success: true };
       } else {
         const errorData = await response.json();
-        return { success: false, message: errorData.message || 'Login failed' };
+        // Map server error messages to translation keys
+        const messageKey = mapServerErrorToTranslationKey(errorData.message);
+        return { 
+          success: false, 
+          message: messageKey ? undefined : errorData.message,
+          messageKey: messageKey || undefined
+        };
       }
     } catch (error) {
-      return { success: false, message: 'An unexpected error occurred during login.' };
+      return { 
+        success: false, 
+        messageKey: 'auth.messages.generalError'
+      };
     }
   };
 
-  const register = async (name: string, email: string, password: string): Promise<{ success: boolean; message?: string }> => {
+  const register = async (name: string, email: string, password: string): Promise<{ success: boolean; message?: string; messageKey?: string }> => {
     try {
       const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.REGISTER), {
         method: 'POST',
@@ -124,14 +133,80 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.ok) {
         // Get the success message from the server response
         const responseData = await response.json();
-        return { success: true, message: responseData.message };
+        // Map server success messages to translation keys
+        const messageKey = mapServerMessageToTranslationKey(responseData.message);
+        return { 
+          success: true, 
+          message: messageKey ? undefined : responseData.message,
+          messageKey: messageKey || undefined
+        };
       } else {
         const errorData = await response.json();
-        return { success: false, message: errorData.message || 'Registration failed' };
+        // Map server error messages to translation keys
+        const messageKey = mapServerErrorToTranslationKey(errorData.message);
+        return { 
+          success: false, 
+          message: messageKey ? undefined : errorData.message,
+          messageKey: messageKey || undefined
+        };
       }
     } catch (error) {
-      return { success: false, message: 'An unexpected error occurred during registration.' };
+      return { 
+        success: false, 
+        messageKey: 'auth.messages.generalError'
+      };
     }
+  };
+
+  // Helper function to map server error messages to translation keys
+  const mapServerErrorToTranslationKey = (serverMessage: string): string | null => {
+    const errorMapping: { [key: string]: string } = {
+      'User with this email already exists': 'auth.messages.userAlreadyExists',
+      'Account temporarily locked due to too many failed attempts': 'auth.messages.accountLocked',
+      'Invalid credentials': 'auth.messages.invalidCredentials',
+      'Invalid or expired verification token': 'auth.messages.invalidVerificationToken',
+      'Invalid 2FA code': 'auth.messages.invalidTwoFactorCode',
+      'Invalid or expired password reset token': 'auth.messages.invalidPasswordResetToken',
+      'Invalid refresh token': 'auth.messages.invalidRefreshToken',
+      'User not found': 'auth.messages.userNotFound',
+      '2FA is already enabled': 'auth.messages.twoFactorAlreadyEnabled',
+      '2FA setup not found. Please run setup first.': 'auth.messages.twoFactorSetupNotFound',
+      'Invalid TOTP code': 'auth.messages.invalidTOTPCode',
+      '2FA is not enabled': 'auth.messages.twoFactorNotEnabled',
+      'Invalid code': 'auth.messages.invalidCode',
+      'Recovery already in progress. Please wait or check your email.': 'auth.messages.recoveryInProgress',
+      'Invalid or expired recovery token': 'auth.messages.invalidRecoveryToken',
+      'Email address is already in use by another account': 'auth.messages.emailAlreadyInUse',
+      'No recovery staging found or new email not set': 'auth.messages.noRecoveryStaging',
+      'No refresh token provided': 'auth.messages.noRefreshTokenProvided',
+      'User is already verified': 'auth.messages.userAlreadyVerified',
+      'Session not found': 'auth.messages.sessionNotFound',
+      'Cannot delete current session': 'auth.messages.cannotDeleteCurrentSession',
+      'Notification not found': 'auth.messages.notificationNotFound'
+    };
+    
+    return errorMapping[serverMessage] || null;
+  };
+
+  // Helper function to map server success messages to translation keys
+  const mapServerMessageToTranslationKey = (serverMessage: string): string | null => {
+    const messageMapping: { [key: string]: string } = {
+      'User registered successfully. Please check your email to verify your account.': 'auth.messages.registrationSuccess',
+      'If an account with this email exists, a password reset link has been sent.': 'auth.messages.passwordResetEmailSent',
+      'Password reset successfully. Please log in with your new password.': 'auth.messages.passwordResetSuccess',
+      'Email verified successfully': 'auth.messages.emailVerified',
+      'Verification email sent successfully': 'auth.messages.verificationEmailSent',
+      'Two-factor authentication enabled successfully': 'auth.messages.twoFactorEnabled',
+      'Two-factor authentication disabled successfully': 'auth.messages.twoFactorDisabled',
+      'Recovery token sent to your recovery email. Please check your inbox.': 'auth.messages.recoveryTokenSent',
+      'If the recovery email is registered, you will receive a recovery token shortly.': 'auth.messages.recoveryEmailNotFound',
+      'Recovery confirmed. Please verify your new email address to complete the process.': 'auth.messages.recoveryConfirmed',
+      'Account recovery completed successfully. Your email has been updated and all sessions have been invalidated.': 'auth.messages.recoveryCompleted',
+      'Token refreshed successfully': 'auth.messages.tokenRefreshed',
+      'Logged out successfully': 'auth.messages.loggedOut'
+    };
+    
+    return messageMapping[serverMessage] || null;
   };
 
   const refreshToken = async (): Promise<boolean> => {

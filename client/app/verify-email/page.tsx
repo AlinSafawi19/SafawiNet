@@ -8,6 +8,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 interface VerificationState {
     status: 'verifying' | 'success' | 'error' | 'invalid';
     message: string;
+    messageKey?: string;
 }
 
 export default function VerifyEmailPage() {
@@ -18,6 +19,16 @@ export default function VerifyEmailPage() {
         status: 'verifying',
         message: t('verifyEmail.verifyingMessage')
     });
+
+    // Helper function to map server messages to translation keys
+    const mapServerMessageToTranslationKey = (serverMessage: string): string | null => {
+        const messageMapping: { [key: string]: string } = {
+            'Email verified successfully': 'auth.messages.emailVerified',
+            'Invalid or expired verification token': 'auth.messages.invalidVerificationToken',
+        };
+        
+        return messageMapping[serverMessage] || null;
+    };
 
     useEffect(() => {
         const verifyEmail = async () => {
@@ -43,9 +54,12 @@ export default function VerifyEmailPage() {
 
                 if (response.ok) {
                     const successData = await response.json();
+                    // Map server success message to translation key
+                    const messageKey = mapServerMessageToTranslationKey(successData.message);
                     setVerificationState({
                         status: 'success',
-                        message: successData.message || t('verifyEmail.successMessage')
+                        message: messageKey ? t(messageKey) : successData.message,
+                        messageKey: messageKey || undefined
                     });
 
                     // Redirect to login page after 3 seconds
@@ -54,9 +68,12 @@ export default function VerifyEmailPage() {
                     }, 3000);
                 } else {
                     const errorData = await response.json();
+                    // Map server error message to translation key
+                    const messageKey = mapServerMessageToTranslationKey(errorData.message);
                     setVerificationState({
                         status: 'error',
-                        message: errorData.message || t('verifyEmail.failedMessage')
+                        message: messageKey ? t(messageKey) : errorData.message,
+                        messageKey: messageKey || undefined
                     });
                 }
             } catch (error) {
@@ -68,7 +85,7 @@ export default function VerifyEmailPage() {
         };
 
         verifyEmail();
-    }, [searchParams, router]);
+    }, [searchParams, router, t]);
 
     const getStatusIcon = () => {
         switch (verificationState.status) {
