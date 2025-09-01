@@ -10,6 +10,7 @@ interface LanguageContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   t: (key: string) => string;
+  isLoading: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -30,6 +31,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   const { user, authenticatedFetch } = useAuth();
   const [locale, setLocaleState] = useState<Locale>('en');
   const [messages, setMessages] = useState<any>({});
+  const [isLoading, setIsLoading] = useState(true);
 
   // Load messages based on current locale
   useEffect(() => {
@@ -57,6 +59,11 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
       if (savedLocale && ['en', 'ar'].includes(savedLocale)) {
         setLocaleState(savedLocale);
       }
+    }
+    // Set loading to false when we have user data or when auth is not loading
+    // user can be null (not authenticated) but auth context is loaded
+    if (user !== undefined) {
+      setIsLoading(false);
     }
   }, [user]);
 
@@ -101,6 +108,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     locale,
     setLocale,
     t,
+    isLoading,
   };
 
   return (

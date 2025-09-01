@@ -81,6 +81,8 @@
       "passwordRequirement": "Password must be at least 8 characters long",
       "signIn": "SIGN IN",
       "createAccount": "CREATE ACCOUNT",
+      "signingIn": "Signing In...",
+      "creatingAccount": "Creating Account...",
       "dontHaveAccount": "Don't have an account?",
       "alreadyHaveAccount": "Already have an account?",
       "signUp": "Sign up",

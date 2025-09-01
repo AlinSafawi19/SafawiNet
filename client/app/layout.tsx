@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import DynamicLangAttribute from './components/DynamicLangAttribute';
+import { AppInitializer } from './components/AppInitializer';
 
 /**
  * Using force dynamic so changes in business assets (e.g. services) are immediately reflected.
@@ -64,12 +65,14 @@ export default function RootLayout({
         <AuthProvider>
           <ThemeProvider>
             <LanguageProvider>
-              <DynamicLangAttribute />
-              <Header />
-              <main className="bg-site dark:bg-dark-bg">{children}</main>
-              <div className="mt-10 sm:mt-20">
-                <Footer />
-              </div>
+              <AppInitializer>
+                <DynamicLangAttribute />
+                <Header />
+                <main className="bg-site dark:bg-dark-bg">{children}</main>
+                <div className="mt-10 sm:mt-20">
+                  <Footer />
+                </div>
+              </AppInitializer>
             </LanguageProvider>
           </ThemeProvider>
         </AuthProvider>

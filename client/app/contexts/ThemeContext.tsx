@@ -10,6 +10,7 @@ interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   isDark: boolean;
+  isLoading: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -30,6 +31,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const { user, authenticatedFetch } = useAuth();
   const [theme, setThemeState] = useState<Theme>('light');
   const [isDark, setIsDark] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Initialize theme from user preferences or localStorage
   useEffect(() => {
@@ -39,7 +41,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     } else if (savedTheme && ['light', 'dark'].includes(savedTheme)) {
       setThemeState(savedTheme);
     }
-  }, [user?.preferences?.theme]);
+    // Set loading to false when we have user data or when auth is not loading
+    // user can be null (not authenticated) but auth context is loaded
+    if (user !== undefined) {
+      setIsLoading(false);
+    }
+  }, [user?.preferences?.theme, user]);
 
   // Apply theme to document
   useEffect(() => {
@@ -83,7 +90,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, isDark }}>
+    <ThemeContext.Provider value={{ theme, setTheme, isDark, isLoading }}>
       {children}
     </ThemeContext.Provider>
   );

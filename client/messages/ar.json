@@ -81,6 +81,8 @@
       "passwordRequirement": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
       "signIn": "تسجيل الدخول",
       "createAccount": "إنشاء حساب",
+      "signingIn": "جاري تسجيل الدخول...",
+      "creatingAccount": "جاري إنشاء الحساب...",
       "dontHaveAccount": "ليس لديك حساب؟",
       "alreadyHaveAccount": "لديك حساب بالفعل؟",
       "signUp": "إنشاء حساب",
