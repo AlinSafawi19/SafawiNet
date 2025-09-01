@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { HiChevronDown, HiArrowRightOnRectangle, HiUser } from 'react-icons/hi2';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { HiUser, HiArrowRightOnRectangle, HiChevronDown } from 'react-icons/hi2';
 
 interface UserDropdownProps {
     user: {
@@ -12,10 +13,14 @@ interface UserDropdownProps {
 }
 
 const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
+    const { logout } = useAuth();
+    const { t, locale } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
-    const { logout } = useAuth();
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Check if current language is RTL
+    const isRTL = locale === 'ar';
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -25,26 +30,29 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
         };
 
         document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen, isAnimating]);
 
     const openDropdown = () => {
-        setIsOpen(true);
-        setIsAnimating(false);
+        if (!isAnimating) {
+            setIsAnimating(true);
+            setIsOpen(true);
+            // Reset animation state after animation completes
+            setTimeout(() => setIsAnimating(false), 600);
+        }
     };
 
     const closeDropdown = () => {
-        setIsAnimating(true);
-        setTimeout(() => {
+        if (!isAnimating) {
+            setIsAnimating(true);
             setIsOpen(false);
-            setIsAnimating(false);
-        }, 300);
+            // Reset animation state after animation completes
+            setTimeout(() => setIsAnimating(false), 600);
+        }
     };
 
-    const handleLogout = async () => {
-        await logout();
+    const handleLogout = () => {
+        logout();
         closeDropdown();
     };
 
@@ -52,43 +60,71 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => isOpen ? closeDropdown() : openDropdown()}
-                className="flex items-center space-x-2 hover:text-purple-500 transition-colors text-base font-medium"
+                className="flex items-center hover:text-purple-500 transition-colors text-base font-medium space-x-2"
                 aria-label="User menu"
                 aria-haspopup="true"
+                disabled={isAnimating}
             >
                 <span className="hidden sm:block">{user.name}</span>
-                {HiChevronDown({
-                    className: `w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
-                        }`
+                {HiChevronDown({ 
+                    className: `w-4 h-4 transition-transform duration-400 ease-out ${isOpen ? 'rotate-180' : ''}` 
                 })}
             </button>
 
-            {isOpen && (
-                <div
-                    className={`dropdown-menu absolute right-0 bg-white dark:bg-dark-surface z-50 overflow-hidden min-w-[200px] border border-gray-200 dark:border-dark-border shadow-lg ${isAnimating
-                            ? 'animate-dropdownClose'
-                            : 'animate-dropdownOpen'
-                        }`}
-                >
-                    {/* Menu Items */}
-                    <div className="py-1">
-                        <button
-                            onClick={() => closeDropdown()}
-                            className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-700 dark:hover:text-purple-400 transition-all duration-200 font-medium font-helvetica"
-                        >
-                            {HiUser({ className: "w-4 h-4 mr-3" })}
-                            My Account
-                        </button>
-                        <button
-                            onClick={handleLogout}
-                            className="w-full flex items-center px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-700 dark:hover:text-purple-500 transition-all duration-200 font-medium font-helvetica"
-                        >
-                            {HiArrowRightOnRectangle({ className: "w-4 h-4 mr-3" })}
-                            Logout
-                        </button>
+            {/* Dropdown Container - Positioned to emerge from header */}
+            <div 
+                className={`absolute right-0 top-full w-48 z-50 overflow-hidden transition-all duration-600 ease-out dropdown-container ${
+                    isOpen 
+                        ? 'opacity-100' 
+                        : 'opacity-0'
+                }`}
+            >
+                {/* Dropdown Content - seamless extension of header */}
+                <div className="bg-white dark:bg-gray-800 py-1">
+                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 text-center">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                     </div>
+                    
+                    <button
+                        onClick={() => closeDropdown()}
+                        className={`flex items-center hover:text-purple-500 transition-colors text-sm font-medium space-x-2 w-full px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                            isRTL ? 'text-right justify-end' : 'text-left'
+                        }`}
+                    >
+                        {isRTL ? (
+                            <>
+                                <span>{t('header.auth.myAccount')}</span>
+                                {HiUser({ className: "w-4 h-4 ml-3" })}
+                            </>
+                        ) : (
+                            <>
+                                {HiUser({ className: "w-4 h-4 mr-3" })}
+                                <span>{t('header.auth.myAccount')}</span>
+                            </>
+                        )}
+                    </button>
+                    
+                    <button
+                        onClick={handleLogout}
+                        className={`flex items-center hover:text-purple-500 transition-colors text-sm font-medium space-x-2 w-full px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                            isRTL ? 'text-right justify-end' : 'text-left'
+                        }`}
+                    >
+                        {isRTL ? (
+                            <>
+                                <span>{t('header.auth.logout')}</span>
+                                {HiArrowRightOnRectangle({ className: "w-4 h-4 ml-3" })}
+                            </>
+                        ) : (
+                            <>
+                                {HiArrowRightOnRectangle({ className: "w-4 h-4 mr-3" })}
+                                <span>{t('header.auth.logout')}</span>
+                            </>
+                        )}
+                    </button>
                 </div>
-            )}
+            </div>
         </div>
     );
 };

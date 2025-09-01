@@ -1,0 +1,147 @@
+{
+  "header": {
+    "navigation": {
+      "home": "الرئيسية",
+      "products": "جميع المنتجات",
+      "deals": "العروض والصفقات",
+      "about": "حول"
+    },
+    "actions": {
+      "notifications": "الإشعارات",
+      "wishlist": "المفضلة",
+      "cart": "السلة",
+      "alerts": "التنبيهات"
+    },
+    "language": {
+      "en": "EN",
+      "ar": "AR"
+    },
+    "auth": {
+      "loginRegister": "تسجيل الدخول/التسجيل",
+      "logout": "تسجيل الخروج",
+      "myAccount": "حسابي"
+    },
+    "mobile": {
+      "navigation": "التنقل",
+      "quickActions": "الإجراءات السريعة",
+      "languageTheme": "اللغة والمظهر"
+    }
+  },
+  "home": {
+    "hero": {
+      "title": {
+        "line1": "شبكات بلا",
+        "line2": "تعقيد",
+        "line3": "ببساطة ,"
+      },
+      "subtitle": "حلول الشبكات المميزة من",
+      "cta": "اكتشف الحلول"
+    },
+    "about": {
+      "title": "عني"
+    }
+  },
+  "errors": {
+    "404": {
+      "title": "404",
+      "message": "الصفحة غير موجودة",
+      "description": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها",
+      "goHome": "العودة للرئيسية",
+      "goBack": "العودة للخلف"
+    }
+  },
+  "verifyEmail": {
+    "verifying": "جاري التحقق من البريد الإلكتروني...",
+    "success": "تم التحقق بنجاح!",
+    "failed": "فشل التحقق",
+    "invalidLink": "رابط غير صحيح",
+    "verifyingMessage": "جاري التحقق من بريدك الإلكتروني...",
+    "invalidLinkMessage": "رابط التحقق غير صحيح. يرجى التحقق من بريدك الإلكتروني والمحاولة مرة أخرى.",
+    "successMessage": "تم التحقق من البريد الإلكتروني بنجاح! يمكنك الآن تسجيل الدخول إلى حسابك.",
+    "failedMessage": "فشل التحقق من البريد الإلكتروني. يرجى المحاولة مرة أخرى.",
+    "errorMessage": "حدث خطأ أثناء التحقق. يرجى المحاولة مرة أخرى.",
+    "redirecting": "سيتم توجيهك إلى صفحة تسجيل الدخول خلال 3 ثوانٍ...",
+    "tryAgain": "حاول مرة أخرى",
+    "goToLogin": "اذهب إلى تسجيل الدخول"
+  },
+  "auth": {
+    "form": {
+      "welcomeBack": "مرحباً بعودتك",
+      "joinUs": "انضم إلينا",
+      "signInSubtitle": "سجل دخولك إلى حسابك",
+      "createAccountSubtitle": "أنشئ حسابك للبدء",
+      "fullName": "الاسم الكامل",
+      "fullNamePlaceholder": "أدخل اسمك الكامل",
+      "emailAddress": "عنوان البريد الإلكتروني",
+      "emailPlaceholder": "أدخل بريدك الإلكتروني",
+      "password": "كلمة المرور",
+      "passwordPlaceholder": "أدخل كلمة المرور",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "confirmPasswordPlaceholder": "أكد كلمة المرور",
+      "passwordRequirement": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
+      "signIn": "تسجيل الدخول",
+      "createAccount": "إنشاء حساب",
+      "dontHaveAccount": "ليس لديك حساب؟",
+      "alreadyHaveAccount": "لديك حساب بالفعل؟",
+      "signUp": "إنشاء حساب",
+      "signInLink": "تسجيل الدخول"
+    },
+    "validation": {
+      "nameRequired": "الاسم مطلوب",
+      "nameTooLong": "يجب أن يكون الاسم أقل من 100 حرف",
+      "emailRequired": "البريد الإلكتروني مطلوب",
+      "emailInvalid": "يرجى إدخال عنوان بريد إلكتروني صحيح",
+      "passwordRequired": "كلمة المرور مطلوبة",
+      "passwordTooShort": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
+      "confirmPasswordRequired": "يرجى تأكيد كلمة المرور",
+      "passwordsDoNotMatch": "كلمات المرور غير متطابقة"
+    },
+    "messages": {
+      "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+      "registrationSuccess": "تم التسجيل بنجاح! يرجى التحقق من بريدك الإلكتروني للتحقق من حسابك قبل تسجيل الدخول.",
+      "registrationFailed": "فشل التسجيل. يرجى المحاولة مرة أخرى.",
+      "generalError": "حدث خطأ. يرجى المحاولة مرة أخرى."
+    },
+    "hero": {
+      "title": "شبكات بلا تعقيد ببساطة",
+      "subtitle": "انضم إلى مجتمع المحترفين واكتشف حلول الشبكات المميزة",
+      "imageAlt": "تالي$ا"
+    }
+  },
+  "footer": {
+    "getInTouch": "تواصل معنا",
+    "phone": "الهاتف:",
+    "tagline": "مصدرك الموثوق لأجهزة الكمبيوتر وملحقات الشبكات",
+    "sections": {
+      "quickLinks": "روابط سريعة",
+      "customerSupport": "دعم العملاء",
+      "myAccount": "حسابي",
+      "company": "الشركة"
+    },
+    "links": {
+      "home": "الرئيسية",
+      "allProducts": "جميع المنتجات",
+      "categories": "الفئات",
+      "dealsOffers": "العروض والصفقات",
+      "compatibilityCheck": "فحص التوافق",
+      "helpCenter": "مركز المساعدة",
+      "contactUs": "اتصل بنا",
+      "shippingInfo": "معلومات الشحن",
+      "returnsExchanges": "المرتجعات والتبديلات",
+      "warrantyInfo": "معلومات الضمان",
+      "myAccount": "حسابي",
+      "orderHistory": "سجل الطلبات",
+      "wishlist": "المفضلة",
+      "myReviews": "تقييماتي",
+      "downloads": "التحميلات",
+      "aboutUs": "من نحن",
+      "privacyPolicy": "سياسة الخصوصية",
+      "termsOfService": "شروط الخدمة",
+      "sitemap": "خريطة الموقع"
+    },
+    "copyright": {
+      "by": "شركة",
+      "allRightsReserved": "جميع الحقوق محفوظة"
+    }
+  }
+}

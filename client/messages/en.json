@@ -1,0 +1,147 @@
+{
+  "header": {
+    "navigation": {
+      "home": "Home",
+      "products": "All Products",
+      "deals": "Deals & Offers",
+      "about": "About"
+    },
+    "actions": {
+      "notifications": "Notifications",
+      "wishlist": "Wishlist",
+      "cart": "Cart",
+      "alerts": "Alerts"
+    },
+    "language": {
+      "en": "EN",
+      "ar": "AR"
+    },
+    "auth": {
+      "loginRegister": "Login/Register",
+      "logout": "Logout",
+      "myAccount": "My Account"
+    },
+    "mobile": {
+      "navigation": "Navigation",
+      "quickActions": "Quick Actions",
+      "languageTheme": "Language & Theme"
+    }
+  },
+  "home": {
+    "hero": {
+      "title": {
+        "line1": "NETWORKING",
+        "line2": "MADE",
+        "line3": "SIMPLE"
+      },
+      "subtitle": "PREMIUM NETWORKING SOLUTIONS BY",
+      "cta": "DISCOVER SOLUTIONS"
+    },
+    "about": {
+      "title": "About Me"
+    }
+  },
+  "errors": {
+    "404": {
+      "title": "404",
+      "message": "This page could not be found.",
+      "description": "The page you are looking for doesn't exist or has been moved.",
+      "goHome": "Go Home",
+      "goBack": "Go Back"
+    }
+  },
+  "verifyEmail": {
+    "verifying": "Verifying Email...",
+    "success": "Verification Successful!",
+    "failed": "Verification Failed",
+    "invalidLink": "Invalid Link",
+    "verifyingMessage": "Verifying your email...",
+    "invalidLinkMessage": "Invalid verification link. Please check your email and try again.",
+    "successMessage": "Email verified successfully! You can now log in to your account.",
+    "failedMessage": "Email verification failed. Please try again.",
+    "errorMessage": "An error occurred during verification. Please try again.",
+    "redirecting": "Redirecting to login page in 3 seconds...",
+    "tryAgain": "Try Again",
+    "goToLogin": "Go to Login"
+  },
+  "auth": {
+    "form": {
+      "welcomeBack": "WELCOME BACK",
+      "joinUs": "JOIN US",
+      "signInSubtitle": "Sign in to your account",
+      "createAccountSubtitle": "Create your account to get started",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Enter your full name",
+      "emailAddress": "Email Address",
+      "emailPlaceholder": "Enter your email",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "passwordRequirement": "Password must be at least 8 characters long",
+      "signIn": "SIGN IN",
+      "createAccount": "CREATE ACCOUNT",
+      "dontHaveAccount": "Don't have an account?",
+      "alreadyHaveAccount": "Already have an account?",
+      "signUp": "Sign up",
+      "signInLink": "Sign in"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "nameTooLong": "Name must be less than 100 characters",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email address",
+      "passwordRequired": "Password is required",
+      "passwordTooShort": "Password must be at least 8 characters long",
+      "confirmPasswordRequired": "Please confirm your password",
+      "passwordsDoNotMatch": "Passwords do not match"
+    },
+    "messages": {
+      "invalidCredentials": "Invalid email or password",
+      "registrationSuccess": "Registration successful! Please check your email to verify your account before signing in.",
+      "registrationFailed": "Registration failed. Please try again.",
+      "generalError": "An error occurred. Please try again."
+    },
+    "hero": {
+      "title": "NETWORKING MADE SIMPLE",
+      "subtitle": "Join the community of professionals and discover premium networking solutions",
+      "imageAlt": "TALI$A"
+    }
+  },
+  "footer": {
+    "getInTouch": "GET IN TOUCH",
+    "phone": "PHONE:",
+    "tagline": "YOUR TRUSTED SOURCE FOR COMPUTERS & NETWORK ACCESSORIES",
+    "sections": {
+      "quickLinks": "Quick Links",
+      "customerSupport": "Customer Support",
+      "myAccount": "My Account",
+      "company": "Company"
+    },
+    "links": {
+      "home": "Home",
+      "allProducts": "All Products",
+      "categories": "Categories",
+      "dealsOffers": "Deals & Offers",
+      "compatibilityCheck": "Compatibility Check",
+      "helpCenter": "Help Center",
+      "contactUs": "Contact Us",
+      "shippingInfo": "Shipping Info",
+      "returnsExchanges": "Returns & Exchanges",
+      "warrantyInfo": "Warranty Info",
+      "myAccount": "My Account",
+      "orderHistory": "Order History",
+      "wishlist": "Wishlist",
+      "myReviews": "My Reviews",
+      "downloads": "Downloads",
+      "aboutUs": "About Us",
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service",
+      "sitemap": "Sitemap"
+    },
+    "copyright": {
+      "by": "BY",
+      "allRightsReserved": "ALL RIGHTS RESERVED."
+    }
+  }
+}

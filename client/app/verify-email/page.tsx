@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { HiCheckCircle, HiXCircle, HiExclamationTriangle } from 'react-icons/hi2';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface VerificationState {
     status: 'verifying' | 'success' | 'error' | 'invalid';
@@ -12,9 +13,10 @@ interface VerificationState {
 export default function VerifyEmailPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
+    const { t } = useLanguage();
     const [verificationState, setVerificationState] = useState<VerificationState>({
         status: 'verifying',
-        message: 'Verifying your email...'
+        message: t('verifyEmail.verifyingMessage')
     });
 
     useEffect(() => {
@@ -24,7 +26,7 @@ export default function VerifyEmailPage() {
             if (!token) {
                 setVerificationState({
                     status: 'invalid',
-                    message: 'Invalid verification link. Please check your email and try again.'
+                    message: t('verifyEmail.invalidLinkMessage')
                 });
                 return;
             }
@@ -43,7 +45,7 @@ export default function VerifyEmailPage() {
                     const successData = await response.json();
                     setVerificationState({
                         status: 'success',
-                        message: successData.message || 'Email verified successfully! You can now log in to your account.'
+                        message: successData.message || t('verifyEmail.successMessage')
                     });
 
                     // Redirect to login page after 3 seconds
@@ -54,13 +56,13 @@ export default function VerifyEmailPage() {
                     const errorData = await response.json();
                     setVerificationState({
                         status: 'error',
-                        message: errorData.message || 'Email verification failed. Please try again.'
+                        message: errorData.message || t('verifyEmail.failedMessage')
                     });
                 }
             } catch (error) {
                 setVerificationState({
                     status: 'error',
-                    message: 'An error occurred during verification. Please try again.'
+                    message: t('verifyEmail.errorMessage')
                 });
             }
         };
@@ -90,10 +92,10 @@ export default function VerifyEmailPage() {
                 </div>
 
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                    {verificationState.status === 'verifying' && 'Verifying Email...'}
-                    {verificationState.status === 'success' && 'Verification Successful!'}
-                    {verificationState.status === 'error' && 'Verification Failed'}
-                    {verificationState.status === 'invalid' && 'Invalid Link'}
+                    {verificationState.status === 'verifying' && t('verifyEmail.verifying')}
+                    {verificationState.status === 'success' && t('verifyEmail.success')}
+                    {verificationState.status === 'error' && t('verifyEmail.failed')}
+                    {verificationState.status === 'invalid' && t('verifyEmail.invalidLink')}
                 </h1>
 
                 <p className="text-gray-600 dark:text-gray-300 mb-8">
@@ -102,7 +104,7 @@ export default function VerifyEmailPage() {
 
                 {verificationState.status === 'success' && (
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Redirecting to login page in 3 seconds...
+                        {t('verifyEmail.redirecting')}
                     </p>
                 )}
 
@@ -111,7 +113,7 @@ export default function VerifyEmailPage() {
                         onClick={() => window.location.reload()}
                         className="bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base"
                     >
-                        Try Again
+                        {t('verifyEmail.tryAgain')}
                     </button>
                 )}
 
@@ -120,7 +122,7 @@ export default function VerifyEmailPage() {
                         href="/auth"
                         className="inline-block bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base"
                     >
-                        Go to Login
+                        {t('verifyEmail.goToLogin')}
                     </a>
                 )}
 

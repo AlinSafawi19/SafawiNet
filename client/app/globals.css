@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Arabic Calligraphy Font Import - Font loaded via HTML head */
+
 @font-face {
   font-display: block;
   font-family: Avenir-LT-W01_35-Light1475496;
@@ -54,10 +56,83 @@
     font-family: Helvetica-W01-Light, sans-serif;
   }
 
+  .alkalami-regular {
+    font-family: "Alkalami", serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+
+  /* Header navigation styling - thinner text */
+  header nav a {
+    font-weight: 300 !important;
+  }
+
+  header nav button {
+    font-weight: 300 !important;
+  }
+
   h1,
   .title {
     @apply font-default;
     @apply text-2xl;
+  }
+
+  /* Arabic h1 styling when language is Arabic */
+  html[lang="ar"] .home-screen h1,
+  html[lang="ar"] .home-screen .title {
+    @apply alkalami-regular;
+    @apply text-4xl;
+    @apply sm:text-6xl;
+    @apply lg:text-7xl;
+    @apply xl:text-8xl;
+  }
+
+  /* Arabic h1 styling when language is Arabic */
+  html[lang="ar"] footer h1 {
+    @apply alkalami-regular;
+    @apply text-2xl;
+    @apply sm:text-4xl;
+    @apply lg:text-5xl;
+    @apply xl:text-6xl;
+  }
+
+  html[lang="ar"] .auth-screen h1 {
+    @apply alkalami-regular;
+    @apply text-xl;
+    @apply sm:text-3xl;
+    @apply lg:text-4xl;
+    @apply xl:text-5xl;
+  }
+
+  /* RTL Support for Auth Form */
+  .rtl {
+    direction: rtl;
+    text-align: right;
+  }
+
+  .rtl .text-center {
+    text-align: center;
+  }
+
+  .rtl input,
+  .rtl label {
+    text-align: right;
+  }
+
+  .rtl .ml-1 {
+    margin-left: 0;
+    margin-right: 0.25rem;
+  }
+
+  .rtl .ml-2 {
+    margin-left: 0;
+    margin-right: 0.5rem;
+  }
+
+  .rtl .sm\\:ml-2 {
+    margin-left: 0;
+    margin-right: 0.5rem;
   }
 
   h2 {
@@ -98,6 +173,8 @@ a {
 * {
   box-sizing: border-box;
 }
+
+
 
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
@@ -178,6 +255,7 @@ input.bg-white\/10:-webkit-autofill:active {
   from {
     background-color: rgba(255, 255, 255, 0.05);
   }
+
   to {
     background-color: rgba(255, 255, 255, 0.1);
   }
@@ -236,13 +314,23 @@ form input:-webkit-autofill:active {
 
 /* Autofill detection animations */
 @keyframes onAutoFillStart {
-  from {/**/}
-  to {/**/}
+  from {
+    /**/
+  }
+
+  to {
+    /**/
+  }
 }
 
 @keyframes onAutoFillCancel {
-  from {/**/}
-  to {/**/}
+  from {
+    /**/
+  }
+
+  to {
+    /**/
+  }
 }
 
 /* Apply animations to inputs for autofill detection */
@@ -290,6 +378,7 @@ input[type="text"]:autofill {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -301,6 +390,7 @@ input[type="text"]:autofill {
     transform: translateX(0);
     opacity: 1;
   }
+
   to {
     transform: translateX(100%);
     opacity: 0;
@@ -317,13 +407,15 @@ input[type="text"]:autofill {
 
 /* Custom Selection Styles - Replace default blue selection */
 ::selection {
-  background-color: #9333ea; /* Purple-600 */
+  background-color: #9333ea;
+  /* Purple-600 */
   color: #ffffff;
   text-shadow: none;
 }
 
 ::-moz-selection {
-  background-color: #9333ea; /* Purple-600 */
+  background-color: #9333ea;
+  /* Purple-600 */
   color: #ffffff;
   text-shadow: none;
 }
@@ -331,48 +423,56 @@ input[type="text"]:autofill {
 /* Enhanced selection for different elements */
 input::selection,
 textarea::selection {
-  background-color: #a855f7; /* Purple-500 */
+  background-color: #a855f7;
+  /* Purple-500 */
   color: #ffffff;
 }
 
 input::-moz-selection,
 textarea::-moz-selection {
-  background-color: #a855f7; /* Purple-500 */
+  background-color: #a855f7;
+  /* Purple-500 */
   color: #ffffff;
 }
 
 /* Selection for code blocks and pre elements */
 pre::selection,
 code::selection {
-  background-color: #7c3aed; /* Purple-700 */
+  background-color: #7c3aed;
+  /* Purple-700 */
   color: #ffffff;
 }
 
 pre::-moz-selection,
 code::-moz-selection {
-  background-color: #7c3aed; /* Purple-700 */
+  background-color: #7c3aed;
+  /* Purple-700 */
   color: #ffffff;
 }
 
 /* Selection for links */
 a::selection {
-  background-color: #8b5cf6; /* Purple-500 */
+  background-color: #8b5cf6;
+  /* Purple-500 */
   color: #ffffff;
 }
 
 a::-moz-selection {
-  background-color: #8b5cf6; /* Purple-500 */
+  background-color: #8b5cf6;
+  /* Purple-500 */
   color: #ffffff;
 }
 
 /* Selection for buttons */
 button::selection {
-  background-color: #9333ea; /* Purple-600 */
+  background-color: #9333ea;
+  /* Purple-600 */
   color: #ffffff;
 }
 
 button::-moz-selection {
-  background-color: #9333ea; /* Purple-600 */
+  background-color: #9333ea;
+  /* Purple-600 */
   color: #ffffff;
 }
 
@@ -383,7 +483,8 @@ h3::selection,
 h4::selection,
 h5::selection,
 h6::selection {
-  background-color: #7c3aed; /* Purple-700 */
+  background-color: #7c3aed;
+  /* Purple-700 */
   color: #ffffff;
 }
 
@@ -393,20 +494,23 @@ h3::-moz-selection,
 h4::-moz-selection,
 h5::-moz-selection,
 h6::-moz-selection {
-  background-color: #7c3aed; /* Purple-700 */
+  background-color: #7c3aed;
+  /* Purple-700 */
   color: #ffffff;
 }
 
 /* Selection for form elements */
 select::selection,
 option::selection {
-  background-color: #a855f7; /* Purple-500 */
+  background-color: #a855f7;
+  /* Purple-500 */
   color: #ffffff;
 }
 
 select::-moz-selection,
 option::-moz-selection {
-  background-color: #a855f7; /* Purple-500 */
+  background-color: #a855f7;
+  /* Purple-500 */
   color: #ffffff;
 }
 
@@ -414,14 +518,16 @@ option::-moz-selection {
 table::selection,
 th::selection,
 td::selection {
-  background-color: #8b5cf6; /* Purple-500 */
+  background-color: #8b5cf6;
+  /* Purple-500 */
   color: #ffffff;
 }
 
 table::-moz-selection,
 th::-moz-selection,
 td::-moz-selection {
-  background-color: #8b5cf6; /* Purple-500 */
+  background-color: #8b5cf6;
+  /* Purple-500 */
   color: #ffffff;
 }
 
@@ -429,38 +535,44 @@ td::-moz-selection {
 li::selection,
 ul::selection,
 ol::selection {
-  background-color: #9333ea; /* Purple-600 */
+  background-color: #9333ea;
+  /* Purple-600 */
   color: #ffffff;
 }
 
 li::-moz-selection,
 ul::-moz-selection,
 ol::-moz-selection {
-  background-color: #9333ea; /* Purple-600 */
+  background-color: #9333ea;
+  /* Purple-600 */
   color: #ffffff;
 }
 
 /* Selection for paragraph text */
 p::selection {
-  background-color: #9333ea; /* Purple-600 */
+  background-color: #9333ea;
+  /* Purple-600 */
   color: #ffffff;
 }
 
 p::-moz-selection {
-  background-color: #9333ea; /* Purple-600 */
+  background-color: #9333ea;
+  /* Purple-600 */
   color: #ffffff;
 }
 
 /* Selection for span and div elements */
 span::selection,
 div::selection {
-  background-color: #9333ea; /* Purple-600 */
+  background-color: #9333ea;
+  /* Purple-600 */
   color: #ffffff;
 }
 
 span::-moz-selection,
 div::-moz-selection {
-  background-color: #9333ea; /* Purple-600 */
+  background-color: #9333ea;
+  /* Purple-600 */
   color: #ffffff;
 }
 
@@ -498,23 +610,25 @@ div::-moz-selection {
 
 @keyframes dropdownOpen {
   0% {
-      max-height: 0;
-      opacity: 0;
+    max-height: 0;
+    opacity: 0;
   }
+
   100% {
-      max-height: 200px;
-      opacity: 1;
+    max-height: 200px;
+    opacity: 1;
   }
 }
 
 @keyframes dropdownClose {
   0% {
-      max-height: 200px;
-      opacity: 1;
+    max-height: 200px;
+    opacity: 1;
   }
+
   100% {
-      max-height: 0;
-      opacity: 0;
+    max-height: 0;
+    opacity: 0;
   }
 }
 
@@ -536,20 +650,33 @@ div::-moz-selection {
   .dark-mode-transition {
     @apply transition-all duration-200 ease-in-out;
   }
-  
+
   .dark-mode-text {
     @apply text-black dark:text-white;
   }
-  
+
   .dark-mode-bg {
     @apply bg-white dark:bg-dark-bg;
   }
-  
+
   .dark-mode-border {
     @apply border-gray-200 dark:border-dark-border;
   }
-  
+
   .dark-mode-input {
     @apply bg-white dark:bg-dark-surface text-black dark:text-white border-gray-300 dark:border-dark-border;
   }
+}
+
+.dropdown-container {
+  transform-origin: top;
+  transition: opacity 300ms ease-out, transform 600ms ease-out;
+}
+
+.dropdown-container:not(.opacity-0) {
+  transform: scaleY(1) translateY(0);
+}
+
+.dropdown-container.opacity-0 {
+  transform: scaleY(0) translateY(-100%);
 }

@@ -3,6 +3,8 @@ import Footer from '@app/components/Layout/Footer';
 import Header from '@app/components/Layout/Header';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { LanguageProvider } from './contexts/LanguageContext';
+import DynamicLangAttribute from './components/DynamicLangAttribute';
 
 /**
  * Using force dynamic so changes in business assets (e.g. services) are immediately reflected.
@@ -25,6 +27,9 @@ export default function RootLayout({
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Alkalami:wght@400&display=swap" rel="stylesheet" />
         <style dangerouslySetInnerHTML={{
           __html: `
             /* AGGRESSIVE AUTOFILL OVERRIDE - Inline styles for maximum compatibility */
@@ -58,11 +63,14 @@ export default function RootLayout({
       <body className="text-black bg-site dark:text-white dark:bg-dark-bg transition-colors duration-200">
         <AuthProvider>
           <ThemeProvider>
-            <Header />
-            <main className="bg-site dark:bg-dark-bg">{children}</main>
-            <div className="mt-10 sm:mt-20">
-              <Footer />
-            </div>
+            <LanguageProvider>
+              <DynamicLangAttribute />
+              <Header />
+              <main className="bg-site dark:bg-dark-bg">{children}</main>
+              <div className="mt-10 sm:mt-20">
+                <Footer />
+              </div>
+            </LanguageProvider>
           </ThemeProvider>
         </AuthProvider>
       </body>

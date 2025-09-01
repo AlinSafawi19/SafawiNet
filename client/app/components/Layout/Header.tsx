@@ -1,31 +1,28 @@
 "use client";
 
+import React, { useState, useEffect } from 'react';
 import {
     HiBell,
     HiOutlineShoppingCart,
     HiHeart,
     HiBars3,
-    HiXMark,
-    HiMagnifyingGlass
+    HiXMark
 } from 'react-icons/hi2';
-import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import UserDropdown from './UserDropdown';
 import ThemeToggle from '../ThemeToggle';
+import LanguageToggle from './LanguageToggle';
 
 const Header = () => {
     const { user, logout } = useAuth();
-
-    const [currentLanguage, setCurrentLanguage] = useState('EN');
+    const { locale, setLocale, t } = useLanguage();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const [isSearchAnimating, setIsSearchAnimating] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
 
     const toggleLanguage = () => {
-        setCurrentLanguage(currentLanguage === 'EN' ? 'AR' : 'EN');
-        // Here you can add logic to change the application language
+        const newLocale = locale === 'en' ? 'ar' : 'en';
+        setLocale(newLocale);
     };
 
     const toggleMobileMenu = () => {
@@ -43,42 +40,6 @@ const Header = () => {
         }
     };
 
-    const toggleSearch = () => {
-        if (isSearchOpen) {
-            // Start closing animation
-            setIsSearchAnimating(true);
-            setTimeout(() => {
-                setIsSearchOpen(false);
-                setIsSearchAnimating(false);
-                setSearchQuery('');
-            }, 300);
-        } else {
-            // Open search immediately
-            setIsSearchOpen(true);
-        }
-    };
-
-    const handleSearchSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (searchQuery.trim()) {
-            // Handle search logic here
-            console.log('Searching for:', searchQuery);
-            // You can add your search implementation here
-        }
-    };
-
-    const handleSearchBlur = () => {
-        if (!searchQuery.trim()) {
-            // Start closing animation
-            setIsSearchAnimating(true);
-            setTimeout(() => {
-                setIsSearchOpen(false);
-                setIsSearchAnimating(false);
-                setSearchQuery('');
-            }, 300);
-        }
-    };
-
     // Close menu on escape key
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
@@ -86,24 +47,13 @@ const Header = () => {
                 if (isMobileMenuOpen) {
                     closeMobileMenu();
                 }
-                if (isSearchOpen) {
-                    // Start closing animation
-                    setIsSearchAnimating(true);
-                    setTimeout(() => {
-                        setIsSearchOpen(false);
-                        setIsSearchAnimating(false);
-                        setSearchQuery('');
-                    }, 300);
-                }
             }
         };
 
-        if (isMobileMenuOpen || isSearchOpen) {
+        if (isMobileMenuOpen) {
             document.addEventListener('keydown', handleEscape);
             // Prevent body scroll when menu is open
-            if (isMobileMenuOpen) {
-                document.body.style.overflow = 'hidden';
-            }
+            document.body.style.overflow = 'hidden';
         } else {
             document.removeEventListener('keydown', handleEscape);
             document.body.style.overflow = 'unset';
@@ -113,108 +63,78 @@ const Header = () => {
             document.removeEventListener('keydown', handleEscape);
             document.body.style.overflow = 'unset';
         };
-    }, [isMobileMenuOpen, isSearchOpen]);
+    }, [isMobileMenuOpen]);
 
     return (
         <>
             <header className="h-header z-40 w-full bg-white dark:bg-dark-surface shadow-sm dark:shadow-gray-900/20 transition-colors duration-200">
                 <div className="flex justify-between px-4 sm:px-6 lg:px-14 h-header items-center">
-                    {/* Left - Logo */}
+                    {/* Logo */}
                     <div className="flex justify-start">
                         <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold">
                             <a href="/" className="hover:text-purple-500 transition-colors">$AFAWI NETT</a>
                         </h2>
                     </div>
 
-                    {/* Center - Main Navigation */}
-                    <nav className="hidden lg:flex items-center space-x-8">
+                    {/* Main Navigation */}
+                    <nav className={`hidden lg:flex items-center ${locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''} space-x-8`}>
                         <a href="/" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
-                            Home
+                            {t('header.navigation.home')}
                         </a>
                         <a href="/products" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
-                            All Products
+                            {t('header.navigation.products')}
                         </a>
                         <a href="/deals" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
-                            Deals & Offers
+                            {t('header.navigation.deals')}
                         </a>
                         <a href="/about" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
-                            About
+                            {t('header.navigation.about')}
                         </a>
                     </nav>
 
-                    {/* Right - Desktop Navigation & Mobile Menu Button */}
+                    {/* Desktop Navigation & Mobile Menu Button */}
                     <div className="flex justify-end items-center space-x-2 sm:space-x-4 lg:space-x-6">
                         {/* Desktop Navigation */}
                         <nav className="hidden lg:flex items-center space-x-6">
-                            {/* Search Icon/Input */}
-                            <div className="relative flex items-center overflow-hidden">
-                                {!isSearchOpen ? (
-                                    <button
-                                        onClick={toggleSearch}
-                                        className="hover:text-purple-500 transition-colors flex items-center"
-                                        aria-label="Search"
-                                    >
-                                        {HiMagnifyingGlass({ className: "w-6 h-6" })}
-                                    </button>
-                                ) : (
-                                    <form
-                                        onSubmit={handleSearchSubmit}
-                                        className={`relative ${isSearchAnimating ? 'animate-slideOut' : 'animate-slideIn'}`}
-                                    >
-                                        <input
-                                            type="text"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            onBlur={handleSearchBlur}
-                                            placeholder="Search..."
-                                            className="w-64 px-4 py-2 text-base border-b-2 border-purple-500 focus:border-purple-600 transition-all duration-300 ease-in-out bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                                            autoFocus
-                                        />
-                                        <button
-                                            type="submit"
-                                            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-purple-500 hover:text-purple-600 transition-colors"
-                                            aria-label="Submit search"
-                                        >
-                                            {HiMagnifyingGlass({ className: "w-5 h-5" })}
-                                        </button>
-                                    </form>
-                                )}
-                            </div>
-
                             <button
                                 className="hover:text-purple-500 transition-colors"
-                                aria-label="Notifications"
+                                aria-label={t('header.actions.notifications')}
                             >
                                 {HiBell({ className: "w-6 h-6" })}
                             </button>
-                            <a href="/wishlist" className="hover:text-purple-500 transition-colors" aria-label="Wishlist">
+                            <a href="/wishlist" className="hover:text-purple-500 transition-colors" aria-label={t('header.actions.wishlist')}>
                                 {HiHeart({ className: "w-6 h-6" })}
                             </a>
-                            <a href="/cart" className="hover:text-purple-500 transition-colors" aria-label="Cart">
+                            <a href="/cart" className="hover:text-purple-500 transition-colors" aria-label={t('header.actions.cart')}>
                                 {HiOutlineShoppingCart({ className: "w-6 h-6" })}
                             </a>
+
+                            {/* Theme Toggle Button */}
+                            <ThemeToggle />
+
+                            {/* Language Toggle Button - Always Visible */}
+                            <LanguageToggle />
+
+                            {/* Login/Register or User Dropdown - Now inside the nav with proper spacing */}
+                            {user ? (
+                                <UserDropdown user={user} />
+                            ) : (
+                                <a href="/auth" className="hover:text-purple-500 transition-colors text-base">
+                                    {t('header.auth.loginRegister')}
+                                </a>
+                            )}
                         </nav>
 
-                        {/* Language Toggle Button - Always Visible */}
-                        <button
-                            onClick={toggleLanguage}
-                            className="flex items-center space-x-1 hover:text-purple-500 transition-colors"
-                            aria-label="Toggle language"
-                        >
-                            <span className="text-base font-medium">{currentLanguage}</span>
-                        </button>
-
-                        {/* Theme Toggle Button */}
-                        <ThemeToggle />
-
-                        {/* Login/Register or User Dropdown */}
-                        {user ? (
-                            <UserDropdown user={user} />
-                        ) : (
-                            <a href="/auth" className="hover:text-purple-500 transition-colors text-base">
-                                Login/Register
-                            </a>
-                        )}
+                        {/* Mobile Auth Section - Show Login/Register or User Dropdown next to menu button */}
+                        <div className="lg:hidden flex items-center space-x-2">
+                            {user ? (
+                                <UserDropdown user={user} />
+                            ) : (
+                                <a href="/auth" className="hover:text-purple-500 transition-colors text-sm font-medium px-3 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200">
+                                    {t('header.auth.loginRegister')}
+                                </a>
+                            )}
+                        </div>
 
                         {/* Mobile Menu Button */}
                         <button
@@ -253,7 +173,7 @@ const Header = () => {
                     {/* Close Button */}
                     <button
                         onClick={closeMobileMenu}
-                        className={`absolute top-6 right-6 text-white hover:text-purple-500 transition-all duration-300 z-10 ${isMobileMenuOpen
+                        className={`absolute top-6 text-white hover:text-purple-500 transition-all duration-300 z-10 right-6 ${isMobileMenuOpen
                             ? 'opacity-100 translate-x-0'
                             : 'opacity-0 translate-x-4'
                             }`}
@@ -282,67 +202,42 @@ const Header = () => {
 
                         {/* Bottom Section - Navigation & Actions */}
                         <div className="flex-1 flex flex-col justify-center pb-8">
-                            {/* Mobile Search Input */}
-                            <div className={`mb-8 transition-all duration-700 ease-out delay-300 ${isMobileMenuOpen
-                                ? 'opacity-100 translate-x-0'
-                                : 'opacity-0 translate-x-full'
-                                }`}>
-                                <form onSubmit={handleSearchSubmit} className="w-full max-w-sm mx-auto">
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            placeholder="Search..."
-                                            className="w-full px-4 py-3 text-base bg-transparent border-b-2 border-white/30 focus:border-purple-400 transition-all duration-300 text-white placeholder-white/70"
-                                        />
-                                        <button
-                                            type="submit"
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white transition-colors"
-                                            aria-label="Submit search"
-                                        >
-                                            {HiMagnifyingGlass({ className: "w-6 h-6" })}
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-
                             {/* Main Navigation Section */}
                             <div className={`mb-8 transition-all duration-700 ease-out delay-300 ${isMobileMenuOpen
                                 ? 'opacity-100 translate-x-0'
                                 : 'opacity-0 translate-x-full'
                                 }`}>
                                 <h3 className="text-white/60 text-base font-medium uppercase tracking-wider mb-4 text-center">
-                                    Navigation
+                                    {t('header.mobile.navigation')}
                                 </h3>
-                                <div className="grid grid-cols-2 gap-4 max-w-xs mx-auto w-full place-items-center">
+                                <div className={`grid grid-cols-2 gap-4 max-w-xs mx-auto w-full place-items-center ${locale === 'ar' ? 'rtl [&>*:nth-child(1)]:order-2 [&>*:nth-child(2)]:order-1 [&>*:nth-child(3)]:order-4 [&>*:nth-child(4)]:order-3' : ''}`}>
                                     <a
                                         href="/"
                                         className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
                                         onClick={closeMobileMenu}
                                     >
-                                        Home
+                                        {t('header.navigation.home')}
                                     </a>
                                     <a
                                         href="/products"
                                         className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
                                         onClick={closeMobileMenu}
                                     >
-                                        All Products
+                                        {t('header.navigation.products')}
                                     </a>
                                     <a
                                         href="/deals"
                                         className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
                                         onClick={closeMobileMenu}
                                     >
-                                        Deals & Offers
+                                        {t('header.navigation.deals')}
                                     </a>
                                     <a
                                         href="/about"
                                         className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
                                         onClick={closeMobileMenu}
                                     >
-                                        About
+                                        {t('header.navigation.about')}
                                     </a>
                                 </div>
                             </div>
@@ -353,7 +248,7 @@ const Header = () => {
                                 : 'opacity-0 translate-x-full'
                                 }`}>
                                 <h3 className="text-white/60 text-base font-medium uppercase tracking-wider mb-4 text-center">
-                                    Quick Actions
+                                    {t('header.mobile.quickActions')}
                                 </h3>
                                 <div className="flex justify-center space-x-6">
                                     <a
@@ -364,7 +259,7 @@ const Header = () => {
                                         <div className="text-white group-hover:text-purple-400 transition-colors">
                                             {HiHeart({ className: "w-7 h-7" })}
                                         </div>
-                                        <span className="text-sm text-white/80 group-hover:text-white">Wishlist</span>
+                                        <span className="text-sm text-white/80 group-hover:text-white">{t('header.actions.wishlist')}</span>
                                     </a>
                                     <a
                                         href="/cart"
@@ -374,7 +269,7 @@ const Header = () => {
                                         <div className="text-white group-hover:text-purple-400 transition-colors">
                                             {HiOutlineShoppingCart({ className: "w-7 h-7" })}
                                         </div>
-                                        <span className="text-sm text-white/80 group-hover:text-white">Cart</span>
+                                        <span className="text-sm text-white/80 group-hover:text-white">{t('header.actions.cart')}</span>
                                     </a>
                                     <button
                                         className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
@@ -382,7 +277,7 @@ const Header = () => {
                                         <div className="text-white group-hover:text-purple-400 transition-colors">
                                             {HiBell({ className: "w-7 h-7" })}
                                         </div>
-                                        <span className="text-sm text-white/80 group-hover:text-white">Alerts</span>
+                                        <span className="text-sm text-white/80 group-hover:text-white">{t('header.actions.alerts')}</span>
                                     </button>
                                 </div>
                             </div>
@@ -395,7 +290,7 @@ const Header = () => {
                                 <div className="flex flex-col items-center space-y-4">
                                     {user ? (
                                         <div className="flex flex-col items-center space-y-3">
-                                            <div className="flex items-center space-x-2 text-white">
+                                            <div className="flex items-center text-white">
                                                 <span className="text-white font-medium">{user.name}</span>
                                             </div>
                                             <button
@@ -405,7 +300,7 @@ const Header = () => {
                                                 }}
                                                 className="px-6 py-2 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300 text-base"
                                             >
-                                                Logout
+                                                {t('header.auth.logout')}
                                             </button>
                                         </div>
                                     ) : (
@@ -414,22 +309,22 @@ const Header = () => {
                                             className="px-6 py-2 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300 text-base"
                                             onClick={closeMobileMenu}
                                         >
-                                            Login/Register
+                                            {t('header.auth.loginRegister')}
                                         </a>
                                     )}
-                                    
+
                                     {/* Language & Theme Section */}
                                     <div className="flex flex-col items-center space-y-3">
                                         <h4 className="text-white/60 text-sm font-medium uppercase tracking-wider">
-                                            Language & Theme
+                                            {t('header.mobile.languageTheme')}
                                         </h4>
                                         <div className="flex space-x-3">
-                                    <button
-                                        onClick={toggleLanguage}
-                                        className="px-4 py-2 rounded-full border border-white/30 hover:border-white/50 text-white font-medium transition-all duration-300 text-base"
-                                    >
-                                        {currentLanguage}
-                                    </button>
+                                            <button
+                                                onClick={toggleLanguage}
+                                                className="px-4 py-2 rounded-full border border-white/30 hover:border-white/50 text-white font-medium transition-all duration-300 text-base"
+                                            >
+                                                {locale === 'en' ? 'العربية' : 'English'}
+                                            </button>
                                             {/* Theme Toggle for Mobile */}
                                             <div className="px-4 py-2 rounded-full border border-white/30 hover:border-white/50 transition-all duration-300">
                                                 <ThemeToggle variant="mobile" />

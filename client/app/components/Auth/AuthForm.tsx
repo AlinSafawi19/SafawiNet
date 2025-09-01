@@ -3,22 +3,25 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
 
 interface ValidationErrors {
-  name?: string;
-  email?: string;
-  password?: string;
-  confirmPassword?: string;
+  name?: string; // Translation key
+  email?: string; // Translation key
+  password?: string; // Translation key
+  confirmPassword?: string; // Translation key
 }
 
 export function AuthForm() {
   const { login, register } = useAuth();
+  const { t, locale } = useLanguage();
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [errorKey, setErrorKey] = useState('');
+  const [successKey, setSuccessKey] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -47,41 +50,41 @@ export function AuthForm() {
   // Validation functions
   const validateEmail = (email: string): string | undefined => {
     if (!email.trim()) {
-      return 'Email is required';
+      return 'auth.validation.emailRequired';
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return 'Please enter a valid email address';
+      return 'auth.validation.emailInvalid';
     }
     return undefined;
   };
 
   const validatePassword = (password: string): string | undefined => {
     if (!password.trim()) {
-      return 'Password is required';
+      return 'auth.validation.passwordRequired';
     }
     if (password.length < 8) {
-      return 'Password must be at least 8 characters long';
+      return 'auth.validation.passwordTooShort';
     }
     return undefined;
   };
 
   const validateName = (name: string): string | undefined => {
     if (!name.trim()) {
-      return 'Name is required';
+      return 'auth.validation.nameRequired';
     }
     if (name.length > 100) {
-      return 'Name must be less than 100 characters';
+      return 'auth.validation.nameTooLong';
     }
     return undefined;
   };
 
   const validateConfirmPassword = (password: string, confirmPassword: string): string | undefined => {
     if (!confirmPassword.trim()) {
-      return 'Please confirm your password';
+      return 'auth.validation.confirmPasswordRequired';
     }
     if (password !== confirmPassword) {
-      return 'Passwords do not match';
+      return 'auth.validation.passwordsDoNotMatch';
     }
     return undefined;
   };
@@ -140,6 +143,8 @@ export function AuthForm() {
     setFormData({ name: '', email: '', password: '', confirmPassword: '' });
     setError('');
     setSuccessMessage('');
+    setErrorKey('');
+    setSuccessKey('');
     setValidationErrors({});
     setTouched({ name: false, email: false, password: false, confirmPassword: false });
   };
@@ -161,34 +166,50 @@ export function AuthForm() {
       return;
     }
 
-    setIsLoading(true);
-
     try {
       if (isLogin) {
         const result = await login(formData.email, formData.password);
         if (result.success) {
           router.push('/');
         } else {
-          setError(result.message || 'Invalid email or password');
+          if (result.message) {
+            setError(result.message);
+            setErrorKey('');
+          } else {
+            setErrorKey('auth.messages.invalidCredentials');
+            setError('');
+          }
         }
       } else {
         const result = await register(formData.name, formData.email, formData.password);
         if (result.success) {
           // Show server success message and switch to login mode
           setError('');
-          setSuccessMessage(result.message || 'Registration successful! Please check your email to verify your account before signing in.');
+          setErrorKey('');
+          if (result.message) {
+            setSuccessMessage(result.message);
+            setSuccessKey('');
+          } else {
+            setSuccessKey('auth.messages.registrationSuccess');
+            setSuccessMessage('');
+          }
           setIsLogin(true);
           setFormData({ name: '', email: '', password: '', confirmPassword: '' });
           setValidationErrors({});
           setTouched({ name: false, email: false, password: false, confirmPassword: false });
         } else {
-          setError(result.message || 'Registration failed. Please try again.');
+          if (result.message) {
+            setError(result.message);
+            setErrorKey('');
+          } else {
+            setErrorKey('auth.messages.registrationFailed');
+            setError('');
+          }
         }
       }
     } catch (error) {
-      setError('An error occurred. Please try again.');
-    } finally {
-      setIsLoading(false);
+      setErrorKey('auth.messages.generalError');
+      setError('');
     }
   };
 
@@ -276,35 +297,41 @@ export function AuthForm() {
     return () => clearTimeout(timer);
   }, []);
 
+
+
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-zinc-900">
+    <div className={`min-h-screen flex flex-col lg:flex-row bg-zinc-900 ${locale === 'ar' ? 'rtl' : 'ltr'}`}>
       {/* Left side - Form */}
       <div className="flex-1 lg:basis-1/2 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-3 sm:py-4 md:py-6 lg:py-8 xl:py-10">
         <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
           {/* Header */}
-          <div className="text-center mb-4 sm:mb-6 md:mb-8">
+          <div className="auth-screen text-center mb-4 sm:mb-6 md:mb-8">
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-2">
-              {isLogin ? 'WELCOME BACK' : 'JOIN US'}
+              {isLogin ? t('auth.form.welcomeBack') : t('auth.form.joinUs')}
             </h1>
             <p className="text-white/70 text-xs sm:text-sm md:text-base">
               {isLogin
-                ? 'Sign in to your account'
-                : 'Create your account to get started'
+                ? t('auth.form.signInSubtitle')
+                : t('auth.form.createAccountSubtitle')
               }
             </p>
           </div>
 
           {/* Error Message */}
-          {error && (
+          {(error || errorKey) && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
-              <p className="text-red-400 text-xs sm:text-sm">{error}</p>
+              <p className="text-red-400 text-xs sm:text-sm">
+                {error || (errorKey ? t(errorKey) : '')}
+              </p>
             </div>
           )}
 
           {/* Success Message */}
-          {successMessage && (
+          {(successMessage || successKey) && (
             <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
-              <p className="text-green-400 text-xs sm:text-sm">{successMessage}</p>
+              <p className="text-green-400 text-xs sm:text-sm">
+                {successMessage || (successKey ? t(successKey) : '')}
+              </p>
             </div>
           )}
 
@@ -313,7 +340,7 @@ export function AuthForm() {
             {!isLogin && (
               <div>
                 <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2">
-                  Full Name
+                  {t('auth.form.fullName')}
                 </label>
                 <input
                   ref={nameRef}
@@ -324,17 +351,17 @@ export function AuthForm() {
                   onChange={handleInputChange}
                   onBlur={handleBlur}
                   className={getInputClass('name')}
-                  placeholder="Enter your full name"
+                  placeholder={t('auth.form.fullNamePlaceholder')}
                 />
                 {touched.name && validationErrors.name && (
-                  <p className="text-red-400 text-xs mt-1">{validationErrors.name}</p>
+                  <p className="text-red-400 text-xs mt-1">{t(validationErrors.name)}</p>
                 )}
               </div>
             )}
 
             <div>
               <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2">
-                Email Address
+                {t('auth.form.emailAddress')}
               </label>
               <input
                 ref={emailRef}
@@ -345,16 +372,16 @@ export function AuthForm() {
                 onChange={handleInputChange}
                 onBlur={handleBlur}
                 className={getInputClass('email')}
-                placeholder="Enter your email"
+                placeholder={t('auth.form.emailPlaceholder')}
               />
               {touched.email && validationErrors.email && (
-                <p className="text-red-400 text-xs mt-1">{validationErrors.email}</p>
+                <p className="text-red-400 text-xs mt-1">{t(validationErrors.email)}</p>
               )}
             </div>
 
             <div>
               <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2">
-                Password
+                {t('auth.form.password')}
               </label>
               <input
                 ref={passwordRef}
@@ -365,20 +392,20 @@ export function AuthForm() {
                 onChange={handleInputChange}
                 onBlur={handleBlur}
                 className={getInputClass('password')}
-                placeholder="Enter your password"
+                placeholder={t('auth.form.passwordPlaceholder')}
               />
               {touched.password && validationErrors.password && (
-                <p className="text-red-400 text-xs mt-1">{validationErrors.password}</p>
+                <p className="text-red-400 text-xs mt-1">{t(validationErrors.password)}</p>
               )}
               {!isLogin && (
-                <p className="text-white/50 text-xs mt-1">Password must be at least 8 characters long</p>
+                <p className="text-white/50 text-xs mt-1">{t('auth.form.passwordRequirement')}</p>
               )}
             </div>
 
             {!isLogin && (
               <div>
                 <label htmlFor="confirmPassword" className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2">
-                  Confirm Password
+                  {t('auth.form.confirmPassword')}
                 </label>
                 <input
                   ref={confirmPasswordRef}
@@ -389,32 +416,31 @@ export function AuthForm() {
                   onChange={handleInputChange}
                   onBlur={handleBlur}
                   className={getInputClass('confirmPassword')}
-                  placeholder="Confirm your password"
+                  placeholder={t('auth.form.confirmPasswordPlaceholder')}
                 />
                 {touched.confirmPassword && validationErrors.confirmPassword && (
-                  <p className="text-red-400 text-xs mt-1">{validationErrors.confirmPassword}</p>
+                  <p className="text-red-400 text-xs mt-1">{t(validationErrors.confirmPassword)}</p>
                 )}
               </div>
             )}
 
             <button
               type="submit"
-              disabled={isLoading}
               className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[44px] sm:min-h-[48px]"
             >
-              {isLoading ? 'PLEASE WAIT...' : (isLogin ? 'SIGN IN' : 'CREATE ACCOUNT')}
+              {isLogin ? t('auth.form.signIn') : t('auth.form.createAccount')}
             </button>
           </form>
 
           {/* Toggle mode */}
           <div className="text-center mt-3 sm:mt-4 md:mt-6">
             <p className="text-white/70 text-xs sm:text-sm">
-              {isLogin ? "Don't have an account?" : "Already have an account?"}
+              {isLogin ? t('auth.form.dontHaveAccount') : t('auth.form.alreadyHaveAccount')}
               <button
                 onClick={toggleMode}
                 className="ml-1 sm:ml-2 text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200 min-h-[32px] px-2 py-1 rounded"
               >
-                {isLogin ? 'Sign up' : 'Sign in'}
+                {isLogin ? t('auth.form.signUp') : t('auth.form.signInLink')}
               </button>
             </p>
           </div>
@@ -426,16 +452,16 @@ export function AuthForm() {
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 to-pink-900/80 z-10"></div>
         <Image
           src="https://static.wixstatic.com/media/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg/v1/fill/w_918,h_585,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg"
-          alt="TALI$A"
+          alt={t('auth.hero.imageAlt')}
           className="w-full h-full object-cover"
           width={1000}
           height={800}
         />
-        <div className="absolute inset-0 z-20 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8">
+        <div className="auth-screen absolute inset-0 z-20 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="text-center text-white">
-            <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 md:mb-4">NETWORKING MADE SIMPLE</h2>
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 md:mb-4">{t('auth.hero.title')}</h1>
             <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/80 max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md">
-              Join the community of professionals and discover premium networking solutions
+              {t('auth.hero.subtitle')}
             </p>
           </div>
         </div>
