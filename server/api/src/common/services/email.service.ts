@@ -201,7 +201,8 @@ export class EmailService {
 
   // Alias method for backward compatibility
   async sendPasswordResetEmail(to: string, resetToken: string): Promise<void> {
-    const resetUrl = `${this.configService.get('API_DOMAIN')}/reset-password?token=${resetToken}`;
+    const frontendDomain = this.configService.get('FRONTEND_DOMAIN', 'localhost:3001');
+    const resetUrl = `http://${frontendDomain}/reset-password?token=${resetToken}`;
     await this.sendPasswordReset(to, {
       name: 'User',
       resetUrl,

@@ -87,7 +87,18 @@
       "dontHaveAccount": "ليس لديك حساب؟",
       "alreadyHaveAccount": "لديك حساب بالفعل؟",
       "signUp": "إنشاء حساب",
-      "signInLink": "تسجيل الدخول"
+      "signInLink": "تسجيل الدخول",
+      "forgotPassword": "نسيت كلمة المرور؟",
+      "resetPassword": "إعادة تعيين كلمة المرور"
+    },
+    "forgotPassword": {
+      "subtitle": "أدخل عنوان بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور",
+      "sending": "جاري الإرسال...",
+      "sendResetLink": "إرسال رابط إعادة التعيين",
+      "rememberPassword": "تذكرت كلمة المرور؟",
+      "backToLogin": "العودة لتسجيل الدخول",
+      "heroTitle": "إعادة تعيين كلمة المرور",
+      "heroSubtitle": "لا تقلق، سنساعدك في العودة إلى حسابك"
     },
     "validation": {
       "nameRequired": "الاسم مطلوب",

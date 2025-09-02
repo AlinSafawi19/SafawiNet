@@ -426,11 +426,7 @@ export class AuthService {
 
     // Send password reset email
     try {
-      const resetUrl = `${this.configService.get('API_DOMAIN')}/reset-password?token=${resetToken}`;
-      await this.emailService.sendPasswordReset(user.email, {
-        name: user.name || 'User',
-        resetUrl,
-      });
+      await this.emailService.sendPasswordResetEmail(user.email, resetToken);
       this.logger.log(`Password reset email sent to ${user.email}`);
     } catch (error) {
       this.logger.error(`Failed to send password reset email to ${user.email}:`, error);

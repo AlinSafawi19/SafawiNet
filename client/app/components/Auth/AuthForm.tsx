@@ -348,9 +348,8 @@ export function AuthForm() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col lg:flex-row bg-zinc-900 ${
-        locale === 'ar' ? 'rtl' : 'ltr'
-      }`}
+      className={`min-h-screen flex flex-col lg:flex-row bg-zinc-900 ${locale === 'ar' ? 'rtl' : 'ltr'
+        }`}
     >
       {/* Left side - Form */}
       <div className="flex-1 lg:basis-1/2 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-3 sm:py-4 md:py-6 lg:py-8 xl:py-10">
@@ -471,6 +470,21 @@ export function AuthForm() {
                 </p>
               )}
             </div>
+
+            {/* Forgot Password Link - Only show in login mode */}
+            {isLogin && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push('/forgot-password');
+                  }}
+                  className="text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200 min-h-[32px] px-2 py-1 rounded hover:underline"
+                >
+                  {t('auth.form.forgotPassword')}
+                </button>
+              </div>
+            )}
 
             {!isLogin && (
               <div>

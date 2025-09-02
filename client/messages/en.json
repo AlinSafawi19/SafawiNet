@@ -87,7 +87,18 @@
       "dontHaveAccount": "Don't have an account?",
       "alreadyHaveAccount": "Already have an account?",
       "signUp": "Sign up",
-      "signInLink": "Sign in"
+      "signInLink": "Sign in",
+      "forgotPassword": "Forgot your password?",
+      "resetPassword": "Reset password"
+    },
+    "forgotPassword": {
+      "subtitle": "Enter your email address and we'll send you a link to reset your password",
+      "sending": "Sending...",
+      "sendResetLink": "Send Reset Link",
+      "rememberPassword": "Remember your password?",
+      "backToLogin": "Back to login",
+      "heroTitle": "Reset Your Password",
+      "heroSubtitle": "Don't worry, we'll help you get back into your account"
     },
     "validation": {
       "nameRequired": "Name is required",

@@ -515,11 +515,7 @@ export class UsersService {
     });
 
     // Send reset email
-    const resetUrl = `${this.configService.get('API_DOMAIN')}/reset-password?token=${resetToken}`;
-    await this.emailService.sendPasswordReset(user.email, {
-      name: user.name || 'User',
-      resetUrl,
-    });
+    await this.emailService.sendPasswordResetEmail(user.email, resetToken);
   }
 
   async resetPassword(token: string, newPassword: string): Promise<boolean> {
