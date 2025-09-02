@@ -4,9 +4,13 @@ import { AppModule } from './app.module';
 import pino from 'pino-http';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Enable WebSockets
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   // Cookie parser middleware for HTTP-only cookies
   app.use(cookieParser());

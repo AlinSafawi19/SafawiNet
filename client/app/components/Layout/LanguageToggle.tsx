@@ -14,9 +14,9 @@ const LanguageToggle = ({ variant }: LanguageToggleProps) => {
         try {
             const newLocale = locale === 'en' ? 'ar' : 'en';
             await setLocale(newLocale);
-        } catch (error) {
-            console.error('Failed to toggle language:', error);
-        }
+            } catch (error) {
+      // Failed to toggle language
+    }
     };
 
     return (

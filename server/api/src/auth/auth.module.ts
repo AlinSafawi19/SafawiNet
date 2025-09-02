@@ -22,6 +22,7 @@ import { EmailService } from '../common/services/email.service';
 import { PinoLoggerService } from '../common/services/logger.service';
 import { SentryService } from '../common/services/sentry.service';
 import { SecurityUtils } from '../common/security/security.utils';
+import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
 
 @Module({
   imports: [
@@ -58,7 +59,8 @@ import { SecurityUtils } from '../common/security/security.utils';
     PinoLoggerService,
     SentryService,
     SecurityUtils,
+    AuthWebSocketGateway,
   ],
-  exports: [AuthService, TwoFactorService, SessionsService, NotificationsService, JwtModule, JwtStrategy, RolesGuard],
+  exports: [AuthService, TwoFactorService, SessionsService, NotificationsService, JwtModule, JwtStrategy, RolesGuard, AuthWebSocketGateway],
 })
 export class AuthModule {}

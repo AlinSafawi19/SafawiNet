@@ -114,6 +114,30 @@ export class AuthController {
       type: 'object',
       properties: {
         message: { type: 'string' },
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            email: { type: 'string' },
+            name: { type: 'string' },
+            isVerified: { type: 'boolean' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+            twoFactorEnabled: { type: 'boolean' },
+            recoveryEmail: { type: 'string', nullable: true },
+            notificationPreferences: { type: 'object', nullable: true },
+            preferences: { type: 'object', nullable: true },
+            roles: { type: 'array', items: { type: 'string' } },
+          },
+        },
+        tokens: {
+          type: 'object',
+          properties: {
+            accessToken: { type: 'string' },
+            refreshToken: { type: 'string' },
+            expiresIn: { type: 'number' },
+          },
+        },
       },
     },
   })

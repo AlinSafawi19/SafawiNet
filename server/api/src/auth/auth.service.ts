@@ -12,6 +12,7 @@ import { RegisterDto, VerifyEmailDto, LoginDto, RefreshTokenDto, ForgotPasswordD
 import { User } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { Request, Response } from 'express';
+import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
 
 export interface AuthTokens {
   accessToken: string;
@@ -42,6 +43,7 @@ export class AuthService {
     private readonly twoFactorService: TwoFactorService,
     private readonly sessionsService: SessionsService,
     private readonly notificationsService: NotificationsService,
+    private readonly webSocketGateway: AuthWebSocketGateway,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<{ message: string; user: Omit<User, 'password'> }> {
@@ -141,13 +143,21 @@ export class AuthService {
 
     // Return user without password
     const { password: _, ...userWithoutPassword } = result.user;
+    
+    // Emit WebSocket event for new user registration
+    try {
+      await this.webSocketGateway.emitVerificationSuccess(result.user.id, userWithoutPassword);
+    } catch (error) {
+      this.logger.warn(`Failed to emit WebSocket registration event: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
     return {
       message: 'User registered successfully. Please check your email to verify your account.',
       user: userWithoutPassword,
     };
   }
 
-  async verifyEmail(verifyEmailDto: VerifyEmailDto): Promise<{ message: string }> {
+  async verifyEmail(verifyEmailDto: VerifyEmailDto): Promise<{ message: string; user: Omit<User, 'password'>; tokens?: AuthTokens }> {
     const { token } = verifyEmailDto;
     const tokenHash = SecurityUtils.hashToken(token);
 
@@ -181,8 +191,33 @@ export class AuthService {
       return oneTimeToken.user;
     });
 
+    // Generate tokens for automatic login
+    const tokens = await this.generateTokens(result, undefined);
+
+    // Emit WebSocket event for real-time notification
+    try {
+      this.logger.log(`📡 Emitting WebSocket events for verified user: ${result.email}`);
+      await this.webSocketGateway.emitVerificationSuccess(result.id, this.excludePassword(result));
+      
+      // Also notify pending verification room for cross-browser sync with tokens
+      this.logger.log(`🔑 Sending tokens to pending verification room for: ${result.email}`);
+      this.logger.log(`🔑 Tokens data:`, { accessToken: tokens.accessToken ? 'PRESENT' : 'MISSING', refreshToken: tokens.refreshToken ? 'PRESENT' : 'MISSING' });
+      await this.webSocketGateway.emitVerificationSuccessToPendingRoom(result.email, this.excludePassword(result), tokens);
+      
+      // Also broadcast login to all devices
+      await this.webSocketGateway.broadcastLogin(this.excludePassword(result));
+      this.logger.log(`✅ All WebSocket events emitted successfully for user: ${result.email}`);
+    } catch (error) {
+      this.logger.warn(`Failed to emit WebSocket verification event: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
     this.logger.log(`Email verified for user ${result.email}`);
-    return { message: 'Email verified successfully' };
+    
+    return { 
+      message: 'Email verified successfully', 
+      user: this.excludePassword(result),
+      tokens
+    };
   }
 
   async login(loginDto: LoginDto, req?: Request): Promise<LoginResult> {

@@ -18,10 +18,10 @@ import { buildApiUrl, API_CONFIG } from '../config/api';
 const hasAuthenticationCookies = (): boolean => {
   try {
     const cookies = document.cookie;
-    // Check for common auth cookie names
+    // Check for common auth cookie names - updated to match backend JWT guard
     const authCookiePatterns = [
-      'access_token',
-      'refresh_token', 
+      'accessToken',
+      'refreshToken', 
       'session',
       'auth',
       'token',
@@ -56,6 +56,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string; messageKey?: string }>;
+  loginWithTokens: (tokens: { accessToken: string; refreshToken: string; expiresIn: number }) => Promise<{ success: boolean; message?: string }>;
   register: (name: string, email: string, password: string) => Promise<{ success: boolean; message?: string; messageKey?: string }>;
   logout: () => Promise<void>;
   checkAuthStatus: () => void;
@@ -193,6 +194,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const responseData = await response.json();
         // Map server success messages to translation keys
         const messageKey = mapServerMessageToTranslationKey(responseData.message);
+        
+        // Join pending verification room for cross-browser sync
+          // Import socket service dynamically to avoid SSR issues
+          import('../services/socket.service').then(({ socketService }) => {
+            socketService.connect(); // Connect anonymously
+            socketService.joinPendingVerificationRoom(email.toLowerCase());
+          }).catch(error => {
+            // Failed to import socket service
+          });
+        
         return { 
           success: true, 
           message: messageKey ? undefined : responseData.message,
@@ -357,6 +368,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       // Clear user state (cookies are handled by the server)
       setUser(null);
+      
+      // Broadcast logout to other tabs and devices
+      broadcastAuthChange('logout');
+    }
+  };
+
+  // Helper method to broadcast authentication changes
+  const broadcastAuthChange = (type: 'login' | 'logout', user?: any) => {
+    try {
+      // Notify other tabs via localStorage
+      localStorage.setItem('auth_state_changed', JSON.stringify({ type, user }));
+      localStorage.removeItem('auth_state_changed'); // Trigger storage event
+      
+      // Notify other devices via WebSocket (if connected)
+      // This will be handled by the WebSocket service
+    } catch (error) {
+      // Failed to broadcast auth change
+    }
+  };
+
+  const loginWithTokens = async (tokens: { accessToken: string; refreshToken: string; expiresIn: number }): Promise<{ success: boolean; message?: string }> => {
+    try {
+      // Set cookies for the tokens - use names that match the backend JWT guard
+      document.cookie = `accessToken=${tokens.accessToken}; path=/; max-age=${tokens.expiresIn}; secure; samesite=strict`;
+      document.cookie = `refreshToken=${tokens.refreshToken}; path=/; max-age=${tokens.expiresIn * 2}; secure; samesite=strict`;
+      
+      // Fetch user data to set the user state
+      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME), {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        const finalUserData = userData.user || userData;
+        setUser(finalUserData);
+        
+        // Broadcast login to other tabs and devices
+        broadcastAuthChange('login', finalUserData);
+        
+        return { success: true, message: 'Login successful' };
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch user data: ${response.status} ${errorText}`);
+      }
+    } catch (error) {
+      return { success: false, message: 'Failed to login with tokens' };
     }
   };
 
@@ -371,9 +429,131 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     initializeAuth();
     
-    // Cleanup function to handle React Strict Mode unmounting
+    // Listen for cross-tab authentication changes
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'auth_state_changed' && event.newValue) {
+        try {
+          const authData = JSON.parse(event.newValue);
+          if (authData.type === 'login' && authData.user) {
+            setUser(authData.user);
+            
+            // Check if user was on auth page and redirect to home
+            const currentPath = window.location.pathname;
+            if (currentPath === '/auth' || currentPath.startsWith('/auth/')) {
+              // Use window.location for cross-tab redirects (router.push doesn't work across tabs)
+              setTimeout(() => {
+                window.location.href = '/';
+              }, 2000);
+            }
+          } else if (authData.type === 'logout') {
+            setUser(null);
+          }
+        } catch (error) {
+          // Error parsing cross-tab auth data
+        }
+      }
+    };
+
+    // Listen for WebSocket authentication broadcasts
+    const handleAuthBroadcast = (data: { type: string; user?: any }) => {
+      if (data.type === 'login' && data.user) {
+        setUser(data.user);
+        
+        // Check if user was on auth page and redirect to home
+        const currentPath = window.location.pathname;
+        if (currentPath === '/auth' || currentPath.startsWith('/auth/')) {
+          // Use window.location for cross-device redirects
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 2000);
+        }
+        
+        // Also notify other tabs
+        localStorage.setItem('auth_state_changed', JSON.stringify({ type: 'login', user: data.user }));
+        localStorage.removeItem('auth_state_changed'); // Trigger storage event
+      } else if (data.type === 'logout') {
+        setUser(null);
+        // Also notify other tabs
+        localStorage.setItem('auth_state_changed', JSON.stringify({ type: 'logout' }));
+        localStorage.removeItem('auth_state_changed'); // Trigger storage event
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Set up WebSocket listener for pending verification rooms
+      import('../services/socket.service').then(({ socketService }) => {
+        // Connect anonymously to listen for verification events
+        socketService.connect();
+        
+        // Listen for email verification events in pending rooms
+        socketService.on('emailVerified', async (data: any) => {
+          if (data.success && data.user) {
+            // Check if we have tokens in the data
+            if (data.tokens) {
+              try {
+                const loginResult = await loginWithTokens(data.tokens);
+                if (loginResult.success) {
+                  // User successfully logged in via pending verification room
+                } else {
+                  // Failed to login with tokens
+                }
+              } catch (error) {
+                // Error during token-based login
+              }
+            } else {
+              setUser(data.user);
+            }
+            
+            // Check if user was on auth page and redirect to home
+            const currentPath = window.location.pathname;
+            if (currentPath === '/auth' || currentPath.startsWith('/auth/')) {
+              setTimeout(() => {
+                window.location.href = '/';
+              }, 2000);
+            }
+            
+            // Also notify other tabs
+            localStorage.setItem('auth_state_changed', JSON.stringify({ type: 'login', user: data.user }));
+            localStorage.removeItem('auth_state_changed'); // Trigger storage event
+          } else {
+            // Email verification event received but data is invalid
+          }
+        });
+        
+        // Test if the connection is working
+        
+        // Test if we can receive any events
+        socketService.on('connect', () => {
+          // WebSocket connected in AuthContext
+        });
+        
+        socketService.on('disconnect', () => {
+          // WebSocket disconnected in AuthContext
+        });
+        
+        // Test if we can receive the pending verification room joined event
+        socketService.on('pendingVerificationRoomJoined', (data) => {
+          // Pending verification room joined event received
+        });
+        
+        // Test WebSocket communication by emitting a test event
+        setTimeout(() => {
+          if (socketService.isSocketConnected()) {
+            // Try to emit a test event to see if the connection is working
+            const socket = socketService.getSocket();
+            if (socket) {
+              socket.emit('test', { message: 'Testing WebSocket connection' });
+            }
+          }
+        }, 2000);
+      });
+
+    // Return cleanup function
     return () => {
       isMounted = false;
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -395,6 +575,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     isLoading,
     login,
+    loginWithTokens,
     register,
     logout,
     checkAuthStatus,

@@ -65,7 +65,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                 aria-haspopup="true"
                 disabled={isAnimating}
             >
-                <span className="hidden sm:block">{user.name}</span>
+                <span className="block">{user.name}</span>
                 {HiChevronDown({ 
                     className: `w-4 h-4 transition-transform duration-400 ease-out ${isOpen ? 'rotate-180' : ''}` 
                 })}

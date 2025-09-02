@@ -14,9 +14,9 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = 'default' }) => {
     const toggleTheme = async () => {    
         try {
             await setTheme(theme === 'light' ? 'dark' : 'light');
-        } catch (error) {
-            console.error('Failed to toggle theme:', error);
-        }
+            } catch (error) {
+      // Failed to toggle theme
+    }
     };
 
     if (variant === 'mobile') {

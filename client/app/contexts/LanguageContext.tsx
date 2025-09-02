@@ -40,7 +40,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         const messages = await import(`../../messages/${locale}.json`);
         setMessages(messages.default || messages);
       } catch (error) {
-        console.error(`Failed to load messages for locale: ${locale}`, error);
+        // Failed to load messages for locale
         // Fallback to English
         const fallbackMessages = await import(`../../messages/en.json`);
         setMessages(fallbackMessages.default || fallbackMessages);
@@ -106,12 +106,12 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         );
 
         if (!response.ok) {
-          console.error('Failed to update language preference:', response.statusText);
+          // Failed to update language preference
           // Optionally revert the locale if the backend update fails
           // setLocaleState(locale);
         }
       } catch (error) {
-        console.error('Error updating language preference:', error);
+        // Error updating language preference
         // Optionally revert the locale if the backend update fails
         // setLocaleState(locale);
       }

@@ -77,12 +77,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         );
 
         if (!response.ok) {
-          console.error('Failed to update theme preference:', response.statusText);
+          // Failed to update theme preference
           // Optionally revert the theme if the backend update fails
           // setThemeState(theme);
         }
       } catch (error) {
-        console.error('Error updating theme preference:', error);
+        // Error updating theme preference
         // Optionally revert the theme if the backend update fails
         // setThemeState(theme);
       }
