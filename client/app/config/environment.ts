@@ -4,10 +4,10 @@
 export const ENV_CONFIG = {
   // API Configuration
   API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
-  
+
   // Environment
   ENV: process.env.NEXT_PUBLIC_ENV || 'development',
-  
+
   // Feature flags
   FEATURES: {
     DEBUG_MODE: process.env.NEXT_PUBLIC_DEBUG_MODE === 'true' || false,

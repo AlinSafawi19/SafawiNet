@@ -732,7 +732,7 @@ export class AuthService {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'strict' : 'lax',
-      domain: domain || undefined,
+      domain: isProduction && domain ? domain : undefined, // Only set domain in production
       maxAge: tokens.expiresIn * 1000, // Convert seconds to milliseconds
       path: '/',
     });
@@ -742,7 +742,7 @@ export class AuthService {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'strict' : 'lax',
-      domain: domain || undefined,
+      domain: isProduction && domain ? domain : undefined, // Only set domain in production
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       path: '/',
     });
@@ -756,7 +756,7 @@ export class AuthService {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'strict' : 'lax',
-      domain: domain || undefined,
+      domain: isProduction && domain ? domain : undefined, // Only set domain in production
       path: '/',
     });
 
@@ -764,7 +764,7 @@ export class AuthService {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'strict' : 'lax',
-      domain: domain || undefined,
+      domain: isProduction && domain ? domain : undefined, // Only set domain in production
       path: '/',
     });
   }

@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
-    HiBell,
-    HiOutlineShoppingCart,
-    HiHeart,
-    HiBars3,
-    HiXMark
+  HiBell,
+  HiOutlineShoppingCart,
+  HiHeart,
+  HiBars3,
+  HiXMark,
 } from 'react-icons/hi2';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -16,342 +16,410 @@ import ThemeToggle from '../ThemeToggle';
 import LanguageToggle from './LanguageToggle';
 
 const Header = () => {
-    const { user, logout } = useAuth();
-    const { locale, t } = useLanguage();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isAnimating, setIsAnimating] = useState(false);
-    const [isScrolled, setIsScrolled] = useState(false);
+  const { user, logout } = useAuth();
+  const { locale, t } = useLanguage();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
-    const toggleMobileMenu = () => {
-        if (!isAnimating) {
-            setIsMobileMenuOpen(!isMobileMenuOpen);
-        }
-    };
+  const toggleMobileMenu = () => {
+    if (!isAnimating) {
+      setIsMobileMenuOpen(!isMobileMenuOpen);
+    }
+  };
 
-    const closeMobileMenu = () => {
-        if (!isAnimating) {
-            setIsAnimating(true);
-            setIsMobileMenuOpen(false);
-            // Reset animation state after animation completes
-            setTimeout(() => setIsAnimating(false), 300);
-        }
-    };
+  const closeMobileMenu = useCallback(() => {
+    if (!isAnimating) {
+      setIsAnimating(true);
+      setIsMobileMenuOpen(false);
+      // Reset animation state after animation completes
+      setTimeout(() => setIsAnimating(false), 300);
+    }
+  }, [isAnimating]);
 
-    // Close menu on escape key
-    useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                if (isMobileMenuOpen) {
-                    closeMobileMenu();
-                }
-            }
-        };
-
+  // Close menu on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
         if (isMobileMenuOpen) {
-            document.addEventListener('keydown', handleEscape);
-            // Prevent body scroll when menu is open
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.removeEventListener('keydown', handleEscape);
-            document.body.style.overflow = 'unset';
+          closeMobileMenu();
         }
+      }
+    };
 
-        return () => {
-            document.removeEventListener('keydown', handleEscape);
-            document.body.style.overflow = 'unset';
-        };
-    }, [isMobileMenuOpen]);
+    if (isMobileMenuOpen) {
+      document.addEventListener('keydown', handleEscape);
+      // Prevent body scroll when menu is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    }
 
-    // Scroll detection
-    useEffect(() => {
-        const handleScroll = () => {
-            if (window.scrollY > 0) {
-                setIsScrolled(true);
-            } else {
-                setIsScrolled(false);
-            }
-        };
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen, closeMobileMenu]);
 
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+  // Scroll detection
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 0) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
 
-    return (
-        <>
-            <header className={`fixed top-0 left-0 right-0 h-header z-40 w-full bg-white dark:bg-dark-surface shadow-sm dark:shadow-gray-900/20 transition-all duration-300 ease-in-out ${
-                isScrolled 
-                    ? 'shadow-lg dark:shadow-gray-900/40 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-sm' 
-                    : 'shadow-sm dark:shadow-gray-900/20'
-            }`}>
-                <div className="flex justify-between px-4 sm:px-6 lg:px-14 h-header items-center">
-                    {/* Logo */}
-                    <div className="flex justify-start">
-                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold">
-                            <Link href="/" className="hover:text-purple-500 transition-colors">$AFAWI NETT</Link>
-                        </h2>
-                    </div>
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-                    {/* Main Navigation */}
-                    <nav className={`hidden lg:flex items-center ${locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''} space-x-8`}>
-                        <Link href="/" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
-                            {t('header.navigation.home')}
-                        </Link>
-                        <Link href="/products" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
-                            {t('header.navigation.products')}
-                        </Link>
-                        <Link href="/deals" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
-                            {t('header.navigation.deals')}
-                        </Link>
-                        <Link href="/about" className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg">
-                            {t('header.navigation.about')}
-                        </Link>
-                    </nav>
+  return (
+    <>
+      <header
+        className={`fixed top-0 left-0 right-0 h-header z-40 w-full bg-white dark:bg-dark-surface shadow-sm dark:shadow-gray-900/20 transition-all duration-300 ease-in-out ${
+          isScrolled
+            ? 'shadow-lg dark:shadow-gray-900/40 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-sm'
+            : 'shadow-sm dark:shadow-gray-900/20'
+        }`}
+      >
+        <div className="flex justify-between px-4 sm:px-6 lg:px-14 h-header items-center">
+          {/* Logo */}
+          <div className="flex justify-start">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold">
+              <Link
+                href="/"
+                className="hover:text-purple-500 transition-colors"
+              >
+                $AFAWI NETT
+              </Link>
+            </h2>
+          </div>
 
-                    {/* Desktop Navigation & Mobile Menu Button */}
-                    <div className="flex justify-end items-center space-x-2 sm:space-x-4 lg:space-x-6">
-                        {/* Desktop Navigation */}
-                        <nav className="hidden lg:flex items-center space-x-6">
-                            <button
-                                className="hover:text-purple-500 transition-colors"
-                                aria-label={t('header.actions.notifications')}
-                            >
-                                {HiBell({ className: "w-6 h-6" })}
-                            </button>
-                            <Link href="/wishlist" className="hover:text-purple-500 transition-colors" aria-label={t('header.actions.wishlist')}>
-                                {HiHeart({ className: "w-6 h-6" })}
-                            </Link>
-                            <Link href="/cart" className="hover:text-purple-500 transition-colors" aria-label={t('header.actions.cart')}>
-                                {HiOutlineShoppingCart({ className: "w-6 h-6" })}
-                            </Link>
+          {/* Main Navigation */}
+          <nav
+            className={`hidden lg:flex items-center ${
+              locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''
+            } space-x-8`}
+          >
+            <Link
+              href="/"
+              className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
+            >
+              {t('header.navigation.home')}
+            </Link>
+            <Link
+              href="/products"
+              className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
+            >
+              {t('header.navigation.products')}
+            </Link>
+            <Link
+              href="/deals"
+              className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
+            >
+              {t('header.navigation.deals')}
+            </Link>
+            <Link
+              href="/about"
+              className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
+            >
+              {t('header.navigation.about')}
+            </Link>
+          </nav>
 
-                            {/* Theme Toggle Button */}
-                            <ThemeToggle />
+          {/* Desktop Navigation & Mobile Menu Button */}
+          <div className="flex justify-end items-center space-x-2 sm:space-x-4 lg:space-x-6">
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center space-x-6">
+              <button
+                className="hover:text-purple-500 transition-colors"
+                aria-label={t('header.actions.notifications')}
+              >
+                {HiBell({ className: 'w-6 h-6' })}
+              </button>
+              <Link
+                href="/wishlist"
+                className="hover:text-purple-500 transition-colors"
+                aria-label={t('header.actions.wishlist')}
+              >
+                {HiHeart({ className: 'w-6 h-6' })}
+              </Link>
+              <Link
+                href="/cart"
+                className="hover:text-purple-500 transition-colors"
+                aria-label={t('header.actions.cart')}
+              >
+                {HiOutlineShoppingCart({ className: 'w-6 h-6' })}
+              </Link>
 
-                            {/* Language Toggle Button - Always Visible */}
-                            <LanguageToggle />
+              {/* Theme Toggle Button */}
+              <ThemeToggle />
 
-                            {/* Login/Register or User Dropdown - Now inside the nav with proper spacing */}
-                            {user ? (
-                                <UserDropdown user={user} />
-                            ) : (
-                                <Link href="/auth" className="hover:text-purple-500 transition-colors text-base">
-                                    {t('header.auth.loginRegister')}
-                                </Link>
-                            )}
-                        </nav>
+              {/* Language Toggle Button - Always Visible */}
+              <LanguageToggle />
 
-                        {/* Mobile Auth Section - Show Login/Register or User Dropdown next to menu button */}
-                        <div className="lg:hidden flex items-center space-x-2">
-                            {user ? (
-                                <UserDropdown user={user} />
-                            ) : (
-                                <Link href="/auth" className="hover:text-purple-500 transition-colors text-sm font-medium px-3 py-1 rounded-md transition-all duration-200">
-                                    {t('header.auth.loginRegister')}
-                                </Link>
-                            )}
-                        </div>
-
-                        {/* Mobile Menu Button */}
-                        <button
-                            onClick={toggleMobileMenu}
-                            className="lg:hidden p-2 hover:text-purple-500 transition-colors"
-                            aria-label="Toggle mobile menu"
-                        >
-                            <div className="relative w-8 h-8">
-                                {/* Hamburger Icon */}
-                                <div className={`absolute inset-0 transition-all duration-300 ease-in-out ${isMobileMenuOpen
-                                    ? 'opacity-0 rotate-90 scale-75'
-                                    : 'opacity-100 rotate-0 scale-100'
-                                    }`}>
-                                    {HiBars3({ className: "w-8 h-8" })}
-                                </div>
-
-                                {/* X Icon */}
-                                <div className={`absolute inset-0 transition-all duration-300 ease-in-out ${isMobileMenuOpen
-                                    ? 'opacity-100 rotate-0 scale-100'
-                                    : 'opacity-0 -rotate-90 scale-75'
-                                    }`}>
-                                    {HiXMark({ className: "w-8 h-8" })}
-                                </div>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Mobile Menu Overlay */}
-                <div
-                    className={`fixed inset-0 bg-black z-50 lg:hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen
-                        ? 'opacity-100 visible'
-                        : 'opacity-0 invisible'
-                        }`}
+              {/* Login/Register or User Dropdown - Now inside the nav with proper spacing */}
+              {user ? (
+                <UserDropdown user={user} />
+              ) : (
+                <Link
+                  href="/auth"
+                  className="hover:text-purple-500 transition-colors text-base"
                 >
-                    {/* Close Button */}
-                    <button
-                        onClick={closeMobileMenu}
-                        className={`absolute top-6 text-white hover:text-purple-500 transition-all duration-300 z-10 right-6 ${isMobileMenuOpen
-                            ? 'opacity-100 translate-x-0'
-                            : 'opacity-0 translate-x-4'
-                            }`}
-                        aria-label="Close mobile menu"
-                    >
-                        {HiXMark({ className: "w-8 h-8" })}
-                    </button>
+                  {t('header.auth.loginRegister')}
+                </Link>
+              )}
+            </nav>
 
-                    {/* Full Screen Menu Content */}
-                    <div className={`flex flex-col h-full text-white px-6 transition-all duration-500 ease-out overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/40 ${isMobileMenuOpen
-                        ? 'opacity-100 translate-x-0'
-                        : 'opacity-0 translate-x-full'
-                        }`}>
+            {/* Mobile Auth Section - Show Login/Register or User Dropdown next to menu button */}
+            <div className="lg:hidden flex items-center space-x-2">
+              {user ? (
+                <UserDropdown user={user} />
+              ) : (
+                <Link
+                  href="/auth"
+                  className="hover:text-purple-500 transition-colors text-sm font-medium px-3 py-1 rounded-md transition-all duration-200"
+                >
+                  {t('header.auth.loginRegister')}
+                </Link>
+              )}
+            </div>
 
-                        {/* Top Section - Logo & Image */}
-                        <div className="flex flex-col items-center pt-16 sm:pt-20">
-                            <div className="flex flex-col-reverse sm:flex-col items-center">
-                                <h2 className={`text-center text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl z-20 transition-all duration-700 ease-out delay-200 ${isMobileMenuOpen
-                                    ? 'opacity-100 translate-x-0'
-                                    : 'opacity-0 translate-x-full'
-                                    }`}>
-                                    $AFAWI NETT
-                                </h2>
-                            </div>
-                        </div>
-
-                        {/* Bottom Section - Navigation & Actions */}
-                        <div className="flex-1 flex flex-col justify-center pb-8">
-                            {/* Main Navigation Section */}
-                            <div className={`mb-8 transition-all duration-700 ease-out delay-300 ${isMobileMenuOpen
-                                ? 'opacity-100 translate-x-0'
-                                : 'opacity-0 translate-x-full'
-                                }`}>
-                                <h3 className="text-white/60 text-base font-medium uppercase tracking-wider mb-4 text-center">
-                                    {t('header.mobile.navigation')}
-                                </h3>
-                                <div className={`grid grid-cols-2 gap-4 max-w-xs mx-auto w-full place-items-center ${locale === 'ar' ? 'rtl [&>*:nth-child(1)]:order-2 [&>*:nth-child(2)]:order-1 [&>*:nth-child(3)]:order-4 [&>*:nth-child(4)]:order-3' : ''}`}>
-                                    <Link
-                                        href="/"
-                                        className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
-                                        onClick={closeMobileMenu}
-                                    >
-                                        {t('header.navigation.home')}
-                                    </Link>
-                                    <Link
-                                        href="/products"
-                                        className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
-                                        onClick={closeMobileMenu}
-                                    >
-                                        {t('header.navigation.products')}
-                                    </Link>
-                                    <Link
-                                        href="/deals"
-                                        className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
-                                        onClick={closeMobileMenu}
-                                    >
-                                        {t('header.navigation.deals')}
-                                    </Link>
-                                    <Link
-                                        href="/about"
-                                        className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
-                                        onClick={closeMobileMenu}
-                                    >
-                                        {t('header.navigation.about')}
-                                    </Link>
-                                </div>
-                            </div>
-
-                            {/* Quick Actions Section */}
-                            <div className={`mb-8 transition-all duration-700 ease-out delay-300 ${isMobileMenuOpen
-                                ? 'opacity-100 translate-x-0'
-                                : 'opacity-0 translate-x-full'
-                                }`}>
-                                <h3 className="text-white/60 text-base font-medium uppercase tracking-wider mb-4 text-center">
-                                    {t('header.mobile.quickActions')}
-                                </h3>
-                                <div className="flex justify-center space-x-6">
-                                    <Link
-                                        href="/wishlist"
-                                        className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
-                                        onClick={closeMobileMenu}
-                                    >
-                                        <div className="text-white group-hover:text-purple-400 transition-colors">
-                                            {HiHeart({ className: "w-7 h-7" })}
-                                        </div>
-                                        <span className="text-sm text-white/80 group-hover:text-white">{t('header.actions.wishlist')}</span>
-                                    </Link>
-                                    <Link
-                                        href="/cart"
-                                        className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
-                                        onClick={closeMobileMenu}
-                                    >
-                                        <div className="text-white group-hover:text-purple-400 transition-colors">
-                                            {HiOutlineShoppingCart({ className: "w-7 h-7" })}
-                                        </div>
-                                        <span className="text-sm text-white/80 group-hover:text-white">{t('header.actions.cart')}</span>
-                                    </Link>
-                                    <button
-                                        className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
-                                    >
-                                        <div className="text-white group-hover:text-purple-400 transition-colors">
-                                            {HiBell({ className: "w-7 h-7" })}
-                                        </div>
-                                        <span className="text-sm text-white/80 group-hover:text-white">{t('header.actions.alerts')}</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Account Section */}
-                            <div className={`transition-all duration-700 ease-out delay-300 ${isMobileMenuOpen
-                                ? 'opacity-100 translate-x-0'
-                                : 'opacity-0 translate-x-full'
-                                }`}>
-                                <div className="flex flex-col items-center space-y-4">
-                                    {user ? (
-                                        <div className="flex flex-col items-center space-y-3">
-                                            <div className="flex items-center text-white">
-                                                <span className="text-white font-medium">{user.name}</span>
-                                            </div>
-                                            <button
-                                                onClick={() => {
-                                                    logout();
-                                                    closeMobileMenu();
-                                                }}
-                                                className="px-6 py-2 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300 text-base"
-                                            >
-                                                {t('header.auth.logout')}
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <Link
-                                            href="/auth"
-                                            className="px-6 py-2 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300 text-base"
-                                            onClick={closeMobileMenu}
-                                        >
-                                            {t('header.auth.loginRegister')}
-                                        </Link>
-                                    )}
-
-                                    {/* Language & Theme Section */}
-                                    <div className="flex flex-col items-center space-y-3">
-                                        <h4 className="text-white/60 text-sm font-medium uppercase tracking-wider">
-                                            {t('header.mobile.languageTheme')}
-                                        </h4>
-                                        <div className="flex space-x-3">
-
-                                            <LanguageToggle variant="mobile" />
-
-                                            {/* Theme Toggle for Mobile */}
-                                            <ThemeToggle variant="mobile" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            {/* Mobile Menu Button */}
+            <button
+              onClick={toggleMobileMenu}
+              className="lg:hidden p-2 hover:text-purple-500 transition-colors"
+              aria-label="Toggle mobile menu"
+            >
+              <div className="relative w-8 h-8">
+                {/* Hamburger Icon */}
+                <div
+                  className={`absolute inset-0 transition-all duration-300 ease-in-out ${
+                    isMobileMenuOpen
+                      ? 'opacity-0 rotate-90 scale-75'
+                      : 'opacity-100 rotate-0 scale-100'
+                  }`}
+                >
+                  {HiBars3({ className: 'w-8 h-8' })}
                 </div>
-            </header>
-            
-            {/* Spacer to prevent content from being hidden behind fixed header */}
-            <div className="h-header"></div>
-        </>
-    );
+
+                {/* X Icon */}
+                <div
+                  className={`absolute inset-0 transition-all duration-300 ease-in-out ${
+                    isMobileMenuOpen
+                      ? 'opacity-100 rotate-0 scale-100'
+                      : 'opacity-0 -rotate-90 scale-75'
+                  }`}
+                >
+                  {HiXMark({ className: 'w-8 h-8' })}
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu Overlay */}
+        <div
+          className={`fixed inset-0 bg-black z-50 lg:hidden transition-all duration-300 ease-in-out ${
+            isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+          }`}
+        >
+          {/* Close Button */}
+          <button
+            onClick={closeMobileMenu}
+            className={`absolute top-6 text-white hover:text-purple-500 transition-all duration-300 z-10 right-6 ${
+              isMobileMenuOpen
+                ? 'opacity-100 translate-x-0'
+                : 'opacity-0 translate-x-4'
+            }`}
+            aria-label="Close mobile menu"
+          >
+            {HiXMark({ className: 'w-8 h-8' })}
+          </button>
+
+          {/* Full Screen Menu Content */}
+          <div
+            className={`flex flex-col h-full text-white px-6 transition-all duration-500 ease-out overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/40 ${
+              isMobileMenuOpen
+                ? 'opacity-100 translate-x-0'
+                : 'opacity-0 translate-x-full'
+            }`}
+          >
+            {/* Top Section - Logo & Image */}
+            <div className="flex flex-col items-center pt-16 sm:pt-20">
+              <div className="flex flex-col-reverse sm:flex-col items-center">
+                <h2
+                  className={`text-center text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl z-20 transition-all duration-700 ease-out delay-200 ${
+                    isMobileMenuOpen
+                      ? 'opacity-100 translate-x-0'
+                      : 'opacity-0 translate-x-full'
+                  }`}
+                >
+                  $AFAWI NETT
+                </h2>
+              </div>
+            </div>
+
+            {/* Bottom Section - Navigation & Actions */}
+            <div className="flex-1 flex flex-col justify-center pb-8">
+              {/* Main Navigation Section */}
+              <div
+                className={`mb-8 transition-all duration-700 ease-out delay-300 ${
+                  isMobileMenuOpen
+                    ? 'opacity-100 translate-x-0'
+                    : 'opacity-0 translate-x-full'
+                }`}
+              >
+                <h3 className="text-white/60 text-base font-medium uppercase tracking-wider mb-4 text-center">
+                  {t('header.mobile.navigation')}
+                </h3>
+                <div
+                  className={`grid grid-cols-2 gap-4 max-w-xs mx-auto w-full place-items-center ${
+                    locale === 'ar'
+                      ? 'rtl [&>*:nth-child(1)]:order-2 [&>*:nth-child(2)]:order-1 [&>*:nth-child(3)]:order-4 [&>*:nth-child(4)]:order-3'
+                      : ''
+                  }`}
+                >
+                  <Link
+                    href="/"
+                    className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
+                    onClick={closeMobileMenu}
+                  >
+                    {t('header.navigation.home')}
+                  </Link>
+                  <Link
+                    href="/products"
+                    className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
+                    onClick={closeMobileMenu}
+                  >
+                    {t('header.navigation.products')}
+                  </Link>
+                  <Link
+                    href="/deals"
+                    className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
+                    onClick={closeMobileMenu}
+                  >
+                    {t('header.navigation.deals')}
+                  </Link>
+                  <Link
+                    href="/about"
+                    className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
+                    onClick={closeMobileMenu}
+                  >
+                    {t('header.navigation.about')}
+                  </Link>
+                </div>
+              </div>
+
+              {/* Quick Actions Section */}
+              <div
+                className={`mb-8 transition-all duration-700 ease-out delay-300 ${
+                  isMobileMenuOpen
+                    ? 'opacity-100 translate-x-0'
+                    : 'opacity-0 translate-x-full'
+                }`}
+              >
+                <h3 className="text-white/60 text-base font-medium uppercase tracking-wider mb-4 text-center">
+                  {t('header.mobile.quickActions')}
+                </h3>
+                <div className="flex justify-center space-x-6">
+                  <Link
+                    href="/wishlist"
+                    className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
+                    onClick={closeMobileMenu}
+                  >
+                    <div className="text-white group-hover:text-purple-400 transition-colors">
+                      {HiHeart({ className: 'w-7 h-7' })}
+                    </div>
+                    <span className="text-sm text-white/80 group-hover:text-white">
+                      {t('header.actions.wishlist')}
+                    </span>
+                  </Link>
+                  <Link
+                    href="/cart"
+                    className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
+                    onClick={closeMobileMenu}
+                  >
+                    <div className="text-white group-hover:text-purple-400 transition-colors">
+                      {HiOutlineShoppingCart({ className: 'w-7 h-7' })}
+                    </div>
+                    <span className="text-sm text-white/80 group-hover:text-white">
+                      {t('header.actions.cart')}
+                    </span>
+                  </Link>
+                  <button className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group">
+                    <div className="text-white group-hover:text-purple-400 transition-colors">
+                      {HiBell({ className: 'w-7 h-7' })}
+                    </div>
+                    <span className="text-sm text-white/80 group-hover:text-white">
+                      {t('header.actions.alerts')}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Account Section */}
+              <div
+                className={`transition-all duration-700 ease-out delay-300 ${
+                  isMobileMenuOpen
+                    ? 'opacity-100 translate-x-0'
+                    : 'opacity-0 translate-x-full'
+                }`}
+              >
+                <div className="flex flex-col items-center space-y-4">
+                  {user ? (
+                    <div className="flex flex-col items-center space-y-3">
+                      <div className="flex items-center text-white">
+                        <span className="text-white font-medium">
+                          {user.name}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          logout();
+                          closeMobileMenu();
+                        }}
+                        className="px-6 py-2 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300 text-base"
+                      >
+                        {t('header.auth.logout')}
+                      </button>
+                    </div>
+                  ) : (
+                    <Link
+                      href="/auth"
+                      className="px-6 py-2 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-medium transition-all duration-300 text-base"
+                      onClick={closeMobileMenu}
+                    >
+                      {t('header.auth.loginRegister')}
+                    </Link>
+                  )}
+
+                  {/* Language & Theme Section */}
+                  <div className="flex flex-col items-center space-y-3">
+                    <h4 className="text-white/60 text-sm font-medium uppercase tracking-wider">
+                      {t('header.mobile.languageTheme')}
+                    </h4>
+                    <div className="flex space-x-3">
+                      <LanguageToggle variant="mobile" />
+
+                      {/* Theme Toggle for Mobile */}
+                      <ThemeToggle variant="mobile" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Spacer to prevent content from being hidden behind fixed header */}
+      <div className="h-header"></div>
+    </>
+  );
 };
 
 export default Header;

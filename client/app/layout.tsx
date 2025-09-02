@@ -1,4 +1,5 @@
 import './globals.css';
+import { Alkalami } from 'next/font/google';
 import Footer from '@app/components/Layout/Footer';
 import Header from '@app/components/Layout/Header';
 import { AuthProvider } from './contexts/AuthContext';
@@ -6,6 +7,14 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import DynamicLangAttribute from './components/DynamicLangAttribute';
 import { AppInitializer } from './components/AppInitializer';
+
+// Initialize the Alkalami font
+const alkalami = Alkalami({
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-alkalami',
+});
 
 /**
  * Using force dynamic so changes in business assets (e.g. services) are immediately reflected.
@@ -19,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={alkalami.variable}>
       <head>
         <title>SAFAWI NETT</title>
         <meta
@@ -28,11 +37,9 @@ export default function RootLayout({
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Alkalami:wght@400&display=swap" rel="stylesheet" />
-        <style dangerouslySetInnerHTML={{
-          __html: `
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
             /* AGGRESSIVE AUTOFILL OVERRIDE - Inline styles for maximum compatibility */
             input:-webkit-autofill,
             input:-webkit-autofill:hover,
@@ -58,8 +65,9 @@ export default function RootLayout({
             input:-webkit-autofill {
               transition: background-color 5000s ease-in-out 0s !important;
             }
-          `
-        }} />
+          `,
+          }}
+        />
       </head>
       <body className="text-black bg-site dark:text-white dark:bg-dark-bg transition-colors duration-200">
         <AuthProvider>

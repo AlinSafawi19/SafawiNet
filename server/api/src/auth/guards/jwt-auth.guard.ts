@@ -60,13 +60,32 @@ export class JwtAuthGuard implements CanActivate {
   }
 
   private extractTokenFromRequest(request: any): string | undefined {
+    // Debug logging
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 JWT Guard - Request cookies:', request?.cookies);
+      console.log('🔍 JWT Guard - Request headers:', request?.headers);
+    }
+    
     // First try to extract from cookies
     if (request?.cookies?.accessToken) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 JWT Guard - Token found in cookies');
+      }
       return request.cookies.accessToken;
     }
     
     // Fallback to Authorization header
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    return type === 'Bearer' ? token : undefined;
+    if (type === 'Bearer' && token) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 JWT Guard - Token found in Authorization header');
+      }
+      return token;
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 JWT Guard - No token found in cookies or headers');
+    }
+    return undefined;
   }
 }

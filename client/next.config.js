@@ -11,10 +11,8 @@ const nextConfig = {
     domains: ['static.wixstatic.com'],
     formats: ['image/webp'],
   },
-  // Configure server to always run on port 3001
-  server: {
-    port: 3001,
-  },
+  // Note: To set a custom port, use environment variable PORT=3001
+  // or modify the package.json scripts to include --port 3001
 };
 
 module.exports = nextConfig;

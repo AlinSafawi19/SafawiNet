@@ -27,14 +27,16 @@ export function AuthForm() {
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
   const [touched, setTouched] = useState({
     name: false,
     email: false,
     password: false,
-    confirmPassword: false
+    confirmPassword: false,
   });
 
   const emailRef = useRef<HTMLInputElement>(null);
@@ -43,10 +45,12 @@ export function AuthForm() {
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
   // Consistent input styling for all form fields
-  const inputClassName = "w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-purple-500 focus:bg-white/15 transition-all duration-300 autofill:bg-white/10 autofill:text-white text-sm sm:text-base";
+  const inputClassName =
+    'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-purple-500 focus:bg-white/15 transition-all duration-300 autofill:bg-white/10 autofill:text-white text-sm sm:text-base';
 
   // Error input styling
-  const errorInputClassName = "w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-red-500/50 rounded-lg text-white placeholder-white/50 focus:border-red-500 focus:bg-white/15 transition-all duration-300 autofill:bg-white/10 autofill:text-white text-sm sm:text-base";
+  const errorInputClassName =
+    'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-red-500/50 rounded-lg text-white placeholder-white/50 focus:border-red-500 focus:bg-white/15 transition-all duration-300 autofill:bg-white/10 autofill:text-white text-sm sm:text-base';
 
   // Validation functions
   const validateEmail = (email: string): string | undefined => {
@@ -80,7 +84,10 @@ export function AuthForm() {
     return undefined;
   };
 
-  const validateConfirmPassword = (password: string, confirmPassword: string): string | undefined => {
+  const validateConfirmPassword = (
+    password: string,
+    confirmPassword: string
+  ): string | undefined => {
     if (!confirmPassword.trim()) {
       return 'auth.validation.confirmPasswordRequired';
     }
@@ -106,7 +113,10 @@ export function AuthForm() {
     if (passwordError) errors.password = passwordError;
 
     if (!isLogin) {
-      const confirmPasswordError = validateConfirmPassword(formData.password, formData.confirmPassword);
+      const confirmPasswordError = validateConfirmPassword(
+        formData.password,
+        formData.confirmPassword
+      );
       if (confirmPasswordError) errors.confirmPassword = confirmPasswordError;
     }
 
@@ -133,9 +143,9 @@ export function AuthForm() {
         break;
     }
 
-    setValidationErrors(prev => ({
+    setValidationErrors((prev) => ({
       ...prev,
-      [name]: error
+      [name]: error,
     }));
   };
 
@@ -147,7 +157,12 @@ export function AuthForm() {
     setErrorKey('');
     setSuccessKey('');
     setValidationErrors({});
-    setTouched({ name: false, email: false, password: false, confirmPassword: false });
+    setTouched({
+      name: false,
+      email: false,
+      password: false,
+      confirmPassword: false,
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -160,7 +175,7 @@ export function AuthForm() {
       name: !isLogin,
       email: true,
       password: true,
-      confirmPassword: !isLogin
+      confirmPassword: !isLogin,
     });
 
     // Validate form before submission
@@ -187,7 +202,11 @@ export function AuthForm() {
           }
         }
       } else {
-        const result = await register(formData.name, formData.email, formData.password);
+        const result = await register(
+          formData.name,
+          formData.email,
+          formData.password
+        );
         if (result.success) {
           // Show server success message and switch to login mode
           setError('');
@@ -203,9 +222,19 @@ export function AuthForm() {
             setSuccessMessage('');
           }
           setIsLogin(true);
-          setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+          setFormData({
+            name: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+          });
           setValidationErrors({});
-          setTouched({ name: false, email: false, password: false, confirmPassword: false });
+          setTouched({
+            name: false,
+            email: false,
+            password: false,
+            confirmPassword: false,
+          });
         } else {
           if (result.messageKey) {
             setErrorKey(result.messageKey);
@@ -230,16 +259,16 @@ export function AuthForm() {
   // Handle form data changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
 
     // Clear error when user starts typing
     if (validationErrors[name as keyof ValidationErrors]) {
-      setValidationErrors(prev => ({
+      setValidationErrors((prev) => ({
         ...prev,
-        [name]: undefined
+        [name]: undefined,
       }));
     }
   };
@@ -247,9 +276,9 @@ export function AuthForm() {
   // Handle field blur for validation
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setTouched(prev => ({
+    setTouched((prev) => ({
       ...prev,
-      [name]: true
+      [name]: true,
     }));
     validateField(name, value);
   };
@@ -291,13 +320,19 @@ export function AuthForm() {
       if (emailRef.current && emailRef.current.matches(':-webkit-autofill')) {
         emailRef.current.classList.add('autofilled');
       }
-      if (passwordRef.current && passwordRef.current.matches(':-webkit-autofill')) {
+      if (
+        passwordRef.current &&
+        passwordRef.current.matches(':-webkit-autofill')
+      ) {
         passwordRef.current.classList.add('autofilled');
       }
       if (nameRef.current && nameRef.current.matches(':-webkit-autofill')) {
         nameRef.current.classList.add('autofilled');
       }
-      if (confirmPasswordRef.current && confirmPasswordRef.current.matches(':-webkit-autofill')) {
+      if (
+        confirmPasswordRef.current &&
+        confirmPasswordRef.current.matches(':-webkit-autofill')
+      ) {
         confirmPasswordRef.current.classList.add('autofilled');
       }
     };
@@ -311,10 +346,12 @@ export function AuthForm() {
     return () => clearTimeout(timer);
   }, []);
 
-
-
   return (
-    <div className={`min-h-screen flex flex-col lg:flex-row bg-zinc-900 ${locale === 'ar' ? 'rtl' : 'ltr'}`}>
+    <div
+      className={`min-h-screen flex flex-col lg:flex-row bg-zinc-900 ${
+        locale === 'ar' ? 'rtl' : 'ltr'
+      }`}
+    >
       {/* Left side - Form */}
       <div className="flex-1 lg:basis-1/2 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-3 sm:py-4 md:py-6 lg:py-8 xl:py-10">
         <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
@@ -326,8 +363,7 @@ export function AuthForm() {
             <p className="text-white/70 text-xs sm:text-sm md:text-base">
               {isLogin
                 ? t('auth.form.signInSubtitle')
-                : t('auth.form.createAccountSubtitle')
-              }
+                : t('auth.form.createAccountSubtitle')}
             </p>
           </div>
 
@@ -350,10 +386,16 @@ export function AuthForm() {
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 md:space-y-6">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-3 sm:space-y-4 md:space-y-6"
+          >
             {!isLogin && (
               <div>
-                <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2">
+                <label
+                  htmlFor="name"
+                  className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2"
+                >
                   {t('auth.form.fullName')}
                 </label>
                 <input
@@ -368,13 +410,18 @@ export function AuthForm() {
                   placeholder={t('auth.form.fullNamePlaceholder')}
                 />
                 {touched.name && validationErrors.name && (
-                  <p className="text-red-400 text-xs mt-1">{t(validationErrors.name)}</p>
+                  <p className="text-red-400 text-xs mt-1">
+                    {t(validationErrors.name)}
+                  </p>
                 )}
               </div>
             )}
 
             <div>
-              <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2">
+              <label
+                htmlFor="email"
+                className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2"
+              >
                 {t('auth.form.emailAddress')}
               </label>
               <input
@@ -389,12 +436,17 @@ export function AuthForm() {
                 placeholder={t('auth.form.emailPlaceholder')}
               />
               {touched.email && validationErrors.email && (
-                <p className="text-red-400 text-xs mt-1">{t(validationErrors.email)}</p>
+                <p className="text-red-400 text-xs mt-1">
+                  {t(validationErrors.email)}
+                </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2">
+              <label
+                htmlFor="password"
+                className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2"
+              >
                 {t('auth.form.password')}
               </label>
               <input
@@ -409,16 +461,23 @@ export function AuthForm() {
                 placeholder={t('auth.form.passwordPlaceholder')}
               />
               {touched.password && validationErrors.password && (
-                <p className="text-red-400 text-xs mt-1">{t(validationErrors.password)}</p>
+                <p className="text-red-400 text-xs mt-1">
+                  {t(validationErrors.password)}
+                </p>
               )}
               {!isLogin && (
-                <p className="text-white/50 text-xs mt-1">{t('auth.form.passwordRequirement')}</p>
+                <p className="text-white/50 text-xs mt-1">
+                  {t('auth.form.passwordRequirement')}
+                </p>
               )}
             </div>
 
             {!isLogin && (
               <div>
-                <label htmlFor="confirmPassword" className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2">
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2"
+                >
                   {t('auth.form.confirmPassword')}
                 </label>
                 <input
@@ -432,9 +491,12 @@ export function AuthForm() {
                   className={getInputClass('confirmPassword')}
                   placeholder={t('auth.form.confirmPasswordPlaceholder')}
                 />
-                {touched.confirmPassword && validationErrors.confirmPassword && (
-                  <p className="text-red-400 text-xs mt-1">{t(validationErrors.confirmPassword)}</p>
-                )}
+                {touched.confirmPassword &&
+                  validationErrors.confirmPassword && (
+                    <p className="text-red-400 text-xs mt-1">
+                      {t(validationErrors.confirmPassword)}
+                    </p>
+                  )}
               </div>
             )}
 
@@ -445,14 +507,34 @@ export function AuthForm() {
             >
               {isLoading ? (
                 <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
-                  {isLogin ? t('auth.form.signingIn') : t('auth.form.creatingAccount')}
+                  {isLogin
+                    ? t('auth.form.signingIn')
+                    : t('auth.form.creatingAccount')}
                 </>
+              ) : isLogin ? (
+                t('auth.form.signIn')
               ) : (
-                isLogin ? t('auth.form.signIn') : t('auth.form.createAccount')
+                t('auth.form.createAccount')
               )}
             </button>
           </form>
@@ -460,7 +542,9 @@ export function AuthForm() {
           {/* Toggle mode */}
           <div className="text-center mt-3 sm:mt-4 md:mt-6">
             <p className="text-white/70 text-xs sm:text-sm">
-              {isLogin ? t('auth.form.dontHaveAccount') : t('auth.form.alreadyHaveAccount')}
+              {isLogin
+                ? t('auth.form.dontHaveAccount')
+                : t('auth.form.alreadyHaveAccount')}
               <button
                 onClick={toggleMode}
                 className="ml-1 sm:ml-2 text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200 min-h-[32px] px-2 py-1 rounded"
@@ -484,7 +568,9 @@ export function AuthForm() {
         />
         <div className="auth-screen absolute inset-0 z-20 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="text-center text-white">
-            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 md:mb-4">{t('auth.hero.title')}</h1>
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 md:mb-4">
+              {t('auth.hero.title')}
+            </h1>
             <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/80 max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md">
               {t('auth.hero.subtitle')}
             </p>

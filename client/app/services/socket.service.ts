@@ -1,14 +1,25 @@
 import { io, Socket } from 'socket.io-client';
 
 export interface SocketEvents {
-  emailVerified: (data: { success: boolean; user: any; message: string; tokens?: any }) => void;
+  emailVerified: (data: {
+    success: boolean;
+    user: any;
+    message: string;
+    tokens?: any;
+  }) => void;
   emailVerificationFailed: (data: { success: boolean; error: string }) => void;
   loginSuccess: (data: { success: boolean; user: any }) => void;
   logout: (data: { success: boolean; message: string }) => void;
   verificationRoomJoined: (data: { success: boolean; error?: string }) => void;
   verificationRoomLeft: (data: { success: boolean }) => void;
-  pendingVerificationRoomJoined: (data: { success: boolean; email: string }) => void;
-  pendingVerificationRoomLeft: (data: { success: boolean; email: string }) => void;
+  pendingVerificationRoomJoined: (data: {
+    success: boolean;
+    email: string;
+  }) => void;
+  pendingVerificationRoomLeft: (data: {
+    success: boolean;
+    email: string;
+  }) => void;
   connect: () => void;
   disconnect: () => void;
 }
@@ -61,7 +72,7 @@ class SocketService {
   private attemptReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      
+
       setTimeout(() => {
         if (this.socket && !this.isConnected) {
           this.socket.connect();
@@ -122,21 +133,28 @@ class SocketService {
     }
   }
 
-  public off<T extends keyof SocketEvents>(event: T, callback: SocketEvents[T]) {
+  public off<T extends keyof SocketEvents>(
+    event: T,
+    callback: SocketEvents[T]
+  ) {
     if (this.socket) {
       this.socket.off(event, callback as any);
     }
   }
 
   // Listen for authentication broadcasts from other devices
-  public onAuthBroadcast(callback: (data: { type: string; user?: any }) => void) {
+  public onAuthBroadcast(
+    callback: (data: { type: string; user?: any }) => void
+  ) {
     if (this.socket) {
       this.socket.on('auth_broadcast', callback);
     }
   }
 
   // Remove auth broadcast listener
-  public offAuthBroadcast(callback: (data: { type: string; user?: any }) => void) {
+  public offAuthBroadcast(
+    callback: (data: { type: string; user?: any }) => void
+  ) {
     if (this.socket) {
       this.socket.off('auth_broadcast', callback);
     }

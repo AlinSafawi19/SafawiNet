@@ -1,6 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 import { useAuth } from './AuthContext';
 import { buildApiUrl, API_CONFIG } from '../config/api';
 
@@ -36,7 +42,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Initialize theme from user preferences or localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme;
-    if (user?.preferences?.theme && ['light', 'dark'].includes(user.preferences.theme)) {
+    if (
+      user?.preferences?.theme &&
+      ['light', 'dark'].includes(user.preferences.theme)
+    ) {
       setThemeState(user.preferences.theme as Theme);
     } else if (savedTheme && ['light', 'dark'].includes(savedTheme)) {
       setThemeState(savedTheme);
@@ -58,10 +67,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const setTheme = async (newTheme: Theme) => {
     // Update local state immediately for responsive UI
     setThemeState(newTheme);
-    
+
     // Store in localStorage for persistence across sessions
     localStorage.setItem('theme', newTheme);
-    
+
     // Update user preferences in database if user is logged in
     if (user) {
       try {

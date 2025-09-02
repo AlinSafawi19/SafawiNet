@@ -29,38 +29,54 @@ export const useSocket = () => {
     socketService.leavePendingVerificationRoom(email);
   }, []);
 
-  const on = useCallback(<T extends keyof import('../services/socket.service').SocketEvents>(
-    event: T,
-    callback: import('../services/socket.service').SocketEvents[T]
-  ) => {
-    socketService.on(event, callback);
-  }, []);
+  const on = useCallback(
+    <T extends keyof import('../services/socket.service').SocketEvents>(
+      event: T,
+      callback: import('../services/socket.service').SocketEvents[T]
+    ) => {
+      socketService.on(event, callback);
+    },
+    []
+  );
 
-  const off = useCallback(<T extends keyof import('../services/socket.service').SocketEvents>(
-    event: T,
-    callback: import('../services/socket.service').SocketEvents[T]
-  ) => {
-    socketService.off(event, callback);
-  }, []);
+  const off = useCallback(
+    <T extends keyof import('../services/socket.service').SocketEvents>(
+      event: T,
+      callback: import('../services/socket.service').SocketEvents[T]
+    ) => {
+      socketService.off(event, callback);
+    },
+    []
+  );
 
   // Listen for authentication broadcasts from other devices
-  const onAuthBroadcast = useCallback((callback: (data: { type: string; user?: any }) => void) => {
-    socketService.onAuthBroadcast(callback);
-  }, []);
+  const onAuthBroadcast = useCallback(
+    (callback: (data: { type: string; user?: any }) => void) => {
+      socketService.onAuthBroadcast(callback);
+    },
+    []
+  );
 
   // Remove auth broadcast listener
-  const offAuthBroadcast = useCallback((callback: (data: { type: string; user?: any }) => void) => {
-    socketService.offAuthBroadcast(callback);
-  }, []);
+  const offAuthBroadcast = useCallback(
+    (callback: (data: { type: string; user?: any }) => void) => {
+      socketService.offAuthBroadcast(callback);
+    },
+    []
+  );
 
   // Auto-connect when user is authenticated
   useEffect(() => {
     if (user) {
       // Get token from cookies - updated to match backend JWT guard
       const cookies = document.cookie.split(';');
-      const accessTokenCookie = cookies.find(cookie => cookie.trim().startsWith('accessToken='));
-      const accessToken = accessTokenCookie ? accessTokenCookie.split('=')[1] : undefined;
-      
+      const accessTokenCookie = cookies.find((cookie) =>
+        cookie.trim().startsWith('accessToken=')
+      );
+      const accessToken = accessTokenCookie
+        ? accessTokenCookie.split('=')[1]
+        : undefined;
+
       if (accessToken) {
         connect(accessToken);
       }

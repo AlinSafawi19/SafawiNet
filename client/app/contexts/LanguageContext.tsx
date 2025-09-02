@@ -1,6 +1,12 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 import { useAuth } from './AuthContext';
 import { buildApiUrl, API_CONFIG } from '../config/api';
 
@@ -13,7 +19,9 @@ interface LanguageContextType {
   isLoading: boolean;
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const LanguageContext = createContext<LanguageContextType | undefined>(
+  undefined
+);
 
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
@@ -27,7 +35,9 @@ interface LanguageProviderProps {
   children: ReactNode;
 }
 
-export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
+export const LanguageProvider: React.FC<LanguageProviderProps> = ({
+  children,
+}) => {
   const { user, authenticatedFetch } = useAuth();
   const [locale, setLocaleState] = useState<Locale>('en');
   const [messages, setMessages] = useState<any>({});
@@ -71,7 +81,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   const t = (key: string): string => {
     const keys = key.split('.');
     let value: any = messages;
-    
+
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
@@ -79,7 +89,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
         return key; // Return key if translation not found
       }
     }
-    
+
     return typeof value === 'string' ? value : key;
   };
 
@@ -87,7 +97,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   const setLocale = async (newLocale: Locale) => {
     // Update local state immediately for responsive UI
     setLocaleState(newLocale);
-    
+
     // Store in localStorage for persistence across sessions
     localStorage.setItem('locale', newLocale);
 

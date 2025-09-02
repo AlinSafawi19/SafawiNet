@@ -4,7 +4,7 @@ import { ENV_CONFIG } from './environment';
 export const API_CONFIG = {
   // Use environment configuration for API URL
   BASE_URL: ENV_CONFIG.API_URL,
-  
+
   // API endpoints
   ENDPOINTS: {
     AUTH: {

@@ -5,19 +5,31 @@ import { useLanguage } from '../../contexts/LanguageContext';
 
 export function HomeScreen() {
   const { t, locale } = useLanguage();
-  
+
   return (
     <div className="home-screen mx-auto relative">
       <div className="relative">
         <div className="flex sm:flex-row flex-col bg-zinc-900 dark:bg-dark-bg">
-          <div className={`basis-1/2 text-center sm:text-left relative ${locale === 'ar' ? 'sm:text-right' : ''}`}>
+          <div
+            className={`basis-1/2 text-center sm:text-left relative ${
+              locale === 'ar' ? 'sm:text-right' : ''
+            }`}
+          >
             <div className="px-6 sm:px-10 lg:px-14 py-6 bg-site dark:bg-dark-surface">
-              <h1 className={`text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none animate-fade-in font-bold text-black dark:text-white ${locale === 'ar' ? 'text-right' : ''}`}>
+              <h1
+                className={`text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none animate-fade-in font-bold text-black dark:text-white ${
+                  locale === 'ar' ? 'text-right' : ''
+                }`}
+              >
                 <span className="block">{t('home.hero.title.line1')}</span>
                 <span className="block">{t('home.hero.title.line2')}</span>
                 <span className="block">{t('home.hero.title.line3')}</span>
               </h1>
-              <h3 className={`text-sm sm:text-base lg:text-2xl py-4 sm:py-6 text-black dark:text-white ${locale === 'ar' ? 'text-right' : ''}`}>
+              <h3
+                className={`text-sm sm:text-base lg:text-2xl py-4 sm:py-6 text-black dark:text-white ${
+                  locale === 'ar' ? 'text-right' : ''
+                }`}
+              >
                 {locale === 'ar' ? (
                   <>
                     <span className="text-purple-500">SAFAWI NETT</span>{' '}
@@ -30,7 +42,11 @@ export function HomeScreen() {
                   </>
                 )}
               </h3>
-              <div className={`flex justify-center sm:justify-start mt-2 ${locale === 'ar' ? 'sm:justify-end' : ''}`}>
+              <div
+                className={`flex justify-center sm:justify-start mt-2 ${
+                  locale === 'ar' ? 'sm:justify-end' : ''
+                }`}
+              >
                 <button className="bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base">
                   {t('home.hero.cta')}
                 </button>
@@ -60,9 +76,11 @@ export function HomeScreen() {
       {/* about me */}
       <div className="bg-zinc-900 dark:bg-dark-bg text-site dark:text-white pt-16 sm:p-20">
         <div className="max-w-4xl mx-auto text-center">
-          <div className={`text-lg sm:text-xl text-white/90 dark:text-gray-300 font-default tracking-wide leading-relaxed px-6 sm:px-8 ${locale === 'ar' ? 'text-right' : ''}`}>
-
-          </div>
+          <div
+            className={`text-lg sm:text-xl text-white/90 dark:text-gray-300 font-default tracking-wide leading-relaxed px-6 sm:px-8 ${
+              locale === 'ar' ? 'text-right' : ''
+            }`}
+          ></div>
         </div>
       </div>
     </div>
