@@ -178,6 +178,8 @@ model LoyaltyTier {
   @@map("loyalty_tiers")
 }
 
+
+
 model LoyaltyAccount {
   id             String               @id @default(cuid())
   userId         String               @unique

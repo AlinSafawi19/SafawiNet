@@ -124,6 +124,27 @@ export class AuthService {
         },
       });
 
+      // Create loyalty account for customers (users with CUSTOMER role)
+      if (user.roles.includes('CUSTOMER')) {
+        // Find the Bronze tier (default tier for new customers)
+        const bronzeTier = await tx.loyaltyTier.findFirst({
+          where: { name: 'Bronze' },
+        });
+
+        if (bronzeTier) {
+          await tx.loyaltyAccount.create({
+            data: {
+              userId: user.id,
+              currentTierId: bronzeTier.id,
+              currentPoints: 0,
+              lifetimePoints: 0,
+              tierUpgradedAt: new Date(),
+            },
+          });
+          this.logger.log(`Created loyalty account for new customer: ${user.email}`);
+        }
+      }
+
       return { user, verificationToken };
     });
 

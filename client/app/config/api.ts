@@ -18,6 +18,10 @@ export const API_CONFIG = {
       PREFERENCES: '/users/me/preferences',
       PROFILE: '/users/me',
     },
+    LOYALTY: {
+      ME: '/v1/loyalty/me',
+      TRANSACTIONS: '/v1/loyalty/transactions',
+    },
   },
 };
 

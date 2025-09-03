@@ -1,12 +1,16 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useLoyalty } from '../../hooks/useLoyalty';
 import {
   HiUser,
   HiArrowRightOnRectangle,
   HiChevronDown,
+  HiGift,
+  HiStar,
 } from 'react-icons/hi2';
 
 interface UserDropdownProps {
@@ -19,6 +23,21 @@ interface UserDropdownProps {
 const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
   const { logout } = useAuth();
   const { t, locale } = useLanguage();
+  const {
+    loyaltyAccount,
+    isLoading: loyaltyLoading,
+    isCustomer,
+  } = useLoyalty();
+
+  // Debug logging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 UserDropdown loyalty state:', {
+      loyaltyAccount,
+      loyaltyLoading,
+      isCustomer,
+    });
+  }
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -63,6 +82,11 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
     closeDropdown();
   };
 
+  const handleMyAccount = () => {
+    router.push('/account');
+    closeDropdown();
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -97,8 +121,60 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
             </p>
           </div>
 
+          {/* Loyalty Section - Only show for customers */}
+          {isCustomer && (
+            <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center space-x-2 mb-2">
+                {HiGift({ className: 'w-4 h-4 text-purple-500' })}
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {t('header.loyalty.title')}
+                </span>
+              </div>
+
+              {loyaltyLoading ? (
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('header.loyalty.loading')}
+                </div>
+              ) : loyaltyAccount ? (
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {t('header.loyalty.currentTier')}:
+                    </span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {loyaltyAccount.currentTier.name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {t('header.loyalty.points')}:
+                    </span>
+                    <span className="font-medium text-purple-600 dark:text-purple-400">
+                      {loyaltyAccount.currentPoints.toLocaleString()}
+                    </span>
+                  </div>
+                  {loyaltyAccount.nextTier && (
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        {t('header.loyalty.nextTier')}:
+                      </span>
+                      <span className="text-gray-900 dark:text-white">
+                        {loyaltyAccount.nextTier.pointsNeeded}{' '}
+                        {t('header.loyalty.pointsNeeded')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                  {t('header.loyalty.noAccount')}
+                </div>
+              )}
+            </div>
+          )}
+
           <button
-            onClick={() => closeDropdown()}
+            onClick={handleMyAccount}
             className={`flex items-center hover:text-purple-500 transition-colors text-sm font-medium space-x-2 w-full px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 ${
               isRTL ? 'text-right justify-end' : 'text-left'
             }`}

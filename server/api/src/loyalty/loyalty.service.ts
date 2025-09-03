@@ -48,15 +48,16 @@ export class LoyaltyService {
   constructor(private prisma: PrismaService) {}
 
   async getUserLoyaltyAccount(userId: string): Promise<LoyaltyAccountInfo> {
-    const loyaltyAccount = await this.prisma.loyaltyAccount.findUnique({
+    let loyaltyAccount = await this.prisma.loyaltyAccount.findUnique({
       where: { userId },
       include: {
         currentTier: true,
       },
     });
 
+    // If no loyalty account exists, create one automatically
     if (!loyaltyAccount) {
-      throw new NotFoundException('Loyalty account not found');
+      loyaltyAccount = await this.createLoyaltyAccountForUser(userId);
     }
 
     // Find next tier if exists
@@ -85,6 +86,33 @@ export class LoyaltyService {
     };
 
     return result;
+  }
+
+  private async createLoyaltyAccountForUser(userId: string) {
+    // Find the Bronze tier (default tier for new customers)
+    const bronzeTier = await this.prisma.loyaltyTier.findFirst({
+      where: { name: 'Bronze' },
+    });
+
+    if (!bronzeTier) {
+      throw new NotFoundException('Default loyalty tier not found');
+    }
+
+    // Create loyalty account
+    const loyaltyAccount = await this.prisma.loyaltyAccount.create({
+      data: {
+        userId,
+        currentTierId: bronzeTier.id,
+        currentPoints: 0,
+        lifetimePoints: 0,
+        tierUpgradedAt: new Date(),
+      },
+      include: {
+        currentTier: true,
+      },
+    });
+
+    return loyaltyAccount;
   }
 
   async getUserTransactions(

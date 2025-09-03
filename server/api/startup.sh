@@ -59,6 +59,17 @@ generate_prisma_client() {
     fi
 }
 
+# Function to seed the database
+seed_database() {
+    log "Seeding database with loyalty tiers..."
+    if npx prisma db seed --schema=./prisma/schema.prisma; then
+        log "Database seeding completed successfully"
+    else
+        log "WARNING: Database seeding failed, but continuing..."
+        # Don't exit on seeding failure as it might just mean tiers already exist
+    fi
+}
+
 # Main execution
 log "Starting application initialization..."
 
@@ -70,6 +81,9 @@ run_migrations
 
 # Generate Prisma client
 generate_prisma_client
+
+# Seed the database with loyalty tiers
+seed_database
 
 # Start the application
 log "Starting application..."

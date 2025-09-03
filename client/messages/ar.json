@@ -22,6 +22,18 @@
       "logout": "تسجيل الخروج",
       "myAccount": "حسابي"
     },
+    "loyalty": {
+      "title": "برنامج الولاء",
+      "currentTier": "المستوى الحالي",
+      "points": "النقاط",
+      "lifetimePoints": "النقاط مدى الحياة",
+      "nextTier": "المستوى التالي",
+      "pointsNeeded": "نقطة مطلوبة",
+      "viewDetails": "عرض التفاصيل",
+      "loading": "جاري التحميل...",
+      "error": "غير قادر على تحميل معلومات الولاء",
+      "noAccount": "جاري إعداد حساب الولاء الخاص بك..."
+    },
     "mobile": {
       "navigation": "التنقل",
       "quickActions": "الإجراءات السريعة",

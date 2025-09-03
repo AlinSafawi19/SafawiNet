@@ -552,33 +552,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return user !== null; // Return current state after refresh completes
     }
     return await refreshToken();
-  }, [isRefreshing, user, refreshToken]);
+  }, [isRefreshing, refreshToken, user]);
 
   // Utility function for making authenticated API calls with automatic token refresh
-  const authenticatedFetch = async (
-    url: string,
-    options: RequestInit = {}
-  ): Promise<Response> => {
-    // Make the initial request
-    let response = await fetch(url, {
-      ...options,
-      credentials: 'include',
-    });
+  const authenticatedFetch = useCallback(
+    async (url: string, options: RequestInit = {}): Promise<Response> => {
+      // Make the initial request
+      let response = await fetch(url, {
+        ...options,
+        credentials: 'include',
+      });
 
-    // If we get a 401, try to refresh the token and retry the request
-    if (response.status === 401) {
-      const refreshSuccess = await autoRefreshToken();
-      if (refreshSuccess) {
-        // Retry the original request with the new token
-        response = await fetch(url, {
-          ...options,
-          credentials: 'include',
-        });
+      // If we get a 401, try to refresh the token and retry the request
+      if (response.status === 401) {
+        const refreshSuccess = await autoRefreshToken();
+        if (refreshSuccess) {
+          // Retry the original request with the new token
+          response = await fetch(url, {
+            ...options,
+            credentials: 'include',
+          });
+        }
       }
-    }
 
-    return response;
-  };
+      return response;
+    },
+    [autoRefreshToken]
+  );
 
   const logout = async () => {
     try {

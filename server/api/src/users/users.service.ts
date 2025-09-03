@@ -84,6 +84,24 @@ export class UsersService {
       },
     });
 
+    // Create loyalty account for admin users (since they also have CUSTOMER role)
+    const bronzeTier = await this.prisma.loyaltyTier.findFirst({
+      where: { name: 'Bronze' },
+    });
+
+    if (bronzeTier) {
+      await this.prisma.loyaltyAccount.create({
+        data: {
+          userId: user.id,
+          currentTierId: bronzeTier.id,
+          currentPoints: 0,
+          lifetimePoints: 0,
+          tierUpgradedAt: new Date(),
+        },
+      });
+      this.logger.log(`Created loyalty account for new admin user: ${user.email}`);
+    }
+
     // Generate verification token
     const verificationToken = SecurityUtils.generateSecureToken();
     const tokenHash = SecurityUtils.hashToken(verificationToken);

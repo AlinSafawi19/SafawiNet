@@ -22,6 +22,18 @@
       "logout": "Logout",
       "myAccount": "My Account"
     },
+    "loyalty": {
+      "title": "Loyalty Program",
+      "currentTier": "Current Tier",
+      "points": "Points",
+      "lifetimePoints": "Lifetime Points",
+      "nextTier": "Next Tier",
+      "pointsNeeded": "points needed",
+      "viewDetails": "View Details",
+      "loading": "Loading...",
+      "error": "Unable to load loyalty information",
+      "noAccount": "Your loyalty account is being set up..."
+    },
     "mobile": {
       "navigation": "Navigation",
       "quickActions": "Quick Actions",
