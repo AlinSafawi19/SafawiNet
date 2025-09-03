@@ -105,6 +105,15 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
     } else {
       this.logger.log('Anonymous WebSocket disconnected');
     }
+    
+    // Remove from all pending verification rooms (for anonymous connections)
+    // This is important for cross-browser sync cleanup
+    for (const [email, room] of this.pendingVerificationRooms.entries()) {
+      if (room.has(client.id)) {
+        this.logger.log(`🧹 Cleaning up anonymous client ${client.id} from pending verification room for ${email}`);
+        this.removeFromPendingVerificationRoom(email, client.id);
+      }
+    }
   }
 
   @SubscribeMessage('joinVerificationRoom')
@@ -147,6 +156,9 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
     // Log current room state
     const room = this.pendingVerificationRooms.get(email);
     this.logger.log(`📊 Pending verification room for ${email} now has ${room?.size || 0} users`);
+    
+    // Log all current pending verification rooms for debugging
+    this.logger.log(`📊 All pending verification rooms:`, this.getRoomStates().pendingVerificationRooms);
   }
 
   @SubscribeMessage('leavePendingVerificationRoom')
@@ -286,10 +298,14 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
     this.logger.log(`🔍 Looking for pending verification room for email: ${email}`);
     const room = this.pendingVerificationRooms.get(email.toLowerCase());
     this.logger.log(`📊 Pending verification room state for ${email}: ${room ? `Found with ${room.size} users` : 'Not found'}`);
+    this.logger.log(`📊 All pending verification rooms before emission:`, this.getRoomStates().pendingVerificationRooms);
     
     if (room && room.size > 0) {
       try {
         this.logger.log(`📡 Emitting emailVerified to pending verification room: pending_verification:${email.toLowerCase()}`);
+        this.logger.log(`📡 Room contains sockets:`, Array.from(room));
+        
+        // Emit to the room
         this.server.to(`pending_verification:${email.toLowerCase()}`).emit('emailVerified', {
           success: true,
           user: userData,
@@ -298,6 +314,21 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
         });
         
         this.logger.log(`✅ Verification success emitted to pending room for email: ${email} with tokens`);
+        
+        // Clean up the pending verification room after successful emission
+        this.logger.log(`🧹 Cleaning up pending verification room for email: ${email}`);
+        this.pendingVerificationRooms.delete(email.toLowerCase());
+        
+        // Also remove all sockets from the room
+        for (const socketId of room) {
+          try {
+            await this.server.in(socketId).socketsLeave(`pending_verification:${email.toLowerCase()}`);
+          } catch (error) {
+            this.logger.warn(`Failed to remove socket ${socketId} from pending verification room:`, error);
+          }
+        }
+        
+        this.logger.log(`✅ Pending verification room cleaned up for email: ${email}`);
       } catch (error) {
         this.logger.error(`❌ Failed to emit verification success to pending room for email ${email}:`, error);
       }
@@ -386,5 +417,23 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
   // Method to broadcast login to all devices (called after successful verification)
   async broadcastLogin(user: any) {
     await this.broadcastAuthChange('login', user);
+  }
+
+  // Debug method to get current room states
+  getRoomStates() {
+    return {
+      verificationRooms: Object.fromEntries(
+        Array.from(this.verificationRooms.entries()).map(([userId, sockets]) => [
+          userId,
+          Array.from(sockets)
+        ])
+      ),
+      pendingVerificationRooms: Object.fromEntries(
+        Array.from(this.pendingVerificationRooms.entries()).map(([email, sockets]) => [
+          email,
+          Array.from(sockets)
+        ])
+      )
+    };
   }
 }

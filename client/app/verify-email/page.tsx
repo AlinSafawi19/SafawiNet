@@ -149,16 +149,30 @@ export default function VerifyEmailPage() {
 
             // Debug user data for role-based redirect
             console.log('🔐 Email verification - user data:', data.user);
-            console.log('🔐 Email verification - user roles:', data.user?.roles);
-            console.log('🔐 Email verification - is admin:', data.user?.roles?.includes('ADMIN'));
+            console.log(
+              '🔐 Email verification - user roles:',
+              data.user?.roles
+            );
+            console.log(
+              '🔐 Email verification - is admin:',
+              data.user?.roles?.includes('ADMIN')
+            );
 
             // Redirect based on user role after 2 seconds
             setTimeout(() => {
-              if (data.user && data.user.roles && data.user.roles.includes('ADMIN')) {
-                console.log('🔐 Email verification - redirecting admin to /admin');
+              if (
+                data.user &&
+                data.user.roles &&
+                data.user.roles.includes('ADMIN')
+              ) {
+                console.log(
+                  '🔐 Email verification - redirecting admin to /admin'
+                );
                 router.push('/admin');
               } else {
-                console.log('🔐 Email verification - redirecting customer to /');
+                console.log(
+                  '🔐 Email verification - redirecting customer to /'
+                );
                 router.push('/');
               }
             }, 2000);
@@ -217,33 +231,67 @@ export default function VerifyEmailPage() {
               // Check cookies after login
 
               // Debug user data for role-based redirect
-              console.log('🔐 Email verification (tokens) - user data:', successData.user);
-              console.log('🔐 Email verification (tokens) - user roles:', successData.user?.roles);
-              console.log('🔐 Email verification (tokens) - is admin:', successData.user?.roles?.includes('ADMIN'));
+              console.log(
+                '🔐 Email verification (tokens) - user data:',
+                successData.user
+              );
+              console.log(
+                '🔐 Email verification (tokens) - user roles:',
+                successData.user?.roles
+              );
+              console.log(
+                '🔐 Email verification (tokens) - is admin:',
+                successData.user?.roles?.includes('ADMIN')
+              );
 
               // Redirect based on user role after successful login
               setTimeout(() => {
-                if (successData.user && successData.user.roles && successData.user.roles.includes('ADMIN')) {
-                  console.log('🔐 Email verification (tokens) - redirecting admin to /admin');
+                if (
+                  successData.user &&
+                  successData.user.roles &&
+                  successData.user.roles.includes('ADMIN')
+                ) {
+                  console.log(
+                    '🔐 Email verification (tokens) - redirecting admin to /admin'
+                  );
                   router.push('/admin');
                 } else {
-                  console.log('🔐 Email verification (tokens) - redirecting customer to /');
+                  console.log(
+                    '🔐 Email verification (tokens) - redirecting customer to /'
+                  );
                   router.push('/');
                 }
               }, 2000);
             } else {
               // Debug user data for fallback redirect
-              console.log('🔐 Email verification (fallback) - user data:', successData.user);
-              console.log('🔐 Email verification (fallback) - user roles:', successData.user?.roles);
-              console.log('🔐 Email verification (fallback) - is admin:', successData.user?.roles?.includes('ADMIN'));
+              console.log(
+                '🔐 Email verification (fallback) - user data:',
+                successData.user
+              );
+              console.log(
+                '🔐 Email verification (fallback) - user roles:',
+                successData.user?.roles
+              );
+              console.log(
+                '🔐 Email verification (fallback) - is admin:',
+                successData.user?.roles?.includes('ADMIN')
+              );
 
               // Fallback: wait for WebSocket event or redirect based on role after 5 seconds
               setTimeout(() => {
-                if (successData.user && successData.user.roles && successData.user.roles.includes('ADMIN')) {
-                  console.log('🔐 Email verification (fallback) - redirecting admin to /admin');
+                if (
+                  successData.user &&
+                  successData.user.roles &&
+                  successData.user.roles.includes('ADMIN')
+                ) {
+                  console.log(
+                    '🔐 Email verification (fallback) - redirecting admin to /admin'
+                  );
                   router.push('/admin');
                 } else {
-                  console.log('🔐 Email verification (fallback) - redirecting customer to /');
+                  console.log(
+                    '🔐 Email verification (fallback) - redirecting customer to /'
+                  );
                   router.push('/');
                 }
               }, 5000);

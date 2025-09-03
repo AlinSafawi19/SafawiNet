@@ -17,7 +17,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   useEffect(() => {
     // Redirect non-admin users or unverified users to home page
-    if (!isLoading && (!user || !user.isVerified || !user.roles.includes('ADMIN'))) {
+    if (
+      !isLoading &&
+      (!user || !user.isVerified || !user.roles.includes('ADMIN'))
+    ) {
       router.push('/');
     }
   }, [user, isLoading, router]);
@@ -26,13 +29,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     <div className="min-h-screen flex">
       {/* Sidebar */}
       <AdminSidebar />
-      
+
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col ${locale === 'ar' ? 'lg:mr-64' : 'lg:ml-64'}`}>
+      <div
+        className={`flex-1 flex flex-col ${
+          locale === 'ar' ? 'lg:mr-64' : 'lg:ml-64'
+        }`}
+      >
         {/* Page Content */}
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
+        <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>
   );

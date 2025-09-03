@@ -10,7 +10,9 @@ interface AdminPasswordEntryProps {
 // Define error types for better error handling
 type ErrorType = 'passwordRequired' | 'invalidAdminPassword' | null;
 
-export default function AdminPasswordEntry({ onSuccess }: AdminPasswordEntryProps) {
+export default function AdminPasswordEntry({
+  onSuccess,
+}: AdminPasswordEntryProps) {
   const { t, locale } = useLanguage();
   const [password, setPassword] = useState('');
   const [errorType, setErrorType] = useState<ErrorType>(null);
@@ -20,7 +22,7 @@ export default function AdminPasswordEntry({ onSuccess }: AdminPasswordEntryProp
   // Function to get translated error message
   const getErrorMessage = (errorType: ErrorType): string => {
     if (!errorType) return '';
-    
+
     switch (errorType) {
       case 'invalidAdminPassword':
         return t('auth.admin.validation.invalidAdminPassword');
@@ -80,8 +82,18 @@ export default function AdminPasswordEntry({ onSuccess }: AdminPasswordEntryProp
         <div className="text-center mb-4 sm:mb-6 md:mb-8">
           <div className="mb-4">
             <div className="w-16 h-16 mx-auto mb-4 bg-purple-600/20 rounded-full flex items-center justify-center border border-purple-500/30">
-              <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              <svg
+                className="w-8 h-8 text-purple-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
               </svg>
             </div>
           </div>
@@ -96,7 +108,11 @@ export default function AdminPasswordEntry({ onSuccess }: AdminPasswordEntryProp
         {/* Error Message */}
         {errorType === 'invalidAdminPassword' && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
-            <p className={`text-red-400 text-xs sm:text-sm ${locale === 'ar' ? 'text-right' : ''}`}>
+            <p
+              className={`text-red-400 text-xs sm:text-sm ${
+                locale === 'ar' ? 'text-right' : ''
+              }`}
+            >
               {getErrorMessage(errorType)}
             </p>
           </div>
@@ -110,30 +126,36 @@ export default function AdminPasswordEntry({ onSuccess }: AdminPasswordEntryProp
           <div>
             <label
               htmlFor="password"
-              className={`block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2 ${locale === 'ar' ? 'text-right' : ''}`}
+              className={`block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2 ${
+                locale === 'ar' ? 'text-right' : ''
+              }`}
             >
               {t('auth.admin.adminPassword')}
             </label>
-                          <input
-                type="password"
-                id="password"
-                name="password"
-                value={password}
-                onChange={handleInputChange}
-                onBlur={handleBlur}
-                className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border rounded-lg text-white placeholder-white/50 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base ${
-                  touched && !password.trim() 
-                    ? 'border-red-500/50 focus:border-red-500' 
-                    : 'border-white/20 focus:border-purple-500'
-                } ${locale === 'ar' ? 'text-right' : ''}`}
-                placeholder={t('auth.admin.adminPasswordPlaceholder')}
-                autoComplete="off"
-              />
-                          {touched && !password.trim() && (
-                <p className={`text-red-400 text-xs mt-1 ${locale === 'ar' ? 'text-right' : ''}`}>
-                  {t('auth.admin.validation.passwordRequired')}
-                </p>
-              )}
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={password}
+              onChange={handleInputChange}
+              onBlur={handleBlur}
+              className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border rounded-lg text-white placeholder-white/50 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base ${
+                touched && !password.trim()
+                  ? 'border-red-500/50 focus:border-red-500'
+                  : 'border-white/20 focus:border-purple-500'
+              } ${locale === 'ar' ? 'text-right' : ''}`}
+              placeholder={t('auth.admin.adminPasswordPlaceholder')}
+              autoComplete="off"
+            />
+            {touched && !password.trim() && (
+              <p
+                className={`text-red-400 text-xs mt-1 ${
+                  locale === 'ar' ? 'text-right' : ''
+                }`}
+              >
+                {t('auth.admin.validation.passwordRequired')}
+              </p>
+            )}
           </div>
 
           <button
@@ -163,20 +185,20 @@ export default function AdminPasswordEntry({ onSuccess }: AdminPasswordEntryProp
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                                 {t('auth.admin.verifying')}
-               </>
-             ) : (
-               t('auth.admin.accessAdminPanel')
-             )}
+                {t('auth.admin.verifying')}
+              </>
+            ) : (
+              t('auth.admin.accessAdminPanel')
+            )}
           </button>
         </form>
 
         {/* Info */}
-                 <div className="text-center mt-3 sm:mt-4 md:mt-6">
-           <p className="text-white/50 text-xs sm:text-sm">
-             {t('auth.admin.restrictedArea')}
-           </p>
-         </div>
+        <div className="text-center mt-3 sm:mt-4 md:mt-6">
+          <p className="text-white/50 text-xs sm:text-sm">
+            {t('auth.admin.restrictedArea')}
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -13,15 +13,18 @@ export const useLoading = () => {
     setIsLoading(false);
   }, []);
 
-  const withLoading = useCallback(async (asyncFunction: () => Promise<any>) => {
-    try {
-      startLoading();
-      const result = await asyncFunction();
-      return result;
-    } finally {
-      stopLoading();
-    }
-  }, [startLoading, stopLoading]);
+  const withLoading = useCallback(
+    async (asyncFunction: () => Promise<any>) => {
+      try {
+        startLoading();
+        const result = await asyncFunction();
+        return result;
+      } finally {
+        stopLoading();
+      }
+    },
+    [startLoading, stopLoading]
+  );
 
   return {
     isLoading,

@@ -8,9 +8,9 @@ interface LoadingWrapperProps {
   isLoading: boolean;
 }
 
-export const LoadingWrapper: React.FC<LoadingWrapperProps> = ({ 
-  children, 
-  isLoading 
+export const LoadingWrapper: React.FC<LoadingWrapperProps> = ({
+  children,
+  isLoading,
 }) => {
   if (isLoading) {
     return <LoadingPage />;

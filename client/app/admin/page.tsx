@@ -12,7 +12,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     // Redirect non-admin users or unverified users to home page
-    if (!isLoading && (!user || !user.isVerified || !user.roles.includes('ADMIN'))) {
+    if (
+      !isLoading &&
+      (!user || !user.isVerified || !user.roles.includes('ADMIN'))
+    ) {
       setIsRedirecting(true);
       router.push('/');
     }
@@ -23,9 +26,5 @@ export default function AdminDashboard() {
     return <LoadingPage />;
   }
 
-  return (
-    <div>
-         
-    </div>
-  );
+  return <div></div>;
 }

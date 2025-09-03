@@ -197,6 +197,11 @@ export class AuthService {
     // Emit WebSocket event for real-time notification
     try {
       this.logger.log(`📡 Emitting WebSocket events for verified user: ${result.email}`);
+      
+      // Log current room states before emitting
+      const roomStates = this.webSocketGateway.getRoomStates();
+      this.logger.log(`📊 Current room states before verification:`, roomStates);
+      
       await this.webSocketGateway.emitVerificationSuccess(result.id, this.excludePassword(result));
       
       // Also notify pending verification room for cross-browser sync with tokens
@@ -207,6 +212,10 @@ export class AuthService {
       // Also broadcast login to all devices
       await this.webSocketGateway.broadcastLogin(this.excludePassword(result));
       this.logger.log(`✅ All WebSocket events emitted successfully for user: ${result.email}`);
+      
+      // Log room states after emitting
+      const roomStatesAfter = this.webSocketGateway.getRoomStates();
+      this.logger.log(`📊 Current room states after verification:`, roomStatesAfter);
     } catch (error) {
       this.logger.warn(`Failed to emit WebSocket verification event: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

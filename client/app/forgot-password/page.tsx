@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setEmail(value);
-    
+
     // Clear error when user starts typing
     if (emailError) {
       setEmailError('');
@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
 
   // Handle email field blur for validation
   const handleEmailBlur = () => {
-    setTouched(prev => ({ ...prev, email: true }));
+    setTouched((prev) => ({ ...prev, email: true }));
     const error = validateEmail(email);
     setEmailError(error);
   };
@@ -49,16 +49,16 @@ export default function ForgotPasswordPage() {
   // Get input class based on validation state
   const getInputClass = () => {
     const hasError = touched.email && emailError;
-    return hasError 
+    return hasError
       ? 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-red-500/50 rounded-lg text-white placeholder-white/50 focus:border-red-500 focus:bg-white/15 transition-all duration-300 autofill:bg-white/10 autofill:text-white text-sm sm:text-base'
       : 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-purple-500 focus:bg-white/15 transition-all duration-300 autofill:bg-white/10 autofill:text-white text-sm sm:text-base';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Mark email as touched and validate
-    setTouched(prev => ({ ...prev, email: true }));
+    setTouched((prev) => ({ ...prev, email: true }));
     const emailValidationError = validateEmail(email);
     setEmailError(emailValidationError);
 
@@ -161,9 +161,7 @@ export default function ForgotPasswordPage() {
                 placeholder={t('auth.form.emailPlaceholder')}
               />
               {touched.email && emailError && (
-                <p className="text-red-400 text-xs mt-1">
-                  {t(emailError)}
-                </p>
+                <p className="text-red-400 text-xs mt-1">{t(emailError)}</p>
               )}
             </div>
 

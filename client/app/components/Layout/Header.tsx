@@ -13,7 +13,7 @@ import {
   HiCube,
   HiShoppingCart as HiOrders,
   HiChartBar,
-  HiChatBubbleLeftRight
+  HiChatBubbleLeftRight,
 } from 'react-icons/hi2';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -34,38 +34,38 @@ const Header = () => {
       name: 'Dashboard',
       href: '/admin',
       icon: HiHome,
-      label: 'admin.sidebar.dashboard'
+      label: 'admin.sidebar.dashboard',
     },
     {
       name: 'Customers',
       href: '/admin/customers',
       icon: HiUsers,
-      label: 'admin.sidebar.customers'
+      label: 'admin.sidebar.customers',
     },
     {
       name: 'Products',
       href: '/admin/products',
       icon: HiCube,
-      label: 'admin.sidebar.products'
+      label: 'admin.sidebar.products',
     },
     {
       name: 'Orders',
       href: '/admin/orders',
       icon: HiOrders,
-      label: 'admin.sidebar.orders'
+      label: 'admin.sidebar.orders',
     },
     {
       name: 'Analytics',
       href: '/admin/analytics',
       icon: HiChartBar,
-      label: 'admin.sidebar.analytics'
+      label: 'admin.sidebar.analytics',
     },
     {
       name: 'Customer Support',
       href: '/admin/support',
       icon: HiChatBubbleLeftRight,
-      label: 'admin.sidebar.support'
-    }
+      label: 'admin.sidebar.support',
+    },
   ] as const;
 
   const toggleMobileMenu = () => {
@@ -149,36 +149,36 @@ const Header = () => {
 
           {/* Main Navigation - Hidden for admin users */}
           {!isAdmin && (
-          <nav
-            className={`hidden lg:flex items-center ${
-              locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''
-            } space-x-8`}
-          >
-            <Link
-              href="/"
-              className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
+            <nav
+              className={`hidden lg:flex items-center ${
+                locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''
+              } space-x-8`}
             >
-              {t('header.navigation.home')}
-            </Link>
-            <Link
-              href="/products"
-              className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
-            >
-              {t('header.navigation.products')}
-            </Link>
-            <Link
-              href="/deals"
-              className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
-            >
-              {t('header.navigation.deals')}
-            </Link>
-            <Link
-              href="/about"
-              className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
-            >
-              {t('header.navigation.about')}
-            </Link>
-          </nav>
+              <Link
+                href="/"
+                className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
+              >
+                {t('header.navigation.home')}
+              </Link>
+              <Link
+                href="/products"
+                className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
+              >
+                {t('header.navigation.products')}
+              </Link>
+              <Link
+                href="/deals"
+                className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
+              >
+                {t('header.navigation.deals')}
+              </Link>
+              <Link
+                href="/about"
+                className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
+              >
+                {t('header.navigation.about')}
+              </Link>
+            </nav>
           )}
 
           {/* Desktop Navigation & Mobile Menu Button */}
@@ -193,23 +193,23 @@ const Header = () => {
               </button>
               {/* Wishlist - Hidden for admin users */}
               {!isAdmin && (
-              <Link
-                href="/wishlist"
-                className="hover:text-purple-500 transition-colors"
-                aria-label={t('header.actions.wishlist')}
-              >
-                {HiHeart({ className: 'w-6 h-6' })}
-              </Link>
+                <Link
+                  href="/wishlist"
+                  className="hover:text-purple-500 transition-colors"
+                  aria-label={t('header.actions.wishlist')}
+                >
+                  {HiHeart({ className: 'w-6 h-6' })}
+                </Link>
               )}
               {/* Cart - Hidden for admin users */}
               {!isAdmin && (
-              <Link
-                href="/cart"
-                className="hover:text-purple-500 transition-colors"
-                aria-label={t('header.actions.cart')}
-              >
-                {HiOutlineShoppingCart({ className: 'w-6 h-6' })}
-              </Link>
+                <Link
+                  href="/cart"
+                  className="hover:text-purple-500 transition-colors"
+                  aria-label={t('header.actions.cart')}
+                >
+                  {HiOutlineShoppingCart({ className: 'w-6 h-6' })}
+                </Link>
               )}
 
               {/* Theme Toggle Button */}
@@ -351,7 +351,10 @@ const Header = () => {
                           className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex flex-col items-center justify-center text-base group"
                           onClick={closeMobileMenu}
                         >
-                          {IconComponent({ className: "w-5 h-5 text-white group-hover:text-purple-400 transition-colors mb-1" })}
+                          {IconComponent({
+                            className:
+                              'w-5 h-5 text-white group-hover:text-purple-400 transition-colors mb-1',
+                          })}
                           <span className="text-xs font-medium text-center leading-tight">
                             {t(item.label) || item.name}
                           </span>
@@ -414,33 +417,33 @@ const Header = () => {
                 <div className="flex justify-center space-x-6">
                   {/* Wishlist - Hidden for admin users */}
                   {!isAdmin && (
-                  <Link
-                    href="/wishlist"
-                    className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
-                    onClick={closeMobileMenu}
-                  >
-                    <div className="text-white group-hover:text-purple-400 transition-colors">
-                      {HiHeart({ className: 'w-7 h-7' })}
-                    </div>
-                    <span className="text-sm text-white/80 group-hover:text-white">
-                      {t('header.actions.wishlist')}
-                    </span>
-                  </Link>
+                    <Link
+                      href="/wishlist"
+                      className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
+                      onClick={closeMobileMenu}
+                    >
+                      <div className="text-white group-hover:text-purple-400 transition-colors">
+                        {HiHeart({ className: 'w-7 h-7' })}
+                      </div>
+                      <span className="text-sm text-white/80 group-hover:text-white">
+                        {t('header.actions.wishlist')}
+                      </span>
+                    </Link>
                   )}
                   {/* Cart - Hidden for admin users */}
                   {!isAdmin && (
-                  <Link
-                    href="/cart"
-                    className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
-                    onClick={closeMobileMenu}
-                  >
-                    <div className="text-white group-hover:text-purple-400 transition-colors">
-                      {HiOutlineShoppingCart({ className: 'w-7 h-7' })}
-                    </div>
-                    <span className="text-sm text-white/80 group-hover:text-white">
-                      {t('header.actions.cart')}
-                    </span>
-                  </Link>
+                    <Link
+                      href="/cart"
+                      className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
+                      onClick={closeMobileMenu}
+                    >
+                      <div className="text-white group-hover:text-purple-400 transition-colors">
+                        {HiOutlineShoppingCart({ className: 'w-7 h-7' })}
+                      </div>
+                      <span className="text-sm text-white/80 group-hover:text-white">
+                        {t('header.actions.cart')}
+                      </span>
+                    </Link>
                   )}
                   <button className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group">
                     <div className="text-white group-hover:text-purple-400 transition-colors">

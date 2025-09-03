@@ -21,7 +21,9 @@ export default function ResetPasswordPage() {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
   const [token, setToken] = useState('');
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
   const [touched, setTouched] = useState({
     password: false,
     confirmPassword: false,
@@ -64,7 +66,7 @@ export default function ResetPasswordPage() {
   }, [password, confirmPassword, touched, t]);
 
   const handleBlur = (field: 'password' | 'confirmPassword') => {
-    setTouched(prev => ({ ...prev, [field]: true }));
+    setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
   const validateForm = (): boolean => {
@@ -109,17 +111,20 @@ export default function ResetPasswordPage() {
     setMessageType('');
 
     try {
-      const response = await fetch('http://localhost:3000/v1/auth/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token,
-          password,
-          confirmPassword,
-        }),
-      });
+      const response = await fetch(
+        'http://localhost:3000/v1/auth/reset-password',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            token,
+            password,
+            confirmPassword,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -148,10 +153,12 @@ export default function ResetPasswordPage() {
   };
 
   const isFormValid = () => {
-    return password.trim().length >= 8 && 
-           confirmPassword.trim().length > 0 && 
-           password === confirmPassword &&
-           Object.keys(validationErrors).length === 0;
+    return (
+      password.trim().length >= 8 &&
+      confirmPassword.trim().length > 0 &&
+      password === confirmPassword &&
+      Object.keys(validationErrors).length === 0
+    );
   };
 
   if (!token) {
@@ -166,8 +173,9 @@ export default function ResetPasswordPage() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col lg:flex-row bg-zinc-900 ${locale === 'ar' ? 'rtl' : 'ltr'
-        }`}
+      className={`min-h-screen flex flex-col lg:flex-row bg-zinc-900 ${
+        locale === 'ar' ? 'rtl' : 'ltr'
+      }`}
     >
       {/* Left side - Form */}
       <div className="flex-1 lg:basis-1/2 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-3 sm:py-4 md:py-6 lg:py-8 xl:py-10">
@@ -185,14 +193,16 @@ export default function ResetPasswordPage() {
           {/* Message Display */}
           {message && (
             <div
-              className={`border rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 ${messageType === 'success'
+              className={`border rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 ${
+                messageType === 'success'
                   ? 'bg-green-500/10 border-green-500/20'
                   : 'bg-red-500/10 border-red-500/20'
-                }`}
+              }`}
             >
               <p
-                className={`text-xs sm:text-sm ${messageType === 'success' ? 'text-green-400' : 'text-red-400'
-                  }`}
+                className={`text-xs sm:text-sm ${
+                  messageType === 'success' ? 'text-green-400' : 'text-red-400'
+                }`}
               >
                 {message}
               </p>
@@ -220,12 +230,14 @@ export default function ResetPasswordPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 onBlur={() => handleBlur('password')}
                 className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border rounded-lg text-white placeholder-white/50 focus:bg-white/15 transition-all duration-300 autofill:bg-white/10 autofill:text-white text-sm sm:text-base ${
-                  validationErrors.password 
-                    ? 'border-red-400 focus:border-red-400' 
+                  validationErrors.password
+                    ? 'border-red-400 focus:border-red-400'
                     : 'border-white/20 focus:border-purple-500'
                 }`}
                 placeholder={t('auth.form.passwordPlaceholder')}
-                aria-describedby={validationErrors.password ? 'password-error' : 'password-help'}
+                aria-describedby={
+                  validationErrors.password ? 'password-error' : 'password-help'
+                }
               />
               {validationErrors.password ? (
                 <p className="text-red-400 text-xs mt-1" id="password-error">
@@ -253,15 +265,22 @@ export default function ResetPasswordPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 onBlur={() => handleBlur('confirmPassword')}
                 className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border rounded-lg text-white placeholder-white/50 focus:bg-white/15 transition-all duration-300 autofill:bg-white/10 autofill:text-white text-sm sm:text-base ${
-                  validationErrors.confirmPassword 
-                    ? 'border-red-400 focus:border-red-400' 
+                  validationErrors.confirmPassword
+                    ? 'border-red-400 focus:border-red-400'
                     : 'border-white/20 focus:border-purple-500'
                 }`}
                 placeholder={t('auth.form.confirmPasswordPlaceholder')}
-                aria-describedby={validationErrors.confirmPassword ? 'confirmPassword-error' : undefined}
+                aria-describedby={
+                  validationErrors.confirmPassword
+                    ? 'confirmPassword-error'
+                    : undefined
+                }
               />
               {validationErrors.confirmPassword && (
-                <p className="text-red-400 text-xs mt-1" id="confirmPassword-error">
+                <p
+                  className="text-red-400 text-xs mt-1"
+                  id="confirmPassword-error"
+                >
                   {validationErrors.confirmPassword}
                 </p>
               )}

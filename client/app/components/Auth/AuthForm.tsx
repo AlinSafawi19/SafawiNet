@@ -51,7 +51,7 @@ export function AuthForm() {
     if (!isLoading && user) {
       // Check if user has admin role
       const isAdmin = user.roles && user.roles.includes('ADMIN');
-      
+
       if (isAdmin) {
         // Redirect admin users to admin dashboard
         setIsRedirecting(true);
@@ -213,25 +213,38 @@ export function AuthForm() {
           console.log('🔐 Login successful, user data:', currentUser);
           console.log('🔐 User roles:', currentUser?.roles);
           console.log('🔐 User roles type:', typeof currentUser?.roles);
-          console.log('🔐 User roles is array:', Array.isArray(currentUser?.roles));
-          console.log('🔐 User roles stringified:', JSON.stringify(currentUser?.roles));
-          
+          console.log(
+            '🔐 User roles is array:',
+            Array.isArray(currentUser?.roles)
+          );
+          console.log(
+            '🔐 User roles stringified:',
+            JSON.stringify(currentUser?.roles)
+          );
+
           // More robust role checking - handle different possible role field structures
-          const roles = currentUser?.roles || (currentUser as any)?.role || (currentUser as any)?.userRoles || (currentUser as any)?.userRole;
+          const roles =
+            currentUser?.roles ||
+            (currentUser as any)?.role ||
+            (currentUser as any)?.userRoles ||
+            (currentUser as any)?.userRole;
           console.log('🔐 Extracted roles from various possible fields:', {
             roles: currentUser?.roles,
             role: (currentUser as any)?.role,
             userRoles: (currentUser as any)?.userRoles,
             userRole: (currentUser as any)?.userRole,
-            finalRoles: roles
+            finalRoles: roles,
           });
-          
-          const hasAdminRole = currentUser && 
-            roles && 
-            (Array.isArray(roles) ? roles.includes('ADMIN') : 
-             typeof roles === 'string' ? roles === 'ADMIN' :
-             false);
-          
+
+          const hasAdminRole =
+            currentUser &&
+            roles &&
+            (Array.isArray(roles)
+              ? roles.includes('ADMIN')
+              : typeof roles === 'string'
+              ? roles === 'ADMIN'
+              : false);
+
           console.log('🔐 Has admin role:', hasAdminRole);
           console.log('🔐 Role check breakdown:', {
             hasUser: !!currentUser,
@@ -239,9 +252,11 @@ export function AuthForm() {
             rolesType: typeof currentUser?.roles,
             isArray: Array.isArray(currentUser?.roles),
             rolesValue: currentUser?.roles,
-            includesAdmin: Array.isArray(currentUser?.roles) ? currentUser.roles.includes('ADMIN') : false
+            includesAdmin: Array.isArray(currentUser?.roles)
+              ? currentUser?.roles.includes('ADMIN')
+              : false,
           });
-          
+
           if (hasAdminRole) {
             console.log('🔐 Redirecting admin user to /admin');
             try {
@@ -259,7 +274,7 @@ export function AuthForm() {
               console.log('🔐 Router push failed, using window.location');
               window.location.href = '/';
             }
-            
+
             // Fallback redirect after a short delay
             setTimeout(() => {
               if (window.location.pathname === '/auth') {
@@ -432,8 +447,9 @@ export function AuthForm() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col lg:flex-row bg-zinc-900 ${locale === 'ar' ? 'rtl' : 'ltr'
-        }`}
+      className={`min-h-screen flex flex-col lg:flex-row bg-zinc-900 ${
+        locale === 'ar' ? 'rtl' : 'ltr'
+      }`}
     >
       {/* Left side - Form */}
       <div className="flex-1 lg:basis-1/2 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-3 sm:py-4 md:py-6 lg:py-8 xl:py-10">

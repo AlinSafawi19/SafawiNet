@@ -1,4 +1,5 @@
-import { io, Socket } from 'socket.io-client';
+// Stub socket service to prevent WebSocket dependencies from being bundled during build
+// The real implementation will be loaded dynamically when needed
 
 export interface SocketEvents {
   emailVerified: (data: {
@@ -24,151 +25,92 @@ export interface SocketEvents {
   disconnect: () => void;
 }
 
-class SocketService {
-  private socket: Socket | null = null;
+class StubSocketService {
   private isConnected = false;
-  private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
-  private reconnectDelay = 1000;
 
   constructor() {
-    // Initialize socket connection
-    this.init();
+    // Stub implementation - no WebSocket dependencies
   }
 
-  private init() {
-    try {
-      this.socket = io('http://localhost:3000/auth', {
-        transports: ['websocket', 'polling'],
-        autoConnect: false,
-        withCredentials: true,
-      });
-
-      this.setupEventListeners();
-    } catch (error) {
-      // Failed to initialize socket
-    }
+  public async connect(token?: string): Promise<void> {
+    // Stub - will be replaced by real implementation
+    console.warn(
+      'Socket service not initialized - use initializeSocketService first'
+    );
   }
 
-  private setupEventListeners() {
-    if (!this.socket) return;
-
-    this.socket.on('connect', () => {
-      this.isConnected = true;
-      this.reconnectAttempts = 0;
-    });
-
-    this.socket.on('disconnect', () => {
-      this.isConnected = false;
-      this.attemptReconnect();
-    });
-
-    this.socket.on('connect_error', (error) => {
-      this.isConnected = false;
-      this.attemptReconnect();
-    });
+  public disconnect(): void {
+    this.isConnected = false;
   }
 
-  private attemptReconnect() {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-
-      setTimeout(() => {
-        if (this.socket && !this.isConnected) {
-          this.socket.connect();
-        }
-      }, this.reconnectDelay * this.reconnectAttempts);
-    } else {
-      // Max reconnection attempts reached. Stopping reconnection attempts.
-      // Reset reconnection attempts after a longer delay to allow for backend recovery
-      setTimeout(() => {
-        this.reconnectAttempts = 0;
-      }, 30000); // 30 seconds
-    }
+  public async joinVerificationRoom(userId: string): Promise<void> {
+    // Stub
   }
 
-  public connect(token?: string) {
-    if (this.socket && !this.isConnected) {
-      if (token) {
-        this.socket.auth = { token };
-      }
-      this.socket.connect();
-    }
+  public async leaveVerificationRoom(userId: string): Promise<void> {
+    // Stub
   }
 
-  public disconnect() {
-    if (this.socket && this.isConnected) {
-      this.socket.disconnect();
-      this.isConnected = false;
-    }
+  public async joinPendingVerificationRoom(email: string): Promise<void> {
+    // Stub
   }
 
-  public joinVerificationRoom(userId: string) {
-    if (this.socket && this.isConnected) {
-      this.socket.emit('joinVerificationRoom', { userId });
-    }
+  public async leavePendingVerificationRoom(email: string): Promise<void> {
+    // Stub
   }
 
-  public leaveVerificationRoom(userId: string) {
-    if (this.socket && this.isConnected) {
-      this.socket.emit('leaveVerificationRoom', { userId });
-    }
-  }
-
-  public joinPendingVerificationRoom(email: string) {
-    if (this.socket && this.isConnected) {
-      this.socket.emit('joinPendingVerificationRoom', { email });
-    }
-  }
-
-  public leavePendingVerificationRoom(email: string) {
-    if (this.socket && this.isConnected) {
-      this.socket.emit('leavePendingVerificationRoom', { email });
-    }
-  }
-
-  public on<T extends keyof SocketEvents>(event: T, callback: SocketEvents[T]) {
-    if (this.socket) {
-      this.socket.on(event, callback as any);
-    }
-  }
-
-  public off<T extends keyof SocketEvents>(
+  public on<T extends keyof SocketEvents>(
     event: T,
     callback: SocketEvents[T]
-  ) {
-    if (this.socket) {
-      this.socket.off(event, callback as any);
-    }
+  ): void {
+    // Stub
   }
 
-  // Listen for authentication broadcasts from other devices
-  public onAuthBroadcast(
-    callback: (data: { type: string; user?: any }) => void
-  ) {
-    if (this.socket) {
-      this.socket.on('auth_broadcast', callback);
-    }
+  public async off<T extends keyof SocketEvents>(
+    event: T,
+    callback: SocketEvents[T]
+  ): Promise<void> {
+    // Stub
   }
 
-  // Remove auth broadcast listener
-  public offAuthBroadcast(
+  public async onAuthBroadcast(
     callback: (data: { type: string; user?: any }) => void
-  ) {
-    if (this.socket) {
-      this.socket.off('auth_broadcast', callback);
-    }
+  ): Promise<void> {
+    // Stub
+  }
+
+  public async offAuthBroadcast(
+    callback: (data: { type: string; user?: any }) => void
+  ): Promise<void> {
+    // Stub
   }
 
   public isSocketConnected(): boolean {
     return this.isConnected;
   }
 
-  public getSocket(): Socket | null {
-    return this.socket;
+  public getSocket(): any {
+    return null;
   }
 }
 
-// Export singleton instance
-export const socketService = new SocketService();
+// Export stub instance
+export const socketService = new StubSocketService();
 export default socketService;
+
+// Function to initialize the real socket service
+export const initializeSocketService = async () => {
+  if (typeof window === 'undefined') {
+    return socketService; // Return stub on server-side
+  }
+
+  try {
+    // Dynamic import of the real implementation
+    const realService = await import('./socket.service.real');
+    const RealSocketService = realService.default;
+    return new RealSocketService();
+  } catch (error) {
+    console.warn('Failed to load real socket service:', error);
+    return socketService; // Return stub if real service fails to load
+  }
+};

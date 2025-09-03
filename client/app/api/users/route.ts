@@ -29,18 +29,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-               // Make request to your backend API
-           const backendResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/users`, {
-             method: 'POST',
-             headers: {
-               'Content-Type': 'application/json',
-             },
-             body: JSON.stringify({
-               email,
-               password,
-               name,
-             }),
-           });
+    // Make request to your backend API
+    const backendResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/users`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+        }),
+      }
+    );
 
     if (!backendResponse.ok) {
       const errorData = await backendResponse.json();
@@ -53,13 +56,12 @@ export async function POST(request: NextRequest) {
     const result = await backendResponse.json();
 
     return NextResponse.json(
-      { 
+      {
         message: 'Admin user created successfully',
-        user: result 
+        user: result,
       },
       { status: 201 }
     );
-
   } catch (error) {
     console.error('Error creating admin user:', error);
     return NextResponse.json(
