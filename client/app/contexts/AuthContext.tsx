@@ -47,7 +47,7 @@ interface AuthContextType {
   login: (
     email: string,
     password: string
-  ) => Promise<{ success: boolean; message?: string; messageKey?: string }>;
+  ) => Promise<{ success: boolean; message?: string; messageKey?: string; user?: User }>;
   loginWithTokens: (tokens: {
     accessToken: string;
     refreshToken: string;
@@ -163,6 +163,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.log('🔍 User data received:', finalUserData);
         }
 
+        // Check if user is verified before setting login state
+        if (!finalUserData.isVerified) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔍 User not verified, logging out');
+          }
+          setUser(null);
+          return;
+        }
+
         setUser(finalUserData);
       } else if (response.status === 401) {
         // Token might be expired, try to refresh it silently
@@ -202,7 +211,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (
     email: string,
     password: string
-  ): Promise<{ success: boolean; message?: string; messageKey?: string }> => {
+  ): Promise<{ success: boolean; message?: string; messageKey?: string; user?: User }> => {
     try {
       const response = await fetch(
         buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN),
@@ -220,9 +229,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const data = await response.json();
         const { user: userData } = data;
 
-        // Set user in state (no localStorage needed with cookie-based auth)
+        // Check if user is verified before setting login state
+        if (!userData.isVerified) {
+          // User is not verified, don't set login state
+          return { 
+            success: false, 
+            messageKey: 'auth.messages.emailVerificationRequired',
+            user: userData // Still return user data for the form to check
+          };
+        }
+
+        // User is verified, set login state
         setUser(userData);
-        return { success: true };
+        return { success: true, user: userData };
       } else {
         const errorData = await response.json();
         // Map server error messages to translation keys
@@ -475,6 +494,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (response.ok) {
           const userData = await response.json();
           const finalUserData = userData.user || userData;
+          
+          // Check if user is verified before setting login state
+          if (!finalUserData.isVerified) {
+            return { success: false, message: 'Email verification required' };
+          }
+          
           setUser(finalUserData);
 
           // Broadcast login to other tabs and devices
@@ -511,14 +536,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           const authData = JSON.parse(event.newValue);
           if (authData.type === 'login' && authData.user) {
-            setUser(authData.user);
+            // Only set user if they are verified
+            if (authData.user.isVerified) {
+              setUser(authData.user);
+            } else {
+              // User not verified, don't set login state
+              return;
+            }
 
-            // Check if user was on auth page and redirect to home
+            // Check if user was on auth page and redirect based on role
             const currentPath = window.location.pathname;
             if (currentPath === '/auth' || currentPath.startsWith('/auth/')) {
               // Use window.location for cross-tab redirects (router.push doesn't work across tabs)
               setTimeout(() => {
-                window.location.href = '/';
+                if (authData.user && authData.user.isVerified && authData.user.roles && authData.user.roles.includes('ADMIN')) {
+                  window.location.href = '/admin';
+                } else if (authData.user && authData.user.isVerified) {
+                  window.location.href = '/';
+                }
+                // If user is not verified, stay on auth page
               }, 2000);
             }
           } else if (authData.type === 'logout') {
@@ -533,14 +569,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Listen for WebSocket authentication broadcasts
     const handleAuthBroadcast = (data: { type: string; user?: any }) => {
       if (data.type === 'login' && data.user) {
-        setUser(data.user);
+        // Only set user if they are verified
+        if (data.user.isVerified) {
+          setUser(data.user);
+        } else {
+          // User not verified, don't set login state
+          return;
+        }
 
-        // Check if user was on auth page and redirect to home
+        // Check if user was on auth page and redirect based on role
         const currentPath = window.location.pathname;
         if (currentPath === '/auth' || currentPath.startsWith('/auth/')) {
           // Use window.location for cross-device redirects
           setTimeout(() => {
-            window.location.href = '/';
+            if (data.user && data.user.isVerified && data.user.roles && data.user.roles.includes('ADMIN')) {
+              window.location.href = '/admin';
+            } else if (data.user && data.user.isVerified) {
+              window.location.href = '/';
+            }
+            // If user is not verified, stay on auth page
           }, 2000);
         }
 
@@ -585,14 +632,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               // Error during token-based login
             }
           } else {
-            setUser(data.user);
+            // Only set user if they are verified
+            if (data.user.isVerified) {
+              setUser(data.user);
+            } else {
+              // User not verified, don't set login state
+              return;
+            }
           }
 
-          // Check if user was on auth page and redirect to home
+          // Check if user was on auth page and redirect based on role
           const currentPath = window.location.pathname;
           if (currentPath === '/auth' || currentPath.startsWith('/auth/')) {
             setTimeout(() => {
-              window.location.href = '/';
+              if (data.user && data.user.isVerified && data.user.roles && data.user.roles.includes('ADMIN')) {
+                window.location.href = '/admin';
+              } else if (data.user && data.user.isVerified) {
+                window.location.href = '/';
+              }
+              // If user is not verified, stay on auth page
             }, 2000);
           }
 

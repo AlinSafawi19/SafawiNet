@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
+import { LoadingPage } from '../LoadingPage';
 
 interface ValidationErrors {
   name?: string; // Translation key
@@ -14,7 +15,7 @@ interface ValidationErrors {
 }
 
 export function AuthForm() {
-  const { login, register } = useAuth();
+  const { login, register, user, isLoading } = useAuth();
   const { t, locale } = useLanguage();
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
@@ -22,7 +23,8 @@ export function AuthForm() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorKey, setErrorKey] = useState('');
   const [successKey, setSuccessKey] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isFormLoading, setIsFormLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -43,6 +45,24 @@ export function AuthForm() {
   const passwordRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
+
+  // Redirect logged-in users
+  useEffect(() => {
+    if (!isLoading && user) {
+      // Check if user has admin role
+      const isAdmin = user.roles && user.roles.includes('ADMIN');
+      
+      if (isAdmin) {
+        // Redirect admin users to admin dashboard
+        setIsRedirecting(true);
+        router.push('/admin');
+      } else {
+        // Redirect customer users to home page
+        setIsRedirecting(true);
+        router.push('/');
+      }
+    }
+  }, [user, isLoading, router]);
 
   // Consistent input styling for all form fields
   const inputClassName =
@@ -168,7 +188,7 @@ export function AuthForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
+    setIsFormLoading(true);
 
     // Mark all fields as touched
     setTouched({
@@ -180,7 +200,7 @@ export function AuthForm() {
 
     // Validate form before submission
     if (!validateForm()) {
-      setIsLoading(false);
+      setIsFormLoading(false);
       return;
     }
 
@@ -188,7 +208,66 @@ export function AuthForm() {
       if (isLogin) {
         const result = await login(formData.email, formData.password);
         if (result.success) {
-          router.push('/');
+          // User is verified, check role and redirect accordingly
+          const currentUser = result.user;
+          console.log('🔐 Login successful, user data:', currentUser);
+          console.log('🔐 User roles:', currentUser?.roles);
+          console.log('🔐 User roles type:', typeof currentUser?.roles);
+          console.log('🔐 User roles is array:', Array.isArray(currentUser?.roles));
+          console.log('🔐 User roles stringified:', JSON.stringify(currentUser?.roles));
+          
+          // More robust role checking - handle different possible role field structures
+          const roles = currentUser?.roles || (currentUser as any)?.role || (currentUser as any)?.userRoles || (currentUser as any)?.userRole;
+          console.log('🔐 Extracted roles from various possible fields:', {
+            roles: currentUser?.roles,
+            role: (currentUser as any)?.role,
+            userRoles: (currentUser as any)?.userRoles,
+            userRole: (currentUser as any)?.userRole,
+            finalRoles: roles
+          });
+          
+          const hasAdminRole = currentUser && 
+            roles && 
+            (Array.isArray(roles) ? roles.includes('ADMIN') : 
+             typeof roles === 'string' ? roles === 'ADMIN' :
+             false);
+          
+          console.log('🔐 Has admin role:', hasAdminRole);
+          console.log('🔐 Role check breakdown:', {
+            hasUser: !!currentUser,
+            hasRoles: !!currentUser?.roles,
+            rolesType: typeof currentUser?.roles,
+            isArray: Array.isArray(currentUser?.roles),
+            rolesValue: currentUser?.roles,
+            includesAdmin: Array.isArray(currentUser?.roles) ? currentUser.roles.includes('ADMIN') : false
+          });
+          
+          if (hasAdminRole) {
+            console.log('🔐 Redirecting admin user to /admin');
+            try {
+              router.push('/admin');
+            } catch (error) {
+              console.log('🔐 Router push failed, using window.location');
+              window.location.href = '/admin';
+            }
+          } else {
+            console.log('🔐 Redirecting customer user to /');
+            // Try router.push first, fallback to window.location if needed
+            try {
+              router.push('/');
+            } catch (error) {
+              console.log('🔐 Router push failed, using window.location');
+              window.location.href = '/';
+            }
+            
+            // Fallback redirect after a short delay
+            setTimeout(() => {
+              if (window.location.pathname === '/auth') {
+                console.log('🔐 Fallback redirect to /');
+                window.location.href = '/';
+              }
+            }, 1000);
+          }
         } else {
           if (result.messageKey) {
             setErrorKey(result.messageKey);
@@ -252,7 +331,7 @@ export function AuthForm() {
       setErrorKey('auth.messages.generalError');
       setError('');
     } finally {
-      setIsLoading(false);
+      setIsFormLoading(false);
     }
   };
 
@@ -345,6 +424,11 @@ export function AuthForm() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // Show loading page while redirecting
+  if (isRedirecting) {
+    return <LoadingPage />;
+  }
 
   return (
     <div
@@ -516,10 +600,10 @@ export function AuthForm() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isFormLoading}
               className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[44px] sm:min-h-[48px] flex items-center justify-center"
             >
-              {isLoading ? (
+              {isFormLoading ? (
                 <>
                   <svg
                     className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"

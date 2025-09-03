@@ -8,6 +8,12 @@ import {
   HiHeart,
   HiBars3,
   HiXMark,
+  HiHome,
+  HiUsers,
+  HiCube,
+  HiShoppingCart as HiOrders,
+  HiChartBar,
+  HiChatBubbleLeftRight
 } from 'react-icons/hi2';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -21,6 +27,46 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // Admin navigation items
+  const adminNavigationItems = [
+    {
+      name: 'Dashboard',
+      href: '/admin',
+      icon: HiHome,
+      label: 'admin.sidebar.dashboard'
+    },
+    {
+      name: 'Customers',
+      href: '/admin/customers',
+      icon: HiUsers,
+      label: 'admin.sidebar.customers'
+    },
+    {
+      name: 'Products',
+      href: '/admin/products',
+      icon: HiCube,
+      label: 'admin.sidebar.products'
+    },
+    {
+      name: 'Orders',
+      href: '/admin/orders',
+      icon: HiOrders,
+      label: 'admin.sidebar.orders'
+    },
+    {
+      name: 'Analytics',
+      href: '/admin/analytics',
+      icon: HiChartBar,
+      label: 'admin.sidebar.analytics'
+    },
+    {
+      name: 'Customer Support',
+      href: '/admin/support',
+      icon: HiChatBubbleLeftRight,
+      label: 'admin.sidebar.support'
+    }
+  ] as const;
 
   const toggleMobileMenu = () => {
     if (!isAnimating) {
@@ -76,6 +122,9 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Check if user is admin
+  const isAdmin = user && user.roles && user.roles.includes('ADMIN');
+
   return (
     <>
       <header
@@ -98,7 +147,8 @@ const Header = () => {
             </h2>
           </div>
 
-          {/* Main Navigation */}
+          {/* Main Navigation - Hidden for admin users */}
+          {!isAdmin && (
           <nav
             className={`hidden lg:flex items-center ${
               locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''
@@ -129,6 +179,7 @@ const Header = () => {
               {t('header.navigation.about')}
             </Link>
           </nav>
+          )}
 
           {/* Desktop Navigation & Mobile Menu Button */}
           <div className="flex justify-end items-center space-x-2 sm:space-x-4 lg:space-x-6">
@@ -140,6 +191,8 @@ const Header = () => {
               >
                 {HiBell({ className: 'w-6 h-6' })}
               </button>
+              {/* Wishlist - Hidden for admin users */}
+              {!isAdmin && (
               <Link
                 href="/wishlist"
                 className="hover:text-purple-500 transition-colors"
@@ -147,6 +200,9 @@ const Header = () => {
               >
                 {HiHeart({ className: 'w-6 h-6' })}
               </Link>
+              )}
+              {/* Cart - Hidden for admin users */}
+              {!isAdmin && (
               <Link
                 href="/cart"
                 className="hover:text-purple-500 transition-colors"
@@ -154,6 +210,7 @@ const Header = () => {
               >
                 {HiOutlineShoppingCart({ className: 'w-6 h-6' })}
               </Link>
+              )}
 
               {/* Theme Toggle Button */}
               <ThemeToggle />
@@ -223,14 +280,14 @@ const Header = () => {
 
         {/* Mobile Menu Overlay */}
         <div
-          className={`fixed inset-0 bg-black z-50 lg:hidden transition-all duration-300 ease-in-out ${
+          className={`fixed top-0 left-0 right-0 bottom-0 w-screen h-screen bg-black z-[9999] lg:hidden transition-all duration-300 ease-in-out ${
             isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
           }`}
         >
           {/* Close Button */}
           <button
             onClick={closeMobileMenu}
-            className={`absolute top-6 text-white hover:text-purple-500 transition-all duration-300 z-10 right-6 ${
+            className={`absolute top-6 text-white hover:text-purple-500 transition-all duration-300 z-[10000] right-6 ${
               isMobileMenuOpen
                 ? 'opacity-100 translate-x-0'
                 : 'opacity-0 translate-x-4'
@@ -242,17 +299,17 @@ const Header = () => {
 
           {/* Full Screen Menu Content */}
           <div
-            className={`flex flex-col h-full text-white px-6 transition-all duration-500 ease-out overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/40 ${
+            className={`flex flex-col h-screen w-full text-white px-6 transition-all duration-500 ease-out overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/40 ${
               isMobileMenuOpen
                 ? 'opacity-100 translate-x-0'
                 : 'opacity-0 translate-x-full'
             }`}
           >
             {/* Top Section - Logo & Image */}
-            <div className="flex flex-col items-center pt-16 sm:pt-20">
+            <div className="flex flex-col items-center pt-20 pb-6">
               <div className="flex flex-col-reverse sm:flex-col items-center">
                 <h2
-                  className={`text-center text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl z-20 transition-all duration-700 ease-out delay-200 ${
+                  className={`text-center text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl z-20 transition-all duration-700 ease-out delay-200 ${
                     isMobileMenuOpen
                       ? 'opacity-100 translate-x-0'
                       : 'opacity-0 translate-x-full'
@@ -276,42 +333,71 @@ const Header = () => {
                 <h3 className="text-white/60 text-base font-medium uppercase tracking-wider mb-4 text-center">
                   {t('header.mobile.navigation')}
                 </h3>
-                <div
-                  className={`grid grid-cols-2 gap-4 max-w-xs mx-auto w-full place-items-center ${
-                    locale === 'ar'
-                      ? 'rtl [&>*:nth-child(1)]:order-2 [&>*:nth-child(2)]:order-1 [&>*:nth-child(3)]:order-4 [&>*:nth-child(4)]:order-3'
-                      : ''
-                  }`}
-                >
-                  <Link
-                    href="/"
-                    className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
-                    onClick={closeMobileMenu}
+                {isAdmin ? (
+                  // Admin Navigation - Same grid layout as regular navigation
+                  <div
+                    className={`grid grid-cols-2 gap-4 max-w-xs mx-auto w-full place-items-center ${
+                      locale === 'ar'
+                        ? 'rtl [&>*:nth-child(1)]:order-2 [&>*:nth-child(2)]:order-1 [&>*:nth-child(3)]:order-4 [&>*:nth-child(4)]:order-3 [&>*:nth-child(5)]:order-6 [&>*:nth-child(6)]:order-5'
+                        : ''
+                    }`}
                   >
-                    {t('header.navigation.home')}
-                  </Link>
-                  <Link
-                    href="/products"
-                    className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
-                    onClick={closeMobileMenu}
+                    {adminNavigationItems.map((item) => {
+                      const IconComponent = item.icon;
+                      return (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex flex-col items-center justify-center text-base group"
+                          onClick={closeMobileMenu}
+                        >
+                          {IconComponent({ className: "w-5 h-5 text-white group-hover:text-purple-400 transition-colors mb-1" })}
+                          <span className="text-xs font-medium text-center leading-tight">
+                            {t(item.label) || item.name}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  // Regular User Navigation - Grid layout
+                  <div
+                    className={`grid grid-cols-2 gap-4 max-w-xs mx-auto w-full place-items-center ${
+                      locale === 'ar'
+                        ? 'rtl [&>*:nth-child(1)]:order-2 [&>*:nth-child(2)]:order-1 [&>*:nth-child(3)]:order-4 [&>*:nth-child(4)]:order-3'
+                        : ''
+                    }`}
                   >
-                    {t('header.navigation.products')}
-                  </Link>
-                  <Link
-                    href="/deals"
-                    className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
-                    onClick={closeMobileMenu}
-                  >
-                    {t('header.navigation.deals')}
-                  </Link>
-                  <Link
-                    href="/about"
-                    className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
-                    onClick={closeMobileMenu}
-                  >
-                    {t('header.navigation.about')}
-                  </Link>
-                </div>
+                    <Link
+                      href="/"
+                      className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
+                      onClick={closeMobileMenu}
+                    >
+                      {t('header.navigation.home')}
+                    </Link>
+                    <Link
+                      href="/products"
+                      className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
+                      onClick={closeMobileMenu}
+                    >
+                      {t('header.navigation.products')}
+                    </Link>
+                    <Link
+                      href="/deals"
+                      className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
+                      onClick={closeMobileMenu}
+                    >
+                      {t('header.navigation.deals')}
+                    </Link>
+                    <Link
+                      href="/about"
+                      className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
+                      onClick={closeMobileMenu}
+                    >
+                      {t('header.navigation.about')}
+                    </Link>
+                  </div>
+                )}
               </div>
 
               {/* Quick Actions Section */}
@@ -326,6 +412,8 @@ const Header = () => {
                   {t('header.mobile.quickActions')}
                 </h3>
                 <div className="flex justify-center space-x-6">
+                  {/* Wishlist - Hidden for admin users */}
+                  {!isAdmin && (
                   <Link
                     href="/wishlist"
                     className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
@@ -338,6 +426,9 @@ const Header = () => {
                       {t('header.actions.wishlist')}
                     </span>
                   </Link>
+                  )}
+                  {/* Cart - Hidden for admin users */}
+                  {!isAdmin && (
                   <Link
                     href="/cart"
                     className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
@@ -350,6 +441,7 @@ const Header = () => {
                       {t('header.actions.cart')}
                     </span>
                   </Link>
+                  )}
                   <button className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group">
                     <div className="text-white group-hover:text-purple-400 transition-colors">
                       {HiBell({ className: 'w-7 h-7' })}

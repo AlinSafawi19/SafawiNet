@@ -49,6 +49,13 @@
       "description": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها",
       "goHome": "العودة للرئيسية",
       "goBack": "العودة للخلف"
+    },
+    "403": {
+      "title": "403",
+      "message": "الوصول ممنوع",
+      "description": "ليس لديك صلاحية للوصول إلى هذا المورد",
+      "goHome": "العودة للرئيسية",
+      "goBack": "العودة للخلف"
     }
   },
   "verifyEmail": {
@@ -91,13 +98,50 @@
       "forgotPassword": "نسيت كلمة المرور؟",
       "resetPassword": "إعادة تعيين كلمة المرور"
     },
+    "admin": {
+      "access": "الوصول للمشرف",
+      "createAdmin": "إنشاء مشرف",
+      "enterPassword": "أدخل كلمة مرور المشرف للمتابعة",
+      "createAdminSubtitle": "إنشاء حساب مستخدم مشرف جديد",
+      "adminPassword": "كلمة مرور المشرف",
+      "adminPasswordPlaceholder": "أدخل كلمة مرور المشرف",
+      "accessAdminPanel": "الوصول إلى لوحة المشرف",
+      "verifying": "جاري التحقق...",
+      "createAdminUser": "إنشاء مستخدم مشرف",
+      "creatingAdmin": "جاري إنشاء المشرف...",
+      "fullName": "الاسم الكامل",
+      "fullNamePlaceholder": "أدخل الاسم الكامل",
+      "emailAddress": "عنوان البريد الإلكتروني",
+      "emailPlaceholder": "أدخل عنوان البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "passwordPlaceholder": "أدخل كلمة المرور",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "confirmPasswordPlaceholder": "أكد كلمة المرور",
+      "passwordRequirement": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
+      "adminUserCreated": "تم إنشاء المستخدم المشرف بنجاح!",
+      "failedToCreate": "فشل في إنشاء المستخدم المشرف",
+      "networkError": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
+      "restrictedArea": "هذه المنطقة مخصصة للموظفين المصرح لهم فقط",
+      "fullSystemAccess": "سيؤدي هذا إلى إنشاء مستخدم مشرف جديد مع وصول كامل للنظام",
+      "validation": {
+        "nameRequired": "الاسم مطلوب",
+        "nameTooLong": "الاسم طويل جداً",
+        "emailRequired": "البريد الإلكتروني مطلوب",
+        "emailInvalid": "تنسيق البريد الإلكتروني غير صحيح",
+        "passwordRequired": "كلمة المرور مطلوبة",
+        "passwordTooShort": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
+        "confirmPasswordRequired": "يرجى تأكيد كلمة المرور",
+        "passwordsDoNotMatch": "كلمات المرور غير متطابقة",
+        "invalidAdminPassword": "كلمة مرور المشرف غير صحيحة"
+      }
+    },
     "forgotPassword": {
       "subtitle": "أدخل عنوان بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور",
       "sending": "جاري الإرسال...",
       "sendResetLink": "إرسال رابط إعادة التعيين",
       "rememberPassword": "تذكرت كلمة المرور؟",
       "backToLogin": "العودة لتسجيل الدخول",
-      "heroTitle": "إعادة تعيين كلمة المرور",
+      "heroTitle": "أعد تعيين كلمة المرور",
       "heroSubtitle": "لا تقلق، سنساعدك في العودة إلى حسابك"
     },
     "validation": {
@@ -116,11 +160,14 @@
       "registrationFailed": "فشل التسجيل. يرجى المحاولة مرة أخرى.",
       "generalError": "حدث خطأ. يرجى المحاولة مرة أخرى.",
       "userAlreadyExists": "المستخدم بهذا البريد الإلكتروني موجود بالفعل",
-      "accountLocked": "الحساب مؤقتاً محظور بسبب محاولات فاشلة كثيرة",
+      "invalidEmailFormat": "تنسيق البريد الإلكتروني غير صحيح",
+      "passwordTooWeak": "كلمة المرور ضعيفة جداً",
+      "serverError": "حدث خطأ في الخادم",
+      "accountLocked": "تم قفل الحساب مؤقتاً بسبب محاولات فاشلة كثيرة",
       "invalidVerificationToken": "رمز التحقق غير صحيح أو منتهي الصلاحية",
       "invalidTwoFactorCode": "رمز المصادقة الثنائية غير صحيح",
       "invalidPasswordResetToken": "رمز إعادة تعيين كلمة المرور غير صحيح أو منتهي الصلاحية",
-      "passwordResetEmailSent": "إذا كان هناك حساب بهذا البريد الإلكتروني، سيتم إرسال رابط إعادة تعيين كلمة المرور.",
+      "passwordResetEmailSent": "إذا كان هناك حساب بهذا البريد الإلكتروني، تم إرسال رابط إعادة تعيين كلمة المرور.",
       "passwordResetSuccess": "تم إعادة تعيين كلمة المرور بنجاح. يرجى تسجيل الدخول بكلمة المرور الجديدة.",
       "emailVerified": "تم التحقق من البريد الإلكتروني بنجاح",
       "verificationEmailSent": "تم إرسال بريد التحقق بنجاح",
@@ -135,26 +182,26 @@
       "twoFactorNotEnabled": "المصادقة الثنائية غير مفعلة",
       "invalidCode": "الرمز غير صحيح",
       "twoFactorDisabled": "تم إلغاء تفعيل المصادقة الثنائية بنجاح",
-      "recoveryInProgress": "الاسترداد قيد التنفيذ بالفعل. يرجى الانتظار أو التحقق من بريدك الإلكتروني.",
+      "recoveryInProgress": "الاسترداد قيد التقدم بالفعل. يرجى الانتظار أو التحقق من بريدك الإلكتروني.",
       "recoveryTokenSent": "تم إرسال رمز الاسترداد إلى بريد الاسترداد الخاص بك. يرجى التحقق من صندوق الوارد.",
       "recoveryEmailNotFound": "إذا كان بريد الاسترداد مسجلاً، ستتلقى رمز استرداد قريباً.",
       "invalidRecoveryToken": "رمز الاسترداد غير صحيح أو منتهي الصلاحية",
       "emailAlreadyInUse": "عنوان البريد الإلكتروني مستخدم بالفعل من قبل حساب آخر",
       "recoveryConfirmed": "تم تأكيد الاسترداد. يرجى التحقق من عنوان البريد الإلكتروني الجديد لإكمال العملية.",
-      "noRecoveryStaging": "لم يتم العثور على مرحلة الاسترداد أو لم يتم تعيين البريد الإلكتروني الجديد",
-      "recoveryCompleted": "تم إكمال استرداد الحساب بنجاح. تم تحديث بريدك الإلكتروني وإلغاء جميع الجلسات.",
+      "noRecoveryStaging": "لم يتم العثور على مرحلة استرداد أو لم يتم تعيين بريد إلكتروني جديد",
+      "recoveryCompleted": "تم إكمال استرداد الحساب بنجاح. تم تحديث بريدك الإلكتروني وتم إلغاء صلاحية جميع الجلسات.",
       "tokenRefreshed": "تم تحديث الرمز المميز بنجاح",
       "loggedOut": "تم تسجيل الخروج بنجاح",
       "noRefreshTokenProvided": "لم يتم توفير رمز تحديث",
-      "userAlreadyVerified": "المستخدم مُتحقق منه بالفعل",
+      "userAlreadyVerified": "المستخدم محقق بالفعل",
       "sessionNotFound": "الجلسة غير موجودة",
       "cannotDeleteCurrentSession": "لا يمكن حذف الجلسة الحالية",
       "notificationNotFound": "الإشعار غير موجود"
     },
     "hero": {
-      "title": "شبكات بلا تعقيد ببساطة",
+      "title": "شبكات بلا تعقيد",
       "subtitle": "انضم إلى مجتمع المحترفين واكتشف حلول الشبكات المميزة",
-      "imageAlt": "تالي$ا"
+      "imageAlt": "تاليسا"
     }
   },
   "footer": {
@@ -176,10 +223,10 @@
       "helpCenter": "مركز المساعدة",
       "contactUs": "اتصل بنا",
       "shippingInfo": "معلومات الشحن",
-      "returnsExchanges": "المرتجعات والتبديلات",
+      "returnsExchanges": "الإرجاع والتبديل",
       "warrantyInfo": "معلومات الضمان",
       "myAccount": "حسابي",
-      "orderHistory": "سجل الطلبات",
+      "orderHistory": "تاريخ الطلبات",
       "wishlist": "المفضلة",
       "myReviews": "تقييماتي",
       "downloads": "التحميلات",
@@ -189,8 +236,18 @@
       "sitemap": "خريطة الموقع"
     },
     "copyright": {
-      "by": "شركة",
-      "allRightsReserved": "جميع الحقوق محفوظة"
+      "by": "بواسطة",
+      "allRightsReserved": "جميع الحقوق محفوظة."
+    }
+  },
+  "admin": {
+    "sidebar": {
+      "dashboard": "لوحة التحكم",
+      "customers": "العملاء",
+      "products": "المنتجات",
+      "orders": "الطلبات",
+      "analytics": "التحليلات",
+      "support": "دعم العملاء"
     }
   }
 }

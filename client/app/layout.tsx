@@ -1,6 +1,6 @@
 import './globals.css';
 import { Alkalami } from 'next/font/google';
-import Footer from '@app/components/Layout/Footer';
+import FooterWrapper from '@app/components/Layout/FooterWrapper';
 import Header from '@app/components/Layout/Header';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -77,9 +77,8 @@ export default function RootLayout({
                 <DynamicLangAttribute />
                 <Header />
                 <main className="bg-site dark:bg-dark-bg">{children}</main>
-                <div className="mt-10 sm:mt-20">
-                  <Footer />
-                </div>
+
+                <FooterWrapper />
               </AppInitializer>
             </LanguageProvider>
           </ThemeProvider>

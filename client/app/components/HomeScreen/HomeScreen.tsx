@@ -2,9 +2,29 @@
 
 import Image from 'next/image';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { LoadingPage } from '../LoadingPage';
 
 export function HomeScreen() {
   const { t, locale } = useLanguage();
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  useEffect(() => {
+    // Redirect admin users to admin dashboard
+    if (!isLoading && user && user.roles && user.roles.includes('ADMIN')) {
+      setIsRedirecting(true);
+      router.push('/admin');
+    }
+  }, [user, isLoading, router]);
+
+  // Show loading page while redirecting
+  if (isRedirecting) {
+    return <LoadingPage />;
+  }
 
   return (
     <div className="home-screen mx-auto relative">

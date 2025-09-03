@@ -551,4 +551,14 @@ export class UsersService {
 
     return true;
   }
+
+  async countAdminUsers(): Promise<number> {
+    return this.prisma.user.count({
+      where: {
+        roles: {
+          has: Role.ADMIN,
+        },
+      },
+    });
+  }
 }

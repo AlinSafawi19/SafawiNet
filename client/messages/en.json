@@ -49,6 +49,13 @@
       "description": "The page you are looking for doesn't exist or has been moved.",
       "goHome": "Go Home",
       "goBack": "Go Back"
+    },
+    "403": {
+      "title": "403",
+      "message": "Access Forbidden.",
+      "description": "You don't have permission to access this resource.",
+      "goHome": "Go Home",
+      "goBack": "Go Back"
     }
   },
   "verifyEmail": {
@@ -91,6 +98,43 @@
       "forgotPassword": "Forgot your password?",
       "resetPassword": "Reset password"
     },
+    "admin": {
+      "access": "ADMIN ACCESS",
+      "createAdmin": "CREATE ADMIN",
+      "enterPassword": "Enter admin password to continue",
+      "createAdminSubtitle": "Create a new admin user account",
+      "adminPassword": "Admin Password",
+      "adminPasswordPlaceholder": "Enter admin password",
+      "accessAdminPanel": "Access Admin Panel",
+      "verifying": "Verifying...",
+      "createAdminUser": "Create Admin User",
+      "creatingAdmin": "Creating Admin...",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Enter full name",
+      "emailAddress": "Email Address",
+      "emailPlaceholder": "Enter email address",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "passwordRequirement": "Password must be at least 8 characters long",
+      "adminUserCreated": "Admin user created successfully!",
+      "failedToCreate": "Failed to create admin user",
+      "networkError": "Network error. Please try again.",
+      "restrictedArea": "This area is restricted to authorized personnel only",
+      "fullSystemAccess": "This will create a new admin user with full system access",
+      "validation": {
+        "nameRequired": "Name is required",
+        "nameTooLong": "Name is too long",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Invalid email format",
+        "passwordRequired": "Password is required",
+        "passwordTooShort": "Password must be at least 8 characters long",
+        "confirmPasswordRequired": "Please confirm your password",
+        "passwordsDoNotMatch": "Passwords do not match",
+        "invalidAdminPassword": "Invalid admin password"
+      }
+    },
     "forgotPassword": {
       "subtitle": "Enter your email address and we'll send you a link to reset your password",
       "sending": "Sending...",
@@ -116,6 +160,9 @@
       "registrationFailed": "Registration failed. Please try again.",
       "generalError": "An error occurred. Please try again.",
       "userAlreadyExists": "User with this email already exists",
+      "invalidEmailFormat": "Invalid email format",
+      "passwordTooWeak": "Password is too weak",
+      "serverError": "Server error occurred",
       "accountLocked": "Account temporarily locked due to too many failed attempts",
       "invalidVerificationToken": "Invalid or expired verification token",
       "invalidTwoFactorCode": "Invalid 2FA code",
@@ -191,6 +238,16 @@
     "copyright": {
       "by": "BY",
       "allRightsReserved": "ALL RIGHTS RESERVED."
+    }
+  },
+  "admin": {
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "customers": "Customers",
+      "products": "Products",
+      "orders": "Orders",
+      "analytics": "Analytics",
+      "support": "Customer Support"
     }
   }
 }
