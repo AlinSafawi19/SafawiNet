@@ -66,6 +66,7 @@ interface AuthContextType {
   refreshToken: () => Promise<boolean>;
   authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>;
   joinPendingVerificationRoom: (email: string) => Promise<void>;
+  updateUser: (updatedUser: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -1034,6 +1035,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => clearInterval(refreshInterval);
   }, [user, autoRefreshToken]);
 
+  const updateUser = useCallback((updatedUser: User) => {
+    setUser(updatedUser);
+  }, []);
+
   const value: AuthContextType = {
     user,
     isLoading,
@@ -1045,6 +1050,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshToken,
     authenticatedFetch,
     joinPendingVerificationRoom,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

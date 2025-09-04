@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { buildApiUrl, API_CONFIG } from '../config/api';
 
 // Global state to prevent multiple API calls across different hook instances
@@ -64,18 +65,21 @@ export interface PaginatedTransactions {
 
 export const useLoyalty = () => {
   const { authenticatedFetch, user, isLoading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const [loyaltyAccount, setLoyaltyAccount] = useState<LoyaltyAccount | null>(
     globalLoyaltyState.data
   );
-  
+
   // Create a unique instance ID for this hook instance
-  const instanceId = useRef<string>(`instance_${Math.random().toString(36).substr(2, 9)}`);
+  const instanceId = useRef<string>(
+    `instance_${Math.random().toString(36).substr(2, 9)}`
+  );
 
   // Register this instance with the global state manager
   useEffect(() => {
     const id = instanceId.current;
     globalStateManager.activeInstances.add(id);
-    
+
     // If this is the first instance, make it the primary
     if (!globalStateManager.primaryInstance) {
       globalStateManager.primaryInstance = id;
@@ -83,29 +87,40 @@ export const useLoyalty = () => {
         console.log('🔄 useLoyalty: This instance is now primary:', id);
       }
     }
-    
+
     // Register state update callback
     globalStateManager.stateUpdateCallbacks.set(id, (state) => {
       setLoyaltyAccount(state.data);
       setError(state.error);
       setIsLoading(state.isLoading);
     });
-    
+
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 useLoyalty: Instance registered:', id, 'Primary:', globalStateManager.primaryInstance);
+      console.log(
+        '🔄 useLoyalty: Instance registered:',
+        id,
+        'Primary:',
+        globalStateManager.primaryInstance
+      );
     }
-    
+
     // Cleanup on unmount
     return () => {
       globalStateManager.activeInstances.delete(id);
       globalStateManager.stateUpdateCallbacks.delete(id);
-      
+
       // If this was the primary instance, assign a new primary
       if (globalStateManager.primaryInstance === id) {
-        const remainingInstances = Array.from(globalStateManager.activeInstances);
-        globalStateManager.primaryInstance = remainingInstances.length > 0 ? remainingInstances[0] : null;
+        const remainingInstances = Array.from(
+          globalStateManager.activeInstances
+        );
+        globalStateManager.primaryInstance =
+          remainingInstances.length > 0 ? remainingInstances[0] : null;
         if (process.env.NODE_ENV === 'development') {
-          console.log('🔄 useLoyalty: Primary instance changed to:', globalStateManager.primaryInstance);
+          console.log(
+            '🔄 useLoyalty: Primary instance changed to:',
+            globalStateManager.primaryInstance
+          );
         }
       }
     };
@@ -114,14 +129,21 @@ export const useLoyalty = () => {
   // Debug state changes
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 useLoyalty: loyaltyAccount state changed to:', loyaltyAccount);
+      console.log(
+        '🔄 useLoyalty: loyaltyAccount state changed to:',
+        loyaltyAccount
+      );
       console.log('🔄 useLoyalty: globalLoyaltyState:', globalLoyaltyState);
     }
   }, [loyaltyAccount]);
 
   // Sync local state with global state when global state changes
   useEffect(() => {
-    if (user && globalLoyaltyState.data && globalLoyaltyState.lastFetchUserId === user.id) {
+    if (
+      user &&
+      globalLoyaltyState.data &&
+      globalLoyaltyState.lastFetchUserId === user.id
+    ) {
       if (loyaltyAccount !== globalLoyaltyState.data) {
         if (process.env.NODE_ENV === 'development') {
           console.log('🔄 useLoyalty: Syncing local state with global state');
@@ -143,8 +165,8 @@ export const useLoyalty = () => {
       console.log('🔄 user roles:', user?.roles);
       console.log('🔄 is customer:', user?.roles?.includes('CUSTOMER'));
     }
-    
-    if (!user || !user.roles.includes('CUSTOMER')) {
+
+    if (!user || !user.roles?.includes('CUSTOMER')) {
       if (process.env.NODE_ENV === 'development') {
         console.log('❌ fetchLoyaltyAccount: User not found or not a customer');
       }
@@ -217,9 +239,16 @@ export const useLoyalty = () => {
         });
 
         if (process.env.NODE_ENV === 'development') {
-          console.log('✅ useLoyalty: Successfully fetched loyalty data:', data);
+          console.log(
+            '✅ useLoyalty: Successfully fetched loyalty data:',
+            data
+          );
           console.log('🔄 useLoyalty: Setting loyaltyAccount state to:', data);
-          console.log('🔄 useLoyalty: Notifying', globalStateManager.stateUpdateCallbacks.size, 'instances');
+          console.log(
+            '🔄 useLoyalty: Notifying',
+            globalStateManager.stateUpdateCallbacks.size,
+            'instances'
+          );
         }
       } else if (response.status === 404) {
         // User doesn't have a loyalty account yet - this is normal, not an error
@@ -293,7 +322,7 @@ export const useLoyalty = () => {
       cursor?: string,
       limit: number = 20
     ): Promise<PaginatedTransactions | null> => {
-      if (!user || !user.roles.includes('CUSTOMER')) {
+      if (!user || !user.roles?.includes('CUSTOMER')) {
         return null;
       }
 
@@ -325,7 +354,7 @@ export const useLoyalty = () => {
   useEffect(() => {
     const id = instanceId.current;
     const isPrimary = globalStateManager.primaryInstance === id;
-    
+
     if (process.env.NODE_ENV === 'development') {
       console.log('🔄 useLoyalty useEffect triggered:', {
         instanceId: id,
@@ -343,7 +372,9 @@ export const useLoyalty = () => {
     // Only the primary instance should manage the global state
     if (!isPrimary) {
       if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 useLoyalty: Not primary instance, skipping state management');
+        console.log(
+          '🔄 useLoyalty: Not primary instance, skipping state management'
+        );
       }
       return;
     }
@@ -362,7 +393,11 @@ export const useLoyalty = () => {
     }
 
     // If we already have data for this user, don't do anything
-    if (user && globalLoyaltyState.data && globalLoyaltyState.lastFetchUserId === user.id) {
+    if (
+      user &&
+      globalLoyaltyState.data &&
+      globalLoyaltyState.lastFetchUserId === user.id
+    ) {
       if (process.env.NODE_ENV === 'development') {
         console.log('🔄 useLoyalty: Already have data for this user, skipping');
       }
@@ -371,21 +406,24 @@ export const useLoyalty = () => {
 
     effectRunningRef.current = true;
 
-    if (user && user.roles.includes('CUSTOMER')) {
+    if (user && user.roles?.includes('CUSTOMER')) {
       // Call fetchLoyaltyAccount directly to avoid dependency issues
       fetchLoyaltyAccount().finally(() => {
         effectRunningRef.current = false;
       });
     } else {
       // Only clear state if this is a different user or user is actually logged out
-      if (globalLoyaltyState.lastFetchUserId && globalLoyaltyState.lastFetchUserId !== user?.id) {
+      if (
+        globalLoyaltyState.lastFetchUserId &&
+        globalLoyaltyState.lastFetchUserId !== user?.id
+      ) {
         // Clear global state when user changes
         globalLoyaltyState.data = null;
         globalLoyaltyState.error = null;
         globalLoyaltyState.lastFetchUserId = null;
         globalLoyaltyState.isLoading = false;
         globalLoyaltyState.isFetching = false;
-        
+
         // Notify all instances of the state change
         globalStateManager.stateUpdateCallbacks.forEach((callback) => {
           callback(globalLoyaltyState);
@@ -397,7 +435,25 @@ export const useLoyalty = () => {
       setIsLoading(false);
       effectRunningRef.current = false;
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, fetchLoyaltyAccount]);
+
+  // Helper function to translate loyalty tier names
+  const translateTierName = (tierName: string): string => {
+    // Convert tier name to lowercase for consistent lookup
+    const normalizedTierName = tierName.toLowerCase();
+
+    // Try to get translation from the messages
+    const translationKey = `header.loyalty.tiers.${normalizedTierName}`;
+    const translatedName = t(translationKey);
+
+    // If translation exists and is different from the key, return it
+    if (translatedName !== translationKey) {
+      return translatedName;
+    }
+
+    // Fallback to original tier name if no translation found
+    return tierName;
+  };
 
   return {
     loyaltyAccount,
@@ -405,6 +461,7 @@ export const useLoyalty = () => {
     error,
     fetchLoyaltyAccount,
     fetchTransactions,
-    isCustomer: user?.roles.includes('CUSTOMER') || false,
+    isCustomer: user?.roles?.includes('CUSTOMER') || false,
+    translateTierName,
   };
 };

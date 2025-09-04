@@ -19,7 +19,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     // Redirect non-admin users or unverified users to home page
     if (
       !isLoading &&
-      (!user || !user.isVerified || !user.roles.includes('ADMIN'))
+      (!user || !user.isVerified || !user.roles?.includes('ADMIN'))
     ) {
       router.push('/');
     }

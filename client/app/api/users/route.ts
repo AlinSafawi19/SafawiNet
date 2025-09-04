@@ -1,5 +1,102 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { name, recoveryEmail } = body;
+
+    // Basic validation
+    if (!name && !recoveryEmail) {
+      return NextResponse.json(
+        { message: 'At least one field (name or recoveryEmail) is required' },
+        { status: 400 }
+      );
+    }
+
+    // Name validation
+    if (name && (typeof name !== 'string' || name.trim().length === 0)) {
+      return NextResponse.json(
+        { message: 'Name must be a non-empty string' },
+        { status: 400 }
+      );
+    }
+
+    if (name && name.length > 100) {
+      return NextResponse.json(
+        { message: 'Name must be less than 100 characters' },
+        { status: 400 }
+      );
+    }
+
+    // Recovery email validation
+    if (recoveryEmail && typeof recoveryEmail !== 'string') {
+      return NextResponse.json(
+        { message: 'Recovery email must be a string' },
+        { status: 400 }
+      );
+    }
+
+    if (recoveryEmail && recoveryEmail.trim().length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(recoveryEmail)) {
+        return NextResponse.json(
+          { message: 'Invalid recovery email format' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Forward cookies from the request to the backend
+    const cookieHeader = request.headers.get('cookie');
+    if (!cookieHeader) {
+      return NextResponse.json(
+        { message: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Make request to your backend API
+    const backendResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/users/me`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: cookieHeader,
+        },
+        body: JSON.stringify({
+          name: name?.trim(),
+          recoveryEmail: recoveryEmail?.trim(),
+        }),
+      }
+    );
+
+    if (!backendResponse.ok) {
+      const errorData = await backendResponse.json();
+      return NextResponse.json(
+        { message: errorData.message || 'Failed to update profile' },
+        { status: backendResponse.status }
+      );
+    }
+
+    const result = await backendResponse.json();
+
+    return NextResponse.json(
+      {
+        message: 'Profile updated successfully',
+        user: result,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    return NextResponse.json(
+      { message: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

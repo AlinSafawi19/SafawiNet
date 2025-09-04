@@ -10,7 +10,6 @@ import {
   HiArrowRightOnRectangle,
   HiChevronDown,
   HiGift,
-  HiStar,
 } from 'react-icons/hi2';
 
 interface UserDropdownProps {
@@ -27,6 +26,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
     loyaltyAccount,
     isLoading: loyaltyLoading,
     isCustomer,
+    translateTierName,
   } = useLoyalty();
 
   // Debug logging
@@ -124,11 +124,26 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
           {/* Loyalty Section - Only show for customers */}
           {isCustomer && (
             <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center space-x-2 mb-2">
-                {HiGift({ className: 'w-4 h-4 text-purple-500' })}
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {t('header.loyalty.title')}
-                </span>
+              <div
+                className={`flex items-center mb-2 ${
+                  isRTL ? 'text-right justify-end' : 'text-left'
+                }`}
+              >
+                {isRTL ? (
+                  <>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      {t('header.loyalty.title')}
+                    </span>
+                    {HiGift({ className: 'w-4 h-4 text-purple-500 ml-2' })}
+                  </>
+                ) : (
+                  <>
+                    {HiGift({ className: 'w-4 h-4 text-purple-500 mr-2' })}
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      {t('header.loyalty.title')}
+                    </span>
+                  </>
+                )}
               </div>
 
               {loyaltyLoading ? (
@@ -138,30 +153,70 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
               ) : loyaltyAccount ? (
                 <div className="space-y-1">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      {t('header.loyalty.currentTier')}:
-                    </span>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {loyaltyAccount.currentTier.name}
-                    </span>
+                    {isRTL ? (
+                      <>
+                        <span className="font-medium text-gray-900 dark:text-white text-right">
+                          {translateTierName(loyaltyAccount.currentTier.name)}
+                        </span>
+                        <span className="text-gray-600 dark:text-gray-400 text-right">
+                          :{t('header.loyalty.currentTier')}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-gray-600 dark:text-gray-400 text-left">
+                          {t('header.loyalty.currentTier')}:
+                        </span>
+                        <span className="font-medium text-gray-900 dark:text-white text-right">
+                          {translateTierName(loyaltyAccount.currentTier.name)}
+                        </span>
+                      </>
+                    )}
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      {t('header.loyalty.points')}:
-                    </span>
-                    <span className="font-medium text-purple-600 dark:text-purple-400">
-                      {loyaltyAccount.currentPoints.toLocaleString()}
-                    </span>
+                    {isRTL ? (
+                      <>
+                        <span className="font-medium text-purple-600 dark:text-purple-400 text-right">
+                          {loyaltyAccount.currentPoints.toLocaleString()}
+                        </span>
+                        <span className="text-gray-600 dark:text-gray-400 text-right">
+                          :{t('header.loyalty.points')}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-gray-600 dark:text-gray-400 text-left">
+                          {t('header.loyalty.points')}:
+                        </span>
+                        <span className="font-medium text-purple-600 dark:text-purple-400 text-right">
+                          {loyaltyAccount.currentPoints.toLocaleString()}
+                        </span>
+                      </>
+                    )}
                   </div>
                   {loyaltyAccount.nextTier && (
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-gray-600 dark:text-gray-400">
-                        {t('header.loyalty.nextTier')}:
-                      </span>
-                      <span className="text-gray-900 dark:text-white">
-                        {loyaltyAccount.nextTier.pointsNeeded}{' '}
-                        {t('header.loyalty.pointsNeeded')}
-                      </span>
+                      {isRTL ? (
+                        <>
+                          <span className="text-gray-900 dark:text-white font-medium text-left">
+                            {loyaltyAccount.nextTier.pointsNeeded}{' '}
+                            {t('header.loyalty.pointsNeeded')}
+                          </span>
+                          <span className="text-gray-600 dark:text-gray-400 text-right">
+                            :{t('header.loyalty.nextTier')}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-gray-600 dark:text-gray-400 text-left">
+                            {t('header.loyalty.nextTier')}:
+                          </span>
+                          <span className="text-gray-900 dark:text-white font-medium text-right">
+                            {loyaltyAccount.nextTier.pointsNeeded}{' '}
+                            {t('header.loyalty.pointsNeeded')}
+                          </span>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>

@@ -32,7 +32,14 @@
       "viewDetails": "View Details",
       "loading": "Loading...",
       "error": "Unable to load loyalty information",
-      "noAccount": "Your loyalty account is being set up..."
+      "noAccount": "Your loyalty account is being set up...",
+      "tiers": {
+        "bronze": "Bronze",
+        "silver": "Silver",
+        "gold": "Gold",
+        "platinum": "Platinum",
+        "diamond": "Diamond"
+      }
     },
     "mobile": {
       "navigation": "Navigation",
@@ -68,6 +75,47 @@
       "description": "You don't have permission to access this resource.",
       "goHome": "Go Home",
       "goBack": "Go Back"
+    }
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "account": "My Account",
+    "profileSettings": "Profile Settings",
+    "loginSecurity": "Login & Security"
+  },
+  "account": {
+    "title": "MY ACCOUNT",
+    "subtitle": "Manage your profile, security settings, and preferences",
+    "loginSecurity": "Login & Security",
+    "loginSecurityDesc": "Manage passwords, 2FA, and security settings",
+    "profileSettings": "Profile Settings",
+    "profileSettingsDesc": "Update personal details and contact information",
+    "loyaltyDesc": "View points, rewards, and loyalty program benefits",
+    "addresses": "Addresses",
+    "addressesDesc": "Manage shipping and billing addresses",
+    "orders": "Orders",
+    "ordersDesc": "View order history and track shipments",
+    "paymentMethods": "Payment Methods",
+    "paymentMethodsDesc": "Manage credit cards, bank accounts, and payment preferences",
+    "backToAccount": "Back to Account",
+    "form": {
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Enter your full name",
+      "recoveryEmail": "Recovery Email",
+      "recoveryEmailPlaceholder": "Enter recovery email (optional)",
+      "recoveryEmailHelp": "Used for account recovery if you lose access to your main email",
+      "updateProfile": "Update Profile",
+      "updating": "Updating..."
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "nameTooLong": "Name must be less than 100 characters",
+      "invalidRecoveryEmail": "Please enter a valid email address"
+    },
+    "messages": {
+      "updateSuccess": "Profile updated successfully",
+      "updateFailed": "Failed to update profile. Please try again.",
+      "generalError": "An error occurred. Please try again."
     }
   },
   "verifyEmail": {
