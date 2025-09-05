@@ -143,7 +143,6 @@
         "currentPasswordRequired": "Current password is required",
         "newPasswordRequired": "New password is required",
         "confirmPasswordRequired": "Please confirm your new password",
-        "rateLimitExceeded": "Too many password change attempts. Please try again later.",
         "internalServerError": "An internal server error occurred. Please try again.",
         "userNotFound": "User not found",
         "passwordChangeFailed": "Failed to change password. Please try again."

@@ -62,11 +62,9 @@ export async function POST(request: NextRequest) {
 
     if (!backendResponse.ok) {
       let messageKey = null;
-      
+
       // Handle specific error cases
-      if (backendResponse.status === 429) {
-        messageKey = 'account.loginSecurity.password.rateLimitExceeded';
-      } else if (backendResponse.status === 401) {
+      if (backendResponse.status === 401) {
         messageKey = 'account.loginSecurity.password.currentPasswordIncorrect';
       } else if (backendResponse.status === 404) {
         messageKey = 'account.loginSecurity.password.userNotFound';
@@ -89,9 +87,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error changing password:', error);
     return NextResponse.json(
-      { 
+      {
         message: 'Internal server error',
-        messageKey: 'account.loginSecurity.password.internalServerError'
+        messageKey: 'account.loginSecurity.password.internalServerError',
       },
       { status: 500 }
     );

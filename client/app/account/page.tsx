@@ -101,7 +101,9 @@ export default function MyAccountPage() {
                   {HiShieldCheck({ className: 'w-8 h-8' })}
                 </div>
                 <div className="tile-text">
-                  <h3 className="tile-title">{t('account.loginSecurity.title')}</h3>
+                  <h3 className="tile-title">
+                    {t('account.loginSecurity.title')}
+                  </h3>
                   <p className="tile-description">
                     {t('account.loginSecurityDesc')}
                   </p>

@@ -143,7 +143,6 @@
         "currentPasswordRequired": "كلمة المرور الحالية مطلوبة",
         "newPasswordRequired": "كلمة المرور الجديدة مطلوبة",
         "confirmPasswordRequired": "يرجى تأكيد كلمة المرور الجديدة",
-        "rateLimitExceeded": "محاولات تغيير كلمة المرور كثيرة جداً. يرجى المحاولة لاحقاً.",
         "internalServerError": "حدث خطأ داخلي في الخادم. يرجى المحاولة مرة أخرى.",
         "userNotFound": "المستخدم غير موجود",
         "passwordChangeFailed": "فشل في تغيير كلمة المرور. يرجى المحاولة مرة أخرى."

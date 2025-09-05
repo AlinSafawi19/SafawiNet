@@ -224,7 +224,7 @@ export default function LoginSecurityPage() {
         setPasswordSuccessMessage('');
         setPasswordError('');
         setPasswordErrorKey('');
-        
+
         // Reset form
         setPasswordFormData({
           currentPassword: '',
@@ -237,7 +237,7 @@ export default function LoginSecurityPage() {
           confirmNewPassword: false,
         });
         setPasswordValidationErrors({});
-        
+
         // Logout user after successful password change
         setTimeout(() => {
           logout();
