@@ -1,5 +1,4 @@
 import './globals.css';
-import { Alkalami } from 'next/font/google';
 import FooterWrapper from '@app/components/Layout/FooterWrapper';
 import Header from '@app/components/Layout/Header';
 import { AuthProvider } from './contexts/AuthContext';
@@ -7,14 +6,6 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import DynamicLangAttribute from './components/DynamicLangAttribute';
 import { AppInitializer } from './components/AppInitializer';
-
-// Initialize the Alkalami font
-const alkalami = Alkalami({
-  weight: '400',
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-alkalami',
-});
 
 /**
  * Using force dynamic so changes in business assets (e.g. services) are immediately reflected.
@@ -28,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={alkalami.variable}>
+    <html lang="en">
       <head>
         <title>SAFAWI NETT</title>
         <meta

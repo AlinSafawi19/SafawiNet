@@ -54,14 +54,14 @@ export default function MyAccountPage() {
           </div>
 
           <h1
-            className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-black dark:text-white mb-3 ${
+            className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 ${
               locale === 'ar' ? 'text-right' : 'text-left'
             }`}
           >
             {t('account.title')}
           </h1>
           <p
-            className={`text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-6 ${
+            className={`text-sm sm:text-base text-gray-300 mb-6 ${
               locale === 'ar' ? 'text-right' : 'text-left'
             }`}
           >

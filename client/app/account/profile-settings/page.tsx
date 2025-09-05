@@ -152,11 +152,11 @@ export default function AccountInformationPage() {
   const getInputClass = (fieldName: keyof ValidationErrors) => {
     const hasError = touched[fieldName] && validationErrors[fieldName];
     const baseClasses =
-      'w-full px-4 py-3 rounded-lg text-gray-900 dark:text-white focus:bg-white/30 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
+      'w-full px-4 py-3 rounded-lg text-white focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
     const alignmentClasses = locale === 'ar' ? 'text-right' : 'text-left';
     const errorClasses = hasError
-      ? 'bg-white/20 dark:bg-white/10 border border-red-500 dark:border-red-500/50 placeholder-gray-600 dark:placeholder-white/50 focus:border-red-500'
-      : 'bg-white/20 dark:bg-white/10 border border-gray-400 dark:border-white/20 placeholder-gray-600 dark:placeholder-white/50 focus:border-purple-500';
+      ? 'bg-white/10 border border-red-500/50 placeholder-white/50 focus:border-red-500'
+      : 'bg-white/10 border border-white/20 placeholder-white/50 focus:border-purple-500';
 
     return `${baseClasses} ${alignmentClasses} ${errorClasses}`;
   };
@@ -246,14 +246,14 @@ export default function AccountInformationPage() {
           </div>
 
           <h1
-            className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-black dark:text-white mb-3 ${
+            className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 ${
               locale === 'ar' ? 'text-right' : 'text-left'
             }`}
           >
             {t('account.profileSettings')}
           </h1>
           <p
-            className={`text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-8 ${
+            className={`text-sm sm:text-base text-gray-300 mb-8 ${
               locale === 'ar' ? 'text-right' : 'text-left'
             }`}
           >
@@ -261,12 +261,12 @@ export default function AccountInformationPage() {
           </p>
 
           {/* Form Container */}
-          <div className="bg-white/10 dark:bg-black/20 backdrop-blur-sm rounded-xl p-6 sm:p-8 border border-white/20 dark:border-white/10 shadow-xl dark:shadow-none">
+          <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6 sm:p-8 border border-white/10 shadow-none">
             {/* Error Message */}
             {(error || errorKey) && (
-              <div className="bg-red-500/10 dark:bg-red-500/10 border border-red-500/20 dark:border-red-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
                 <p
-                  className={`text-red-600 dark:text-red-400 text-sm ${
+                  className={`text-red-400 text-sm ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
@@ -277,9 +277,9 @@ export default function AccountInformationPage() {
 
             {/* Success Message */}
             {(successMessage || successKey) && (
-              <div className="bg-green-500/10 dark:bg-green-500/10 border border-green-500/20 dark:border-green-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
+              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
                 <p
-                  className={`text-green-600 dark:text-green-400 text-sm ${
+                  className={`text-green-400 text-sm ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
@@ -293,7 +293,7 @@ export default function AccountInformationPage() {
               <div>
                 <label
                   htmlFor="name"
-                  className={`block text-sm font-medium text-gray-700 dark:text-white/80 mb-2 ${
+                  className={`block text-sm font-medium text-white/80 mb-2 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
@@ -321,7 +321,7 @@ export default function AccountInformationPage() {
                 />
                 {touched.name && validationErrors.name && (
                   <p
-                    className={`text-red-600 dark:text-red-400 text-xs mt-1 ${
+                    className={`text-red-400 text-xs mt-1 ${
                       locale === 'ar' ? 'text-right' : 'text-left'
                     }`}
                   >
@@ -334,7 +334,7 @@ export default function AccountInformationPage() {
               <div>
                 <label
                   htmlFor="recoveryEmail"
-                  className={`block text-sm font-medium text-gray-700 dark:text-white/80 mb-2 ${
+                  className={`block text-sm font-medium text-white/80 mb-2 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
@@ -362,7 +362,7 @@ export default function AccountInformationPage() {
                 />
                 {touched.recoveryEmail && validationErrors.recoveryEmail && (
                   <p
-                    className={`text-red-600 dark:text-red-400 text-xs mt-1 ${
+                    className={`text-red-400 text-xs mt-1 ${
                       locale === 'ar' ? 'text-right' : 'text-left'
                     }`}
                   >
@@ -370,7 +370,7 @@ export default function AccountInformationPage() {
                   </p>
                 )}
                 <p
-                  className={`text-gray-500 dark:text-white/50 text-xs mt-1 ${
+                  className={`text-white/50 text-xs mt-1 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
@@ -383,12 +383,12 @@ export default function AccountInformationPage() {
                 <button
                   type="submit"
                   disabled={isFormLoading}
-                  className="w-full bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center"
+                  className="w-full bg-white text-black font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center"
                 >
                   {isFormLoading ? (
                     <>
                       <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-black"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"

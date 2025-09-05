@@ -21,7 +21,9 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
   className = '',
 }) => {
   const { locale } = useLanguage();
+  const pathname = usePathname();
   const isRTL = locale === 'ar';
+  const isAccountPage = pathname.startsWith('/account');
 
   return (
     <nav
@@ -39,8 +41,8 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
           <li key={index} className="flex items-center">
             {index > 0 && (
               <svg
-                className={`w-4 h-4 text-gray-400 mx-2 ${
-                  isRTL ? 'rotate-180' : ''
+                className={`w-4 h-4 mx-2 ${isRTL ? 'rotate-180' : ''} ${
+                  isAccountPage ? 'text-gray-400' : 'text-gray-400'
                 }`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
@@ -56,7 +58,11 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
             {item.href && !item.isActive ? (
               <Link
                 href={item.href}
-                className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors duration-200"
+                className={`transition-colors duration-200 ${
+                  isAccountPage
+                    ? 'text-gray-400 hover:text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                }`}
               >
                 {item.label}
               </Link>
@@ -64,7 +70,11 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
               <span
                 className={`${
                   item.isActive
-                    ? 'text-black dark:text-white font-medium'
+                    ? isAccountPage
+                      ? 'text-white font-medium'
+                      : 'text-black dark:text-white font-medium'
+                    : isAccountPage
+                    ? 'text-gray-400'
                     : 'text-gray-600 dark:text-gray-400'
                 }`}
               >

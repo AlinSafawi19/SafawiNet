@@ -59,13 +59,9 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 249, 246, 0.85);
+    background-color: rgba(26, 26, 26, 0.85);
     pointer-events: none;
     z-index: 0;
-  }
-
-  .dark .account-bg::before {
-    background-color: rgba(26, 26, 26, 0.85);
   }
 
   .account-bg > * {
@@ -88,11 +84,6 @@
     font-family: Helvetica-W01-Light, sans-serif;
   }
 
-  .alkalami-regular {
-    font-family: var(--font-alkalami), serif;
-    font-weight: 400;
-    font-style: normal;
-  }
 
   /* Header navigation styling - thinner text */
   header nav a {
@@ -126,10 +117,10 @@
     @apply min-h-[180px];
     @apply flex flex-col justify-between;
     @apply backdrop-blur-sm;
-    @apply border border-white/20 dark:border-white/10;
+    @apply border border-white/10;
     @apply hover:scale-105;
     @apply hover:shadow-2xl;
-    @apply hover:shadow-gray-300/30 dark:hover:shadow-purple-500/20;
+    @apply hover:shadow-purple-500/20;
     @apply hover:-translate-y-2;
   }
 
@@ -148,8 +139,8 @@
   .tile-addresses,
   .tile-orders,
   .tile-payment {
-    @apply bg-white/10 dark:bg-black/20;
-    @apply hover:bg-white/20 dark:hover:bg-black/30;
+    @apply bg-black/20;
+    @apply hover:bg-black/30;
   }
 
   .tile-security::before,
@@ -158,7 +149,7 @@
   .tile-addresses::before,
   .tile-orders::before,
   .tile-payment::before {
-    @apply bg-gradient-to-br from-white/20 to-transparent dark:from-white/5 dark:to-transparent;
+    @apply bg-gradient-to-br from-white/5 to-transparent;
   }
 
   .tile-content {
@@ -183,10 +174,10 @@
   .tile-addresses .tile-icon,
   .tile-orders .tile-icon,
   .tile-payment .tile-icon {
-    @apply bg-gray-100 dark:bg-white/10;
-    @apply text-gray-800 dark:text-white/80;
-    @apply group-hover:bg-gray-200 dark:group-hover:bg-white/15;
-    @apply group-hover:text-gray-900 dark:group-hover:text-white;
+    @apply bg-white/10;
+    @apply text-white/80;
+    @apply group-hover:bg-white/15;
+    @apply group-hover:text-white;
   }
 
   .tile-text {
@@ -196,31 +187,28 @@
 
   .tile-title {
     @apply text-lg font-bold;
-    @apply text-black dark:text-white;
+    @apply text-white;
     @apply mb-2;
     @apply transition-all duration-300 ease-out;
-    @apply group-hover:text-gray-800 dark:group-hover:text-white/90;
+    @apply group-hover:text-white/90;
   }
 
   .tile-description {
     @apply text-sm;
-    @apply text-gray-800 dark:text-white/70;
+    @apply text-white/70;
     @apply leading-relaxed;
     @apply transition-all duration-300 ease-out;
-    @apply group-hover:text-gray-900 dark:group-hover:text-white/80;
+    @apply group-hover:text-white/80;
   }
 
   .tile-overlay {
     @apply absolute inset-0;
     @apply rounded-2xl;
-    @apply bg-gradient-to-br from-gray-100/20 to-transparent dark:from-white/5 dark:to-transparent;
+    @apply bg-gradient-to-br from-white/5 to-transparent;
     @apply opacity-0;
     @apply transition-all duration-300 ease-out;
     @apply group-hover:opacity-100;
   }
-
-
-
 
   /* RTL Support for Auth Form */
   .rtl {
