@@ -10,6 +10,7 @@ export interface JwtPayload {
   name: string;
   verified: boolean;
   roles: string[];
+  refreshTokenId: string;
   iat: number;
   exp: number;
 }
@@ -64,7 +65,44 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Email not verified');
     }
 
-    console.log('✅ JWT Strategy - User validated successfully:', user.email);
+    // Validate session against UserSession table
+    if (payload.refreshTokenId) {
+      const userSession = await this.prisma.userSession.findFirst({
+        where: {
+          userId: payload.sub,
+          refreshTokenId: payload.refreshTokenId,
+        },
+        select: {
+          id: true,
+          isCurrent: true,
+          lastActiveAt: true,
+        },
+      });
+
+      if (!userSession) {
+        console.log('❌ JWT Strategy - Session not found for refreshTokenId:', payload.refreshTokenId);
+        throw new UnauthorizedException('Invalid session');
+      }
+
+      if (!userSession.isCurrent) {
+        console.log('❌ JWT Strategy - Session is not current for refreshTokenId:', payload.refreshTokenId);
+        throw new UnauthorizedException('Session expired');
+      }
+
+      // Update session activity
+      try {
+        await this.prisma.userSession.update({
+          where: { id: userSession.id },
+          data: { lastActiveAt: new Date() },
+        });
+        console.log('🔄 JWT Strategy - Updated session activity for session:', userSession.id);
+      } catch (error) {
+        console.log('⚠️ JWT Strategy - Failed to update session activity:', error);
+        // Don't fail validation if session update fails
+      }
+    }
+
+    console.log('✅ JWT Strategy - User and session validated successfully:', user.email);
     
     return {
       sub: user.id,
@@ -72,6 +110,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       name: user.name,
       verified: user.isVerified,
       roles: user.roles,
+      refreshTokenId: payload.refreshTokenId,
     };
   }
 }

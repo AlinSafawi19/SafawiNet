@@ -28,6 +28,13 @@ export class JwtAuthGuard implements CanActivate {
       // Check if user exists and is verified
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          isVerified: true,
+          roles: true,
+        },
       });
 
       if (!user) {
@@ -40,7 +47,44 @@ export class JwtAuthGuard implements CanActivate {
         throw new UnauthorizedException('Email not verified');
       }
 
-      console.log('🛡️ JWT Guard - Authentication successful, user:', user.email);
+      // Validate session against UserSession table
+      if (payload.refreshTokenId) {
+        const userSession = await this.prisma.userSession.findFirst({
+          where: {
+            userId: payload.sub,
+            refreshTokenId: payload.refreshTokenId,
+          },
+          select: {
+            id: true,
+            isCurrent: true,
+            lastActiveAt: true,
+          },
+        });
+
+        if (!userSession) {
+          console.log('🛡️ JWT Guard - Session not found for refreshTokenId:', payload.refreshTokenId);
+          throw new UnauthorizedException('Invalid session');
+        }
+
+        if (!userSession.isCurrent) {
+          console.log('🛡️ JWT Guard - Session is not current for refreshTokenId:', payload.refreshTokenId);
+          throw new UnauthorizedException('Session expired');
+        }
+
+        // Update session activity
+        try {
+          await this.prisma.userSession.update({
+            where: { id: userSession.id },
+            data: { lastActiveAt: new Date() },
+          });
+          console.log('🔄 JWT Guard - Updated session activity for session:', userSession.id);
+        } catch (error) {
+          console.log('⚠️ JWT Guard - Failed to update session activity:', error);
+          // Don't fail validation if session update fails
+        }
+      }
+
+      console.log('🛡️ JWT Guard - Authentication and session validation successful, user:', user.email);
       
       // Attach user to request
       request.user = {
@@ -49,6 +93,8 @@ export class JwtAuthGuard implements CanActivate {
         email: user.email,
         name: user.name,
         verified: user.isVerified,
+        roles: user.roles,
+        refreshTokenId: payload.refreshTokenId,
       };
       
       return true;
