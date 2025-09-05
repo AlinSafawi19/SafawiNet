@@ -56,7 +56,8 @@ export default function VerifyEmailPage() {
     (serverMessage: string): string | null => {
       const messageMapping: { [key: string]: string } = {
         'Email verified successfully': 'verifyEmail.successMessage',
-        'Account recovery completed successfully. Your email has been updated and all sessions have been invalidated.': 'verifyEmail.recoverySuccessMessage',
+        'Account recovery completed successfully. Your email has been updated and all sessions have been invalidated.':
+          'verifyEmail.recoverySuccessMessage',
         'Invalid or expired verification token':
           'auth.messages.invalidVerificationToken',
       };
@@ -76,12 +77,12 @@ export default function VerifyEmailPage() {
     if (!isLoading && user) {
       console.log('🔐 User already logged in via AuthContext:', user);
       hasVerifiedRef.current = true;
-      
+
       setVerificationState({
         status: 'success',
         message: t('verifyEmail.recoverySuccessMessage'),
       });
-      
+
       // Redirect based on user role
       setTimeout(() => {
         if (user.roles && user.roles.includes('ADMIN')) {
@@ -90,7 +91,7 @@ export default function VerifyEmailPage() {
           router.push('/');
         }
       }, 2000);
-      
+
       return;
     }
 
@@ -101,19 +102,19 @@ export default function VerifyEmailPage() {
           method: 'GET',
           credentials: 'include',
         });
-        
+
         if (response.ok) {
           const userData = await response.json();
           console.log('🔐 User already authenticated:', userData);
-          
+
           // Mark as verified to prevent API calls
           hasVerifiedRef.current = true;
-          
+
           setVerificationState({
             status: 'success',
             message: t('verifyEmail.recoverySuccessMessage'),
           });
-          
+
           // Redirect based on user role
           setTimeout(() => {
             if (userData.roles && userData.roles.includes('ADMIN')) {
@@ -122,7 +123,7 @@ export default function VerifyEmailPage() {
               router.push('/');
             }
           }, 2000);
-          
+
           return true; // User is already authenticated
         }
       } catch (error) {
@@ -143,14 +144,22 @@ export default function VerifyEmailPage() {
         // Check if user was on auth page or account recovery page - redirect to home, otherwise stay
         const currentPath = window.location.pathname;
 
-        if (currentPath === '/auth' || currentPath.startsWith('/auth/') || currentPath === '/account-recovery') {
+        if (
+          currentPath === '/auth' ||
+          currentPath.startsWith('/auth/') ||
+          currentPath === '/account-recovery'
+        ) {
           setVerificationState({
             status: 'success',
             message: t('verifyEmail.successMessage'),
           });
           // Redirect based on user role after 2 seconds
           setTimeout(() => {
-            if (data.user && data.user.roles && data.user.roles.includes('ADMIN')) {
+            if (
+              data.user &&
+              data.user.roles &&
+              data.user.roles.includes('ADMIN')
+            ) {
               router.push('/admin');
             } else {
               router.push('/');
@@ -248,12 +257,18 @@ export default function VerifyEmailPage() {
                 }
               }, 2000);
             } else {
-              console.warn('🔐 Email verification WebSocket callback - login failed:', loginResult);
+              console.warn(
+                '🔐 Email verification WebSocket callback - login failed:',
+                loginResult
+              );
               // Don't change the UI state here since verification already succeeded
             }
           }
         } catch (error) {
-          console.error('🔐 Email verification WebSocket callback error:', error);
+          console.error(
+            '🔐 Email verification WebSocket callback error:',
+            error
+          );
           // Don't change the UI state here since verification already succeeded
         }
       };
@@ -278,22 +293,21 @@ export default function VerifyEmailPage() {
         // If recovery completion fails with rate limiting, wait and try regular verification
         if (!response.ok) {
           if (response.status === 429) {
-            console.log('🔐 Rate limited on recovery completion, trying regular verification...');
+            console.log(
+              '🔐 Rate limited on recovery completion, trying regular verification...'
+            );
             // Wait a bit before trying the fallback
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 1000));
           }
-          
-          response = await fetch(
-            'http://localhost:3000/v1/auth/verify-email',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              credentials: 'include',
-              body: JSON.stringify({ token }),
-            }
-          );
+
+          response = await fetch('http://localhost:3000/v1/auth/verify-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ token }),
+          });
         }
 
         if (response.ok) {
@@ -362,8 +376,11 @@ export default function VerifyEmailPage() {
                 }, 2000);
               } else {
                 // Login failed but verification succeeded - still show success and redirect
-                console.warn('🔐 Email verification succeeded but login failed:', loginResult);
-                
+                console.warn(
+                  '🔐 Email verification succeeded but login failed:',
+                  loginResult
+                );
+
                 // Connect to socket and join verification room even if login failed
                 connect();
                 joinVerificationRoom(currentUserId);
@@ -408,8 +425,11 @@ export default function VerifyEmailPage() {
               }
             } catch (loginError) {
               // Login error but verification succeeded - still show success and redirect
-              console.warn('🔐 Email verification succeeded but login error:', loginError);
-              
+              console.warn(
+                '🔐 Email verification succeeded but login error:',
+                loginError
+              );
+
               // Connect to socket and join verification room even if login failed
               connect();
               joinVerificationRoom(currentUserId);
@@ -471,13 +491,13 @@ export default function VerifyEmailPage() {
         } else {
           const errorData = await response.json();
           console.log('🔐 Verification failed:', errorData);
-          
+
           // If both endpoints failed, check if user is actually logged in
           const isActuallyLoggedIn = await checkExistingAuth();
           if (isActuallyLoggedIn) {
             return; // User is logged in, exit early
           }
-          
+
           // Map server error message to translation key
           const messageKey = mapServerMessageToTranslationKey(
             errorData.message
@@ -490,13 +510,13 @@ export default function VerifyEmailPage() {
         }
       } catch (error) {
         console.error('🔐 Email verification error:', error);
-        
+
         // Check if user is actually logged in despite the error
         const isActuallyLoggedIn = await checkExistingAuth();
         if (isActuallyLoggedIn) {
           return; // User is logged in, exit early
         }
-        
+
         setVerificationState({
           status: 'error',
           message: t('verifyEmail.errorMessage'),

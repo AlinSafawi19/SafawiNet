@@ -58,17 +58,25 @@ export default function AccountRecoveryPage() {
   // Map backend messages to translation keys
   const mapBackendMessageToTranslationKey = (message: string): string => {
     const messageMap: { [key: string]: string } = {
-      'If the recovery email is registered, you will receive a recovery token shortly.': 'auth.messages.recoveryEmailNotFound',
-      'Recovery token sent to your recovery email. Please check your inbox.': 'auth.messages.recoveryTokenSent',
-      'Recovery already in progress. Please wait or check your email.': 'auth.messages.recoveryInProgress',
+      'If the recovery email is registered, you will receive a recovery token shortly.':
+        'auth.messages.recoveryEmailNotFound',
+      'Recovery token sent to your recovery email. Please check your inbox.':
+        'auth.messages.recoveryTokenSent',
+      'Recovery already in progress. Please wait or check your email.':
+        'auth.messages.recoveryInProgress',
       'Invalid or expired recovery token': 'auth.messages.invalidRecoveryToken',
-      'Email address is already in use by another account': 'auth.messages.emailAlreadyInUse',
-      'Recovery confirmed. Please verify your new email address to complete the process.': 'auth.messages.recoveryConfirmed',
-      'No recovery staging found or new email not set': 'auth.messages.noRecoveryStaging',
-      'Account recovery completed successfully. Your email has been updated and all sessions have been invalidated.': 'auth.messages.recoveryCompleted',
-      'Invalid or expired verification token': 'auth.messages.invalidVerificationToken',
+      'Email address is already in use by another account':
+        'auth.messages.emailAlreadyInUse',
+      'Recovery confirmed. Please verify your new email address to complete the process.':
+        'auth.messages.recoveryConfirmed',
+      'No recovery staging found or new email not set':
+        'auth.messages.noRecoveryStaging',
+      'Account recovery completed successfully. Your email has been updated and all sessions have been invalidated.':
+        'auth.messages.recoveryCompleted',
+      'Invalid or expired verification token':
+        'auth.messages.invalidVerificationToken',
     };
-    
+
     return messageMap[message] || 'auth.messages.generalError';
   };
 
@@ -91,13 +99,16 @@ export default function AccountRecoveryPage() {
     setMessageType('');
 
     try {
-      const response = await fetch('http://localhost:3000/v1/auth/recover/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ recoveryEmail }),
-      });
+      const response = await fetch(
+        'http://localhost:3000/v1/auth/recover/request',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ recoveryEmail }),
+        }
+      );
 
       const data = await response.json();
 

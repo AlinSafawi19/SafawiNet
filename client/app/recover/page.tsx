@@ -20,7 +20,9 @@ export default function RecoverPage() {
   const [messageKey, setMessageKey] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
   const [token, setToken] = useState('');
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
   const [touched, setTouched] = useState({
     newEmail: false,
   });
@@ -88,11 +90,13 @@ export default function RecoverPage() {
   // Map backend messages to translation keys
   const mapBackendMessageToTranslationKey = (message: string): string => {
     const messageMap: { [key: string]: string } = {
-      'Recovery confirmed. Please verify your new email address to complete the process.': 'auth.messages.recoveryConfirmed',
+      'Recovery confirmed. Please verify your new email address to complete the process.':
+        'auth.messages.recoveryConfirmed',
       'Invalid or expired recovery token': 'auth.messages.invalidRecoveryToken',
-      'Email address is already in use by another account': 'auth.messages.emailAlreadyInUse',
+      'Email address is already in use by another account':
+        'auth.messages.emailAlreadyInUse',
     };
-    
+
     return messageMap[message] || 'auth.messages.generalError';
   };
 
@@ -109,16 +113,19 @@ export default function RecoverPage() {
     setMessageType('');
 
     try {
-      const response = await fetch('http://localhost:3000/v1/auth/recover/confirm', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token,
-          newEmail: newEmail.toLowerCase(),
-        }),
-      });
+      const response = await fetch(
+        'http://localhost:3000/v1/auth/recover/confirm',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            token,
+            newEmail: newEmail.toLowerCase(),
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -130,7 +137,7 @@ export default function RecoverPage() {
         setNewEmail('');
         setValidationErrors({});
         setTouched({ newEmail: false });
-        
+
         // Redirect to verify email page after 3 seconds
         setTimeout(() => {
           router.push('/verify-email?token=' + data.verificationToken);
