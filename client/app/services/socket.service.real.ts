@@ -9,7 +9,6 @@ export interface SocketEvents {
   }) => void;
   emailVerificationFailed: (data: { success: boolean; error: string }) => void;
   loginSuccess: (data: { success: boolean; user: any }) => void;
-  logout: (data: { success: boolean; message: string }) => void;
   verificationRoomJoined: (data: { success: boolean; error?: string }) => void;
   verificationRoomLeft: (data: { success: boolean }) => void;
   pendingVerificationRoomJoined: (data: {

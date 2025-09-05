@@ -430,13 +430,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                       'ℹ️ Registration: Not on auth/verify-email page, no redirect needed'
                     );
                   }
-
-                  // Also notify other tabs
-                  localStorage.setItem(
-                    'auth_state_changed',
-                    JSON.stringify({ type: 'login', user: data.user })
-                  );
-                  localStorage.removeItem('auth_state_changed'); // Trigger storage event
                 }
               });
             } catch (error) {
@@ -596,9 +589,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       // Clear user state (cookies are handled by the server)
       setUser(null);
-
-      // Broadcast logout to other tabs and devices
-      broadcastAuthChange('logout');
     }
   };
 
@@ -628,15 +618,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Helper method to broadcast authentication changes
-  const broadcastAuthChange = (type: 'login' | 'logout', user?: any) => {
+  const broadcastAuthChange = (type: 'login', user?: any) => {
     try {
-      // Notify other tabs via localStorage
-      localStorage.setItem(
-        'auth_state_changed',
-        JSON.stringify({ type, user })
-      );
-      localStorage.removeItem('auth_state_changed'); // Trigger storage event
-
       // Notify other devices via WebSocket (if connected)
       // This will be handled by the WebSocket service
     } catch (error) {
@@ -705,51 +688,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     initializeAuth();
 
-    // Listen for cross-tab authentication changes
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'auth_state_changed' && event.newValue) {
-        try {
-          const authData = JSON.parse(event.newValue);
-          if (authData.type === 'login' && authData.user) {
-            // Only set user if they are verified
-            if (authData.user.isVerified) {
-              setUser(authData.user);
-            } else {
-              // User not verified, don't set login state
-              return;
-            }
-
-            // Check if user was on auth page or verify-email page and redirect based on role
-            const currentPath = window.location.pathname;
-            if (
-              currentPath === '/auth' ||
-              currentPath.startsWith('/auth/') ||
-              currentPath === '/verify-email'
-            ) {
-              // Use window.location for cross-tab redirects (router.push doesn't work across tabs)
-              setTimeout(() => {
-                if (
-                  authData.user &&
-                  authData.user.isVerified &&
-                  authData.user.roles &&
-                  authData.user.roles.includes('ADMIN')
-                ) {
-                  window.location.href = '/admin';
-                } else if (authData.user && authData.user.isVerified) {
-                  window.location.href = '/';
-                }
-                // If user is not verified, stay on current page
-              }, 2000);
-            }
-          } else if (authData.type === 'logout') {
-            setUser(null);
-          }
-        } catch (error) {
-          // Error parsing cross-tab auth data
-        }
-      }
-    };
-
     // Listen for WebSocket authentication broadcasts
     const handleAuthBroadcast = (data: { type: string; user?: any }) => {
       if (data.type === 'login' && data.user) {
@@ -779,26 +717,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // If user is not verified, stay on auth page
           }, 2000);
         }
-
-        // Also notify other tabs
-        localStorage.setItem(
-          'auth_state_changed',
-          JSON.stringify({ type: 'login', user: data.user })
-        );
-        localStorage.removeItem('auth_state_changed'); // Trigger storage event
-      } else if (data.type === 'logout') {
-        setUser(null);
-        // Also notify other tabs
-        localStorage.setItem(
-          'auth_state_changed',
-          JSON.stringify({ type: 'logout' })
-        );
-        localStorage.removeItem('auth_state_changed'); // Trigger storage event
       }
     };
 
     // Add event listeners
-    window.addEventListener('storage', handleStorageChange);
 
     // Set up WebSocket listener for pending verification rooms
     import('../services/socket.service').then(
@@ -905,13 +827,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 'ℹ️ Not on auth/verify-email page, no redirect needed'
               );
             }
-
-            // Also notify other tabs
-            localStorage.setItem(
-              'auth_state_changed',
-              JSON.stringify({ type: 'login', user: data.user })
-            );
-            localStorage.removeItem('auth_state_changed'); // Trigger storage event
           } else {
             // Email verification event received but data is invalid
           }
@@ -1017,7 +932,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Return cleanup function
     return () => {
       isMounted = false;
-      window.removeEventListener('storage', handleStorageChange);
     };
   }, [checkAuthStatus, loginWithTokens, user]);
 

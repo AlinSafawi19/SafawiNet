@@ -379,44 +379,21 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
     }
   }
 
-  // Method to emit logout
-  async emitLogout(userId: string) {
-    if (!this.server) {
-      this.logger.error('WebSocket server not initialized, cannot emit logout');
-      return;
-    }
 
-    try {
-    this.server.to(`user:${userId}`).emit('logout', {
-      success: true,
-      message: 'Logged out successfully',
-    });
-    
-    this.logger.log(`Logout emitted to user ${userId}`);
-    } catch (error) {
-      this.logger.error(`Failed to emit logout to user ${userId}:`, error);
-    }
-  }
-
-  // Method to broadcast authentication changes to all devices
-  async broadcastAuthChange(type: 'login' | 'logout', user?: any) {
+  // Method to broadcast login to all devices (called after successful verification)
+  async broadcastLogin(user: any) {
     if (!this.server) {
-      this.logger.error('WebSocket server not initialized, cannot broadcast auth change');
+      this.logger.error('WebSocket server not initialized, cannot broadcast login');
       return;
     }
 
     try {
       // Broadcast to all connected clients
-      this.server.emit('auth_broadcast', { type, user });
-      this.logger.log(`Authentication change broadcasted: ${type}`);
+      this.server.emit('auth_broadcast', { type: 'login', user });
+      this.logger.log(`Login broadcasted to all devices`);
     } catch (error) {
-      this.logger.error(`Failed to broadcast auth change: ${type}`, error);
+      this.logger.error(`Failed to broadcast login`, error);
     }
-  }
-
-  // Method to broadcast login to all devices (called after successful verification)
-  async broadcastLogin(user: any) {
-    await this.broadcastAuthChange('login', user);
   }
 
   // Debug method to get current room states
