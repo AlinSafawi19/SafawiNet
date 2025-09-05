@@ -1,6 +1,5 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, UsePipes, UseGuards, Request, BadRequestException, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
-import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
@@ -37,7 +36,6 @@ import { z } from 'zod';
 
 @ApiTags('Authentication')
 @Controller('v1/auth')
-@UseGuards(ThrottlerGuard)
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
@@ -47,7 +45,6 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  @Throttle({ default: { limit: 5, ttl: 300000 } }) // 5 requests per 5 minutes
   @ApiOperation({ summary: 'Register a new user' })
   @ApiBody({
     description: 'User registration data',
@@ -94,7 +91,6 @@ export class AuthController {
 
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 10, ttl: 300000 } }) // 10 requests per 5 minutes
   @ApiOperation({ summary: 'Verify user email with token' })
   @ApiBody({
     description: 'Email verification data',
@@ -152,7 +148,6 @@ export class AuthController {
 
   @Post('resend-verification')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 3, ttl: 300000 } }) // 3 requests per 5 minutes
   @ApiOperation({ summary: 'Resend email verification' })
   @ApiBody({
     description: 'Resend verification email data',
@@ -189,7 +184,6 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   @ApiOperation({ summary: 'Login user' })
   @ApiBody({
     description: 'User login credentials',
@@ -265,7 +259,6 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 20, ttl: 60000 } }) // 20 requests per minute
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({
     status: 200,
@@ -296,7 +289,6 @@ export class AuthController {
 
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 3, ttl: 300000 } }) // 3 requests per 5 minutes (brute-force protection)
   @ApiOperation({ summary: 'Request password reset' })
   @ApiBody({
     description: 'Password reset request data',
@@ -326,7 +318,6 @@ export class AuthController {
 
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 5, ttl: 300000 } }) // 5 requests per 5 minutes
   @ApiOperation({ summary: 'Reset password with token' })
   @ApiBody({
     description: 'Password reset data',
@@ -493,7 +484,6 @@ export class AuthController {
 
   @Post('2fa/login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   @ApiOperation({ summary: 'Complete login with 2FA code' })
   @ApiBody({
     description: '2FA login data',
@@ -547,7 +537,6 @@ export class AuthController {
 
   @Post('recover/request')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 3, ttl: 300000 } }) // 3 requests per 5 minutes
   @ApiOperation({ 
     summary: 'Request account recovery via recovery email',
     description: 'Request account recovery by sending a recovery token to the recovery email address. This is used when users lose access to their primary email or 2FA device.'
@@ -581,7 +570,6 @@ export class AuthController {
 
   @Post('recover/confirm')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 5, ttl: 300000 } }) // 5 requests per 5 minutes
   @ApiOperation({ 
     summary: 'Confirm account recovery and stage new email',
     description: 'Confirm account recovery using the recovery token and stage a new email address. A verification email will be sent to the new email address.'
@@ -662,7 +650,6 @@ export class AuthController {
 
   @Post('recover/complete')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 5, ttl: 300000 } }) // 5 requests per 5 minutes
   @ApiOperation({ 
     summary: 'Complete account recovery and update email',
     description: 'Complete account recovery by verifying the new email address and updating the user account. This finalizes the email change process.'

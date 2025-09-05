@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
@@ -36,12 +35,6 @@ import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
       }),
       inject: [ConfigService],
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000, // 1 minute
-        limit: 100,
-      },
-    ]),
   ],
   controllers: [AuthController, SessionsController, NotificationsController, EmailMonitoringController, AdminController, CustomerController],
   providers: [

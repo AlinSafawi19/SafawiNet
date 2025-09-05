@@ -2,7 +2,6 @@ import { Controller, Post, Body, Get, Param, UseGuards, UsePipes, HttpCode, Http
 import { ApiBody, ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { RateLimitGuard, RateLimit } from '../common/guards/rate-limit.guard';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles } from '../auth/guards/roles.guard';
 import { Role } from '@prisma/client';
@@ -31,7 +30,6 @@ import {
 
 @ApiTags('Users')
 @Controller('users')
-@UseGuards(RateLimitGuard)
 export class UsersController {
   // Note: The POST /users endpoint creates admin users with ADMIN role
   // For regular customer registration, use POST /auth/register instead
@@ -59,7 +57,6 @@ export class UsersController {
   @ApiResponse({ status: 201, description: 'Admin user created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 409, description: 'User already exists' })
-  @RateLimit({ limit: 10, windowSeconds: 300, keyPrefix: 'admin_creation' }) // Reasonable rate limiting
   @UsePipes(new ZodValidationPipe(CreateUserSchema))
   async createUser(@Body() createUserDto: CreateUserDto) {
     const user = await this.usersService.createUser(createUserDto);
@@ -77,7 +74,6 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'List of admin users retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
-  @RateLimit({ limit: 100, windowSeconds: 60, keyPrefix: 'admin_listing' })
   async findAllAdmins() {
     const admins = await this.usersService.findAllAdmins();
     return { admins };
@@ -91,7 +87,6 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'List of customer users retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
-  @RateLimit({ limit: 100, windowSeconds: 60, keyPrefix: 'customer_listing' })
   async findAllCustomers() {
     const customers = await this.usersService.findAllCustomers();
     return { customers };
@@ -103,7 +98,6 @@ export class UsersController {
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'Current user profile retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @RateLimit({ limit: 100, windowSeconds: 60, keyPrefix: 'get_current_user' })
   async getCurrentUser(@Request() req: any) {
     this.logger.log('🚀 /users/me endpoint reached!');
     this.logger.log('🚀 Request user object:', req.user);
@@ -116,7 +110,6 @@ export class UsersController {
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'User found successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  @RateLimit({ limit: 100, windowSeconds: 60, keyPrefix: 'user_detail' })
   async findUserById(@Param('id') id: string) {
     const user = await this.usersService.findUserById(id);
     if (!user) {
@@ -141,7 +134,6 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Email verified successfully' })
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   @HttpCode(HttpStatus.OK)
-  @RateLimit({ limit: 10, windowSeconds: 300, keyPrefix: 'email_verification' })
   @UsePipes(new ZodValidationPipe(VerifyEmailSchema))
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
     const success = await this.usersService.verifyEmail(verifyEmailDto.token);
@@ -166,7 +158,6 @@ export class UsersController {
   })
   @ApiResponse({ status: 200, description: 'Password reset email sent if user exists' })
   @HttpCode(HttpStatus.OK)
-  @RateLimit({ limit: 3, windowSeconds: 3600, keyPrefix: 'password_reset_request' })
   @UsePipes(new ZodValidationPipe(RequestPasswordResetSchema))
   async requestPasswordReset(@Body() requestPasswordResetDto: RequestPasswordResetDto) {
     await this.usersService.requestPasswordReset(requestPasswordResetDto.email);
@@ -191,7 +182,6 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   @HttpCode(HttpStatus.OK)
-  @RateLimit({ limit: 5, windowSeconds: 3600, keyPrefix: 'password_reset' })
   @UsePipes(new ZodValidationPipe(ResetPasswordSchema))
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     const success = await this.usersService.resetPassword(
@@ -224,7 +214,6 @@ export class UsersController {
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 409, description: 'Recovery email already in use' })
-  @RateLimit({ limit: 10, windowSeconds: 300, keyPrefix: 'update_profile' })
   @UsePipes(new ZodValidationPipe(UpdateProfileSchema))
   async updateProfile(@Request() req: any, @Body() updateProfileDto: UpdateProfileDto) {
     const user = await this.usersService.updateProfile(req.user.sub, updateProfileDto);
@@ -260,7 +249,6 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Preferences updated successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @RateLimit({ limit: 20, windowSeconds: 300, keyPrefix: 'update_preferences' })
   @UsePipes(new ZodValidationPipe(UpdatePreferencesSchema))
   async updatePreferences(@Request() req: any, @Body() updatePreferencesDto: UpdatePreferencesDto) {
     const user = await this.usersService.updatePreferences(req.user.sub, updatePreferencesDto);
@@ -304,7 +292,6 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Notification preferences updated successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @RateLimit({ limit: 20, windowSeconds: 300, keyPrefix: 'update_notification_preferences' })
   @UsePipes(new ZodValidationPipe(UpdateNotificationPreferencesSchema))
   async updateNotificationPreferences(@Request() req: any, @Body() updateNotificationPreferencesDto: UpdateNotificationPreferencesDto) {
     const user = await this.usersService.updateNotificationPreferences(req.user.sub, updateNotificationPreferencesDto);
@@ -333,7 +320,6 @@ export class UsersController {
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 409, description: 'Email already in use' })
-  @RateLimit({ limit: 5, windowSeconds: 3600, keyPrefix: 'change_email' })
   @UsePipes(new ZodValidationPipe(ChangeEmailSchema))
   async changeEmail(@Request() req: any, @Body() changeEmailDto: ChangeEmailDto) {
     const result = await this.usersService.changeEmail(req.user.sub, changeEmailDto);
@@ -360,7 +346,6 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized or incorrect current password' })
-  @RateLimit({ limit: 5, windowSeconds: 3600, keyPrefix: 'change_password' })
   @UsePipes(new ZodValidationPipe(ChangePasswordSchema))
   async changePassword(@Request() req: any, @Body() changePasswordDto: ChangePasswordDto) {
     const result = await this.usersService.changePassword(req.user.sub, changePasswordDto);
@@ -383,7 +368,6 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Email change confirmed successfully' })
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   @HttpCode(HttpStatus.OK)
-  @RateLimit({ limit: 5, windowSeconds: 3600, keyPrefix: 'confirm_email_change' })
   @UsePipes(new ZodValidationPipe(ConfirmEmailChangeSchema))
   async confirmEmailChange(@Body() confirmEmailChangeDto: ConfirmEmailChangeDto) {
     const result = await this.usersService.confirmEmailChange(confirmEmailChangeDto.token);

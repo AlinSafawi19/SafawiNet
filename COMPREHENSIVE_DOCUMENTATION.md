@@ -299,12 +299,6 @@ POST /v1/email-monitoring/ses/complaint # SES complaint webhook
 - **Role guards** for admin-only endpoints
 - **Custom decorators** for role checking
 
-### Rate Limiting
-- **Global rate limiting** (100 requests per minute)
-- **Login-specific rate limiting** (300 requests per minute)
-- **Custom rate limits** for sensitive operations
-- **Burst protection** for login endpoints
-
 ### Security Headers
 - **Helmet.js** for security headers
 - **CORS** configuration with allowed origins
@@ -484,7 +478,7 @@ npm run deploy:prod
 - **User management** - Profile updates, preferences
 - **Loyalty system** - Points, tiers, transactions
 - **Email system** - Delivery, templates, monitoring
-- **Security features** - Rate limiting, authorization
+- **Security features** - authorization
 
 ### Load Testing
 - **K6** for performance testing

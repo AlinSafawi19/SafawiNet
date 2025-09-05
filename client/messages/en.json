@@ -86,7 +86,6 @@
   "account": {
     "title": "MY ACCOUNT",
     "subtitle": "Manage your profile, security settings, and preferences",
-    "loginSecurity": "Login & Security",
     "loginSecurityDesc": "Manage passwords, 2FA, and security settings",
     "profileSettings": "Profile Settings",
     "profileSettingsDesc": "Update personal details and contact information",
@@ -116,6 +115,39 @@
       "updateSuccess": "Profile updated successfully",
       "updateFailed": "Failed to update profile. Please try again.",
       "generalError": "An error occurred. Please try again."
+    },
+    "loginSecurity": {
+      "title": "Login & Security",
+      "subtitle": "Manage your account security settings",
+      "tabs": {
+        "password": "Password",
+        "email": "Email",
+        "twoFactor": "Two-Factor Authentication"
+      },
+      "password": {
+        "title": "Change Password",
+        "subtitle": "Update your password to keep your account secure",
+        "currentPassword": "Current Password",
+        "currentPasswordPlaceholder": "Enter your current password",
+        "newPassword": "New Password",
+        "newPasswordPlaceholder": "Enter your new password",
+        "confirmNewPassword": "Confirm New Password",
+        "confirmNewPasswordPlaceholder": "Confirm your new password",
+        "passwordRequirement": "Password must be at least 8 characters long",
+        "changePassword": "Change Password",
+        "changing": "Changing...",
+        "success": "Password changed successfully. You will be logged out in a moment.",
+        "currentPasswordIncorrect": "Current password is incorrect",
+        "passwordsDoNotMatch": "New passwords do not match",
+        "passwordTooShort": "New password must be at least 8 characters long",
+        "currentPasswordRequired": "Current password is required",
+        "newPasswordRequired": "New password is required",
+        "confirmPasswordRequired": "Please confirm your new password",
+        "rateLimitExceeded": "Too many password change attempts. Please try again later.",
+        "internalServerError": "An internal server error occurred. Please try again.",
+        "userNotFound": "User not found",
+        "passwordChangeFailed": "Failed to change password. Please try again."
+      }
     }
   },
   "verifyEmail": {

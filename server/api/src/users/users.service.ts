@@ -374,8 +374,10 @@ export class UsersService {
     return { message: 'Email changed successfully. Please sign in with your new email address.' };
   }
 
-  async changePassword(userId: string, changePasswordDto: ChangePasswordDto): Promise<{ message: string }> {
-    const { currentPassword, newPassword } = changePasswordDto;
+  async changePassword(userId: string, changePasswordDto: ChangePasswordDto): Promise<{ message: string; messageKey: string }> {
+    try {
+      this.logger.log(`Changing password for user ${userId}`);
+      const { currentPassword, newPassword, confirmNewPassword } = changePasswordDto;
 
     // Get user with password
     const user = await this.prisma.user.findUnique({
@@ -387,7 +389,16 @@ export class UsersService {
     }
 
     // Verify current password
-    const isCurrentPasswordValid = await SecurityUtils.verifyPassword(currentPassword, user.password);
+      this.logger.log(`Verifying password for user ${userId}, hash format: ${user.password.substring(0, 20)}...`);
+      let isCurrentPasswordValid = false;
+      try {
+        isCurrentPasswordValid = await SecurityUtils.verifyPassword(user.password, currentPassword);
+      } catch (error) {
+        this.logger.warn(`Password verification failed for user ${userId}:`, error instanceof Error ? error.message : String(error));
+        // If verification fails due to hash format issues, treat as incorrect password
+        isCurrentPasswordValid = false;
+      }
+      
     if (!isCurrentPasswordValid) {
       throw new UnauthorizedException('Current password is incorrect');
     }
@@ -417,7 +428,14 @@ export class UsersService {
       // Don't fail password change if email fails
     }
 
-    return { message: 'Password changed successfully' };
+    return { 
+      message: 'Password changed successfully',
+      messageKey: 'account.loginSecurity.password.success'
+    };
+    } catch (error) {
+      this.logger.error(`Error changing password for user ${userId}:`, error);
+      throw error;
+    }
   }
 
   async revokeRefreshTokens(userId: string): Promise<void> {

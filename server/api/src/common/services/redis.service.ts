@@ -152,25 +152,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  // Rate limiting helper
-  async isRateLimited(key: string, limit: number, windowSeconds: number): Promise<boolean> {
-    try {
-      if (!(await this.ensureConnection())) {
-        return false; // Allow request if Redis is unavailable
-      }
-      const current = await this.incr(key);
-      
-      if (current === 1) {
-        await this.expire(key, windowSeconds);
-      }
-      
-      return current > limit;
-    } catch (error) {
-      this.logger.error(`Error checking rate limit for key ${key}:`, error);
-      return false; // Allow request if rate limiting fails
-    }
-  }
-
   // Get Redis client for advanced operations
   getClient(): Redis {
     return this.redis;

@@ -290,16 +290,8 @@ export default function VerifyEmailPage() {
           }
         );
 
-        // If recovery completion fails with rate limiting, wait and try regular verification
+        // If recovery completion fails, wait and try regular verification
         if (!response.ok) {
-          if (response.status === 429) {
-            console.log(
-              '🔐 Rate limited on recovery completion, trying regular verification...'
-            );
-            // Wait a bit before trying the fallback
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-          }
-
           response = await fetch('http://localhost:3000/v1/auth/verify-email', {
             method: 'POST',
             headers: {

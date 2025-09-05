@@ -21,7 +21,17 @@ export class SecurityUtils {
    * Verify password against hash
    */
   static async verifyPassword(hash: string, password: string): Promise<boolean> {
-    return argon2.verify(hash, password);
+    try {
+      // Check if hash is in Argon2 format (starts with $)
+      if (!hash.startsWith('$')) {
+        console.error('Invalid hash format - not Argon2:', hash.substring(0, 20) + '...');
+        return false;
+      }
+      return await argon2.verify(hash, password);
+    } catch (error) {
+      console.error('Password verification error:', error);
+      return false;
+    }
   }
 
   /**

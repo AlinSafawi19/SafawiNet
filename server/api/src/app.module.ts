@@ -1,6 +1,5 @@
 import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { PassportModule } from '@nestjs/passport';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bullmq';
@@ -35,22 +34,6 @@ import { PerformanceController } from './common/controllers/performance.controll
       isGlobal: true,
     }),
     PassportModule.register({}),
-    ThrottlerModule.forRoot([
-      {
-        ttl: parseInt(process.env.RATE_LIMIT_TTL || '60000'),
-        limit: parseInt(process.env.RATE_LIMIT_LIMIT || '100'),
-      },
-      // Special rate limit for login endpoints
-      {
-        name: 'login',
-        ttl: 60000, // 1 minute
-        limit: parseInt(process.env.LOGIN_BURST_LIMIT || '300'),
-        skipIf: (context) => {
-          const request = context.switchToHttp().getRequest();
-          return !request.url.includes('/auth/login');
-        },
-      },
-    ]),
     ScheduleModule.forRoot(),
     BullModule.forRoot({
       connection: {
