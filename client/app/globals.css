@@ -106,18 +106,9 @@
   h1,
   .title {
     @apply font-default;
-    @apply text-2xl;
+    @apply text-4xl;
   }
 
-  /* Arabic h1 styling when language is Arabic */
-  html[lang="ar"] .home-screen h1,
-  html[lang="ar"] .home-screen .title {
-    @apply alkalami-regular;
-    @apply text-4xl;
-    @apply sm:text-6xl;
-    @apply lg:text-7xl;
-    @apply xl:text-8xl;
-  }
 
   /* Dashboard Tiles Styling */
   .dashboard-grid {
@@ -228,22 +219,8 @@
     @apply group-hover:opacity-100;
   }
 
-  /* Arabic h1 styling when language is Arabic */
-  html[lang="ar"] footer h1, html[lang="ar"] .account h1 {
-    @apply alkalami-regular;
-    @apply text-2xl;
-    @apply sm:text-4xl;
-    @apply lg:text-5xl;
-    @apply xl:text-6xl;
-  }
 
-  html[lang="ar"] .auth-screen h1 {
-    @apply alkalami-regular;
-    @apply text-xl;
-    @apply sm:text-3xl;
-    @apply lg:text-4xl;
-    @apply xl:text-5xl;
-  }
+
 
   /* RTL Support for Auth Form */
   .rtl {

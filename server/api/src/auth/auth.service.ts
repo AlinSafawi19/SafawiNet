@@ -183,7 +183,7 @@ export class AuthService {
     const tokenHash = SecurityUtils.hashToken(token);
 
     // Find and validate token atomically
-    const result = await this.prisma.$transaction(async (tx) => {
+    const { result, wasRecoveryVerification } = await this.prisma.$transaction(async (tx) => {
       const oneTimeToken = await tx.oneTimeToken.findFirst({
         where: {
           hash: tokenHash,
@@ -198,18 +198,52 @@ export class AuthService {
         throw new BadRequestException('Invalid or expired verification token');
       }
 
-      // Mark token as used and verify user
+      // Check if this is a recovery verification (has pending recovery staging)
+      const recoveryStaging = await tx.recoveryStaging.findUnique({
+        where: { userId: oneTimeToken.user.id },
+      });
+
+      let updatedUser = oneTimeToken.user;
+      let isRecoveryVerification = false;
+
+      if (recoveryStaging && recoveryStaging.newEmail) {
+        // This is a recovery verification - update the email
+        isRecoveryVerification = true;
+        updatedUser = await tx.user.update({
+          where: { id: oneTimeToken.user.id },
+          data: { 
+            email: recoveryStaging.newEmail,
+            isVerified: true,
+          },
+        });
+
+        // Clear recovery staging
+        await tx.recoveryStaging.delete({
+          where: { userId: oneTimeToken.user.id },
+        });
+
+        // Invalidate all existing sessions for security
+        await tx.refreshSession.updateMany({
+          where: { userId: oneTimeToken.user.id },
+          data: { isActive: false },
+        });
+
+        this.logger.log(`Recovery verification completed for user ${oneTimeToken.user.email}, email changed to: ${recoveryStaging.newEmail}`);
+      } else {
+        // Regular email verification
+        updatedUser = await tx.user.update({
+          where: { id: oneTimeToken.user.id },
+          data: { isVerified: true },
+        });
+      }
+
+      // Mark token as used
       await tx.oneTimeToken.update({
         where: { id: oneTimeToken.id },
         data: { usedAt: new Date() },
       });
 
-      await tx.user.update({
-        where: { id: oneTimeToken.user.id },
-        data: { isVerified: true },
-      });
-
-      return oneTimeToken.user;
+      return { result: updatedUser, wasRecoveryVerification: isRecoveryVerification };
     });
 
     // Generate tokens for automatic login
@@ -243,8 +277,12 @@ export class AuthService {
 
     this.logger.log(`Email verified for user ${result.email}`);
     
+    const message = wasRecoveryVerification 
+      ? 'Account recovery completed successfully. Your email has been updated and all sessions have been invalidated.'
+      : 'Email verified successfully';
+    
     return { 
-      message: 'Email verified successfully', 
+      message, 
       user: this.excludePassword(result),
       tokens
     };

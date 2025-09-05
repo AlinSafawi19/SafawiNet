@@ -685,6 +685,24 @@ export class AuthController {
       type: 'object',
       properties: {
         message: { type: 'string' },
+        user: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            email: { type: 'string' },
+            name: { type: 'string' },
+            isVerified: { type: 'boolean' },
+            roles: { type: 'array', items: { type: 'string' } },
+          },
+        },
+        tokens: {
+          type: 'object',
+          properties: {
+            accessToken: { type: 'string' },
+            refreshToken: { type: 'string' },
+            expiresIn: { type: 'number' },
+          },
+        },
       },
     },
   })

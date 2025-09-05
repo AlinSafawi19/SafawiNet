@@ -350,7 +350,7 @@ export default function AccountInformationPage() {
                   </div>
                 </label>
                 <input
-                  type="email"
+                  type="text"
                   id="recoveryEmail"
                   name="recoveryEmail"
                   value={formData.recoveryEmail}

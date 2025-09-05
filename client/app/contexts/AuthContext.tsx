@@ -927,7 +927,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Listen for email input changes to auto-join pending verification rooms
           const setupEmailListener = () => {
             const emailInputs = document.querySelectorAll(
-              'input[type="text"][name="email"], input[type="email"][name="email"]'
+              'input[type="text"][name="email"]'
             );
             emailInputs.forEach((input) => {
               const emailInput = input as HTMLInputElement;

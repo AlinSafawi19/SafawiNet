@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/services/prisma.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { EmailService } from '../common/services/email.service';
+import { JwtService } from '@nestjs/jwt';
+import { AuthTokens } from './auth.service';
 
 export interface RecoveryRequestResult {
   message: string;
@@ -13,6 +15,13 @@ export interface RecoveryConfirmResult {
   message: string;
   newEmail: string;
   requiresVerification: boolean;
+  verificationToken: string;
+}
+
+export interface RecoveryCompleteResult {
+  message: string;
+  user: any;
+  tokens: AuthTokens;
 }
 
 @Injectable()
@@ -23,6 +32,7 @@ export class RecoveryService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async requestRecovery(recoveryEmail: string): Promise<RecoveryRequestResult> {
@@ -72,7 +82,8 @@ export class RecoveryService {
     });
 
     // Send recovery email
-    const recoveryUrl = `${this.configService.get('API_DOMAIN')}/recover?token=${recoveryToken}`;
+    const frontendDomain = this.configService.get('FRONTEND_DOMAIN', 'localhost:3001');
+    const recoveryUrl = `http://${frontendDomain}/recover?token=${recoveryToken}`;
     await this.emailService.sendTemplateEmail('recovery-email', recoveryEmail, {
       name: user.name || 'User',
       recoveryUrl,
@@ -147,10 +158,11 @@ export class RecoveryService {
       message: 'Recovery confirmed. Please verify your new email address to complete the process.',
       newEmail: newEmail,
       requiresVerification: true,
+      verificationToken: verificationToken,
     };
   }
 
-  async completeRecovery(verificationToken: string): Promise<{ message: string }> {
+  async completeRecovery(verificationToken: string): Promise<RecoveryCompleteResult> {
     // Find verification token
     const token = await this.prisma.oneTimeToken.findFirst({
       where: {
@@ -182,7 +194,7 @@ export class RecoveryService {
     });
 
     // Update user's email
-    await this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id: token.userId },
       data: { 
         email: recoveryStaging.newEmail,
@@ -201,10 +213,15 @@ export class RecoveryService {
       data: { isActive: false },
     });
 
+    // Generate new tokens for automatic login
+    const tokens = await this.generateTokens(updatedUser);
+
     this.logger.log(`Recovery completed for user ${token.user.email}, email changed to: ${recoveryStaging.newEmail}`);
 
     return {
       message: 'Account recovery completed successfully. Your email has been updated and all sessions have been invalidated.',
+      user: this.excludePassword(updatedUser),
+      tokens,
     };
   }
 
@@ -224,5 +241,51 @@ export class RecoveryService {
 
       this.logger.log(`Cleaned up ${expiredRecoveries.length} expired recovery attempts`);
     }
+  }
+
+  private async generateTokens(user: any): Promise<AuthTokens> {
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      verified: user.isVerified,
+      roles: user.roles,
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+    const { refreshToken } = await this.createRefreshToken(user.id);
+
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: 15 * 60, // 15 minutes in seconds
+    };
+  }
+
+  private async createRefreshToken(userId: string): Promise<{ refreshToken: string; tokenId: string }> {
+    const { randomUUID } = await import('crypto');
+    const familyId = randomUUID();
+    const tokenId = randomUUID();
+    const refreshToken = randomUUID();
+
+    // Hash the refresh token for storage
+    const refreshHash = SecurityUtils.hashToken(refreshToken);
+
+    // Store refresh session
+    await this.prisma.refreshSession.create({
+      data: {
+        familyId,
+        tokenId,
+        refreshHash,
+        userId,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      },
+    });
+
+    return { refreshToken, tokenId };
+  }
+
+  private excludePassword(user: any): any {
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 }

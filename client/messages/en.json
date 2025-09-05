@@ -126,6 +126,7 @@
     "verifyingMessage": "Verifying your email...",
     "invalidLinkMessage": "Invalid verification link. Please check your email and try again.",
     "successMessage": "Email verified successfully! You can now log in to your account.",
+    "recoverySuccessMessage": "Account recovery completed successfully! Your email has been updated and you are now logged in.",
     "failedMessage": "Email verification failed. Please try again.",
     "errorMessage": "An error occurred during verification. Please try again.",
     "redirecting": "Redirecting to login page in 3 seconds...",
@@ -156,7 +157,8 @@
       "signUp": "Sign up",
       "signInLink": "Sign in",
       "forgotPassword": "Forgot your password?",
-      "resetPassword": "Reset password"
+      "resetPassword": "Reset password",
+      "lostAccountEmail": "Lost account email?"
     },
     "admin": {
       "access": "ADMIN ACCESS",
@@ -204,6 +206,33 @@
       "heroTitle": "Reset Your Password",
       "heroSubtitle": "Don't worry, we'll help you get back into your account"
     },
+    "accountRecovery": {
+      "title": "Account Recovery",
+      "subtitle": "Enter your recovery email address and we'll send you a recovery token",
+      "recoveryEmailLabel": "Recovery Email Address",
+      "recoveryEmailPlaceholder": "Enter your recovery email",
+      "recoveryEmailHelp": "This is the email you set up for account recovery when you created your account",
+      "sending": "Sending...",
+      "sendRecoveryLink": "Send Recovery Token",
+      "rememberCredentials": "Remember your credentials?",
+      "backToLogin": "Back to login",
+      "heroTitle": "Account Recovery",
+      "heroSubtitle": "We'll help you regain access to your account",
+      "recoveryEmailSent": "If the recovery email is registered, you will receive a recovery token shortly."
+    },
+    "recoveryConfirm": {
+      "title": "Confirm Account Recovery",
+      "subtitle": "Enter your new email address to complete the recovery process",
+      "newEmailLabel": "New Email Address",
+      "newEmailPlaceholder": "Enter your new email address",
+      "newEmailHelp": "This will become your new primary email address",
+      "confirming": "Confirming...",
+      "confirmRecovery": "Confirm Recovery",
+      "rememberCredentials": "Remember your credentials?",
+      "backToLogin": "Back to login",
+      "heroTitle": "Confirm Recovery",
+      "heroSubtitle": "Enter your new email address to complete the process"
+    },
     "validation": {
       "nameRequired": "Name is required",
       "nameTooLong": "Name must be less than 100 characters",
@@ -224,7 +253,6 @@
       "passwordTooWeak": "Password is too weak",
       "serverError": "Server error occurred",
       "accountLocked": "Account temporarily locked due to too many failed attempts",
-      "invalidVerificationToken": "Invalid or expired verification token",
       "invalidTwoFactorCode": "Invalid 2FA code",
       "invalidPasswordResetToken": "Invalid or expired password reset token",
       "passwordResetEmailSent": "If an account with this email exists, a password reset link has been sent.",
@@ -250,6 +278,7 @@
       "recoveryConfirmed": "Recovery confirmed. Please verify your new email address to complete the process.",
       "noRecoveryStaging": "No recovery staging found or new email not set",
       "recoveryCompleted": "Account recovery completed successfully. Your email has been updated and all sessions have been invalidated.",
+      "invalidVerificationToken": "Invalid or expired verification token",
       "tokenRefreshed": "Token refreshed successfully",
       "loggedOut": "Logged out successfully",
       "noRefreshTokenProvided": "No refresh token provided",
