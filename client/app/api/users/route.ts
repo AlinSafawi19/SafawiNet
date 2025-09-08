@@ -3,12 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, recoveryEmail } = body;
+    const { name } = body;
 
     // Basic validation
-    if (!name && !recoveryEmail) {
+    if (!name) {
       return NextResponse.json(
-        { message: 'At least one field (name or recoveryEmail) is required' },
+        { message: 'Name is required' },
         { status: 400 }
       );
     }
@@ -28,23 +28,6 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Recovery email validation
-    if (recoveryEmail && typeof recoveryEmail !== 'string') {
-      return NextResponse.json(
-        { message: 'Recovery email must be a string' },
-        { status: 400 }
-      );
-    }
-
-    if (recoveryEmail && recoveryEmail.trim().length > 0) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(recoveryEmail)) {
-        return NextResponse.json(
-          { message: 'Invalid recovery email format' },
-          { status: 400 }
-        );
-      }
-    }
 
     // Forward cookies from the request to the backend
     const cookieHeader = request.headers.get('cookie');
@@ -66,7 +49,6 @@ export async function PATCH(request: NextRequest) {
         },
         body: JSON.stringify({
           name: name?.trim(),
-          recoveryEmail: recoveryEmail?.trim(),
         }),
       }
     );

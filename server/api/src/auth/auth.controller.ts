@@ -4,7 +4,6 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
-import { RecoveryService } from './recovery.service';
 import { Response } from 'express';
 import {
   RegisterSchema,
@@ -17,8 +16,6 @@ import {
   TwoFactorEnableSchema,
   TwoFactorDisableSchema,
   TwoFactorLoginSchema,
-  RecoveryRequestSchema,
-  RecoveryConfirmSchema,
   RegisterDto,
   VerifyEmailDto,
   LoginDto,
@@ -29,8 +26,6 @@ import {
   TwoFactorEnableDto,
   TwoFactorDisableDto,
   TwoFactorLoginDto,
-  RecoveryRequestDto,
-  RecoveryConfirmDto,
 } from './schemas/auth.schemas';
 import { z } from 'zod';
 
@@ -40,7 +35,6 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly twoFactorService: TwoFactorService,
-    private readonly recoveryService: RecoveryService,
   ) {}
 
   @Post('register')
@@ -120,7 +114,6 @@ export class AuthController {
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
             twoFactorEnabled: { type: 'boolean' },
-            recoveryEmail: { type: 'string', nullable: true },
             notificationPreferences: { type: 'object', nullable: true },
             preferences: { type: 'object', nullable: true },
             roles: { type: 'array', items: { type: 'string' } },
@@ -535,81 +528,6 @@ export class AuthController {
     return this.authService.twoFactorLogin(twoFactorLoginDto.userId, twoFactorLoginDto, req);
   }
 
-  @Post('recover/request')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
-    summary: 'Request account recovery via recovery email',
-    description: 'Request account recovery by sending a recovery token to the recovery email address. This is used when users lose access to their primary email or 2FA device.'
-  })
-  @ApiBody({
-    description: 'Recovery request data',
-    examples: {
-      recoveryRequest: {
-        summary: 'Request account recovery',
-        value: {
-          recoveryEmail: 'recovery@safawinet.com'
-        }
-      }
-    }
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Recovery request processed',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string' },
-        recoveryEmail: { type: 'string' },
-      },
-    },
-  })
-  @UsePipes(new ZodValidationPipe(RecoveryRequestSchema))
-  async requestRecovery(@Body() recoveryRequestDto: RecoveryRequestDto) {
-    return this.recoveryService.requestRecovery(recoveryRequestDto.recoveryEmail);
-  }
-
-  @Post('recover/confirm')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
-    summary: 'Confirm account recovery and stage new email',
-    description: 'Confirm account recovery using the recovery token and stage a new email address. A verification email will be sent to the new email address.'
-  })
-  @ApiBody({
-    description: 'Recovery confirmation data',
-    examples: {
-      recoveryConfirm: {
-        summary: 'Confirm recovery and stage new email',
-        value: {
-          token: 'recovery_token_from_email',
-          newEmail: 'newemail@safawinet.com'
-        }
-      }
-    }
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Recovery confirmed, verification required',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string' },
-        newEmail: { type: 'string' },
-        requiresVerification: { type: 'boolean' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid recovery token or email already in use',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid or expired recovery token',
-  })
-  @UsePipes(new ZodValidationPipe(RecoveryConfirmSchema))
-  async confirmRecovery(@Body() recoveryConfirmDto: RecoveryConfirmDto) {
-    return this.recoveryService.confirmRecovery(recoveryConfirmDto.token, recoveryConfirmDto.newEmail);
-  }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
@@ -648,61 +566,4 @@ export class AuthController {
     }
   }
 
-  @Post('recover/complete')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ 
-    summary: 'Complete account recovery and update email',
-    description: 'Complete account recovery by verifying the new email address and updating the user account. This finalizes the email change process.'
-  })
-  @ApiBody({
-    description: 'Recovery completion data',
-    examples: {
-      recoveryComplete: {
-        summary: 'Complete recovery with verification token',
-        value: {
-          token: 'verification_token_from_new_email'
-        }
-      }
-    }
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Account recovery completed successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string' },
-        user: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            email: { type: 'string' },
-            name: { type: 'string' },
-            isVerified: { type: 'boolean' },
-            roles: { type: 'array', items: { type: 'string' } },
-          },
-        },
-        tokens: {
-          type: 'object',
-          properties: {
-            accessToken: { type: 'string' },
-            refreshToken: { type: 'string' },
-            expiresIn: { type: 'number' },
-          },
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid or expired verification token',
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'No recovery staging found or new email not set',
-  })
-  @UsePipes(new ZodValidationPipe(z.object({ token: z.string() })))
-  async completeRecovery(@Body() body: { token: string }) {
-    return this.recoveryService.completeRecovery(body.token);
-  }
 }

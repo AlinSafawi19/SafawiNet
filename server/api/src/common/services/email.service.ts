@@ -209,26 +209,6 @@ export class EmailService {
     });
   }
 
-  async sendRecoveryEmail(to: string, recoveryToken: string, originalEmail: string): Promise<void> {
-    const recoveryUrl = `${this.configService.get('API_DOMAIN')}/recover?token=${recoveryToken}`;
-    await this.sendTemplateEmail('recovery-email', to, {
-      name: 'User',
-      recoveryUrl,
-      originalEmail,
-      appName: 'Safawinet',
-      supportEmail: 'support@safawinet.com',
-    });
-  }
-
-  async sendEmailChangeConfirmationEmail(to: string, changeToken: string): Promise<void> {
-    const confirmationUrl = `${this.configService.get('API_DOMAIN')}/confirm-email-change?token=${changeToken}`;
-    await this.sendTemplateEmail('email-change-confirmation', to, {
-      name: 'User',
-      confirmationUrl,
-      appName: 'Safawinet',
-      supportEmail: 'support@safawinet.com',
-    });
-  }
 
   async sendPasswordChangeNotificationEmail(to: string): Promise<void> {
     await this.sendTemplateEmail('password-change-notification', to, {

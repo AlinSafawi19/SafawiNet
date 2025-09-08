@@ -9,7 +9,7 @@ import {
   Breadcrumb,
   generateBreadcrumbItems,
 } from '../../components/Breadcrumb';
-import { HiLockClosed, HiEnvelope, HiShieldCheck } from 'react-icons/hi2';
+import { HiLockClosed, HiShieldCheck } from 'react-icons/hi2';
 
 interface ValidationErrors {
   currentPassword?: string;
@@ -24,7 +24,7 @@ export default function LoginSecurityPage() {
   const pathname = usePathname();
 
   const [activeTab, setActiveTab] = useState<
-    'password' | 'email' | 'twoFactor'
+    'password' | 'twoFactor'
   >('password');
 
   // Password change form state
@@ -275,11 +275,6 @@ export default function LoginSecurityPage() {
       id: 'password' as const,
       label: t('account.loginSecurity.tabs.password'),
       icon: HiLockClosed,
-    },
-    {
-      id: 'email' as const,
-      label: t('account.loginSecurity.tabs.email'),
-      icon: HiEnvelope,
     },
     {
       id: 'twoFactor' as const,
@@ -580,25 +575,6 @@ export default function LoginSecurityPage() {
                     </button>
                   </div>
                 </form>
-              </div>
-            )}
-
-            {activeTab === 'email' && (
-              <div>
-                <h2
-                  className={`text-lg font-semibold text-white mb-2 ${
-                    locale === 'ar' ? 'text-right' : 'text-left'
-                  }`}
-                >
-                  {t('account.loginSecurity.tabs.email')}
-                </h2>
-                <p
-                  className={`text-sm text-gray-300 ${
-                    locale === 'ar' ? 'text-right' : 'text-left'
-                  }`}
-                >
-                  Email change functionality coming soon...
-                </p>
               </div>
             )}
 

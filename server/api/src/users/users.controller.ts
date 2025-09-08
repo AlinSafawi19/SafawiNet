@@ -20,12 +20,8 @@ import {
   UpdatePreferencesDto,
   UpdateNotificationPreferencesSchema,
   UpdateNotificationPreferencesDto,
-  ChangeEmailSchema,
-  ChangeEmailDto,
   ChangePasswordSchema,
   ChangePasswordDto,
-  ConfirmEmailChangeSchema,
-  ConfirmEmailChangeDto,
 } from './schemas/user.schemas';
 
 @ApiTags('Users')
@@ -205,7 +201,6 @@ export class UsersController {
         summary: 'Update user profile',
         value: {
           name: 'John Smith',
-          recoveryEmail: 'john.recovery@safawinet.com'
         }
       }
     }
@@ -213,7 +208,6 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Profile updated successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 409, description: 'Recovery email already in use' })
   @UsePipes(new ZodValidationPipe(UpdateProfileSchema))
   async updateProfile(@Request() req: any, @Body() updateProfileDto: UpdateProfileDto) {
     const user = await this.usersService.updateProfile(req.user.sub, updateProfileDto);
@@ -301,30 +295,6 @@ export class UsersController {
     };
   }
 
-  @Post('me/change-email')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Request email change' })
-  @ApiBody({
-    description: 'Email change request data',
-    examples: {
-      changeEmail: {
-        summary: 'Request email change',
-        value: {
-          newEmail: 'newemail@safawinet.com'
-        }
-      }
-    }
-  })
-  @ApiResponse({ status: 200, description: 'Email change confirmation sent' })
-  @ApiResponse({ status: 400, description: 'Invalid input data' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 409, description: 'Email already in use' })
-  @UsePipes(new ZodValidationPipe(ChangeEmailSchema))
-  async changeEmail(@Request() req: any, @Body() changeEmailDto: ChangeEmailDto) {
-    const result = await this.usersService.changeEmail(req.user.sub, changeEmailDto);
-    return result;
-  }
 
   @Post('me/change-password')
   @UseGuards(JwtAuthGuard)
@@ -352,25 +322,4 @@ export class UsersController {
     return result;
   }
 
-  @Post('confirm-email-change')
-  @ApiOperation({ summary: 'Confirm email change with token' })
-  @ApiBody({
-    description: 'Email change confirmation data',
-    examples: {
-      confirmEmailChange: {
-        summary: 'Confirm email change',
-        value: {
-          token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
-        }
-      }
-    }
-  })
-  @ApiResponse({ status: 200, description: 'Email change confirmed successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
-  @HttpCode(HttpStatus.OK)
-  @UsePipes(new ZodValidationPipe(ConfirmEmailChangeSchema))
-  async confirmEmailChange(@Body() confirmEmailChangeDto: ConfirmEmailChangeDto) {
-    const result = await this.usersService.confirmEmailChange(confirmEmailChangeDto.token);
-    return result;
-  }
 }

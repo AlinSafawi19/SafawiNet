@@ -571,18 +571,9 @@ export function AuthForm() {
               )}
             </div>
 
-            {/* Forgot Password and Account Recovery Links - Only show in login mode */}
+            {/* Forgot Password Link - Only show in login mode */}
             {isLogin && (
-              <div className="flex justify-between items-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    router.push('/account-recovery');
-                  }}
-                  className="text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200 min-h-[32px] px-2 py-1 rounded hover:underline text-sm"
-                >
-                  {t('auth.form.lostAccountEmail')}
-                </button>
+              <div className="flex justify-end items-center">
                 <button
                   type="button"
                   onClick={() => {

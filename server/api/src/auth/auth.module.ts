@@ -4,7 +4,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
-import { RecoveryService } from './recovery.service';
 import { SessionsController } from './sessions.controller';
 import { NotificationsController } from './notifications.controller';
 import { EmailMonitoringController } from './email-monitoring.controller';
@@ -40,7 +39,6 @@ import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
   providers: [
     AuthService,
     TwoFactorService,
-    RecoveryService,
     SessionsService,
     NotificationsService,
     EmailMonitoringService,

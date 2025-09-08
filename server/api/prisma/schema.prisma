@@ -16,7 +16,6 @@ model User {
   updatedAt               DateTime             @updatedAt
   isVerified              Boolean              @default(false)
   twoFactorEnabled        Boolean              @default(false)
-  recoveryEmail           String?              @db.Citext
   notificationPreferences Json?
   preferences             Json?
   roles                   Role[]               @default([CUSTOMER])
@@ -24,8 +23,6 @@ model User {
   loyaltyAccounts         LoyaltyAccount?
   notifications           Notification[]
   oneTimeTokens           OneTimeToken[]
-  pendingEmailChanges     PendingEmailChange[]
-  recoveryStaging         RecoveryStaging?
   refreshSessions         RefreshSession[]
   twoFactorSecret         TwoFactorSecret?
   userSessions            UserSession[]
@@ -90,33 +87,6 @@ model BackupCode {
   @@map("backup_codes")
 }
 
-model RecoveryStaging {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  newEmail          String   @db.Citext
-  recoveryTokenHash String
-  expiresAt         DateTime
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([expiresAt])
-  @@map("recovery_staging")
-}
-
-model PendingEmailChange {
-  id              String   @id @default(cuid())
-  userId          String
-  newEmail        String   @db.Citext
-  changeTokenHash String
-  expiresAt       DateTime
-  createdAt       DateTime @default(now())
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([expiresAt])
-  @@index([changeTokenHash])
-  @@map("pending_email_changes")
-}
 
 model UserSession {
   id                String   @id @default(cuid())

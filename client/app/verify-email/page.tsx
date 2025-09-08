@@ -56,8 +56,6 @@ export default function VerifyEmailPage() {
     (serverMessage: string): string | null => {
       const messageMapping: { [key: string]: string } = {
         'Email verified successfully': 'verifyEmail.successMessage',
-        'Account recovery completed successfully. Your email has been updated and all sessions have been invalidated.':
-          'verifyEmail.recoverySuccessMessage',
         'Invalid or expired verification token':
           'auth.messages.invalidVerificationToken',
       };
@@ -80,7 +78,7 @@ export default function VerifyEmailPage() {
 
       setVerificationState({
         status: 'success',
-        message: t('verifyEmail.recoverySuccessMessage'),
+        message: t('verifyEmail.successMessage'),
       });
 
       // Redirect based on user role
@@ -112,7 +110,7 @@ export default function VerifyEmailPage() {
 
           setVerificationState({
             status: 'success',
-            message: t('verifyEmail.recoverySuccessMessage'),
+            message: t('verifyEmail.successMessage'),
           });
 
           // Redirect based on user role
@@ -141,13 +139,12 @@ export default function VerifyEmailPage() {
     // Define the auth broadcast handler
     const handleAuthBroadcast = (data: { type: string; user?: any }) => {
       if (data.type === 'login' && data.user) {
-        // Check if user was on auth page or account recovery page - redirect to home, otherwise stay
+        // Check if user was on auth page - redirect to home, otherwise stay
         const currentPath = window.location.pathname;
 
         if (
           currentPath === '/auth' ||
-          currentPath.startsWith('/auth/') ||
-          currentPath === '/account-recovery'
+          currentPath.startsWith('/auth/')
         ) {
           setVerificationState({
             status: 'success',
@@ -277,30 +274,15 @@ export default function VerifyEmailPage() {
         // Mark as attempting verification to prevent multiple calls
         hasVerifiedRef.current = true;
 
-        // First try the recovery completion endpoint for account recovery
-        let response = await fetch(
-          'http://localhost:3000/v1/auth/recover/complete',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({ token }),
-          }
-        );
-
-        // If recovery completion fails, wait and try regular verification
-        if (!response.ok) {
-          response = await fetch('http://localhost:3000/v1/auth/verify-email', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({ token }),
-          });
-        }
+        // Try regular verification
+        const response = await fetch('http://localhost:3000/v1/auth/verify-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ token }),
+        });
 
         if (response.ok) {
           successData = await response.json();

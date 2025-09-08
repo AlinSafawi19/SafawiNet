@@ -27,7 +27,6 @@ export const ResetPasswordSchema = z.object({
 // New schemas for Account & Preferences Management
 export const UpdateProfileSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name too long').optional(),
-  recoveryEmail: z.string().email('Invalid recovery email format').optional(),
 });
 
 export const UpdatePreferencesSchema = z.object({
@@ -62,10 +61,6 @@ export const UpdateNotificationPreferencesSchema = z.object({
   }).optional(),
 });
 
-export const ChangeEmailSchema = z.object({
-  newEmail: z.string().email('Invalid email format').describe('New email address'),
-});
-
 export const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required').describe('Current password'),
   newPassword: z.string().min(8, 'New password must be at least 8 characters').describe('New password'),
@@ -73,10 +68,6 @@ export const ChangePasswordSchema = z.object({
 }).refine((data) => data.newPassword === data.confirmNewPassword, {
   message: "New password and confirmation password don't match",
   path: ["confirmNewPassword"],
-});
-
-export const ConfirmEmailChangeSchema = z.object({
-  token: z.string().min(1, 'Token is required').describe('Email change confirmation token'),
 });
 
 // DTOs for Swagger documentation
@@ -134,7 +125,6 @@ export class UpdateProfileDto extends createZodDto(UpdateProfileSchema) {
       summary: 'Update user profile',
       value: {
         name: 'John Smith',
-        recoveryEmail: 'john.recovery@safawinet.com'
       }
     }
   };
@@ -186,17 +176,6 @@ export class UpdateNotificationPreferencesDto extends createZodDto(UpdateNotific
   };
 }
 
-export class ChangeEmailDto extends createZodDto(ChangeEmailSchema) {
-  static examples = {
-    changeEmail: {
-      summary: 'Request email change',
-      value: {
-        newEmail: 'newemail@safawinet.com'
-      }
-    }
-  };
-}
-
 export class ChangePasswordDto extends createZodDto(ChangePasswordSchema) {
   static examples = {
     changePassword: {
@@ -205,17 +184,6 @@ export class ChangePasswordDto extends createZodDto(ChangePasswordSchema) {
         currentPassword: 'user123456',
         newPassword: 'newSecurePassword123',
         confirmNewPassword: 'newSecurePassword123'
-      }
-    }
-  };
-}
-
-export class ConfirmEmailChangeDto extends createZodDto(ConfirmEmailChangeSchema) {
-  static examples = {
-    confirmEmailChange: {
-      summary: 'Confirm email change',
-      value: {
-        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
       }
     }
   };

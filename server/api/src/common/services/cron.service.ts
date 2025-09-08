@@ -159,25 +159,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
         },
       });
 
-      // Clean up expired pending email changes
-      const emailResult = await this.prisma.pendingEmailChange.deleteMany({
-        where: {
-          expiresAt: {
-            lt: new Date(),
-          },
-        },
-      });
-
-      // Clean up expired recovery staging
-      const recoveryResult = await this.prisma.recoveryStaging.deleteMany({
-        where: {
-          expiresAt: {
-            lt: new Date(),
-          },
-        },
-      });
-      
-      const totalCleaned = refreshResult.count + oneTimeResult.count + emailResult.count + recoveryResult.count;
+      const totalCleaned = refreshResult.count + oneTimeResult.count;
       this.logger.log(`Cleaned up ${totalCleaned} expired tokens/sessions`, 'CronService');
       return totalCleaned;
     } catch (error) {

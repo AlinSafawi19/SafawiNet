@@ -30,7 +30,6 @@ interface User {
   updatedAt: string;
   isVerified: boolean;
   twoFactorEnabled: boolean;
-  recoveryEmail: string | null;
   notificationPreferences: any | null;
   preferences: {
     theme: string;
@@ -485,13 +484,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       'Invalid TOTP code': 'auth.messages.invalidTOTPCode',
       '2FA is not enabled': 'auth.messages.twoFactorNotEnabled',
       'Invalid code': 'auth.messages.invalidCode',
-      'Recovery already in progress. Please wait or check your email.':
-        'auth.messages.recoveryInProgress',
-      'Invalid or expired recovery token': 'auth.messages.invalidRecoveryToken',
       'Email address is already in use by another account':
         'auth.messages.emailAlreadyInUse',
-      'No recovery staging found or new email not set':
-        'auth.messages.noRecoveryStaging',
       'No refresh token provided': 'auth.messages.noRefreshTokenProvided',
       'User is already verified': 'auth.messages.userAlreadyVerified',
       'Session not found': 'auth.messages.sessionNotFound',
@@ -521,14 +515,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         'auth.messages.twoFactorEnabled',
       'Two-factor authentication disabled successfully':
         'auth.messages.twoFactorDisabled',
-      'Recovery token sent to your recovery email. Please check your inbox.':
-        'auth.messages.recoveryTokenSent',
-      'If the recovery email is registered, you will receive a recovery token shortly.':
-        'auth.messages.recoveryEmailNotFound',
-      'Recovery confirmed. Please verify your new email address to complete the process.':
-        'auth.messages.recoveryConfirmed',
-      'Account recovery completed successfully. Your email has been updated and all sessions have been invalidated.':
-        'auth.messages.recoveryCompleted',
       'Token refreshed successfully': 'auth.messages.tokenRefreshed',
       'Logged out successfully': 'auth.messages.loggedOut',
     };

@@ -123,47 +123,13 @@ export const TwoFactorLoginDto = z.object({
   code: z.string().min(6, 'Code must be at least 6 characters'),
 });
 
-// Recovery DTOs
-export const RecoveryRequestDto = z.object({
-  recoveryEmail: z.string().email('Invalid recovery email format').describe('Recovery email address for account recovery'),
-});
-
-export const RecoveryConfirmDto = z.object({
-  token: z.string().min(1, 'Recovery token is required').describe('Recovery token received via email'),
-  newEmail: z.string().email('Invalid new email format').describe('New email address for the account'),
-});
 
 // Schema exports
 export const TwoFactorSetupSchema = TwoFactorSetupDto;
 export const TwoFactorEnableSchema = TwoFactorEnableDto;
 export const TwoFactorDisableSchema = TwoFactorDisableDto;
 export const TwoFactorLoginSchema = TwoFactorLoginDto;
-export const RecoveryRequestSchema = RecoveryRequestDto;
-export const RecoveryConfirmSchema = RecoveryConfirmDto;
 
-// DTO classes with examples
-export class RecoveryRequestDtoClass extends createZodDto(RecoveryRequestDto) {
-  static examples = {
-    recoveryRequest: {
-      summary: 'Request account recovery',
-      value: {
-        recoveryEmail: 'recovery@safawinet.com'
-      }
-    }
-  };
-}
-
-export class RecoveryConfirmDtoClass extends createZodDto(RecoveryConfirmDto) {
-  static examples = {
-    recoveryConfirm: {
-      summary: 'Confirm account recovery and stage new email',
-      value: {
-        token: 'recovery_token_from_email',
-        newEmail: 'newemail@safawinet.com'
-      }
-    }
-  };
-}
 
 export class TwoFactorSetupDtoClass extends createZodDto(TwoFactorSetupDto) {
   static examples = {
@@ -212,8 +178,6 @@ export type TwoFactorSetupDto = z.infer<typeof TwoFactorSetupDto>;
 export type TwoFactorEnableDto = z.infer<typeof TwoFactorEnableDto>;
 export type TwoFactorDisableDto = z.infer<typeof TwoFactorDisableDto>;
 export type TwoFactorLoginDto = z.infer<typeof TwoFactorLoginDto>;
-export type RecoveryRequestDto = z.infer<typeof RecoveryRequestDto>;
-export type RecoveryConfirmDto = z.infer<typeof RecoveryConfirmDto>;
 
 // Session management schemas
 export const SessionListSchema = z.object({

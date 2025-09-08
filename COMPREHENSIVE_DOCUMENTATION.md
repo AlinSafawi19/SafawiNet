@@ -169,11 +169,9 @@ PUT /users/me/preferences     # Update user preferences
 PUT /users/me/notification-preferences # Update notification preferences
 ```
 
-#### Email & Password Management
+#### Password Management
 ```http
-POST /users/me/change-email   # Request email change
 POST /users/me/change-password # Change password
-POST /users/confirm-email-change # Confirm email change
 ```
 
 #### Email Verification & Password Reset
@@ -264,9 +262,7 @@ POST /v1/email-monitoring/ses/complaint # SES complaint webhook
 - `backup_codes` - 2FA backup codes
 - `user_sessions` - Active user sessions with device info
 
-#### Security & Recovery
-- `recovery_staging` - Account recovery process
-- `pending_email_changes` - Email change requests
+#### Security
 - `notifications` - User notifications
 
 #### Loyalty System
@@ -330,8 +326,6 @@ POST /v1/email-monitoring/ses/complaint # SES complaint webhook
 - **Refresh Token**: 7 days
 - **Email Verification**: 24 hours
 - **Password Reset**: 1 hour
-- **Email Change**: 1 hour
-- **Account Recovery**: 24 hours
 
 ### Two-Factor Authentication
 - **TOTP-based** (Time-based One-Time Password)
@@ -344,8 +338,6 @@ POST /v1/email-monitoring/ses/complaint # SES complaint webhook
 ### Email Types
 - **Email Verification** - Account verification
 - **Password Reset** - Password recovery
-- **Email Change** - Email address updates
-- **Account Recovery** - Account recovery process
 - **Security Alerts** - Security notifications
 - **Marketing** - Promotional emails (opt-in)
 

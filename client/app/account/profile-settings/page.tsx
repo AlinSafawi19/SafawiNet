@@ -13,7 +13,6 @@ import { HiUser, HiEnvelope } from 'react-icons/hi2';
 
 interface ValidationErrors {
   name?: string;
-  recoveryEmail?: string;
 }
 
 export default function AccountInformationPage() {
@@ -24,7 +23,6 @@ export default function AccountInformationPage() {
 
   const [formData, setFormData] = useState({
     name: '',
-    recoveryEmail: '',
   });
 
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
@@ -32,7 +30,6 @@ export default function AccountInformationPage() {
   );
   const [touched, setTouched] = useState({
     name: false,
-    recoveryEmail: false,
   });
 
   const [isFormLoading, setIsFormLoading] = useState(false);
@@ -47,7 +44,6 @@ export default function AccountInformationPage() {
     if (user && !hasInitialized.current) {
       setFormData({
         name: user.name || '',
-        recoveryEmail: user.recoveryEmail || '',
       });
       hasInitialized.current = true;
     }
@@ -81,12 +77,6 @@ export default function AccountInformationPage() {
     return undefined;
   };
 
-  const validateRecoveryEmail = (email: string): string | undefined => {
-    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return 'account.validation.invalidRecoveryEmail';
-    }
-    return undefined;
-  };
 
   // Validate all fields
   const validateForm = (): boolean => {
@@ -95,8 +85,6 @@ export default function AccountInformationPage() {
     const nameError = validateName(formData.name);
     if (nameError) errors.name = nameError;
 
-    const recoveryEmailError = validateRecoveryEmail(formData.recoveryEmail);
-    if (recoveryEmailError) errors.recoveryEmail = recoveryEmailError;
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -109,9 +97,6 @@ export default function AccountInformationPage() {
     switch (name) {
       case 'name':
         error = validateName(value);
-        break;
-      case 'recoveryEmail':
-        error = validateRecoveryEmail(value);
         break;
     }
 
@@ -172,7 +157,6 @@ export default function AccountInformationPage() {
     // Mark all fields as touched
     setTouched({
       name: true,
-      recoveryEmail: true,
     });
 
     // Validate form before submission
@@ -189,7 +173,6 @@ export default function AccountInformationPage() {
         },
         body: JSON.stringify({
           name: formData.name.trim(),
-          recoveryEmail: formData.recoveryEmail.trim() || null,
         }),
       });
 
@@ -203,7 +186,6 @@ export default function AccountInformationPage() {
           // Directly update form data with the new values
           setFormData({
             name: userData.name || '',
-            recoveryEmail: userData.recoveryEmail || '',
           });
         }
 
@@ -330,53 +312,6 @@ export default function AccountInformationPage() {
                 )}
               </div>
 
-              {/* Recovery Email Field */}
-              <div>
-                <label
-                  htmlFor="recoveryEmail"
-                  className={`block text-sm font-medium text-white/80 mb-2 ${
-                    locale === 'ar' ? 'text-right' : 'text-left'
-                  }`}
-                >
-                  <div
-                    className={`flex items-center ${
-                      locale === 'ar' ? 'flex-row-reverse' : ''
-                    }`}
-                  >
-                    {HiEnvelope({
-                      className: `w-4 h-4 ${locale === 'ar' ? 'ml-2' : 'mr-2'}`,
-                    })}
-                    {t('account.form.recoveryEmail')}
-                  </div>
-                </label>
-                <input
-                  type="text"
-                  id="recoveryEmail"
-                  name="recoveryEmail"
-                  value={formData.recoveryEmail}
-                  onChange={handleInputChange}
-                  onBlur={handleBlur}
-                  className={getInputClass('recoveryEmail')}
-                  placeholder={t('account.form.recoveryEmailPlaceholder')}
-                  dir={locale === 'ar' ? 'rtl' : 'ltr'}
-                />
-                {touched.recoveryEmail && validationErrors.recoveryEmail && (
-                  <p
-                    className={`text-red-400 text-xs mt-1 ${
-                      locale === 'ar' ? 'text-right' : 'text-left'
-                    }`}
-                  >
-                    {t(validationErrors.recoveryEmail)}
-                  </p>
-                )}
-                <p
-                  className={`text-white/50 text-xs mt-1 ${
-                    locale === 'ar' ? 'text-right' : 'text-left'
-                  }`}
-                >
-                  {t('account.form.recoveryEmailHelp')}
-                </p>
-              </div>
 
               {/* Submit Button */}
               <div className="pt-4">

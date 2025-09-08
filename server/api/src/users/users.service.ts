@@ -8,7 +8,6 @@ import {
   UpdateProfileDto, 
   UpdatePreferencesDto, 
   UpdateNotificationPreferencesDto,
-  ChangeEmailDto,
   ChangePasswordDto
 } from './schemas/user.schemas';
 import { User, Role } from '@prisma/client';
@@ -190,30 +189,13 @@ export class UsersService {
   }
 
   async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<Omit<User, 'password'>> {
-    const { name, recoveryEmail } = updateProfileDto;
+    const { name } = updateProfileDto;
 
-    // Check if recovery email is already in use by another user
-    if (recoveryEmail) {
-      const existingUser = await this.prisma.user.findFirst({
-        where: {
-          OR: [
-            { email: recoveryEmail.toLowerCase() },
-            { recoveryEmail: recoveryEmail.toLowerCase() },
-          ],
-          NOT: { id: userId },
-        },
-      });
-
-      if (existingUser) {
-        throw new ConflictException('Recovery email is already in use');
-      }
-    }
 
     const user = await this.prisma.user.update({
       where: { id: userId },
       data: {
         ...(name !== undefined && { name }),
-        ...(recoveryEmail !== undefined && { recoveryEmail: recoveryEmail?.toLowerCase() }),
       },
     });
 
@@ -268,110 +250,6 @@ export class UsersService {
 
     const { password: _, ...userWithoutPassword } = updatedUser;
     return userWithoutPassword;
-  }
-
-  async changeEmail(userId: string, changeEmailDto: ChangeEmailDto): Promise<{ message: string }> {
-    const { newEmail } = changeEmailDto;
-
-    // Check if new email is already in use
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: newEmail.toLowerCase() },
-    });
-
-    if (existingUser) {
-      throw new ConflictException('Email is already in use');
-    }
-
-    // Check if user is trying to change to their current email
-    const currentUser = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!currentUser) {
-      throw new NotFoundException('User not found');
-    }
-    
-    if (currentUser.email.toLowerCase() === newEmail.toLowerCase()) {
-      throw new BadRequestException('New email must be different from current email');
-    }
-
-    // Remove any existing pending email changes for this user
-    await this.prisma.pendingEmailChange.deleteMany({
-      where: { userId },
-    });
-
-    // Generate email change token
-    const changeToken = SecurityUtils.generateSecureToken();
-    const tokenHash = SecurityUtils.hashToken(changeToken);
-
-    // Store pending email change
-    await this.prisma.pendingEmailChange.create({
-      data: {
-        userId,
-        newEmail: newEmail.toLowerCase(),
-        changeTokenHash: tokenHash,
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
-      },
-    });
-
-    // Send email change confirmation email
-    try {
-      const confirmationUrl = `${this.configService.get('API_DOMAIN')}/confirm-email-change?token=${changeToken}`;
-      await this.emailService.sendTemplateEmail('email-change-confirmation', newEmail, {
-        name: currentUser.name || 'User',
-        confirmationUrl,
-        appName: 'Safawinet',
-        supportEmail: 'support@safawinet.com',
-      });
-    } catch (error) {
-      this.logger.error(`Failed to send email change confirmation to ${newEmail}:`, error);
-      throw new BadRequestException('Failed to send confirmation email');
-    }
-
-    return { message: 'Email change confirmation sent to new email address' };
-  }
-
-  async confirmEmailChange(token: string): Promise<{ message: string }> {
-    const tokenHash = SecurityUtils.hashToken(token);
-
-    const pendingEmailChange = await this.prisma.pendingEmailChange.findFirst({
-      where: {
-        changeTokenHash: tokenHash,
-        expiresAt: { gt: new Date() },
-      },
-      include: {
-        user: true,
-      },
-    });
-
-    if (!pendingEmailChange) {
-      throw new BadRequestException('Invalid or expired email change token');
-    }
-
-    // Check if the new email is still available
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: pendingEmailChange.newEmail },
-    });
-
-    if (existingUser) {
-      throw new ConflictException('Email is no longer available');
-    }
-
-    // Update user email and remove pending change
-    await this.prisma.$transaction([
-      this.prisma.user.update({
-        where: { id: pendingEmailChange.userId },
-        data: { email: pendingEmailChange.newEmail },
-      }),
-      this.prisma.pendingEmailChange.delete({
-        where: { id: pendingEmailChange.id },
-      }),
-    ]);
-
-    // Revoke all refresh tokens for this user
-    await this.revokeRefreshTokens(pendingEmailChange.userId);
-
-    return { message: 'Email changed successfully. Please sign in with your new email address.' };
   }
 
   async changePassword(userId: string, changePasswordDto: ChangePasswordDto): Promise<{ message: string; messageKey: string }> {
