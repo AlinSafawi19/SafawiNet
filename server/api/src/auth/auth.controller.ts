@@ -332,6 +332,7 @@ export class AuthController {
       type: 'object',
       properties: {
         message: { type: 'string' },
+        email: { type: 'string' },
       },
     },
   })

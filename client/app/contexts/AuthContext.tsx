@@ -132,6 +132,89 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [isRefreshing]);
 
+  // Check if password was changed while user was offline
+  const checkPasswordChange = useCallback(async (userId: string, isLoginAttempt: boolean = false) => {
+    try {
+      console.log('🔍 Checking password change for user:', userId, 'isLoginAttempt:', isLoginAttempt);
+      
+      // Get the last known password change timestamp from localStorage
+      const lastPasswordChange = localStorage.getItem(`lastPasswordChange_${userId}`);
+      console.log('🔍 Last known password change:', lastPasswordChange);
+      
+      // Check with server for current password change timestamp
+      const response = await fetch(buildApiUrl(`/users/${userId}/password-change-timestamp`), {
+        headers: {
+          'Authorization': `Bearer ${document.cookie.split('; ').find(row => row.startsWith('accessToken='))?.split('=')[1] || ''}`,
+        },
+        credentials: 'include',
+      });
+      
+      console.log('🔍 Password change timestamp response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const serverPasswordChange = data.passwordChangedAt;
+        console.log('🔍 Server password change timestamp:', serverPasswordChange);
+        
+        // If we have a stored timestamp and server timestamp is newer, password was changed while offline
+        if (lastPasswordChange && serverPasswordChange && new Date(serverPasswordChange) > new Date(lastPasswordChange)) {
+          // If this is a login attempt, don't logout - just update the timestamp
+          if (isLoginAttempt) {
+            console.log('🔍 Login attempt detected, updating timestamp without logout');
+            localStorage.setItem(`lastPasswordChange_${userId}`, serverPasswordChange);
+            return false;
+          }
+          
+          console.log('🚪 Password was changed while offline, logging out...');
+          console.log('🚪 Last known:', lastPasswordChange, 'Server:', serverPasswordChange);
+          
+          // Update the stored timestamp first to prevent repeated logouts
+          localStorage.setItem(`lastPasswordChange_${userId}`, serverPasswordChange);
+          
+          // Call logout directly without dependency
+          try {
+            await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGOUT), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+            });
+          } catch (error) {
+            // Silent fail on logout
+          } finally {
+            setUser(null);
+          }
+          return true;
+        }
+        
+        // Update the stored timestamp with the server's current timestamp
+        if (serverPasswordChange) {
+          localStorage.setItem(`lastPasswordChange_${userId}`, serverPasswordChange);
+          console.log('🔍 Updated stored timestamp to:', serverPasswordChange);
+        } else {
+          // If no server timestamp, use current time
+          const currentTime = new Date().toISOString();
+          localStorage.setItem(`lastPasswordChange_${userId}`, currentTime);
+          console.log('🔍 Set initial timestamp to:', currentTime);
+        }
+      } else {
+        console.log('🔍 Failed to get server timestamp, response status:', response.status);
+        // If we can't get the server timestamp, just update with current time
+        const currentTime = new Date().toISOString();
+        localStorage.setItem(`lastPasswordChange_${userId}`, currentTime);
+        console.log('🔍 Set fallback timestamp to:', currentTime);
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Failed to check password change:', error);
+      // On error, just update with current time to avoid repeated checks
+      const currentTime = new Date().toISOString();
+      localStorage.setItem(`lastPasswordChange_${userId}`, currentTime);
+      console.log('🔍 Set error fallback timestamp to:', currentTime);
+      return false;
+    }
+  }, []);
+
   const checkAuthStatus = useCallback(async () => {
     // Prevent multiple calls during initialization to avoid duplicate API calls
     // This fixes the performance issue where /users/me and /v1/auth/refresh were called twice
@@ -180,6 +263,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         setUser(finalUserData);
+        
+        // Check if password was changed while user was offline
+        const wasLoggedOut = await checkPasswordChange(finalUserData.id, false);
+        if (wasLoggedOut) {
+          // User was logged out due to password change, don't continue
+          return;
+        }
       } else if (response.status === 401) {
         // Token might be expired, try to refresh it silently
         if (process.env.NODE_ENV === 'development') {
@@ -253,6 +343,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // User is verified, set login state
         setUser(userData);
+        
+        // Check if password was changed while user was offline
+        const wasLoggedOut = await checkPasswordChange(userData.id, true);
+        if (wasLoggedOut) {
+          // User was logged out due to password change
+          return { 
+            success: false, 
+            messageKey: 'auth.messages.passwordChangedWhileOffline' 
+          };
+        }
+        
         return { success: true, user: userData };
       } else {
         const errorData = await response.json();
@@ -900,6 +1001,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Test if we can receive the pending verification room joined event
         socketService.on('pendingVerificationRoomJoined', (data: any) => {
           // Pending verification room joined event received
+        });
+
+        // Listen for force logout events (password change/reset)
+        socketService.on('forceLogout', async (data: any) => {
+          console.log('🚪 Force logout event received:', data);
+          
+          // Use existing logout function
+          await logout();
+          
+          // Redirect to login page
+          window.location.href = '/auth';
         });
 
         // Test WebSocket communication by emitting a test event

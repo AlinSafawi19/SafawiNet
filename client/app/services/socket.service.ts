@@ -20,6 +20,19 @@ export interface SocketEvents {
     success: boolean;
     email: string;
   }) => void;
+  passwordResetRoomJoined: (data: {
+    success: boolean;
+    email: string;
+  }) => void;
+  passwordResetRoomLeft: (data: {
+    success: boolean;
+    email: string;
+  }) => void;
+  forceLogout: (data: {
+    reason: string;
+    message: string;
+    timestamp: string;
+  }) => void;
   connect: () => void;
   disconnect: () => void;
 }
@@ -55,6 +68,14 @@ class StubSocketService {
   }
 
   public async leavePendingVerificationRoom(email: string): Promise<void> {
+    // Stub
+  }
+
+  public async joinPasswordResetRoom(email: string): Promise<void> {
+    // Stub
+  }
+
+  public async leavePasswordResetRoom(email: string): Promise<void> {
     // Stub
   }
 

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/services/prisma.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { EmailService } from '../common/services/email.service';
+import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
 import { 
   CreateUserDto, 
   UpdateProfileDto, 
@@ -20,6 +21,7 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
+    private readonly webSocketGateway: AuthWebSocketGateway,
   ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
@@ -287,7 +289,10 @@ export class UsersService {
     // Update password
     await this.prisma.user.update({
       where: { id: userId },
-      data: { password: hashedNewPassword },
+      data: { 
+        password: hashedNewPassword,
+        passwordChangedAt: new Date(),
+      },
     });
 
     // Revoke all refresh tokens for this user
@@ -304,6 +309,20 @@ export class UsersService {
     } catch (error) {
       this.logger.error(`Failed to send password change notification to ${user.email}:`, error);
       // Don't fail password change if email fails
+    }
+
+    // Emit logout event to all user's devices
+    try {
+      // Emit to user's personal room (for all logged-in devices)
+      await this.webSocketGateway.emitLogoutToUserDevices(userId, 'password_changed');
+      
+      // Also emit global logout to catch any devices that might not be in the user's room
+      await this.webSocketGateway.emitGlobalLogout('password_changed');
+      
+      this.logger.log(`Logout events emitted for password change - user: ${user.email}`);
+    } catch (error) {
+      this.logger.error(`Failed to emit logout events for password change - user: ${user.email}:`, error);
+      // Don't fail the password change if WebSocket emission fails
     }
 
     return { 
@@ -334,6 +353,27 @@ export class UsersService {
 
     const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
+  }
+
+  async getPasswordChangeTimestamp(userId: string): Promise<{ passwordChangedAt: string | null }> {
+    this.logger.log(`🔍 Getting password change timestamp for user: ${userId}`);
+    
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordChangedAt: true },
+    });
+
+    if (!user) {
+      this.logger.warn(`🔍 User not found: ${userId}`);
+      throw new Error('User not found');
+    }
+
+    const result = {
+      passwordChangedAt: user.passwordChangedAt?.toISOString() || null,
+    };
+    
+    this.logger.log(`🔍 Password change timestamp for user ${userId}:`, result);
+    return result;
   }
 
   async findUserByEmail(email: string): Promise<User | null> {

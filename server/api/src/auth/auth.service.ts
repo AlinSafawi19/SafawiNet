@@ -469,7 +469,7 @@ export class AuthService {
     return { message: 'If an account with this email exists, a password reset link has been sent.' };
   }
 
-  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ message: string; email: string }> {
     const { token, password } = resetPasswordDto;
     const tokenHash = SecurityUtils.hashToken(token);
 
@@ -501,7 +501,10 @@ export class AuthService {
       // Update user password
       await tx.user.update({
         where: { id: oneTimeToken.user.id },
-        data: { password: hashedPassword },
+        data: { 
+          password: hashedPassword,
+          passwordChangedAt: new Date(),
+        },
       });
 
       // Revoke all refresh sessions for this user (session invalidation)
@@ -516,7 +519,30 @@ export class AuthService {
     // Log security event
     this.logger.warn(`Password reset completed for user ${result.email} - all sessions invalidated`);
 
-    return { message: 'Password reset successfully. Please log in with your new password.' };
+    // Emit logout event to password reset room and user's devices
+    // Use setTimeout to allow client to join room first
+    setTimeout(async () => {
+      try {
+        // Emit to password reset room (for devices that requested reset)
+        await this.webSocketGateway.emitLogoutToPasswordResetRoom(result.email, 'password_reset');
+        
+        // Emit to user's personal room (for all logged-in devices)
+        await this.webSocketGateway.emitLogoutToUserDevices(result.id, 'password_reset');
+        
+        // Also emit global logout to catch any devices that might not be in either room
+        await this.webSocketGateway.emitGlobalLogout('password_reset');
+        
+        this.logger.log(`Logout events emitted for password reset - user: ${result.email}`);
+      } catch (error) {
+        this.logger.error(`Failed to emit logout events for password reset - user: ${result.email}:`, error);
+        // Don't fail the password reset if WebSocket emission fails
+      }
+    }, 500); // 500ms delay to allow client to join room
+
+    return { 
+      message: 'Password reset successfully. Please log in with your new password.',
+      email: result.email 
+    };
   }
 
   private async generateTokens(user: User, req?: Request): Promise<AuthTokens> {

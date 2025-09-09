@@ -1,20 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSocket } from '../hooks/useSocket';
 
 export default function ForgotPasswordPage() {
   const { t, locale } = useLanguage();
   const router = useRouter();
+  const { joinPasswordResetRoom, leavePasswordResetRoom } = useSocket();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
   const [emailError, setEmailError] = useState('');
   const [touched, setTouched] = useState({ email: false });
+
+  // Join password reset room when email is entered
+  useEffect(() => {
+    const joinRoom = async () => {
+      if (email && email.includes('@') && email.includes('.')) {
+        try {
+          await joinPasswordResetRoom(email);
+          console.log('✅ Joined password reset room for:', email);
+        } catch (error) {
+          console.error('❌ Failed to join password reset room:', error);
+        }
+      }
+    };
+
+    // Debounce the room joining
+    const timeoutId = setTimeout(joinRoom, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [email, joinPasswordResetRoom]);
+
+  // Cleanup: leave room when component unmounts
+  useEffect(() => {
+    return () => {
+      if (email) {
+        leavePasswordResetRoom(email);
+      }
+    };
+  }, [email, leavePasswordResetRoom]);
 
   // Email validation function
   const validateEmail = (email: string): string => {
@@ -85,6 +114,7 @@ export default function ForgotPasswordPage() {
       if (response.ok) {
         setMessageType('success');
         setMessage(t('auth.messages.passwordResetEmailSent'));
+        
         setEmail('');
         setEmailError('');
         setTouched({ email: false });

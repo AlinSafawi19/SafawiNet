@@ -57,6 +57,20 @@ export const useSocket = () => {
     }
   }, []);
 
+  const joinPasswordResetRoom = useCallback(async (email: string) => {
+    const service = await getSocketService();
+    if (service) {
+      await service.joinPasswordResetRoom(email);
+    }
+  }, []);
+
+  const leavePasswordResetRoom = useCallback(async (email: string) => {
+    const service = await getSocketService();
+    if (service) {
+      await service.leavePasswordResetRoom(email);
+    }
+  }, []);
+
   const on = useCallback(
     async <T extends keyof import('../services/socket.service').SocketEvents>(
       event: T,
@@ -145,6 +159,8 @@ export const useSocket = () => {
     leaveVerificationRoom,
     joinPendingVerificationRoom,
     leavePendingVerificationRoom,
+    joinPasswordResetRoom,
+    leavePasswordResetRoom,
     on,
     off,
     onAuthBroadcast,

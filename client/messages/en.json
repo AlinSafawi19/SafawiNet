@@ -141,7 +141,9 @@
         "confirmPasswordRequired": "Please confirm your new password",
         "internalServerError": "An internal server error occurred. Please try again.",
         "userNotFound": "User not found",
-        "passwordChangeFailed": "Failed to change password. Please try again."
+        "passwordChangeFailed": "Failed to change password. Please try again.",
+        "securityNotice": "Security Notice",
+        "securityNoticeMessage": "For your security, you will be automatically logged out from all devices and browsers after changing your password."
       }
     }
   },
@@ -183,7 +185,9 @@
       "signUp": "Sign up",
       "signInLink": "Sign in",
       "forgotPassword": "Forgot your password?",
-      "resetPassword": "Reset password"
+      "resetPassword": "Reset password",
+      "securityNotice": "Security Notice",
+      "securityNoticeMessage": "For your security, you will be automatically logged out from all devices and browsers after resetting your password."
     },
     "admin": {
       "access": "ADMIN ACCESS",
@@ -272,6 +276,7 @@
       "invalidVerificationToken": "Invalid or expired verification token",
       "tokenRefreshed": "Token refreshed successfully",
       "loggedOut": "Logged out successfully",
+      "passwordChangedWhileOffline": "Your password was changed while you were offline. Please log in again.",
       "noRefreshTokenProvided": "No refresh token provided",
       "userAlreadyVerified": "User is already verified",
       "sessionNotFound": "Session not found",

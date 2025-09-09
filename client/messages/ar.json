@@ -141,7 +141,9 @@
         "confirmPasswordRequired": "يرجى تأكيد كلمة المرور الجديدة",
         "internalServerError": "حدث خطأ داخلي في الخادم. يرجى المحاولة مرة أخرى.",
         "userNotFound": "المستخدم غير موجود",
-        "passwordChangeFailed": "فشل في تغيير كلمة المرور. يرجى المحاولة مرة أخرى."
+        "passwordChangeFailed": "فشل في تغيير كلمة المرور. يرجى المحاولة مرة أخرى.",
+        "securityNotice": "إشعار أمني",
+        "securityNoticeMessage": "لأمانك، سيتم تسجيل خروجك تلقائياً من جميع الأجهزة والمتصفحات بعد تغيير كلمة المرور."
       }
     }
   },
@@ -183,7 +185,9 @@
       "signUp": "إنشاء حساب",
       "signInLink": "تسجيل الدخول",
       "forgotPassword": "نسيت كلمة المرور؟",
-      "resetPassword": "إعادة تعيين كلمة المرور"
+      "resetPassword": "إعادة تعيين كلمة المرور",
+      "securityNotice": "إشعار أمني",
+      "securityNoticeMessage": "لأمانك، سيتم تسجيل خروجك تلقائياً من جميع الأجهزة والمتصفحات بعد إعادة تعيين كلمة المرور."
     },
     "admin": {
       "access": "الوصول للمشرف",
@@ -272,6 +276,7 @@
       "invalidVerificationToken": "رمز التحقق غير صحيح أو منتهي الصلاحية",
       "tokenRefreshed": "تم تحديث الرمز المميز بنجاح",
       "loggedOut": "تم تسجيل الخروج بنجاح",
+      "passwordChangedWhileOffline": "تم تغيير كلمة المرور الخاصة بك أثناء عدم الاتصال. يرجى تسجيل الدخول مرة أخرى.",
       "noRefreshTokenProvided": "لم يتم توفير رمز تحديث",
       "userAlreadyVerified": "المستخدم محقق بالفعل",
       "sessionNotFound": "الجلسة غير موجودة",

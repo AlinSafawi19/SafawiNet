@@ -19,6 +19,19 @@ export interface SocketEvents {
     success: boolean;
     email: string;
   }) => void;
+  passwordResetRoomJoined: (data: {
+    success: boolean;
+    email: string;
+  }) => void;
+  passwordResetRoomLeft: (data: {
+    success: boolean;
+    email: string;
+  }) => void;
+  forceLogout: (data: {
+    reason: string;
+    message: string;
+    timestamp: string;
+  }) => void;
   connect: () => void;
   disconnect: () => void;
 }
@@ -173,6 +186,41 @@ class RealSocketService {
   public async leavePendingVerificationRoom(email: string): Promise<void> {
     if (this.socket && this.isConnected) {
       this.socket.emit('leavePendingVerificationRoom', { email });
+    }
+  }
+
+  public async joinPasswordResetRoom(email: string): Promise<void> {
+    if (this.socket && this.isConnected) {
+      console.log('📡 Emitting joinPasswordResetRoom for email:', email);
+      this.socket.emit('joinPasswordResetRoom', { email });
+    } else if (this.socket && !this.isConnected) {
+      console.log('⏳ Socket not connected yet, waiting for connection...');
+      // Wait for connection to be established
+      await new Promise<void>((resolve) => {
+        const checkConnection = () => {
+          if (this.isConnected) {
+            console.log(
+              '📡 Socket now connected, emitting joinPasswordResetRoom for email:',
+              email
+            );
+            this.socket?.emit('joinPasswordResetRoom', { email });
+            resolve();
+          } else {
+            setTimeout(checkConnection, 100); // Check every 100ms
+          }
+        };
+        checkConnection();
+      });
+    } else {
+      console.warn(
+        '⚠️ Cannot join password reset room - socket not initialized'
+      );
+    }
+  }
+
+  public async leavePasswordResetRoom(email: string): Promise<void> {
+    if (this.socket && this.isConnected) {
+      this.socket.emit('leavePasswordResetRoom', { email });
     }
   }
 

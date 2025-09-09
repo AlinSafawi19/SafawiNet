@@ -36,6 +36,7 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
   private readonly logger = new Logger(AuthWebSocketGateway.name);
   private readonly verificationRooms = new Map<string, Set<string>>(); // userId -> Set of socketIds
   private readonly pendingVerificationRooms = new Map<string, Set<string>>(); // email -> Set of socketIds
+  private readonly passwordResetRooms = new Map<string, Set<string>>(); // email -> Set of socketIds
 
   constructor(
     private readonly jwtService: JwtService,
@@ -114,6 +115,14 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
         this.removeFromPendingVerificationRoom(email, client.id);
       }
     }
+
+    // Remove from all password reset rooms (for anonymous connections)
+    for (const [email, room] of this.passwordResetRooms.entries()) {
+      if (room.has(client.id)) {
+        this.logger.log(`🧹 Cleaning up anonymous client ${client.id} from password reset room for ${email}`);
+        this.removeFromPasswordResetRoom(email, client.id);
+      }
+    }
   }
 
   @SubscribeMessage('joinVerificationRoom')
@@ -171,6 +180,36 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
     await this.removeFromPendingVerificationRoom(email, client.id);
     client.emit('pendingVerificationRoomLeft', { success: true, email });
     this.logger.log(`✅ User ${client.id} successfully left pending verification room for email: ${email}`);
+  }
+
+  @SubscribeMessage('joinPasswordResetRoom')
+  async handleJoinPasswordResetRoom(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: { email: string }
+  ) {
+    // Allow anonymous connections to join password reset rooms
+    const email = data.email.toLowerCase();
+    this.logger.log(`🔗 User ${client.id} attempting to join password reset room for email: ${email}`);
+    
+    await this.addToPasswordResetRoom(email, client.id);
+    client.emit('passwordResetRoomJoined', { success: true, email });
+    this.logger.log(`✅ User ${client.id} successfully joined password reset room for email: ${email}`);
+    
+    // Log current room state
+    const room = this.passwordResetRooms.get(email);
+    this.logger.log(`📊 Password reset room for ${email} now has ${room?.size || 0} users`);
+  }
+
+  @SubscribeMessage('leavePasswordResetRoom')
+  async handleLeavePasswordResetRoom(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: { email: string }
+  ) {
+    const email = data.email.toLowerCase();
+    this.logger.log(`🔗 User ${client.id} attempting to leave password reset room for email: ${email}`);
+    await this.removeFromPasswordResetRoom(email, client.id);
+    client.emit('passwordResetRoomLeft', { success: true, email });
+    this.logger.log(`✅ User ${client.id} successfully left password reset room for email: ${email}`);
   }
 
   private async addToVerificationRoom(userId: string, socketId: string) {
@@ -254,6 +293,47 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
         this.logger.log(`User removed from pending verification room for email: ${email}`);
       } catch (error) {
         this.logger.warn(`Failed to remove user from pending verification room for email ${email}:`, error);
+      }
+    }
+  }
+
+  private async addToPasswordResetRoom(email: string, socketId: string) {
+    if (!this.server) {
+      this.logger.error('WebSocket server not initialized, cannot add user to password reset room');
+      return;
+    }
+
+    if (!this.passwordResetRooms.has(email)) {
+      this.passwordResetRooms.set(email, new Set());
+    }
+    this.passwordResetRooms.get(email)!.add(socketId);
+    
+    try {
+      await this.server.in(socketId).socketsJoin(`password_reset:${email}`);
+      this.logger.log(`User added to password reset room for email: ${email}`);
+    } catch (error) {
+      this.logger.warn(`Failed to add user to password reset room for email ${email}:`, error);
+    }
+  }
+
+  private async removeFromPasswordResetRoom(email: string, socketId: string) {
+    if (!this.server) {
+      this.logger.error('WebSocket server not initialized, cannot remove user from password reset room');
+      return;
+    }
+
+    const room = this.passwordResetRooms.get(email);
+    if (room) {
+      room.delete(socketId);
+      if (room.size === 0) {
+        this.passwordResetRooms.delete(email);
+      }
+      
+      try {
+        await this.server.in(socketId).socketsLeave(`password_reset:${email}`);
+        this.logger.log(`User removed from password reset room for email: ${email}`);
+      } catch (error) {
+        this.logger.warn(`Failed to remove user from password reset room for email ${email}:`, error);
       }
     }
   }
@@ -396,6 +476,96 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
     }
   }
 
+  // Method to emit logout event to all user's devices (for password change)
+  async emitLogoutToUserDevices(userId: string, reason: string = 'password_changed') {
+    if (!this.server) {
+      this.logger.error('WebSocket server not initialized, cannot emit logout to user devices');
+      return;
+    }
+
+    try {
+      // Emit to user's personal room (all their devices)
+      this.server.to(`user:${userId}`).emit('forceLogout', {
+        reason,
+        message: 'Your password has been changed. Please log in again.',
+        timestamp: new Date().toISOString(),
+      });
+      
+      this.logger.log(`Logout emitted to all devices for user ${userId} - reason: ${reason}`);
+    } catch (error) {
+      this.logger.error(`Failed to emit logout to user devices for user ${userId}:`, error);
+    }
+  }
+
+  // Method to emit logout event to password reset room (for password reset)
+  async emitLogoutToPasswordResetRoom(email: string, reason: string = 'password_reset') {
+    if (!this.server) {
+      this.logger.error('WebSocket server not initialized, cannot emit logout to password reset room');
+      return;
+    }
+
+    this.logger.log(`🔍 Looking for password reset room for email: ${email}`);
+    const room = this.passwordResetRooms.get(email.toLowerCase());
+    this.logger.log(`📊 Password reset room state for ${email}: ${room ? `Found with ${room.size} users` : 'Not found'}`);
+    
+    if (room && room.size > 0) {
+      try {
+        this.logger.log(`📡 Emitting forceLogout to password reset room: password_reset:${email.toLowerCase()}`);
+        this.logger.log(`📡 Room contains sockets:`, Array.from(room));
+        
+        // Emit to the room
+        this.server.to(`password_reset:${email.toLowerCase()}`).emit('forceLogout', {
+          reason,
+          message: 'Your password has been reset. Please log in with your new password.',
+          timestamp: new Date().toISOString(),
+        });
+        
+        this.logger.log(`✅ Logout emitted to password reset room for email: ${email}`);
+        
+        // Clean up the password reset room after successful emission
+        this.logger.log(`🧹 Cleaning up password reset room for email: ${email}`);
+        this.passwordResetRooms.delete(email.toLowerCase());
+        
+        // Also remove all sockets from the room
+        for (const socketId of room) {
+          try {
+            await this.server.in(socketId).socketsLeave(`password_reset:${email.toLowerCase()}`);
+          } catch (error) {
+            this.logger.warn(`Failed to remove socket ${socketId} from password reset room:`, error);
+          }
+        }
+        
+        this.logger.log(`✅ Password reset room cleaned up for email: ${email}`);
+      } catch (error) {
+        this.logger.error(`❌ Failed to emit logout to password reset room for email ${email}:`, error);
+      }
+    } else {
+      this.logger.warn(`⚠️ No password reset room found for email: ${email}`);
+      this.logger.log(`🔍 Available password reset rooms:`, Array.from(this.passwordResetRooms.keys()));
+    }
+  }
+
+  // Method to emit logout event to all connected devices (global logout)
+  async emitGlobalLogout(reason: string = 'security_event') {
+    if (!this.server) {
+      this.logger.error('WebSocket server not initialized, cannot emit global logout');
+      return;
+    }
+
+    try {
+      // Broadcast to all connected clients
+      this.server.emit('forceLogout', {
+        reason,
+        message: 'You have been logged out for security reasons. Please log in again.',
+        timestamp: new Date().toISOString(),
+      });
+      
+      this.logger.log(`Global logout emitted to all devices - reason: ${reason}`);
+    } catch (error) {
+      this.logger.error(`Failed to emit global logout:`, error);
+    }
+  }
+
   // Debug method to get current room states
   getRoomStates() {
     return {
@@ -407,6 +577,12 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
       ),
       pendingVerificationRooms: Object.fromEntries(
         Array.from(this.pendingVerificationRooms.entries()).map(([email, sockets]) => [
+          email,
+          Array.from(sockets)
+        ])
+      ),
+      passwordResetRooms: Object.fromEntries(
+        Array.from(this.passwordResetRooms.entries()).map(([email, sockets]) => [
           email,
           Array.from(sockets)
         ])

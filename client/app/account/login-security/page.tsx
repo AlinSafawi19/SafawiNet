@@ -364,6 +364,23 @@ export default function LoginSecurityPage() {
                   {t('account.loginSecurity.password.subtitle')}
                 </p>
 
+                {/* Security Notice */}
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 sm:p-4 mb-6">
+                  <div className={`flex items-start space-x-2 sm:space-x-3 ${locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <p className={`text-blue-400 text-xs sm:text-sm font-medium mb-1 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+                        {t('account.loginSecurity.password.securityNotice')}
+                      </p>
+                      <p className={`text-blue-300/80 text-xs sm:text-sm ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+                        {t('account.loginSecurity.password.securityNoticeMessage')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Error Message */}
                 {(passwordError || passwordErrorKey) && (
                   <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
