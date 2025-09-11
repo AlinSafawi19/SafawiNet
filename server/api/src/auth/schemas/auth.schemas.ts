@@ -123,12 +123,28 @@ export const TwoFactorLoginDto = z.object({
   code: z.string().min(6, 'Code must be at least 6 characters'),
 });
 
+// Simple 2FA DTOs (email-based)
+export const SimpleTwoFactorEnableDto = z.object({
+  // No body required for enable - user is identified from JWT token
+}).describe('No request body required - user is identified from JWT token in Authorization header');
+
+export const SimpleTwoFactorDisableDto = z.object({
+  currentPassword: z.string().min(1, 'Current password is required').describe('Current user password for verification'),
+});
+
+export const TwoFactorCodeDto = z.object({
+  userId: z.string().min(1, 'User ID is required'),
+  code: z.string().length(6, '2FA code must be 6 digits').describe('6-digit code received via email'),
+});
 
 // Schema exports
 export const TwoFactorSetupSchema = TwoFactorSetupDto;
 export const TwoFactorEnableSchema = TwoFactorEnableDto;
 export const TwoFactorDisableSchema = TwoFactorDisableDto;
 export const TwoFactorLoginSchema = TwoFactorLoginDto;
+export const SimpleTwoFactorEnableSchema = SimpleTwoFactorEnableDto;
+export const SimpleTwoFactorDisableSchema = SimpleTwoFactorDisableDto;
+export const TwoFactorCodeSchema = TwoFactorCodeDto;
 
 
 export class TwoFactorSetupDtoClass extends createZodDto(TwoFactorSetupDto) {
@@ -174,10 +190,46 @@ export class TwoFactorLoginDtoClass extends createZodDto(TwoFactorLoginDto) {
   };
 }
 
+// Simple 2FA DTO classes
+export class SimpleTwoFactorEnableDtoClass extends createZodDto(SimpleTwoFactorEnableDto) {
+  static examples = {
+    simpleTwoFactorEnable: {
+      summary: 'Enable 2FA (no body required)',
+      value: {}
+    }
+  };
+}
+
+export class SimpleTwoFactorDisableDtoClass extends createZodDto(SimpleTwoFactorDisableDto) {
+  static examples = {
+    simpleTwoFactorDisable: {
+      summary: 'Disable 2FA with current password',
+      value: {
+        currentPassword: 'yourCurrentPassword'
+      }
+    }
+  };
+}
+
+export class TwoFactorCodeDtoClass extends createZodDto(TwoFactorCodeDto) {
+  static examples = {
+    twoFactorCode: {
+      summary: 'Complete login with email 2FA code',
+      value: {
+        userId: 'user_id_from_previous_login',
+        code: '123456'
+      }
+    }
+  };
+}
+
 export type TwoFactorSetupDto = z.infer<typeof TwoFactorSetupDto>;
 export type TwoFactorEnableDto = z.infer<typeof TwoFactorEnableDto>;
 export type TwoFactorDisableDto = z.infer<typeof TwoFactorDisableDto>;
 export type TwoFactorLoginDto = z.infer<typeof TwoFactorLoginDto>;
+export type SimpleTwoFactorEnableDto = z.infer<typeof SimpleTwoFactorEnableDto>;
+export type SimpleTwoFactorDisableDto = z.infer<typeof SimpleTwoFactorDisableDto>;
+export type TwoFactorCodeDto = z.infer<typeof TwoFactorCodeDto>;
 
 // Session management schemas
 export const SessionListSchema = z.object({

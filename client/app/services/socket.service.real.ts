@@ -67,16 +67,26 @@ class RealSocketService {
     this.socket.on('connect', () => {
       this.isConnected = true;
       this.reconnectAttempts = 0;
+      console.log('🔌 Socket connected');
     });
 
     this.socket.on('disconnect', () => {
       this.isConnected = false;
+      console.log('🔌 Socket disconnected');
       this.attemptReconnect();
     });
 
     this.socket.on('connect_error', (error: any) => {
       this.isConnected = false;
+      console.error('❌ Socket connection error:', error);
       this.attemptReconnect();
+    });
+
+    // Set up force logout listener immediately when socket is created
+    this.socket.on('forceLogout', (data: any) => {
+      console.log('🚪 Force logout event received in socket service:', data);
+      // Emit a custom event that the AuthContext can listen to
+      window.dispatchEvent(new CustomEvent('forceLogout', { detail: data }));
     });
   }
 

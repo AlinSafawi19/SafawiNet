@@ -40,6 +40,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtPayload) {
     console.log('🔐 JWT Strategy - validate called with payload:', payload);
+    console.log('🔐 JWT Strategy - iat field:', payload.iat, 'type:', typeof payload.iat);
+    console.log('🔐 JWT Strategy - exp field:', payload.exp, 'type:', typeof payload.exp);
     
     // Check if user still exists and is verified
     const user = await this.prisma.user.findUnique({
@@ -111,6 +113,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       verified: user.isVerified,
       roles: user.roles,
       refreshTokenId: payload.refreshTokenId,
+      iat: payload.iat,
+      exp: payload.exp,
     };
   }
 }

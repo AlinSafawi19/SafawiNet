@@ -35,5 +35,5 @@ EXPOSE 3000
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 ENV PRISMA_CLIENT_ENGINE_TYPE="dataproxy"
 
-# Start with improved startup script
-CMD ["./startup.sh"]
+# Start with direct npm command
+CMD ["npm", "run", "start:dev"]

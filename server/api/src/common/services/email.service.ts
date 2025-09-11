@@ -219,21 +219,6 @@ export class EmailService {
     });
   }
 
-  async sendWelcomeEmail(to: string, data: { name: string }): Promise<void> {
-    await this.sendTemplateEmail('welcome', to, {
-      ...data,
-      appName: 'Safawinet',
-      loginUrl: `${this.configService.get('API_DOMAIN')}/login`,
-    });
-  }
-
-  async sendTwoFactorSetup(to: string, data: { name: string; qrCode: string; backupCodes: string[] }): Promise<void> {
-    await this.sendTemplateEmail('two-factor-setup', to, {
-      ...data,
-      appName: 'Safawinet',
-    });
-  }
-
   async sendSecurityAlert(to: string, data: { name: string; event: string; location: string; timestamp: string }): Promise<void> {
     await this.sendTemplateEmail('security-alert', to, {
       ...data,
@@ -275,9 +260,8 @@ export class EmailService {
     const subjects: Record<string, string> = {
       'email-verification': 'Verify your email address',
       'password-reset': 'Reset your password',
-      'welcome': 'Welcome to Safawinet!',
-      'two-factor-setup': 'Set up two-factor authentication',
-      'security-alert': 'Security alert - New login detected',
+      'two-factor-code': 'Your two-factor authentication code',
+      'security-alert': 'Security Alert',
     };
 
     return subjects[templateName] || 'Message from Safawinet';
@@ -297,24 +281,20 @@ export class EmailService {
         appName: 'Safawinet',
         supportEmail: 'support@safawinet.com',
       },
-      'welcome': {
+      'two-factor-code': {
         name: 'John Doe',
+        code: '123456',
+        expirationMinutes: 10,
         appName: 'Safawinet',
-        loginUrl: 'https://safawinet.com/login',
-      },
-      'two-factor-setup': {
-        name: 'John Doe',
-        qrCode: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-        backupCodes: ['12345678', '87654321', '11111111', '22222222', '33333333'],
-        appName: 'Safawinet',
+        supportEmail: 'support@safawinet.com',
       },
       'security-alert': {
         name: 'John Doe',
-        event: 'New login',
-        location: 'New York, NY, USA',
+        event: 'Password Changed',
+        message: 'Your password has been successfully changed. If you did not make this change, please contact support immediately.',
         timestamp: new Date().toLocaleString(),
         appName: 'Safawinet',
-        supportEmail: 'security@safawinet.com',
+        supportEmail: 'support@safawinet.com',
       },
     };
 

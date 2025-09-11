@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Alert - {{event}}</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eeeeee;
+        }
+        .header h1 {
+            color: #dc3545;
+            font-size: 24px;
+            margin: 0;
+        }
+        .alert-icon {
+            font-size: 48px;
+            color: #dc3545;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .content p {
+            margin-bottom: 15px;
+        }
+        .alert-box {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #dc3545;
+            margin: 20px 0;
+        }
+        .event-details {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .event-details h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .event-details p {
+            margin: 5px 0;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #eeeeee;
+            color: #777777;
+            font-size: 12px;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .warning {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="alert-icon">⚠️</div>
+            <h1>Security Alert</h1>
+        </div>
+        <div class="content">
+            <p>Hello {{name}},</p>
+            
+            <div class="alert-box">
+                <strong>Security Event Detected:</strong> {{event}}
+            </div>
+            
+            <p>We detected a security-related change to your {{appName}} account:</p>
+            
+            <div class="event-details">
+                <h3>Event Details</h3>
+                <p><strong>Event:</strong> {{event}}</p>
+                <p><strong>Time:</strong> {{timestamp}}</p>
+                {{#if location}}
+                <p><strong>Location:</strong> {{location}}</p>
+                {{/if}}
+                {{#if message}}
+                <p><strong>Details:</strong> {{message}}</p>
+                {{/if}}
+            </div>
+            
+            <p>If you made this change, no further action is required.</p>
+            
+            <p class="warning">If you did not make this change, please contact our support team immediately to secure your account.</p>
+            
+            <p>For your security, we recommend:</p>
+            <ul>
+                <li>Changing your password if you suspect unauthorized access</li>
+                <li>Enabling two-factor authentication if not already enabled</li>
+                <li>Reviewing your recent account activity</li>
+            </ul>
+        </div>
+        <div class="footer">
+            <p>&copy; {{appName}}. All rights reserved.</p>
+            <p>If you have any questions, please contact <a href="mailto:{{supportEmail}}">{{supportEmail}}</a></p>
+        </div>
+    </div>
+</body>
+</html>

@@ -13,7 +13,10 @@ wait_for_db() {
     timeout=60
     counter=0
     
-    while ! npx prisma db execute --stdin <<< "SELECT 1;" > /dev/null 2>&1; do
+    while ! npx prisma db execute --stdin <<EOF > /dev/null 2>&1
+SELECT 1;
+EOF
+    do
         counter=$((counter + 1))
         if [ $counter -ge $timeout ]; then
             log "ERROR: Database connection timeout after ${timeout} seconds"

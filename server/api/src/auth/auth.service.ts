@@ -6,6 +6,7 @@ import { RedisService } from '../common/services/redis.service';
 import { EmailService } from '../common/services/email.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { TwoFactorService } from './two-factor.service';
+import { SimpleTwoFactorService } from './simple-two-factor.service';
 import { SessionsService, DeviceInfo } from './sessions.service';
 import { NotificationsService } from './notifications.service';
 import { RegisterDto, VerifyEmailDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto, TwoFactorLoginDto } from './schemas/auth.schemas';
@@ -41,6 +42,7 @@ export class AuthService {
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
     private readonly twoFactorService: TwoFactorService,
+    private readonly simpleTwoFactorService: SimpleTwoFactorService,
     private readonly sessionsService: SessionsService,
     private readonly notificationsService: NotificationsService,
     private readonly webSocketGateway: AuthWebSocketGateway,
@@ -299,6 +301,14 @@ export class AuthService {
       // Clear failed login attempts on successful password verification
       await this.redisService.del(`login_attempts:${emailKey}`);
       
+      // Send 2FA code via email
+      try {
+        await this.simpleTwoFactorService.sendTwoFactorCode(user.id);
+      } catch (error) {
+        this.logger.error(`Failed to send 2FA code to user ${user.email}:`, error);
+        // Continue with 2FA flow even if email sending fails
+      }
+      
       return {
         requiresTwoFactor: true,
         user: this.excludePassword(user),
@@ -322,16 +332,11 @@ export class AuthService {
   async twoFactorLogin(userId: string, twoFactorLoginDto: TwoFactorLoginDto, req?: Request): Promise<LoginResult> {
     const { code } = twoFactorLoginDto;
 
-    // Validate 2FA code
-    const validationResult = await this.twoFactorService.validateTwoFactorCode(userId, code);
+    // Validate 2FA code using simple service
+    const validationResult = await this.simpleTwoFactorService.validateTwoFactorCode(userId, code);
     
     if (!validationResult.isValid) {
       throw new UnauthorizedException('Invalid 2FA code');
-    }
-
-    // If it's a backup code, mark it as used
-    if (validationResult.isBackupCode) {
-      await this.markBackupCodeAsUsed(userId, code);
     }
 
     // Get user
@@ -503,7 +508,6 @@ export class AuthService {
         where: { id: oneTimeToken.user.id },
         data: { 
           password: hashedPassword,
-          passwordChangedAt: new Date(),
         },
       });
 
@@ -518,6 +522,21 @@ export class AuthService {
 
     // Log security event
     this.logger.warn(`Password reset completed for user ${result.email} - all sessions invalidated`);
+
+    // Send password reset security alert email
+    try {
+      await this.emailService.sendTemplateEmail('security-alert', result.email, {
+        name: result.name || 'User',
+        appName: 'Safawinet',
+        supportEmail: 'support@safawinet.com',
+        event: 'Password Reset',
+        message: 'Your password has been successfully reset. If you did not request this reset, please contact support immediately.',
+        timestamp: new Date().toLocaleString(),
+      });
+    } catch (error) {
+      this.logger.error(`Failed to send password reset security alert to ${result.email}:`, error);
+      // Don't fail password reset if email fails
+    }
 
     // Emit logout event to password reset room and user's devices
     // Use setTimeout to allow client to join room first

@@ -4,6 +4,7 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
+import { SimpleTwoFactorService } from './simple-two-factor.service';
 import { Response } from 'express';
 import {
   RegisterSchema,
@@ -16,6 +17,9 @@ import {
   TwoFactorEnableSchema,
   TwoFactorDisableSchema,
   TwoFactorLoginSchema,
+  SimpleTwoFactorEnableSchema,
+  SimpleTwoFactorDisableSchema,
+  TwoFactorCodeSchema,
   RegisterDto,
   VerifyEmailDto,
   LoginDto,
@@ -26,6 +30,9 @@ import {
   TwoFactorEnableDto,
   TwoFactorDisableDto,
   TwoFactorLoginDto,
+  SimpleTwoFactorEnableDto,
+  SimpleTwoFactorDisableDto,
+  TwoFactorCodeDto,
 } from './schemas/auth.schemas';
 import { z } from 'zod';
 
@@ -35,6 +42,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly twoFactorService: TwoFactorService,
+    private readonly simpleTwoFactorService: SimpleTwoFactorService,
   ) {}
 
   @Post('register')
@@ -345,69 +353,20 @@ export class AuthController {
     return this.authService.resetPassword(resetPasswordDto);
   }
 
-  @Post('2fa/setup')
-  @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ 
-    summary: 'Setup two-factor authentication',
-    description: 'Initialize 2FA setup for the authenticated user. Requires a valid JWT token in the Authorization header. The user is identified from the JWT token.'
-  })
-  @ApiBody({
-    description: 'No request body required - user is identified from JWT token',
-    examples: {
-      setup2FA: {
-        summary: 'Setup 2FA (no body required)',
-        value: {}
-      }
-    }
-  })
-  @ApiResponse({
-    status: 200,
-    description: '2FA setup successful',
-    schema: {
-      type: 'object',
-      properties: {
-        secret: { type: 'string', description: 'TOTP secret (display once)' },
-        qrCode: { type: 'string', description: 'QR code data URL' },
-        otpauthUrl: { type: 'string', description: 'otpauth URL for authenticator apps' },
-        backupCodes: { 
-          type: 'array', 
-          items: { type: 'string' },
-          description: 'Backup codes (display once, store securely)' 
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 400,
-    description: '2FA already enabled or setup not found',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - Invalid or missing JWT token',
-  })
-  @UsePipes(new ZodValidationPipe(TwoFactorSetupSchema))
-  async setupTwoFactor(@Request() req, @Body() twoFactorSetupDto: TwoFactorSetupDto) {
-    return this.twoFactorService.setupTwoFactor(req.user.sub);
-  }
-
   @Post('2fa/enable')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ 
     summary: 'Enable two-factor authentication',
-    description: 'Enable 2FA for the authenticated user using a TOTP code. Requires a valid JWT token in the Authorization header.'
+    description: 'Enable email-based 2FA for the authenticated user. No password required. Requires a valid JWT token in the Authorization header.'
   })
   @ApiBody({
-    description: '2FA enable data',
+    description: 'No request body required - user is identified from JWT token',
     examples: {
       enable2FA: {
-        summary: 'Enable 2FA with TOTP code',
-        value: {
-          code: '123456'
-        }
+        summary: 'Enable 2FA (no body required)',
+        value: {}
       }
     }
   })
@@ -423,15 +382,14 @@ export class AuthController {
   })
   @ApiResponse({
     status: 400,
-    description: '2FA already enabled or setup not found',
+    description: '2FA already enabled',
   })
   @ApiResponse({
     status: 401,
-    description: 'Invalid TOTP code or unauthorized - Invalid or missing JWT token',
+    description: 'Unauthorized - Invalid or missing JWT token',
   })
-  @UsePipes(new ZodValidationPipe(TwoFactorEnableSchema))
-  async enableTwoFactor(@Request() req, @Body() twoFactorEnableDto: TwoFactorEnableDto) {
-    return this.twoFactorService.enableTwoFactor(req.user.sub, twoFactorEnableDto.code);
+  async enableTwoFactor(@Request() req) {
+    return this.simpleTwoFactorService.enableTwoFactor(req.user.sub);
   }
 
   @Post('2fa/disable')
@@ -440,15 +398,15 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ 
     summary: 'Disable two-factor authentication',
-    description: 'Disable 2FA for the authenticated user using a TOTP or backup code. Requires a valid JWT token in the Authorization header.'
+    description: 'Disable email-based 2FA for the authenticated user. Requires current password. Requires a valid JWT token in the Authorization header.'
   })
   @ApiBody({
     description: '2FA disable data',
     examples: {
       disable2FA: {
-        summary: 'Disable 2FA with TOTP or backup code',
+        summary: 'Disable 2FA with current password',
         value: {
-          code: '123456'
+          currentPassword: 'yourCurrentPassword'
         }
       }
     }
@@ -469,11 +427,11 @@ export class AuthController {
   })
   @ApiResponse({
     status: 401,
-    description: 'Invalid code or unauthorized - Invalid or missing JWT token',
+    description: 'Invalid current password or unauthorized - Invalid or missing JWT token',
   })
-  @UsePipes(new ZodValidationPipe(TwoFactorDisableSchema))
-  async disableTwoFactor(@Request() req, @Body() twoFactorDisableDto: TwoFactorDisableDto) {
-    return this.twoFactorService.disableTwoFactor(req.user.sub, twoFactorDisableDto.code);
+  @UsePipes(new ZodValidationPipe(SimpleTwoFactorDisableSchema))
+  async disableTwoFactor(@Request() req, @Body() twoFactorDisableDto: SimpleTwoFactorDisableDto) {
+    return this.simpleTwoFactorService.disableTwoFactor(req.user.sub, twoFactorDisableDto.currentPassword);
   }
 
   @Post('2fa/login')
@@ -483,7 +441,7 @@ export class AuthController {
     description: '2FA login data',
     examples: {
       twoFactorLogin: {
-        summary: 'Complete login with TOTP or backup code',
+        summary: 'Complete login with email 2FA code',
         value: {
           userId: 'user_id_from_previous_login',
           code: '123456'
@@ -525,8 +483,18 @@ export class AuthController {
     description: 'Invalid 2FA code',
   })
   @UsePipes(new ZodValidationPipe(TwoFactorLoginSchema))
-  async twoFactorLogin(@Body() twoFactorLoginDto: TwoFactorLoginDto, @Request() req: any) {
-    return this.authService.twoFactorLogin(twoFactorLoginDto.userId, twoFactorLoginDto, req);
+  async twoFactorLogin(@Body() twoFactorLoginDto: TwoFactorLoginDto, @Request() req: any, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.twoFactorLogin(twoFactorLoginDto.userId, twoFactorLoginDto, req);
+    
+    // If login was successful and tokens were generated, set them as HTTP-only cookies
+    if (result.tokens) {
+      this.authService.setAuthCookies(res, result.tokens);
+      // Remove tokens from response body for security
+      const { tokens, ...responseWithoutTokens } = result;
+      return responseWithoutTokens;
+    }
+    
+    return result;
   }
 
 

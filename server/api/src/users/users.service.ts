@@ -291,23 +291,24 @@ export class UsersService {
       where: { id: userId },
       data: { 
         password: hashedNewPassword,
-        passwordChangedAt: new Date(),
       },
     });
 
     // Revoke all refresh tokens for this user
     await this.revokeRefreshTokens(userId);
 
-    // Send password change notification email
+    // Send password change security alert email
     try {
-      await this.emailService.sendTemplateEmail('password-change-notification', user.email, {
+      await this.emailService.sendTemplateEmail('security-alert', user.email, {
         name: user.name || 'User',
         appName: 'Safawinet',
         supportEmail: 'support@safawinet.com',
+        event: 'Password Changed',
+        message: 'Your password has been successfully changed. If you did not make this change, please contact support immediately.',
         timestamp: new Date().toLocaleString(),
       });
     } catch (error) {
-      this.logger.error(`Failed to send password change notification to ${user.email}:`, error);
+      this.logger.error(`Failed to send password change security alert to ${user.email}:`, error);
       // Don't fail password change if email fails
     }
 
@@ -353,27 +354,6 @@ export class UsersService {
 
     const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
-  }
-
-  async getPasswordChangeTimestamp(userId: string): Promise<{ passwordChangedAt: string | null }> {
-    this.logger.log(`🔍 Getting password change timestamp for user: ${userId}`);
-    
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { passwordChangedAt: true },
-    });
-
-    if (!user) {
-      this.logger.warn(`🔍 User not found: ${userId}`);
-      throw new Error('User not found');
-    }
-
-    const result = {
-      passwordChangedAt: user.passwordChangedAt?.toISOString() || null,
-    };
-    
-    this.logger.log(`🔍 Password change timestamp for user ${userId}:`, result);
-    return result;
   }
 
   async findUserByEmail(email: string): Promise<User | null> {

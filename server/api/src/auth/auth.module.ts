@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TwoFactorService } from './two-factor.service';
+import { SimpleTwoFactorService } from './simple-two-factor.service';
 import { SessionsController } from './sessions.controller';
 import { NotificationsController } from './notifications.controller';
 import { EmailMonitoringController } from './email-monitoring.controller';
@@ -21,6 +22,7 @@ import { PinoLoggerService } from '../common/services/logger.service';
 import { SentryService } from '../common/services/sentry.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -34,11 +36,13 @@ import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
       }),
       inject: [ConfigService],
     }),
+    forwardRef(() => UsersModule),
   ],
   controllers: [AuthController, SessionsController, NotificationsController, EmailMonitoringController, AdminController, CustomerController],
   providers: [
     AuthService,
     TwoFactorService,
+    SimpleTwoFactorService,
     SessionsService,
     NotificationsService,
     EmailMonitoringService,

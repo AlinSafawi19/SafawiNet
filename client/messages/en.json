@@ -276,7 +276,6 @@
       "invalidVerificationToken": "Invalid or expired verification token",
       "tokenRefreshed": "Token refreshed successfully",
       "loggedOut": "Logged out successfully",
-      "passwordChangedWhileOffline": "Your password was changed while you were offline. Please log in again.",
       "noRefreshTokenProvided": "No refresh token provided",
       "userAlreadyVerified": "User is already verified",
       "sessionNotFound": "Session not found",

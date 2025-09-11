@@ -102,43 +102,6 @@ export class UsersController {
     return { user };
   }
 
-  @Get(':id/password-change-timestamp')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get password change timestamp for offline logout detection' })
-  @ApiResponse({
-    status: 200,
-    description: 'Password change timestamp retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        passwordChangedAt: { type: 'string', format: 'date-time' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized',
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden - can only access own data',
-  })
-  async getPasswordChangeTimestamp(@Param('id') userId: string, @Request() req: any) {
-    this.logger.log(`🔍 Password change timestamp requested for user: ${userId}`);
-    this.logger.log(`🔍 Request user ID: ${req.user.sub}`);
-    
-    // Ensure user can only access their own data
-    if (req.user.sub !== userId) {
-      this.logger.warn(`🔍 Forbidden access attempt - requested: ${userId}, authenticated: ${req.user.sub}`);
-      throw new Error('Forbidden');
-    }
-    
-    const result = await this.usersService.getPasswordChangeTimestamp(userId);
-    this.logger.log(`🔍 Password change timestamp result:`, result);
-    return result;
-  }
-
   @Get(':id')
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'User found successfully' })

@@ -15,7 +15,7 @@ interface ValidationErrors {
 }
 
 export function AuthForm() {
-  const { login, register, user, isLoading } = useAuth();
+  const { login, loginWith2FA, register, user, isLoading } = useAuth();
   const { t, locale } = useLanguage();
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
@@ -40,6 +40,12 @@ export function AuthForm() {
     password: false,
     confirmPassword: false,
   });
+
+  // 2FA state
+  const [show2FAForm, setShow2FAForm] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [twoFactorUserId, setTwoFactorUserId] = useState('');
+  const [is2FALoading, setIs2FALoading] = useState(false);
 
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -283,7 +289,14 @@ export function AuthForm() {
               }
             }, 1000);
           }
+        } else if (result.requiresTwoFactor) {
+          // Show 2FA form
+          setTwoFactorUserId(result.user?.id || '');
+          setShow2FAForm(true);
+          setError('');
+          setErrorKey('');
         } else {
+          // Handle other login errors
           if (result.messageKey) {
             setErrorKey(result.messageKey);
             setError('');
@@ -347,6 +360,52 @@ export function AuthForm() {
       setError('');
     } finally {
       setIsFormLoading(false);
+    }
+  };
+
+  // Handle 2FA form submission
+  const handle2FASubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setErrorKey('');
+    setIs2FALoading(true);
+
+    if (!twoFactorCode.trim()) {
+      setError('Please enter the 2FA code');
+      setIs2FALoading(false);
+      return;
+    }
+
+    try {
+      const result = await loginWith2FA(twoFactorUserId, twoFactorCode);
+      if (result.success) {
+        // 2FA successful, redirect based on role
+        const currentUser = result.user;
+        const roles = currentUser?.roles || (currentUser as any)?.role || (currentUser as any)?.userRoles || (currentUser as any)?.userRole;
+        const hasAdminRole = currentUser && roles && (Array.isArray(roles) ? roles.includes('ADMIN') : typeof roles === 'string' ? roles === 'ADMIN' : false);
+
+        if (hasAdminRole) {
+          router.push('/admin');
+        } else {
+          router.push('/');
+        }
+      } else {
+        if (result.messageKey) {
+          setErrorKey(result.messageKey);
+          setError('');
+        } else if (result.message) {
+          setError(result.message);
+          setErrorKey('');
+        } else {
+          setErrorKey('auth.messages.invalid2FACode');
+          setError('');
+        }
+      }
+    } catch (error) {
+      setErrorKey('auth.messages.generalError');
+      setError('');
+    } finally {
+      setIs2FALoading(false);
     }
   };
 
@@ -457,12 +516,13 @@ export function AuthForm() {
           {/* Header */}
           <div className="auth-screen text-center mb-4 sm:mb-6 md:mb-8">
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-2">
-              {isLogin ? t('auth.form.welcomeBack') : t('auth.form.joinUs')}
+              {show2FAForm ? 'Two-Factor Authentication' : (isLogin ? t('auth.form.welcomeBack') : t('auth.form.joinUs'))}
             </h1>
             <p className="text-white/70 text-xs sm:text-sm md:text-base">
-              {isLogin
-                ? t('auth.form.signInSubtitle')
-                : t('auth.form.createAccountSubtitle')}
+              {show2FAForm 
+                ? 'Please enter the 6-digit code sent to your email'
+                : (isLogin ? t('auth.form.signInSubtitle') : t('auth.form.createAccountSubtitle'))
+              }
             </p>
           </div>
 
@@ -484,11 +544,58 @@ export function AuthForm() {
             </div>
           )}
 
-          {/* Form */}
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-3 sm:space-y-4 md:space-y-6"
-          >
+          {/* 2FA Form */}
+          {show2FAForm && (
+            <form
+              onSubmit={handle2FASubmit}
+              className="space-y-3 sm:space-y-4 md:space-y-6"
+            >
+              <div>
+                <label htmlFor="twoFactorCode" className="block text-sm font-medium text-white mb-1">
+                  Verification Code
+                </label>
+                <input
+                  type="text"
+                  id="twoFactorCode"
+                  name="twoFactorCode"
+                  value={twoFactorCode}
+                  onChange={(e) => setTwoFactorCode(e.target.value)}
+                  placeholder="Enter 6-digit code"
+                  maxLength={6}
+                  className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={is2FALoading}
+                />
+              </div>
+              
+              <button
+                type="submit"
+                disabled={is2FALoading || !twoFactorCode.trim()}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-md transition-colors"
+              >
+                {is2FALoading ? 'Verifying...' : 'Verify Code'}
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  setShow2FAForm(false);
+                  setTwoFactorCode('');
+                  setError('');
+                  setErrorKey('');
+                }}
+                className="w-full bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-2 px-4 rounded-md transition-colors"
+              >
+                Back to Login
+              </button>
+            </form>
+          )}
+
+          {/* Main Form */}
+          {!show2FAForm && (
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-3 sm:space-y-4 md:space-y-6"
+            >
             {!isLogin && (
               <div>
                 <label
@@ -652,6 +759,7 @@ export function AuthForm() {
               )}
             </button>
           </form>
+          )}
 
           {/* Toggle mode */}
           <div className="text-center mt-3 sm:mt-4 md:mt-6">

@@ -9,10 +9,11 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger, UseGuards } from '@nestjs/common';
+import { Logger, UseGuards, Inject, forwardRef } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { WsJwtGuard } from '../auth/guards/ws-jwt.guard';
+import { UsersService } from '../users/users.service';
 
 interface AuthenticatedSocket extends Socket {
   user?: {
@@ -41,6 +42,8 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
   ) {}
 
   afterInit(server: Server) {
@@ -73,6 +76,7 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
           };
           
           this.logger.log(`Authenticated WebSocket connection for user ${client.user.email}`);
+          
           
           // Join user to their personal room
           await client.join(`user:${client.user.id}`);
@@ -485,9 +489,16 @@ export class AuthWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
 
     try {
       // Emit to user's personal room (all their devices)
+      let message = 'Your password has been changed. Please log in again.';
+      if (reason === '2fa_disabled') {
+        message = 'Two-factor authentication has been disabled. Please log in again.';
+      } else if (reason === 'password_reset') {
+        message = 'Your password has been reset. Please log in with your new password.';
+      }
+      
       this.server.to(`user:${userId}`).emit('forceLogout', {
         reason,
-        message: 'Your password has been changed. Please log in again.',
+        message,
         timestamp: new Date().toISOString(),
       });
       

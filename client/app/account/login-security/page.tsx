@@ -9,6 +9,7 @@ import {
   Breadcrumb,
   generateBreadcrumbItems,
 } from '../../components/Breadcrumb';
+import { buildApiUrl } from '../../config/api';
 import { HiLockClosed, HiShieldCheck } from 'react-icons/hi2';
 
 interface ValidationErrors {
@@ -47,6 +48,12 @@ export default function LoginSecurityPage() {
   const [passwordSuccessMessage, setPasswordSuccessMessage] = useState('');
   const [passwordErrorKey, setPasswordErrorKey] = useState('');
   const [passwordSuccessKey, setPasswordSuccessKey] = useState('');
+
+  // 2FA state
+  const [is2FALoading, setIs2FALoading] = useState(false);
+  const [showDisableModal, setShowDisableModal] = useState(false);
+  const [disablePassword, setDisablePassword] = useState('');
+  const [disablePasswordError, setDisablePasswordError] = useState('');
 
   useEffect(() => {
     // Redirect unauthenticated users to login
@@ -267,6 +274,76 @@ export default function LoginSecurityPage() {
       setPasswordError('');
     } finally {
       setIsPasswordFormLoading(false);
+    }
+  };
+
+  // 2FA handlers
+  const handleEnable2FA = async () => {
+    setIs2FALoading(true);
+    try {
+      const url = buildApiUrl('/v1/auth/2fa/enable');
+      console.log('2FA enable URL:', url);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('2FA enable success:', data);
+        // Refresh user data to get updated 2FA status
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        console.error('2FA enable error:', errorData);
+        alert(errorData.message || `Failed to enable 2FA (${response.status})`);
+      }
+    } catch (error) {
+      console.error('2FA enable exception:', error);
+      alert('An error occurred while enabling 2FA');
+    } finally {
+      setIs2FALoading(false);
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    if (!disablePassword.trim()) {
+      setDisablePasswordError('Current password is required');
+      return;
+    }
+
+    setIs2FALoading(true);
+    setDisablePasswordError('');
+
+    try {
+      const response = await fetch(buildApiUrl('/v1/auth/2fa/disable'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          currentPassword: disablePassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setShowDisableModal(false);
+        setDisablePassword('');
+        // Refresh user data to get updated 2FA status
+        window.location.reload();
+      } else {
+        setDisablePasswordError(data.message || 'Failed to disable 2FA');
+      }
+    } catch (error) {
+      setDisablePasswordError('An error occurred while disabling 2FA');
+    } finally {
+      setIs2FALoading(false);
     }
   };
 
@@ -598,24 +675,105 @@ export default function LoginSecurityPage() {
             {activeTab === 'twoFactor' && (
               <div>
                 <h2
-                  className={`text-lg font-semibold text-white mb-2 ${
+                  className={`text-lg font-semibold text-white mb-4 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
                   {t('account.loginSecurity.tabs.twoFactor')}
                 </h2>
-                <p
-                  className={`text-sm text-gray-300 ${
-                    locale === 'ar' ? 'text-right' : 'text-left'
-                  }`}
-                >
-                  Two-factor authentication setup coming soon...
-                </p>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
+                    <div className={`${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+                      <h3 className="text-white font-medium">
+                        Email Two-Factor Authentication
+                      </h3>
+                      <p className="text-sm text-gray-300 mt-1">
+                        {user?.twoFactorEnabled 
+                          ? '2FA is currently enabled. You will receive a code via email when logging in.'
+                          : 'Enable 2FA to receive a security code via email when logging in.'
+                        }
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span className={`text-sm ${user?.twoFactorEnabled ? 'text-green-400' : 'text-gray-400'}`}>
+                        {user?.twoFactorEnabled ? 'Enabled' : 'Disabled'}
+                      </span>
+                      <button
+                        onClick={() => {
+                          if (user?.twoFactorEnabled) {
+                            // Show disable modal
+                            setShowDisableModal(true);
+                          } else {
+                            // Enable 2FA
+                            handleEnable2FA();
+                          }
+                        }}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          user?.twoFactorEnabled
+                            ? 'bg-red-600 hover:bg-red-700 text-white'
+                            : 'bg-green-600 hover:bg-green-700 text-white'
+                        }`}
+                        disabled={is2FALoading}
+                      >
+                        {is2FALoading ? 'Loading...' : (user?.twoFactorEnabled ? 'Disable' : 'Enable')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Disable 2FA Modal */}
+      {showDisableModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Disable Two-Factor Authentication
+            </h3>
+            <p className="text-gray-300 mb-4">
+              To disable 2FA, please enter your current password:
+            </p>
+            <div className="space-y-4">
+              <div>
+                <input
+                  type="password"
+                  value={disablePassword}
+                  onChange={(e) => setDisablePassword(e.target.value)}
+                  placeholder="Current password"
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {disablePasswordError && (
+                  <p className="text-red-400 text-sm mt-1">{disablePasswordError}</p>
+                )}
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setShowDisableModal(false);
+                    setDisablePassword('');
+                    setDisablePasswordError('');
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
+                  disabled={is2FALoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDisable2FA}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+                  disabled={is2FALoading}
+                >
+                  {is2FALoading ? 'Disabling...' : 'Disable 2FA'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

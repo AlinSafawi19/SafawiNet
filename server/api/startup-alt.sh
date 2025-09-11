@@ -6,7 +6,10 @@ echo "Starting application initialization..."
 
 # Wait for database using a simple approach
 echo "Waiting for database to be ready..."
-until npx prisma db execute --stdin <<< "SELECT 1;" > /dev/null 2>&1; do
+until npx prisma db execute --stdin <<EOF > /dev/null 2>&1
+SELECT 1;
+EOF
+do
     echo "Database not ready, waiting..."
     sleep 2
 done

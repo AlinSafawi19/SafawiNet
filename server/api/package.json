@@ -12,7 +12,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "start:docker": "npx prisma migrate deploy && npx prisma generate && npx prisma db seed && npm run start:dev",
+    "start:docker": "npx prisma migrate deploy && npx prisma generate && npx prisma db seed && npm run build && npm run start:dev",
     "lint": "eslint \"{src,apps,libs,test}/\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
