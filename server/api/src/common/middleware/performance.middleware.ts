@@ -1,6 +1,9 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { PerformanceService, PerformanceMetrics } from '../services/performance.service';
+import {
+  PerformanceService,
+  PerformanceMetrics,
+} from '../services/performance.service';
 
 @Injectable()
 export class PerformanceMiddleware implements NestMiddleware {
@@ -14,9 +17,9 @@ export class PerformanceMiddleware implements NestMiddleware {
     // Override res.end to capture response time
     const originalEnd = res.end;
     const performanceService = this.performanceService;
-    res.end = function(chunk?: any, encoding?: any) {
+    res.end = function (chunk?: any, encoding?: any) {
       const duration = Date.now() - startTime;
-      
+
       // Record performance metrics
       const metrics: PerformanceMetrics = {
         route: req.route?.path || req.path,

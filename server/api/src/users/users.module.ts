@@ -12,11 +12,11 @@ import { AuthModule } from '../auth/auth.module';
   imports: [forwardRef(() => AuthModule), JwtModule],
   controllers: [UsersController],
   providers: [
-    UsersService, 
-    PrismaService, 
-    EmailService, 
+    UsersService,
+    PrismaService,
+    EmailService,
     RedisService,
-    JwtAuthGuard
+    JwtAuthGuard,
   ],
   exports: [UsersService],
 })

@@ -29,7 +29,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
   async sweepExpiredTokens() {
     try {
       this.logger.log('Starting expired token cleanup', 'CronService');
-      
+
       // Add job to security queue for token cleanup
       await this.queueService.addSecurityJob({
         type: 'token_cleanup',
@@ -39,7 +39,11 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
       this.logger.log('Expired token cleanup job queued', 'CronService');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error('Failed to queue token cleanup job', errorMessage, 'CronService');
+      this.logger.error(
+        'Failed to queue token cleanup job',
+        errorMessage,
+        'CronService',
+      );
     }
   }
 
@@ -48,7 +52,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
   async pruneStaleSessions() {
     try {
       this.logger.log('Starting stale session cleanup', 'CronService');
-      
+
       // Add job to security queue for session cleanup
       await this.queueService.addSecurityJob({
         type: 'session_cleanup',
@@ -58,7 +62,11 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
       this.logger.log('Stale session cleanup job queued', 'CronService');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error('Failed to queue session cleanup job', errorMessage, 'CronService');
+      this.logger.error(
+        'Failed to queue session cleanup job',
+        errorMessage,
+        'CronService',
+      );
     }
   }
 
@@ -67,7 +75,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
   async expireReadNotifications() {
     try {
       this.logger.log('Starting notification cleanup', 'CronService');
-      
+
       // Add job to security queue for notification cleanup
       await this.queueService.addSecurityJob({
         type: 'notification_cleanup',
@@ -77,7 +85,11 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
       this.logger.log('Notification cleanup job queued', 'CronService');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error('Failed to queue notification cleanup job', errorMessage, 'CronService');
+      this.logger.error(
+        'Failed to queue notification cleanup job',
+        errorMessage,
+        'CronService',
+      );
     }
   }
 
@@ -86,7 +98,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
   async performDatabaseCleanup() {
     try {
       this.logger.log('Starting database cleanup', 'CronService');
-      
+
       // Add job to maintenance queue
       await this.queueService.addMaintenanceJob({
         type: 'db_cleanup',
@@ -96,7 +108,11 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
       this.logger.log('Database cleanup job queued', 'CronService');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error('Failed to queue database cleanup job', errorMessage, 'CronService');
+      this.logger.error(
+        'Failed to queue database cleanup job',
+        errorMessage,
+        'CronService',
+      );
     }
   }
 
@@ -105,7 +121,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
   async performLogRotation() {
     try {
       this.logger.log('Starting log rotation', 'CronService');
-      
+
       // Add job to maintenance queue
       await this.queueService.addMaintenanceJob({
         type: 'log_rotation',
@@ -115,7 +131,11 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
       this.logger.log('Log rotation job queued', 'CronService');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error('Failed to queue log rotation job', errorMessage, 'CronService');
+      this.logger.error(
+        'Failed to queue log rotation job',
+        errorMessage,
+        'CronService',
+      );
     }
   }
 
@@ -124,7 +144,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
   async performHealthCheck() {
     try {
       this.logger.log('Starting health check', 'CronService');
-      
+
       // Add job to maintenance queue
       await this.queueService.addMaintenanceJob({
         type: 'health_check',
@@ -134,7 +154,11 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
       this.logger.log('Health check job queued', 'CronService');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error('Failed to queue health check job', errorMessage, 'CronService');
+      this.logger.error(
+        'Failed to queue health check job',
+        errorMessage,
+        'CronService',
+      );
     }
   }
 
@@ -160,11 +184,18 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
       });
 
       const totalCleaned = refreshResult.count + oneTimeResult.count;
-      this.logger.log(`Cleaned up ${totalCleaned} expired tokens/sessions`, 'CronService');
+      this.logger.log(
+        `Cleaned up ${totalCleaned} expired tokens/sessions`,
+        'CronService',
+      );
       return totalCleaned;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error('Failed to cleanup expired tokens', errorMessage, 'CronService');
+      this.logger.error(
+        'Failed to cleanup expired tokens',
+        errorMessage,
+        'CronService',
+      );
       throw error;
     }
   }
@@ -173,7 +204,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
     try {
       // Clean up old user sessions (older than 30 days)
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      
+
       const result = await this.prisma.userSession.deleteMany({
         where: {
           lastActiveAt: {
@@ -181,12 +212,16 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
           },
         },
       });
-      
+
       this.logger.log(`Cleaned up ${result.count} old sessions`, 'CronService');
       return result.count;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error('Failed to cleanup old sessions', errorMessage, 'CronService');
+      this.logger.error(
+        'Failed to cleanup old sessions',
+        errorMessage,
+        'CronService',
+      );
       throw error;
     }
   }
@@ -205,12 +240,19 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
           ],
         },
       });
-      
-      this.logger.log(`Cleaned up ${result.count} old read notifications`, 'CronService');
+
+      this.logger.log(
+        `Cleaned up ${result.count} old read notifications`,
+        'CronService',
+      );
       return result.count;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error('Failed to cleanup old notifications', errorMessage, 'CronService');
+      this.logger.error(
+        'Failed to cleanup old notifications',
+        errorMessage,
+        'CronService',
+      );
       throw error;
     }
   }

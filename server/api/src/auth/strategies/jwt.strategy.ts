@@ -40,9 +40,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtPayload) {
     console.log('🔐 JWT Strategy - validate called with payload:', payload);
-    console.log('🔐 JWT Strategy - iat field:', payload.iat, 'type:', typeof payload.iat);
-    console.log('🔐 JWT Strategy - exp field:', payload.exp, 'type:', typeof payload.exp);
-    
+    console.log(
+      '🔐 JWT Strategy - iat field:',
+      payload.iat,
+      'type:',
+      typeof payload.iat,
+    );
+    console.log(
+      '🔐 JWT Strategy - exp field:',
+      payload.exp,
+      'type:',
+      typeof payload.exp,
+    );
+
     // Check if user still exists and is verified
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
@@ -82,12 +92,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       });
 
       if (!userSession) {
-        console.log('❌ JWT Strategy - Session not found for refreshTokenId:', payload.refreshTokenId);
+        console.log(
+          '❌ JWT Strategy - Session not found for refreshTokenId:',
+          payload.refreshTokenId,
+        );
         throw new UnauthorizedException('Invalid session');
       }
 
       if (!userSession.isCurrent) {
-        console.log('❌ JWT Strategy - Session is not current for refreshTokenId:', payload.refreshTokenId);
+        console.log(
+          '❌ JWT Strategy - Session is not current for refreshTokenId:',
+          payload.refreshTokenId,
+        );
         throw new UnauthorizedException('Session expired');
       }
 
@@ -97,15 +113,24 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           where: { id: userSession.id },
           data: { lastActiveAt: new Date() },
         });
-        console.log('🔄 JWT Strategy - Updated session activity for session:', userSession.id);
+        console.log(
+          '🔄 JWT Strategy - Updated session activity for session:',
+          userSession.id,
+        );
       } catch (error) {
-        console.log('⚠️ JWT Strategy - Failed to update session activity:', error);
+        console.log(
+          '⚠️ JWT Strategy - Failed to update session activity:',
+          error,
+        );
         // Don't fail validation if session update fails
       }
     }
 
-    console.log('✅ JWT Strategy - User and session validated successfully:', user.email);
-    
+    console.log(
+      '✅ JWT Strategy - User and session validated successfully:',
+      user.email,
+    );
+
     return {
       sub: user.id,
       email: user.email,

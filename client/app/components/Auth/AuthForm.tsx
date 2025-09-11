@@ -381,8 +381,19 @@ export function AuthForm() {
       if (result.success) {
         // 2FA successful, redirect based on role
         const currentUser = result.user;
-        const roles = currentUser?.roles || (currentUser as any)?.role || (currentUser as any)?.userRoles || (currentUser as any)?.userRole;
-        const hasAdminRole = currentUser && roles && (Array.isArray(roles) ? roles.includes('ADMIN') : typeof roles === 'string' ? roles === 'ADMIN' : false);
+        const roles =
+          currentUser?.roles ||
+          (currentUser as any)?.role ||
+          (currentUser as any)?.userRoles ||
+          (currentUser as any)?.userRole;
+        const hasAdminRole =
+          currentUser &&
+          roles &&
+          (Array.isArray(roles)
+            ? roles.includes('ADMIN')
+            : typeof roles === 'string'
+            ? roles === 'ADMIN'
+            : false);
 
         if (hasAdminRole) {
           router.push('/admin');
@@ -516,13 +527,18 @@ export function AuthForm() {
           {/* Header */}
           <div className="auth-screen text-center mb-4 sm:mb-6 md:mb-8">
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-2">
-              {show2FAForm ? 'Two-Factor Authentication' : (isLogin ? t('auth.form.welcomeBack') : t('auth.form.joinUs'))}
+              {show2FAForm
+                ? 'Two-Factor Authentication'
+                : isLogin
+                ? t('auth.form.welcomeBack')
+                : t('auth.form.joinUs')}
             </h1>
             <p className="text-white/70 text-xs sm:text-sm md:text-base">
-              {show2FAForm 
+              {show2FAForm
                 ? 'Please enter the 6-digit code sent to your email'
-                : (isLogin ? t('auth.form.signInSubtitle') : t('auth.form.createAccountSubtitle'))
-              }
+                : isLogin
+                ? t('auth.form.signInSubtitle')
+                : t('auth.form.createAccountSubtitle')}
             </p>
           </div>
 
@@ -551,7 +567,10 @@ export function AuthForm() {
               className="space-y-3 sm:space-y-4 md:space-y-6"
             >
               <div>
-                <label htmlFor="twoFactorCode" className="block text-sm font-medium text-white mb-1">
+                <label
+                  htmlFor="twoFactorCode"
+                  className="block text-sm font-medium text-white mb-1"
+                >
                   Verification Code
                 </label>
                 <input
@@ -566,7 +585,7 @@ export function AuthForm() {
                   disabled={is2FALoading}
                 />
               </div>
-              
+
               <button
                 type="submit"
                 disabled={is2FALoading || !twoFactorCode.trim()}
@@ -574,7 +593,7 @@ export function AuthForm() {
               >
                 {is2FALoading ? 'Verifying...' : 'Verify Code'}
               </button>
-              
+
               <button
                 type="button"
                 onClick={() => {
@@ -596,169 +615,169 @@ export function AuthForm() {
               onSubmit={handleSubmit}
               className="space-y-3 sm:space-y-4 md:space-y-6"
             >
-            {!isLogin && (
+              {!isLogin && (
+                <div>
+                  <label
+                    htmlFor="name"
+                    className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2"
+                  >
+                    {t('auth.form.fullName')}
+                  </label>
+                  <input
+                    ref={nameRef}
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    className={getInputClass('name')}
+                    placeholder={t('auth.form.fullNamePlaceholder')}
+                  />
+                  {touched.name && validationErrors.name && (
+                    <p className="text-red-400 text-xs mt-1">
+                      {t(validationErrors.name)}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div>
                 <label
-                  htmlFor="name"
+                  htmlFor="email"
                   className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2"
                 >
-                  {t('auth.form.fullName')}
+                  {t('auth.form.emailAddress')}
                 </label>
                 <input
-                  ref={nameRef}
+                  ref={emailRef}
                   type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
+                  id="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleInputChange}
                   onBlur={handleBlur}
-                  className={getInputClass('name')}
-                  placeholder={t('auth.form.fullNamePlaceholder')}
+                  className={getInputClass('email')}
+                  placeholder={t('auth.form.emailPlaceholder')}
                 />
-                {touched.name && validationErrors.name && (
+                {touched.email && validationErrors.email && (
                   <p className="text-red-400 text-xs mt-1">
-                    {t(validationErrors.name)}
+                    {t(validationErrors.email)}
                   </p>
                 )}
               </div>
-            )}
 
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2"
-              >
-                {t('auth.form.emailAddress')}
-              </label>
-              <input
-                ref={emailRef}
-                type="text"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                onBlur={handleBlur}
-                className={getInputClass('email')}
-                placeholder={t('auth.form.emailPlaceholder')}
-              />
-              {touched.email && validationErrors.email && (
-                <p className="text-red-400 text-xs mt-1">
-                  {t(validationErrors.email)}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2"
-              >
-                {t('auth.form.password')}
-              </label>
-              <input
-                ref={passwordRef}
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                onBlur={handleBlur}
-                className={getInputClass('password')}
-                placeholder={t('auth.form.passwordPlaceholder')}
-              />
-              {touched.password && validationErrors.password && (
-                <p className="text-red-400 text-xs mt-1">
-                  {t(validationErrors.password)}
-                </p>
-              )}
-              {!isLogin && (
-                <p className="text-white/50 text-xs mt-1">
-                  {t('auth.form.passwordRequirement')}
-                </p>
-              )}
-            </div>
-
-            {/* Forgot Password Link - Only show in login mode */}
-            {isLogin && (
-              <div className="flex justify-end items-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    router.push('/forgot-password');
-                  }}
-                  className="text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200 min-h-[32px] px-2 py-1 rounded hover:underline"
-                >
-                  {t('auth.form.forgotPassword')}
-                </button>
-              </div>
-            )}
-
-            {!isLogin && (
               <div>
                 <label
-                  htmlFor="confirmPassword"
+                  htmlFor="password"
                   className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2"
                 >
-                  {t('auth.form.confirmPassword')}
+                  {t('auth.form.password')}
                 </label>
                 <input
-                  ref={confirmPasswordRef}
+                  ref={passwordRef}
                   type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
+                  id="password"
+                  name="password"
+                  value={formData.password}
                   onChange={handleInputChange}
                   onBlur={handleBlur}
-                  className={getInputClass('confirmPassword')}
-                  placeholder={t('auth.form.confirmPasswordPlaceholder')}
+                  className={getInputClass('password')}
+                  placeholder={t('auth.form.passwordPlaceholder')}
                 />
-                {touched.confirmPassword &&
-                  validationErrors.confirmPassword && (
-                    <p className="text-red-400 text-xs mt-1">
-                      {t(validationErrors.confirmPassword)}
-                    </p>
-                  )}
+                {touched.password && validationErrors.password && (
+                  <p className="text-red-400 text-xs mt-1">
+                    {t(validationErrors.password)}
+                  </p>
+                )}
+                {!isLogin && (
+                  <p className="text-white/50 text-xs mt-1">
+                    {t('auth.form.passwordRequirement')}
+                  </p>
+                )}
               </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={isFormLoading}
-              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[44px] sm:min-h-[48px] flex items-center justify-center"
-            >
-              {isFormLoading ? (
-                <>
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
+              {/* Forgot Password Link - Only show in login mode */}
+              {isLogin && (
+                <div className="flex justify-end items-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      router.push('/forgot-password');
+                    }}
+                    className="text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200 min-h-[32px] px-2 py-1 rounded hover:underline"
                   >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  {isLogin
-                    ? t('auth.form.signingIn')
-                    : t('auth.form.creatingAccount')}
-                </>
-              ) : isLogin ? (
-                t('auth.form.signIn')
-              ) : (
-                t('auth.form.createAccount')
+                    {t('auth.form.forgotPassword')}
+                  </button>
+                </div>
               )}
-            </button>
-          </form>
+
+              {!isLogin && (
+                <div>
+                  <label
+                    htmlFor="confirmPassword"
+                    className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2"
+                  >
+                    {t('auth.form.confirmPassword')}
+                  </label>
+                  <input
+                    ref={confirmPasswordRef}
+                    type="password"
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    className={getInputClass('confirmPassword')}
+                    placeholder={t('auth.form.confirmPasswordPlaceholder')}
+                  />
+                  {touched.confirmPassword &&
+                    validationErrors.confirmPassword && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {t(validationErrors.confirmPassword)}
+                      </p>
+                    )}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isFormLoading}
+                className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[44px] sm:min-h-[48px] flex items-center justify-center"
+              >
+                {isFormLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    {isLogin
+                      ? t('auth.form.signingIn')
+                      : t('auth.form.creatingAccount')}
+                  </>
+                ) : isLogin ? (
+                  t('auth.form.signIn')
+                ) : (
+                  t('auth.form.createAccount')
+                )}
+              </button>
+            </form>
           )}
 
           {/* Toggle mode */}

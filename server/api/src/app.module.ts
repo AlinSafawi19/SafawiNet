@@ -49,9 +49,9 @@ import { PerformanceController } from './common/controllers/performance.controll
   ],
   controllers: [AppController, PerformanceController],
   providers: [
-    AppService, 
-    RedisService, 
-    EmailService, 
+    AppService,
+    RedisService,
+    EmailService,
     PinoLoggerService,
     TelemetryService,
     SentryService,

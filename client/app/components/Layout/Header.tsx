@@ -142,7 +142,7 @@ const Header = () => {
                 href="/"
                 className="hover:text-purple-500 transition-colors"
               >
-                $AFAWI NETT
+                SAFAWI NET
               </Link>
             </h2>
           </div>
@@ -315,7 +315,7 @@ const Header = () => {
                       : 'opacity-0 translate-x-full'
                   }`}
                 >
-                  $AFAWI NETT
+                  SAFAWI NET
                 </h2>
               </div>
             </div>

@@ -32,7 +32,7 @@ export class PinoLoggerService implements LoggerService {
   setContext(requestId: string, userId?: string) {
     this.requestId = requestId;
     this.userId = userId;
-    
+
     // Set Sentry context if available
     if (userId) {
       this.sentryService.setUser({ id: userId });
@@ -48,7 +48,7 @@ export class PinoLoggerService implements LoggerService {
 
   error(message: any, trace?: string, context?: string) {
     this.logger.error({ context, trace }, message);
-    
+
     // Send to Sentry if it's an error object
     if (message instanceof Error) {
       this.sentryService.captureException(message, { context });
@@ -75,39 +75,57 @@ export class PinoLoggerService implements LoggerService {
   }
 
   // Log with additional metadata
-  logWithMetadata(message: string, metadata: Record<string, any>, context?: string) {
+  logWithMetadata(
+    message: string,
+    metadata: Record<string, any>,
+    context?: string,
+  ) {
     this.logger.info({ context, ...metadata }, message);
   }
 
   // Log performance metrics
-  logPerformance(route: string, method: string, duration: number, statusCode: number) {
-    this.logger.info({
-      context: 'Performance',
-      route,
-      method,
-      duration,
-      statusCode,
-      performance: true,
-    }, `Request completed: ${method} ${route} in ${duration}ms`);
+  logPerformance(
+    route: string,
+    method: string,
+    duration: number,
+    statusCode: number,
+  ) {
+    this.logger.info(
+      {
+        context: 'Performance',
+        route,
+        method,
+        duration,
+        statusCode,
+        performance: true,
+      },
+      `Request completed: ${method} ${route} in ${duration}ms`,
+    );
   }
 
   // Log security events
   logSecurityEvent(event: string, details: Record<string, any>) {
-    this.logger.warn({
-      context: 'Security',
-      securityEvent: true,
-      ...details,
-    }, `Security event: ${event}`);
+    this.logger.warn(
+      {
+        context: 'Security',
+        securityEvent: true,
+        ...details,
+      },
+      `Security event: ${event}`,
+    );
   }
 
   // Log database queries (for performance monitoring)
   logDatabaseQuery(query: string, duration: number, table?: string) {
-    this.logger.debug({
-      context: 'Database',
-      query,
-      duration,
-      table,
-      dbQuery: true,
-    }, `Database query executed in ${duration}ms`);
+    this.logger.debug(
+      {
+        context: 'Database',
+        query,
+        duration,
+        table,
+        dbQuery: true,
+      },
+      `Database query executed in ${duration}ms`,
+    );
   }
 }

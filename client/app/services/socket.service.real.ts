@@ -19,14 +19,8 @@ export interface SocketEvents {
     success: boolean;
     email: string;
   }) => void;
-  passwordResetRoomJoined: (data: {
-    success: boolean;
-    email: string;
-  }) => void;
-  passwordResetRoomLeft: (data: {
-    success: boolean;
-    email: string;
-  }) => void;
+  passwordResetRoomJoined: (data: { success: boolean; email: string }) => void;
+  passwordResetRoomLeft: (data: { success: boolean; email: string }) => void;
   forceLogout: (data: {
     reason: string;
     message: string;

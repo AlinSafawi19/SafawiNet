@@ -14,9 +14,10 @@ export class WsJwtGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     try {
       const client: Socket = context.switchToWs().getClient();
-      const token = client.handshake.auth.token || 
-                   client.handshake.headers.authorization?.replace('Bearer ', '');
-      
+      const token =
+        client.handshake.auth.token ||
+        client.handshake.headers.authorization?.replace('Bearer ', '');
+
       if (!token) {
         throw new WsException('Token not provided');
       }
@@ -24,10 +25,10 @@ export class WsJwtGuard implements CanActivate {
       const payload = this.jwtService.verify(token, {
         secret: this.configService.get('JWT_SECRET'),
       });
-      
+
       // Attach user info to socket for later use
       (client as any).user = payload;
-      
+
       return true;
     } catch (err) {
       throw new WsException('Invalid token');

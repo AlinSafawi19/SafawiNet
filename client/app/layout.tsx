@@ -21,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>SAFAWI NETT</title>
+        <title>SAFAWI NET</title>
         <meta
           name="description"
           content="Your trusted source for computers & network accessories"

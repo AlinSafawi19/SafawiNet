@@ -32,7 +32,7 @@ export class EmailService {
 
   private async initializeTransporter() {
     const isDevelopment = this.configService.get('NODE_ENV') === 'development';
-    
+
     if (isDevelopment) {
       // Use Mailhog for development - no authentication required
       this.transporter = nodemailer.createTransport({
@@ -72,21 +72,29 @@ export class EmailService {
       path.join(process.cwd(), 'templates/emails'),
       path.join(process.cwd(), 'src/templates/emails'),
     ];
-    
+
     let templatesLoaded = false;
-    
+
     for (const templatesDir of possiblePaths) {
       try {
-        if (await fs.access(templatesDir).then(() => true).catch(() => false)) {
+        if (
+          await fs
+            .access(templatesDir)
+            .then(() => true)
+            .catch(() => false)
+        ) {
           const templateFiles = await fs.readdir(templatesDir);
-          
+
           for (const file of templateFiles) {
             if (file.endsWith('.hbs')) {
               const templateName = path.basename(file, '.hbs');
               const templatePath = path.join(templatesDir, file);
               const templateContent = await fs.readFile(templatePath, 'utf-8');
-              
-              this.templates.set(templateName, handlebars.compile(templateContent));
+
+              this.templates.set(
+                templateName,
+                handlebars.compile(templateContent),
+              );
               this.logger.log(`Loaded email template: ${templateName}`);
             }
           }
@@ -99,9 +107,11 @@ export class EmailService {
         continue;
       }
     }
-    
+
     if (!templatesLoaded) {
-      this.logger.warn('No email templates found in any of the expected directories. Using fallback templates.');
+      this.logger.warn(
+        'No email templates found in any of the expected directories. Using fallback templates.',
+      );
       // Create fallback templates
       this.createFallbackTemplates();
     }
@@ -117,7 +127,7 @@ export class EmailService {
       <p>If you didn't create an account, please ignore this email.</p>
       <p>Best regards,<br>{{appName}} Team</p>
     `;
-    
+
     const passwordResetTemplate = `
       <h2>Password Reset</h2>
       <p>Hello {{name}},</p>
@@ -126,16 +136,24 @@ export class EmailService {
       <p>If you didn't request this, please ignore this email.</p>
       <p>Best regards,<br>{{appName}} Team</p>
     `;
-    
-    this.templates.set('email-verification', handlebars.compile(emailVerificationTemplate));
-    this.templates.set('password-reset', handlebars.compile(passwordResetTemplate));
+
+    this.templates.set(
+      'email-verification',
+      handlebars.compile(emailVerificationTemplate),
+    );
+    this.templates.set(
+      'password-reset',
+      handlebars.compile(passwordResetTemplate),
+    );
     this.logger.log('Fallback email templates created');
   }
 
   async sendEmail(emailData: EmailData): Promise<void> {
     try {
       const mailOptions = {
-        from: emailData.from || this.configService.get('EMAIL_FROM', 'noreply@safawinet.com'),
+        from:
+          emailData.from ||
+          this.configService.get('EMAIL_FROM', 'noreply@safawinet.com'),
         to: emailData.to,
         subject: emailData.subject,
         html: emailData.html,
@@ -143,7 +161,9 @@ export class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      this.logger.log(`Email sent successfully to ${emailData.to}: ${result.messageId}`);
+      this.logger.log(
+        `Email sent successfully to ${emailData.to}: ${result.messageId}`,
+      );
     } catch (error) {
       this.logger.error(`Failed to send email to ${emailData.to}:`, error);
       throw error;
@@ -154,10 +174,10 @@ export class EmailService {
     templateName: string,
     to: string,
     data: Record<string, any>,
-    subject?: string
+    subject?: string,
   ): Promise<void> {
     const template = this.templates.get(templateName);
-    
+
     if (!template) {
       throw new Error(`Email template '${templateName}' not found`);
     }
@@ -173,7 +193,10 @@ export class EmailService {
   }
 
   // Predefined email methods
-  async sendEmailVerification(to: string, data: { name: string; verificationUrl: string }): Promise<void> {
+  async sendEmailVerification(
+    to: string,
+    data: { name: string; verificationUrl: string },
+  ): Promise<void> {
     await this.sendTemplateEmail('email-verification', to, {
       ...data,
       appName: 'Safawinet',
@@ -182,8 +205,14 @@ export class EmailService {
   }
 
   // Alias methods for backward compatibility
-  async sendVerificationEmail(to: string, verificationToken: string): Promise<void> {
-    const frontendDomain = this.configService.get('FRONTEND_DOMAIN', 'localhost:3001');
+  async sendVerificationEmail(
+    to: string,
+    verificationToken: string,
+  ): Promise<void> {
+    const frontendDomain = this.configService.get(
+      'FRONTEND_DOMAIN',
+      'localhost:3001',
+    );
     const verificationUrl = `http://${frontendDomain}/verify-email?token=${verificationToken}`;
     await this.sendEmailVerification(to, {
       name: 'User',
@@ -191,7 +220,10 @@ export class EmailService {
     });
   }
 
-  async sendPasswordReset(to: string, data: { name: string; resetUrl: string }): Promise<void> {
+  async sendPasswordReset(
+    to: string,
+    data: { name: string; resetUrl: string },
+  ): Promise<void> {
     await this.sendTemplateEmail('password-reset', to, {
       ...data,
       appName: 'Safawinet',
@@ -201,14 +233,16 @@ export class EmailService {
 
   // Alias method for backward compatibility
   async sendPasswordResetEmail(to: string, resetToken: string): Promise<void> {
-    const frontendDomain = this.configService.get('FRONTEND_DOMAIN', 'localhost:3001');
+    const frontendDomain = this.configService.get(
+      'FRONTEND_DOMAIN',
+      'localhost:3001',
+    );
     const resetUrl = `http://${frontendDomain}/reset-password?token=${resetToken}`;
     await this.sendPasswordReset(to, {
       name: 'User',
       resetUrl,
     });
   }
-
 
   async sendPasswordChangeNotificationEmail(to: string): Promise<void> {
     await this.sendTemplateEmail('password-change-notification', to, {
@@ -219,7 +253,10 @@ export class EmailService {
     });
   }
 
-  async sendSecurityAlert(to: string, data: { name: string; event: string; location: string; timestamp: string }): Promise<void> {
+  async sendSecurityAlert(
+    to: string,
+    data: { name: string; event: string; location: string; timestamp: string },
+  ): Promise<void> {
     await this.sendTemplateEmail('security-alert', to, {
       ...data,
       appName: 'Safawinet',
@@ -228,9 +265,12 @@ export class EmailService {
   }
 
   // Development preview methods
-  async previewTemplate(templateName: string, data: Record<string, any>): Promise<EmailTemplate> {
+  async previewTemplate(
+    templateName: string,
+    data: Record<string, any>,
+  ): Promise<EmailTemplate> {
     const template = this.templates.get(templateName);
-    
+
     if (!template) {
       throw new Error(`Email template '${templateName}' not found`);
     }
@@ -247,16 +287,22 @@ export class EmailService {
 
   async previewAllTemplates(): Promise<Record<string, EmailTemplate>> {
     const previews: Record<string, EmailTemplate> = {};
-    
+
     for (const [templateName] of this.templates) {
       const sampleData = this.getSampleData(templateName);
-      previews[templateName] = await this.previewTemplate(templateName, sampleData);
+      previews[templateName] = await this.previewTemplate(
+        templateName,
+        sampleData,
+      );
     }
 
     return previews;
   }
 
-  private getDefaultSubject(templateName: string, data: Record<string, any>): string {
+  private getDefaultSubject(
+    templateName: string,
+    data: Record<string, any>,
+  ): string {
     const subjects: Record<string, string> = {
       'email-verification': 'Verify your email address',
       'password-reset': 'Reset your password',
@@ -291,7 +337,8 @@ export class EmailService {
       'security-alert': {
         name: 'John Doe',
         event: 'Password Changed',
-        message: 'Your password has been successfully changed. If you did not make this change, please contact support immediately.',
+        message:
+          'Your password has been successfully changed. If you did not make this change, please contact support immediately.',
         timestamp: new Date().toLocaleString(),
         appName: 'Safawinet',
         supportEmail: 'support@safawinet.com',

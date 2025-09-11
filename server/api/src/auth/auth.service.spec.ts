@@ -168,14 +168,18 @@ describe('AuthService', () => {
         meta: { target: ['email'] },
       });
 
-      await expect(service.register(registerData)).rejects.toThrow('User already exists');
+      await expect(service.register(registerData)).rejects.toThrow(
+        'User already exists',
+      );
     });
 
     it('should handle database errors gracefully', async () => {
       const dbError = new Error('Database connection failed');
       mockPrismaService.user.create.mockRejectedValue(dbError);
 
-      await expect(service.register(registerData)).rejects.toThrow('Database connection failed');
+      await expect(service.register(registerData)).rejects.toThrow(
+        'Database connection failed',
+      );
       expect(mockSentryService.captureException).toHaveBeenCalledWith(dbError);
     });
   });
@@ -210,7 +214,10 @@ describe('AuthService', () => {
       expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
         where: { email: loginData.email },
       });
-      expect(bcrypt.compare).toHaveBeenCalledWith(loginData.password, mockUser.password);
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        loginData.password,
+        mockUser.password,
+      );
       expect(mockJwtService.sign).toHaveBeenCalledTimes(2);
       expect(result).toEqual({
         accessToken,
@@ -227,34 +234,42 @@ describe('AuthService', () => {
     it('should throw error for non-existent user', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.login(loginData)).rejects.toThrow('Invalid credentials');
+      await expect(service.login(loginData)).rejects.toThrow(
+        'Invalid credentials',
+      );
     });
 
     it('should throw error for invalid password', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(false as never);
 
-      await expect(service.login(loginData)).rejects.toThrow('Invalid credentials');
+      await expect(service.login(loginData)).rejects.toThrow(
+        'Invalid credentials',
+      );
     });
 
     it('should throw error for unverified user', async () => {
       const unverifiedUser = { ...mockUser, isVerified: false };
       mockPrismaService.user.findUnique.mockResolvedValue(unverifiedUser);
 
-      await expect(service.login(loginData)).rejects.toThrow('Email not verified');
+      await expect(service.login(loginData)).rejects.toThrow(
+        'Email not verified',
+      );
     });
 
     it('should log security event for failed login', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(false as never);
 
-      await expect(service.login(loginData)).rejects.toThrow('Invalid credentials');
+      await expect(service.login(loginData)).rejects.toThrow(
+        'Invalid credentials',
+      );
       expect(mockLoggerService.logSecurityEvent).toHaveBeenCalledWith(
         'Failed login attempt',
         expect.objectContaining({
           email: loginData.email,
           reason: 'Invalid password',
-        })
+        }),
       );
     });
   });
@@ -278,7 +293,10 @@ describe('AuthService', () => {
 
     it('should verify email successfully with valid token', async () => {
       mockPrismaService.oneTimeToken.findFirst.mockResolvedValue(mockToken);
-      mockPrismaService.user.update.mockResolvedValue({ ...mockUser, isVerified: true });
+      mockPrismaService.user.update.mockResolvedValue({
+        ...mockUser,
+        isVerified: true,
+      });
       mockPrismaService.oneTimeToken.update.mockResolvedValue({});
 
       const result = await service.verifyEmail(token);
@@ -301,7 +319,9 @@ describe('AuthService', () => {
     it('should throw error for invalid token', async () => {
       mockPrismaService.oneTimeToken.findFirst.mockResolvedValue(null);
 
-      await expect(service.verifyEmail(token)).rejects.toThrow('Invalid or expired token');
+      await expect(service.verifyEmail(token)).rejects.toThrow(
+        'Invalid or expired token',
+      );
     });
 
     it('should throw error for expired token', async () => {
@@ -311,7 +331,9 @@ describe('AuthService', () => {
       };
       mockPrismaService.oneTimeToken.findFirst.mockResolvedValue(expiredToken);
 
-      await expect(service.verifyEmail(token)).rejects.toThrow('Invalid or expired token');
+      await expect(service.verifyEmail(token)).rejects.toThrow(
+        'Invalid or expired token',
+      );
     });
 
     it('should throw error for already used token', async () => {
@@ -321,7 +343,9 @@ describe('AuthService', () => {
       };
       mockPrismaService.oneTimeToken.findFirst.mockResolvedValue(usedToken);
 
-      await expect(service.verifyEmail(token)).rejects.toThrow('Invalid or expired token');
+      await expect(service.verifyEmail(token)).rejects.toThrow(
+        'Invalid or expired token',
+      );
     });
   });
 
@@ -418,7 +442,9 @@ describe('AuthService', () => {
     it('should throw error for invalid refresh token', async () => {
       mockPrismaService.refreshSession.findFirst.mockResolvedValue(null);
 
-      await expect(service.refreshToken(refreshToken)).rejects.toThrow('Invalid refresh token');
+      await expect(service.refreshToken(refreshToken)).rejects.toThrow(
+        'Invalid refresh token',
+      );
     });
 
     it('should throw error for expired refresh token', async () => {
@@ -426,9 +452,13 @@ describe('AuthService', () => {
         ...mockSession,
         expiresAt: new Date(Date.now() - 86400000), // 1 day ago
       };
-      mockPrismaService.refreshSession.findFirst.mockResolvedValue(expiredSession);
+      mockPrismaService.refreshSession.findFirst.mockResolvedValue(
+        expiredSession,
+      );
 
-      await expect(service.refreshToken(refreshToken)).rejects.toThrow('Invalid refresh token');
+      await expect(service.refreshToken(refreshToken)).rejects.toThrow(
+        'Invalid refresh token',
+      );
     });
   });
 
@@ -436,7 +466,9 @@ describe('AuthService', () => {
     const userId = 'user123';
 
     it('should logout successfully', async () => {
-      mockPrismaService.refreshSession.deleteMany.mockResolvedValue({ count: 1 });
+      mockPrismaService.refreshSession.deleteMany.mockResolvedValue({
+        count: 1,
+      });
 
       const result = await service.logout(userId);
 
@@ -447,7 +479,9 @@ describe('AuthService', () => {
     });
 
     it('should handle logout when no sessions exist', async () => {
-      mockPrismaService.refreshSession.deleteMany.mockResolvedValue({ count: 0 });
+      mockPrismaService.refreshSession.deleteMany.mockResolvedValue({
+        count: 0,
+      });
 
       const result = await service.logout(userId);
 

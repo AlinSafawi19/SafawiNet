@@ -42,7 +42,7 @@ export class AdminController {
     const skip = (pageNum - 1) * limitNum;
 
     const where: any = {};
-    
+
     if (search) {
       where.OR = [
         { email: { contains: search, mode: 'insensitive' } },
@@ -156,7 +156,7 @@ export class AdminController {
     @Request() req: any,
   ) {
     const { roles } = body;
-    
+
     // Prevent admin from removing their own admin role
     if (req.user.id === id && !roles.includes(Role.ADMIN)) {
       throw new Error('Cannot remove admin role from yourself');
@@ -173,7 +173,9 @@ export class AdminController {
       },
     });
 
-    this.logger.log(`Admin ${req.user.email} updated roles for user ${updatedUser.email} to: ${roles.join(', ')}`);
+    this.logger.log(
+      `Admin ${req.user.email} updated roles for user ${updatedUser.email} to: ${roles.join(', ')}`,
+    );
 
     return updatedUser;
   }
@@ -187,7 +189,7 @@ export class AdminController {
     }
 
     await this.prisma.user.delete({ where: { id } });
-    
+
     this.logger.log(`Admin ${req.user.email} deleted user ${id}`);
   }
 
@@ -306,16 +308,20 @@ export class AdminController {
 
   @Delete('sessions/:sessionId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async revokeSession(@Param('sessionId') sessionId: string, @Request() req: any) {
+  async revokeSession(
+    @Param('sessionId') sessionId: string,
+    @Request() req: any,
+  ) {
     await this.prisma.userSession.delete({ where: { id: sessionId } });
-    
+
     this.logger.log(`Admin ${req.user.email} revoked session ${sessionId}`);
   }
 
   // Notification Management
   @Post('notifications/broadcast')
   async broadcastNotification(
-    @Body() body: {
+    @Body()
+    body: {
       title: string;
       message: string;
       type: string;
@@ -348,7 +354,9 @@ export class AdminController {
       data: notifications,
     });
 
-    this.logger.log(`Admin ${req.user.email} broadcasted notification to ${users.length} users`);
+    this.logger.log(
+      `Admin ${req.user.email} broadcasted notification to ${users.length} users`,
+    );
 
     return {
       message: `Notification broadcasted to ${users.length} users`,

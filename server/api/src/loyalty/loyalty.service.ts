@@ -78,11 +78,13 @@ export class LoyaltyService {
       currentPoints: loyaltyAccount.currentPoints,
       lifetimePoints: loyaltyAccount.lifetimePoints,
       tierUpgradedAt: loyaltyAccount.tierUpgradedAt,
-      nextTier: nextTier ? {
-        name: nextTier.name,
-        minPoints: nextTier.minPoints,
-        pointsNeeded: nextTier.minPoints - loyaltyAccount.currentPoints,
-      } : null,
+      nextTier: nextTier
+        ? {
+            name: nextTier.name,
+            minPoints: nextTier.minPoints,
+            pointsNeeded: nextTier.minPoints - loyaltyAccount.currentPoints,
+          }
+        : null,
     };
 
     return result;
@@ -148,10 +150,12 @@ export class LoyaltyService {
     });
 
     const hasNext = transactions.length > take;
-    const actualTransactions = hasNext ? transactions.slice(0, take) : transactions;
+    const actualTransactions = hasNext
+      ? transactions.slice(0, take)
+      : transactions;
 
     const result: PaginatedTransactions = {
-      transactions: actualTransactions.map(t => ({
+      transactions: actualTransactions.map((t) => ({
         id: t.id,
         type: t.type,
         points: t.points,
@@ -164,7 +168,9 @@ export class LoyaltyService {
       pagination: {
         hasNext,
         hasPrevious: !!cursor,
-        nextCursor: hasNext ? actualTransactions[actualTransactions.length - 1]?.id : null,
+        nextCursor: hasNext
+          ? actualTransactions[actualTransactions.length - 1]?.id
+          : null,
         previousCursor: cursor || null,
       },
     };

@@ -52,13 +52,13 @@ export function HomeScreen() {
               >
                 {locale === 'ar' ? (
                   <>
-                    <span className="text-purple-500">SAFAWI NETT</span>{' '}
+                    <span className="text-purple-500">SAFAWI NET</span>{' '}
                     {t('home.hero.subtitle')}
                   </>
                 ) : (
                   <>
                     {t('home.hero.subtitle')}{' '}
-                    <span className="text-purple-500">SAFAWI NETT</span>
+                    <span className="text-purple-500">SAFAWI NET</span>
                   </>
                 )}
               </h3>

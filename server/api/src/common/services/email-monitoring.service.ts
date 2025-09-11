@@ -55,10 +55,14 @@ export class EmailMonitoringService {
 
     // Calculate fresh metrics
     const metrics = await this.calculateEmailMetrics();
-    
+
     // Cache the results
-    await this.redisService.set(this.metricsCacheKey, JSON.stringify(metrics), this.metricsCacheTTL);
-    
+    await this.redisService.set(
+      this.metricsCacheKey,
+      JSON.stringify(metrics),
+      this.metricsCacheTTL,
+    );
+
     return metrics;
   }
 
@@ -104,7 +108,7 @@ export class EmailMonitoringService {
     ]);
 
     const totalSent = sent + delivered + bounced + complained + rejected;
-    
+
     return {
       sent: totalSent,
       delivered,
@@ -131,18 +135,25 @@ export class EmailMonitoringService {
 
     // Check bounce rate (should be < 5% for production)
     if (metrics.bounceRate > 5) {
-      issues.push(`Bounce rate too high: ${metrics.bounceRate.toFixed(2)}% (should be < 5%)`);
+      issues.push(
+        `Bounce rate too high: ${metrics.bounceRate.toFixed(2)}% (should be < 5%)`,
+      );
     }
 
     // Check complaint rate (should be < 0.1% for production)
     if (metrics.complaintRate > 0.1) {
-      issues.push(`Complaint rate too high: ${metrics.complaintRate.toFixed(3)}% (should be < 0.1%)`);
+      issues.push(
+        `Complaint rate too high: ${metrics.complaintRate.toFixed(3)}% (should be < 0.1%)`,
+      );
     }
 
     // Check delivery rate (should be > 95% for production)
-    const deliveryRate = metrics.sent > 0 ? (metrics.delivered / metrics.sent) * 100 : 0;
+    const deliveryRate =
+      metrics.sent > 0 ? (metrics.delivered / metrics.sent) * 100 : 0;
     if (deliveryRate < 95) {
-      issues.push(`Delivery rate too low: ${deliveryRate.toFixed(2)}% (should be > 95%)`);
+      issues.push(
+        `Delivery rate too low: ${deliveryRate.toFixed(2)}% (should be > 95%)`,
+      );
     }
 
     return {
@@ -156,7 +167,9 @@ export class EmailMonitoringService {
    * Process SES bounce notification
    */
   async processBounce(bounceInfo: BounceInfo): Promise<void> {
-    this.logger.warn(`Processing bounce for ${bounceInfo.email}: ${bounceInfo.bounceType} - ${bounceInfo.bounceSubType}`);
+    this.logger.warn(
+      `Processing bounce for ${bounceInfo.email}: ${bounceInfo.bounceType} - ${bounceInfo.bounceSubType}`,
+    );
 
     try {
       await this.prisma.$transaction(async (tx) => {
@@ -179,7 +192,7 @@ export class EmailMonitoringService {
         if (bounceInfo.bounceType === 'Permanent') {
           await tx.user.updateMany({
             where: { email: bounceInfo.email },
-            data: { 
+            data: {
               isVerified: false,
               // Add a flag to indicate email is invalid
               preferences: {
@@ -195,14 +208,15 @@ export class EmailMonitoringService {
             where: { email: bounceInfo.email },
             select: { id: true },
           });
-          
+
           if (user) {
             await tx.notification.create({
               data: {
                 userId: user.id,
                 type: 'email_bounce',
                 title: 'Email Delivery Issue',
-                message: 'We were unable to deliver emails to your address. Please update your email address.',
+                message:
+                  'We were unable to deliver emails to your address. Please update your email address.',
                 priority: 'high',
                 metadata: {
                   bounceType: bounceInfo.bounceType,
@@ -216,9 +230,11 @@ export class EmailMonitoringService {
 
       // Clear metrics cache to force refresh
       await this.redisService.del(this.metricsCacheKey);
-
     } catch (error) {
-      this.logger.error(`Failed to process bounce for ${bounceInfo.email}:`, error);
+      this.logger.error(
+        `Failed to process bounce for ${bounceInfo.email}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -227,7 +243,9 @@ export class EmailMonitoringService {
    * Process SES complaint notification
    */
   async processComplaint(complaintInfo: ComplaintInfo): Promise<void> {
-    this.logger.warn(`Processing complaint for ${complaintInfo.email}: ${complaintInfo.complaintFeedbackType}`);
+    this.logger.warn(
+      `Processing complaint for ${complaintInfo.email}: ${complaintInfo.complaintFeedbackType}`,
+    );
 
     try {
       await this.prisma.$transaction(async (tx) => {
@@ -262,14 +280,15 @@ export class EmailMonitoringService {
           where: { email: complaintInfo.email },
           select: { id: true },
         });
-        
+
         if (user) {
           await tx.notification.create({
             data: {
               userId: user.id,
               type: 'email_complaint',
               title: 'Email Preferences Updated',
-              message: 'You have been unsubscribed from email notifications due to a complaint.',
+              message:
+                'You have been unsubscribed from email notifications due to a complaint.',
               priority: 'normal',
               metadata: {
                 complaintFeedbackType: complaintInfo.complaintFeedbackType,
@@ -281,9 +300,11 @@ export class EmailMonitoringService {
 
       // Clear metrics cache to force refresh
       await this.redisService.del(this.metricsCacheKey);
-
     } catch (error) {
-      this.logger.error(`Failed to process complaint for ${complaintInfo.email}:`, error);
+      this.logger.error(
+        `Failed to process complaint for ${complaintInfo.email}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -301,22 +322,26 @@ export class EmailMonitoringService {
   }> {
     const health = await this.isEmailDeliveryHealthy();
     const environment = this.configService.get('NODE_ENV', 'development');
-    
+
     const recommendations: string[] = [];
-    
+
     if (!health.healthy) {
       if (health.metrics.bounceRate > 5) {
-        recommendations.push('Review email list quality and remove invalid addresses');
+        recommendations.push(
+          'Review email list quality and remove invalid addresses',
+        );
         recommendations.push('Implement double opt-in to reduce bounces');
       }
-      
+
       if (health.metrics.complaintRate > 0.1) {
         recommendations.push('Review email content and frequency');
         recommendations.push('Ensure clear unsubscribe links in all emails');
       }
-      
+
       if (health.metrics.sent < 100) {
-        recommendations.push('Insufficient data for accurate metrics - send more emails');
+        recommendations.push(
+          'Insufficient data for accurate metrics - send more emails',
+        );
       }
     }
 
@@ -334,13 +359,16 @@ export class EmailMonitoringService {
   @Cron(CronExpression.EVERY_HOUR)
   async scheduledHealthCheck(): Promise<void> {
     this.logger.log('Running scheduled email health check');
-    
+
     try {
       const health = await this.getHealthReport();
-      
+
       if (!health.healthy) {
-        this.logger.warn('Email delivery health issues detected:', health.issues);
-        
+        this.logger.warn(
+          'Email delivery health issues detected:',
+          health.issues,
+        );
+
         // In production, you might want to send alerts here
         if (health.environment === 'production') {
           await this.sendHealthAlert(health);
@@ -348,7 +376,6 @@ export class EmailMonitoringService {
       } else {
         this.logger.log('Email delivery health check passed');
       }
-      
     } catch (error) {
       this.logger.error('Scheduled email health check failed:', error);
     }
@@ -380,11 +407,11 @@ export class EmailMonitoringService {
     total: number;
   }> {
     const where: any = {};
-    
+
     if (email) {
       where.email = email;
     }
-    
+
     if (status) {
       where.status = status;
     }

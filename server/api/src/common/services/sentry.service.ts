@@ -8,7 +8,10 @@ export class SentryService implements OnModuleInit {
 
   async onModuleInit() {
     const dsn = this.configService.get<string>('SENTRY_DSN');
-    const environment = this.configService.get<string>('SENTRY_ENVIRONMENT', 'development');
+    const environment = this.configService.get<string>(
+      'SENTRY_ENVIRONMENT',
+      'development',
+    );
 
     if (!dsn) {
       console.warn('SENTRY_DSN not configured, skipping Sentry setup');
@@ -23,7 +26,10 @@ export class SentryService implements OnModuleInit {
         profilesSampleRate: environment === 'production' ? 0.1 : 1.0,
         beforeSend(event) {
           // Filter out health check and metrics endpoints
-          if (event.request?.url?.includes('/health') || event.request?.url?.includes('/metrics')) {
+          if (
+            event.request?.url?.includes('/health') ||
+            event.request?.url?.includes('/metrics')
+          ) {
             return null;
           }
           return event;
@@ -42,7 +48,11 @@ export class SentryService implements OnModuleInit {
   }
 
   // Capture messages
-  captureMessage(message: string, level: Sentry.SeverityLevel = 'info', context?: Record<string, any>) {
+  captureMessage(
+    message: string,
+    level: Sentry.SeverityLevel = 'info',
+    context?: Record<string, any>,
+  ) {
     Sentry.captureMessage(message, { level, extra: context });
   }
 

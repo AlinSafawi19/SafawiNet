@@ -15,12 +15,20 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
   constructor(private configService: ConfigService) {}
 
   async onModuleInit() {
-    const environment = this.configService.get<string>('NODE_ENV', 'development');
-    const serviceName = this.configService.get<string>('OTEL_SERVICE_NAME', 'safawinet-api');
+    const environment = this.configService.get<string>(
+      'NODE_ENV',
+      'development',
+    );
+    const serviceName = this.configService.get<string>(
+      'OTEL_SERVICE_NAME',
+      'safawinet-api',
+    );
     const otelEndpoint = this.configService.get<string>('OTEL_ENDPOINT');
 
     if (!otelEndpoint) {
-      console.warn('OTEL_ENDPOINT not configured, skipping OpenTelemetry setup');
+      console.warn(
+        'OTEL_ENDPOINT not configured, skipping OpenTelemetry setup',
+      );
       return;
     }
 

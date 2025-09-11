@@ -14,19 +14,23 @@ export class IdempotencyMiddleware implements NestMiddleware {
       return next();
     }
 
-    const idempotencyKey = req.headers['idempotency-key'] || req.headers['Idempotency-Key'] as string;
-    
+    const idempotencyKey =
+      req.headers['idempotency-key'] ||
+      (req.headers['Idempotency-Key'] as string);
+
     if (!idempotencyKey) {
       return next();
     }
 
     try {
       // Check if we've seen this key before
-      const existingResponse = await this.redisService.get(`idempotency:${idempotencyKey}`);
-      
+      const existingResponse = await this.redisService.get(
+        `idempotency:${idempotencyKey}`,
+      );
+
       if (existingResponse) {
         this.logger.log(`Idempotency key ${idempotencyKey} already processed`);
-        
+
         // Return the cached response
         const parsed = JSON.parse(existingResponse);
         res.status(parsed.status).json(parsed.body);
@@ -37,20 +41,20 @@ export class IdempotencyMiddleware implements NestMiddleware {
       await this.redisService.set(
         `idempotency:${idempotencyKey}`,
         JSON.stringify({ status: 200, body: { message: 'Processing' } }),
-        300 // 5 minutes
+        300, // 5 minutes
       );
 
       // Override res.json to capture the response
       const originalJson = res.json.bind(res);
       const redisService = this.redisService;
-      res.json = function(body: any) {
+      res.json = function (body: any) {
         // Store the actual response
         redisService.set(
           `idempotency:${idempotencyKey}`,
           JSON.stringify({ status: res.statusCode, body }),
-          300 // 5 minutes
+          300, // 5 minutes
         );
-        
+
         return originalJson(body);
       };
 

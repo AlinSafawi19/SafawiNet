@@ -114,7 +114,7 @@ export default function ForgotPasswordPage() {
       if (response.ok) {
         setMessageType('success');
         setMessage(t('auth.messages.passwordResetEmailSent'));
-        
+
         setEmail('');
         setEmailError('');
         setTouched({ email: false });

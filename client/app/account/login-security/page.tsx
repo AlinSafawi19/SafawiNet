@@ -24,9 +24,9 @@ export default function LoginSecurityPage() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [activeTab, setActiveTab] = useState<
-    'password' | 'twoFactor'
-  >('password');
+  const [activeTab, setActiveTab] = useState<'password' | 'twoFactor'>(
+    'password'
+  );
 
   // Password change form state
   const [passwordFormData, setPasswordFormData] = useState({
@@ -443,16 +443,38 @@ export default function LoginSecurityPage() {
 
                 {/* Security Notice */}
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 sm:p-4 mb-6">
-                  <div className={`flex items-start space-x-2 sm:space-x-3 ${locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  <div
+                    className={`flex items-start space-x-2 sm:space-x-3 ${
+                      locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''
+                    }`}
+                  >
+                    <svg
+                      className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 mt-0.5 flex-shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     <div>
-                      <p className={`text-blue-400 text-xs sm:text-sm font-medium mb-1 ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+                      <p
+                        className={`text-blue-400 text-xs sm:text-sm font-medium mb-1 ${
+                          locale === 'ar' ? 'text-right' : 'text-left'
+                        }`}
+                      >
                         {t('account.loginSecurity.password.securityNotice')}
                       </p>
-                      <p className={`text-blue-300/80 text-xs sm:text-sm ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
-                        {t('account.loginSecurity.password.securityNoticeMessage')}
+                      <p
+                        className={`text-blue-300/80 text-xs sm:text-sm ${
+                          locale === 'ar' ? 'text-right' : 'text-left'
+                        }`}
+                      >
+                        {t(
+                          'account.loginSecurity.password.securityNoticeMessage'
+                        )}
                       </p>
                     </div>
                   </div>
@@ -681,22 +703,31 @@ export default function LoginSecurityPage() {
                 >
                   {t('account.loginSecurity.tabs.twoFactor')}
                 </h2>
-                
+
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                    <div className={`${locale === 'ar' ? 'text-right' : 'text-left'}`}>
+                    <div
+                      className={`${
+                        locale === 'ar' ? 'text-right' : 'text-left'
+                      }`}
+                    >
                       <h3 className="text-white font-medium">
                         Email Two-Factor Authentication
                       </h3>
                       <p className="text-sm text-gray-300 mt-1">
-                        {user?.twoFactorEnabled 
+                        {user?.twoFactorEnabled
                           ? '2FA is currently enabled. You will receive a code via email when logging in.'
-                          : 'Enable 2FA to receive a security code via email when logging in.'
-                        }
+                          : 'Enable 2FA to receive a security code via email when logging in.'}
                       </p>
                     </div>
                     <div className="flex items-center space-x-3">
-                      <span className={`text-sm ${user?.twoFactorEnabled ? 'text-green-400' : 'text-gray-400'}`}>
+                      <span
+                        className={`text-sm ${
+                          user?.twoFactorEnabled
+                            ? 'text-green-400'
+                            : 'text-gray-400'
+                        }`}
+                      >
                         {user?.twoFactorEnabled ? 'Enabled' : 'Disabled'}
                       </span>
                       <button
@@ -716,7 +747,11 @@ export default function LoginSecurityPage() {
                         }`}
                         disabled={is2FALoading}
                       >
-                        {is2FALoading ? 'Loading...' : (user?.twoFactorEnabled ? 'Disable' : 'Enable')}
+                        {is2FALoading
+                          ? 'Loading...'
+                          : user?.twoFactorEnabled
+                          ? 'Disable'
+                          : 'Enable'}
                       </button>
                     </div>
                   </div>
@@ -747,7 +782,9 @@ export default function LoginSecurityPage() {
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {disablePasswordError && (
-                  <p className="text-red-400 text-sm mt-1">{disablePasswordError}</p>
+                  <p className="text-red-400 text-sm mt-1">
+                    {disablePasswordError}
+                  </p>
                 )}
               </div>
               <div className="flex space-x-3">

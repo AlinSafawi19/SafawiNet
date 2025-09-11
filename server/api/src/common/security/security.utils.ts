@@ -1,8 +1,15 @@
 import * as argon2 from 'argon2';
-import { randomBytes, createHash, createCipheriv, createDecipheriv, scryptSync } from 'crypto';
+import {
+  randomBytes,
+  createHash,
+  createCipheriv,
+  createDecipheriv,
+  scryptSync,
+} from 'crypto';
 
 export class SecurityUtils {
-  private static readonly ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-encryption-key-32-chars-long';
+  private static readonly ENCRYPTION_KEY =
+    process.env.ENCRYPTION_KEY || 'default-encryption-key-32-chars-long';
   private static readonly ALGORITHM = 'aes-256-cbc';
 
   /**
@@ -20,11 +27,17 @@ export class SecurityUtils {
   /**
    * Verify password against hash
    */
-  static async verifyPassword(hash: string, password: string): Promise<boolean> {
+  static async verifyPassword(
+    hash: string,
+    password: string,
+  ): Promise<boolean> {
     try {
       // Check if hash is in Argon2 format (starts with $)
       if (!hash.startsWith('$')) {
-        console.error('Invalid hash format - not Argon2:', hash.substring(0, 20) + '...');
+        console.error(
+          'Invalid hash format - not Argon2:',
+          hash.substring(0, 20) + '...',
+        );
         return false;
       }
       return await argon2.verify(hash, password);
@@ -76,10 +89,10 @@ export class SecurityUtils {
     const key = scryptSync(this.ENCRYPTION_KEY, 'salt', 32);
     const iv = randomBytes(16);
     const cipher = createCipheriv(this.ALGORITHM, key, iv);
-    
+
     let encrypted = cipher.update(data, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    
+
     return iv.toString('hex') + ':' + encrypted;
   }
 
@@ -91,11 +104,11 @@ export class SecurityUtils {
     const parts = encryptedData.split(':');
     const iv = Buffer.from(parts[0], 'hex');
     const encrypted = parts[1];
-    
+
     const decipher = createDecipheriv(this.ALGORITHM, key, iv);
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
-    
+
     return decrypted;
   }
 }

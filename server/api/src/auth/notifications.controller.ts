@@ -33,19 +33,36 @@ import { NotificationListSchema } from './schemas/auth.schemas';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class NotificationsController {
-  constructor(
-    private readonly notificationsService: NotificationsService,
-  ) {}
+  constructor(private readonly notificationsService: NotificationsService) {}
 
   @Get()
   @ApiOperation({
     summary: 'List user notifications',
-    description: 'Get a paginated list of user notifications with cursor pagination',
+    description:
+      'Get a paginated list of user notifications with cursor pagination',
   })
-  @ApiQuery({ name: 'cursor', required: false, description: 'Cursor for pagination' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Number of notifications to return (max 100)', type: Number })
-  @ApiQuery({ name: 'type', required: false, description: 'Filter by notification type' })
-  @ApiQuery({ name: 'isRead', required: false, description: 'Filter by read status', type: Boolean })
+  @ApiQuery({
+    name: 'cursor',
+    required: false,
+    description: 'Cursor for pagination',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of notifications to return (max 100)',
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    description: 'Filter by notification type',
+  })
+  @ApiQuery({
+    name: 'isRead',
+    required: false,
+    description: 'Filter by read status',
+    type: Boolean,
+  })
   @ApiResponse({
     status: 200,
     description: 'Notifications retrieved successfully',
@@ -65,7 +82,11 @@ export class NotificationsController {
               readAt: { type: 'string', format: 'date-time', nullable: true },
               metadata: { type: 'object', nullable: true },
               priority: { type: 'string' },
-              expiresAt: { type: 'string', format: 'date-time', nullable: true },
+              expiresAt: {
+                type: 'string',
+                format: 'date-time',
+                nullable: true,
+              },
               createdAt: { type: 'string', format: 'date-time' },
               updatedAt: { type: 'string', format: 'date-time' },
             },
@@ -92,7 +113,10 @@ export class NotificationsController {
     description: 'Mark a specific notification as read by ID',
   })
   @ApiParam({ name: 'id', description: 'Notification ID to mark as read' })
-  @ApiResponse({ status: 204, description: 'Notification marked as read successfully' })
+  @ApiResponse({
+    status: 204,
+    description: 'Notification marked as read successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Notification not found' })
   async markAsRead(
@@ -105,7 +129,8 @@ export class NotificationsController {
   @Get('unread-count')
   @ApiOperation({
     summary: 'Get unread notification count',
-    description: 'Get the total count of unread notifications for the current user',
+    description:
+      'Get the total count of unread notifications for the current user',
   })
   @ApiResponse({
     status: 200,

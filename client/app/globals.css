@@ -8,22 +8,29 @@
   font-display: block;
   font-family: Avenir-LT-W01_35-Light1475496;
   src: url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/edefe737-dc78-4aa3-ad03-3c6f908330ed.eot?#iefix);
-  src: url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/edefe737-dc78-4aa3-ad03-3c6f908330ed.eot?#iefix) format('eot'),
-    url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/0078f486-8e52-42c0-ad81-3c8d3d43f48e.woff2) format('woff2'),
-    url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/908c4810-64db-4b46-bb8e-823eb41f68c0.woff) format('woff'),
-    url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/4577388c-510f-4366-addb-8b663bcc762a.ttf) format('truetype'),
-    url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/b0268c31-e450-4159-bfea-e0d20e2b5c0c.svg#b0268c31-e450-4159-bfea-e0d20e2b5c0c) format('svg');
+  src: url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/edefe737-dc78-4aa3-ad03-3c6f908330ed.eot?#iefix)
+      format('eot'),
+    url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/0078f486-8e52-42c0-ad81-3c8d3d43f48e.woff2)
+      format('woff2'),
+    url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/908c4810-64db-4b46-bb8e-823eb41f68c0.woff)
+      format('woff'),
+    url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/4577388c-510f-4366-addb-8b663bcc762a.ttf)
+      format('truetype'),
+    url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/b0268c31-e450-4159-bfea-e0d20e2b5c0c.svg#b0268c31-e450-4159-bfea-e0d20e2b5c0c)
+      format('svg');
 }
 
 @font-face {
   font-family: 'Helvetica-W01-Light';
-  src: url('//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/03805817-4611-4dbc-8c65-0f73031c3973.woff') format('woff');
+  src: url('//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/03805817-4611-4dbc-8c65-0f73031c3973.woff')
+    format('woff');
 }
 
 @font-face {
   font-family: 'Poppins-SemiBold';
   font-weight: 700;
-  src: url('//fonts.gstatic.com/s/poppins/v5/aDjpMND83pDErGXlVEr-Sfk_vArhqVIZ0nv9q090hN8.woff2') format('woff2');
+  src: url('//fonts.gstatic.com/s/poppins/v5/aDjpMND83pDErGXlVEr-Sfk_vArhqVIZ0nv9q090hN8.woff2')
+    format('woff2');
 }
 
 @layer components {
@@ -43,8 +50,7 @@
 
   .account-bg {
     @apply bg-site dark:bg-dark-bg;
-    background-image: 
-      url("https://static.wixstatic.com/media/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg/v1/fill/w_918,h_585,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg");
+    background-image: url('https://static.wixstatic.com/media/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg/v1/fill/w_918,h_585,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -84,7 +90,6 @@
     font-family: Helvetica-W01-Light, sans-serif;
   }
 
-
   /* Header navigation styling - thinner text */
   header nav a {
     font-weight: 300 !important;
@@ -99,7 +104,6 @@
     @apply font-default;
     @apply text-4xl;
   }
-
 
   /* Dashboard Tiles Styling */
   .dashboard-grid {
@@ -279,8 +283,6 @@ a {
   box-sizing: border-box;
 }
 
-
-
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -330,15 +332,15 @@ input:-ms-input-placeholder {
 }
 
 /* Custom autofill for specific input types */
-input[type="password"]:-webkit-autofill,
-input[type="text"]:-webkit-autofill {
+input[type='password']:-webkit-autofill,
+input[type='text']:-webkit-autofill {
   -webkit-box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.1) inset !important;
   -webkit-text-fill-color: #ffffff !important;
 }
 
 /* Enhanced autofill styles for the login form */
-input[type="password"]:focus:-webkit-autofill,
-input[type="text"]:focus:-webkit-autofill {
+input[type='password']:focus:-webkit-autofill,
+input[type='text']:focus:-webkit-autofill {
   -webkit-box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.15) inset !important;
   -webkit-text-fill-color: #ffffff !important;
   border-color: #a855f7 !important;
@@ -371,14 +373,14 @@ input:-webkit-autofill {
 }
 
 /* AGGRESSIVE AUTOFILL OVERRIDE - More specific selectors */
-input[type="password"]:-webkit-autofill,
-input[type="password"]:-webkit-autofill:hover,
-input[type="password"]:-webkit-autofill:focus,
-input[type="password"]:-webkit-autofill:active,
-input[type="text"]:-webkit-autofill,
-input[type="text"]:-webkit-autofill:hover,
-input[type="text"]:-webkit-autofill:focus,
-input[type="text"]:-webkit-autofill:active {
+input[type='password']:-webkit-autofill,
+input[type='password']:-webkit-autofill:hover,
+input[type='password']:-webkit-autofill:focus,
+input[type='password']:-webkit-autofill:active,
+input[type='text']:-webkit-autofill,
+input[type='text']:-webkit-autofill:hover,
+input[type='text']:-webkit-autofill:focus,
+input[type='text']:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
   -webkit-text-fill-color: #ffffff !important;
   background-color: rgba(255, 255, 255, 0.1) !important;
@@ -470,8 +472,8 @@ input:autofill:focus {
 }
 
 /* Additional autofill override attempts */
-input[type="password"]:autofill,
-input[type="text"]:autofill {
+input[type='password']:autofill,
+input[type='text']:autofill {
   background-color: rgba(255, 255, 255, 0.1) !important;
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.2) !important;

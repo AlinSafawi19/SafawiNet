@@ -1,4 +1,9 @@
-import { Injectable, Logger, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/services/prisma.service';
 import { SecurityUtils } from '../common/security/security.utils';
@@ -49,7 +54,7 @@ export class TwoFactorService {
     });
 
     // Generate QR code
-    const qrCode = await QRCode.toDataURL(secret.otpauth_url!);
+    const qrCode = await QRCode.toDataURL(secret.otpauth_url);
 
     // Generate 10 backup codes
     const backupCodes = this.generateBackupCodes();
@@ -57,7 +62,7 @@ export class TwoFactorService {
     // Store encrypted secret and hashed backup codes in a transaction
     await this.prisma.$transaction(async (tx) => {
       // Store encrypted secret
-      const encryptedSecret = SecurityUtils.encryptData(secret.base32!);
+      const encryptedSecret = SecurityUtils.encryptData(secret.base32);
       await tx.twoFactorSecret.create({
         data: {
           userId,
@@ -66,7 +71,7 @@ export class TwoFactorService {
       });
 
       // Store hashed backup codes
-      const backupCodeData = backupCodes.map(code => ({
+      const backupCodeData = backupCodes.map((code) => ({
         userId,
         codeHash: SecurityUtils.hashToken(code),
       }));
@@ -86,14 +91,19 @@ export class TwoFactorService {
     };
   }
 
-  async enableTwoFactor(userId: string, code: string): Promise<{ message: string }> {
+  async enableTwoFactor(
+    userId: string,
+    code: string,
+  ): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { twoFactorSecret: true },
     });
 
     if (!user || !user.twoFactorSecret) {
-      throw new BadRequestException('2FA setup not found. Please run setup first.');
+      throw new BadRequestException(
+        '2FA setup not found. Please run setup first.',
+      );
     }
 
     if (user.twoFactorEnabled) {
@@ -116,7 +126,10 @@ export class TwoFactorService {
     return { message: 'Two-factor authentication enabled successfully' };
   }
 
-  async disableTwoFactor(userId: string, code: string): Promise<{ message: string }> {
+  async disableTwoFactor(
+    userId: string,
+    code: string,
+  ): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { twoFactorSecret: true, backupCodes: true },
@@ -162,7 +175,10 @@ export class TwoFactorService {
     return { message: 'Two-factor authentication disabled successfully' };
   }
 
-  async validateTwoFactorCode(userId: string, code: string): Promise<BackupCodeValidationResult> {
+  async validateTwoFactorCode(
+    userId: string,
+    code: string,
+  ): Promise<BackupCodeValidationResult> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { twoFactorSecret: true },
@@ -175,7 +191,10 @@ export class TwoFactorService {
     return await this.validateCode(userId, code);
   }
 
-  private async validateCode(userId: string, code: string): Promise<BackupCodeValidationResult> {
+  private async validateCode(
+    userId: string,
+    code: string,
+  ): Promise<BackupCodeValidationResult> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { twoFactorSecret: true, backupCodes: true },
@@ -187,7 +206,7 @@ export class TwoFactorService {
 
     // First, check if it's a backup code
     const backupCode = user.backupCodes.find(
-      bc => !bc.isUsed && SecurityUtils.verifyToken(code, bc.codeHash)
+      (bc) => !bc.isUsed && SecurityUtils.verifyToken(code, bc.codeHash),
     );
 
     if (backupCode) {
@@ -214,7 +233,10 @@ export class TwoFactorService {
     }
   }
 
-  private async markBackupCodeAsUsed(userId: string, code: string): Promise<void> {
+  private async markBackupCodeAsUsed(
+    userId: string,
+    code: string,
+  ): Promise<void> {
     const codeHash = SecurityUtils.hashToken(code);
     await this.prisma.backupCode.updateMany({
       where: {

@@ -142,10 +142,7 @@ export default function VerifyEmailPage() {
         // Check if user was on auth page - redirect to home, otherwise stay
         const currentPath = window.location.pathname;
 
-        if (
-          currentPath === '/auth' ||
-          currentPath.startsWith('/auth/')
-        ) {
+        if (currentPath === '/auth' || currentPath.startsWith('/auth/')) {
           setVerificationState({
             status: 'success',
             message: t('verifyEmail.successMessage'),
@@ -275,14 +272,17 @@ export default function VerifyEmailPage() {
         hasVerifiedRef.current = true;
 
         // Try regular verification
-        const response = await fetch('http://localhost:3000/v1/auth/verify-email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({ token }),
-        });
+        const response = await fetch(
+          'http://localhost:3000/v1/auth/verify-email',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ token }),
+          }
+        );
 
         if (response.ok) {
           successData = await response.json();

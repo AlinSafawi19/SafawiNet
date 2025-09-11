@@ -142,7 +142,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [isRefreshing]);
 
-
   const checkAuthStatus = useCallback(async () => {
     // Prevent multiple calls during initialization to avoid duplicate API calls
     // This fixes the performance issue where /users/me and /v1/auth/refresh were called twice
@@ -250,7 +249,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         const data = await response.json();
-        const { user: userData, requiresTwoFactor, requiresVerification } = data;
+        const {
+          user: userData,
+          requiresTwoFactor,
+          requiresVerification,
+        } = data;
 
         // Check if user is verified before setting login state
         if (requiresVerification) {
@@ -265,17 +268,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Check if 2FA is required
         if (requiresTwoFactor) {
           // User needs to enter 2FA code
-        return {
-          success: false,
-          messageKey: 'auth.messages.twoFactorRequired',
-          user: userData, // Return user data for 2FA form
-          requiresTwoFactor: true,
-        } as any;
+          return {
+            success: false,
+            messageKey: 'auth.messages.twoFactorRequired',
+            user: userData, // Return user data for 2FA form
+            requiresTwoFactor: true,
+          } as any;
         }
 
         // User is verified and no 2FA required, set login state
         setUser(userData);
-        
+
         return { success: true, user: userData };
       } else {
         const errorData = await response.json();
@@ -344,7 +347,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Broadcast login to other tabs and devices
           broadcastAuthChange('login', finalUserData);
 
-          
           return { success: true, user: finalUserData };
         } else {
           const errorText = await userResponse.text();
@@ -657,7 +659,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     [autoRefreshToken]
   );
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       // Call the logout endpoint to invalidate the session on the server
       await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGOUT), {
@@ -673,7 +675,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Clear user state (cookies are handled by the server)
       setUser(null);
     }
-  };
+  }, []);
 
   // Utility function to join pending verification room for cross-browser sync
   const joinPendingVerificationRoom = async (email: string) => {
@@ -758,6 +760,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     },
     []
+  );
+
+  // Define force logout handler before useEffect to avoid scope issues
+  const handleForceLogout = useCallback(
+    async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log(
+        '🚪 Force logout event received via custom event:',
+        customEvent.detail
+      );
+
+      // Use existing logout function
+      await logout();
+
+      // Redirect to login page
+      window.location.href = '/auth';
+    },
+    [logout]
   );
 
   useEffect(() => {
@@ -1002,10 +1022,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Listen for force logout events (password change/reset)
         socketService.on('forceLogout', async (data: any) => {
           console.log('🚪 Force logout event received via socket:', data);
-          
+
           // Use existing logout function
           await logout();
-          
+
           // Redirect to login page
           window.location.href = '/auth';
         });
@@ -1032,19 +1052,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Clean up the custom event listener
       window.removeEventListener('forceLogout', handleForceLogout);
     };
-  }, [checkAuthStatus, loginWithTokens, user]);
-
-  // Define force logout handler outside useEffect to avoid scope issues
-  const handleForceLogout = useCallback(async (event: Event) => {
-    const customEvent = event as CustomEvent;
-    console.log('🚪 Force logout event received via custom event:', customEvent.detail);
-    
-    // Use existing logout function
-    await logout();
-    
-    // Redirect to login page
-    window.location.href = '/auth';
-  }, [logout]);
+  }, [checkAuthStatus, loginWithTokens, user, handleForceLogout, logout]);
 
   // Set up automatic token refresh timer
   useEffect(() => {

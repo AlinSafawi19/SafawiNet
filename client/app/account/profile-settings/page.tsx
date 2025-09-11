@@ -77,14 +77,12 @@ export default function AccountInformationPage() {
     return undefined;
   };
 
-
   // Validate all fields
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
 
     const nameError = validateName(formData.name);
     if (nameError) errors.name = nameError;
-
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -311,7 +309,6 @@ export default function AccountInformationPage() {
                   </p>
                 )}
               </div>
-
 
               {/* Submit Button */}
               <div className="pt-4">

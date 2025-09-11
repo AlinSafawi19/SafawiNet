@@ -33,7 +33,7 @@ async function main() {
       minPoints: 1000,
       maxPoints: 4999,
       benefits: {
-        discount: 0.10,
+        discount: 0.1,
         freeShipping: true,
         prioritySupport: false,
         exclusiveOffers: false,
@@ -59,7 +59,7 @@ async function main() {
       minPoints: 20000,
       maxPoints: 99999,
       benefits: {
-        discount: 0.20,
+        discount: 0.2,
         freeShipping: true,
         prioritySupport: true,
         exclusiveOffers: true,

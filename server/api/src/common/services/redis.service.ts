@@ -1,4 +1,9 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
@@ -12,7 +17,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     const redisUrl = this.configService.get('REDIS_URL', 'redis://redis:6379');
-    
+
     this.redis = new Redis(redisUrl, {
       lazyConnect: true,
       maxRetriesPerRequest: null,
@@ -43,7 +48,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.redis.connect();
     } catch (error) {
-      this.logger.warn('Failed to connect to Redis, will retry on first operation:', error);
+      this.logger.warn(
+        'Failed to connect to Redis, will retry on first operation:',
+        error,
+      );
     }
   }
 

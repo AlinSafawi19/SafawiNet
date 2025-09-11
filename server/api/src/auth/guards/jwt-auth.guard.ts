@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../common/services/prisma.service';
 
@@ -24,7 +29,7 @@ export class JwtAuthGuard implements CanActivate {
       console.log('🛡️ JWT Guard - Validating token');
       const payload = await this.jwtService.verifyAsync(token);
       console.log('🛡️ JWT Guard - Token payload:', payload);
-      
+
       // Check if user exists and is verified
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
@@ -62,12 +67,18 @@ export class JwtAuthGuard implements CanActivate {
         });
 
         if (!userSession) {
-          console.log('🛡️ JWT Guard - Session not found for refreshTokenId:', payload.refreshTokenId);
+          console.log(
+            '🛡️ JWT Guard - Session not found for refreshTokenId:',
+            payload.refreshTokenId,
+          );
           throw new UnauthorizedException('Invalid session');
         }
 
         if (!userSession.isCurrent) {
-          console.log('🛡️ JWT Guard - Session is not current for refreshTokenId:', payload.refreshTokenId);
+          console.log(
+            '🛡️ JWT Guard - Session is not current for refreshTokenId:',
+            payload.refreshTokenId,
+          );
           throw new UnauthorizedException('Session expired');
         }
 
@@ -77,15 +88,24 @@ export class JwtAuthGuard implements CanActivate {
             where: { id: userSession.id },
             data: { lastActiveAt: new Date() },
           });
-          console.log('🔄 JWT Guard - Updated session activity for session:', userSession.id);
+          console.log(
+            '🔄 JWT Guard - Updated session activity for session:',
+            userSession.id,
+          );
         } catch (error) {
-          console.log('⚠️ JWT Guard - Failed to update session activity:', error);
+          console.log(
+            '⚠️ JWT Guard - Failed to update session activity:',
+            error,
+          );
           // Don't fail validation if session update fails
         }
       }
 
-      console.log('🛡️ JWT Guard - Authentication and session validation successful, user:', user.email);
-      
+      console.log(
+        '🛡️ JWT Guard - Authentication and session validation successful, user:',
+        user.email,
+      );
+
       // Attach user to request
       request.user = {
         id: user.id,
@@ -96,10 +116,11 @@ export class JwtAuthGuard implements CanActivate {
         roles: user.roles,
         refreshTokenId: payload.refreshTokenId,
       };
-      
+
       return true;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.log('🛡️ JWT Guard - Token validation failed:', errorMessage);
       throw new UnauthorizedException('Invalid token');
     }
@@ -111,7 +132,7 @@ export class JwtAuthGuard implements CanActivate {
       console.log('🔍 JWT Guard - Request cookies:', request?.cookies);
       console.log('🔍 JWT Guard - Request headers:', request?.headers);
     }
-    
+
     // First try to extract from cookies
     if (request?.cookies?.accessToken) {
       if (process.env.NODE_ENV === 'development') {
@@ -119,7 +140,7 @@ export class JwtAuthGuard implements CanActivate {
       }
       return request.cookies.accessToken;
     }
-    
+
     // Fallback to Authorization header
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     if (type === 'Bearer' && token) {
@@ -128,7 +149,7 @@ export class JwtAuthGuard implements CanActivate {
       }
       return token;
     }
-    
+
     if (process.env.NODE_ENV === 'development') {
       console.log('🔍 JWT Guard - No token found in cookies or headers');
     }

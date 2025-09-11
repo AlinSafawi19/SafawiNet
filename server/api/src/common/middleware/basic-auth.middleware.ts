@@ -1,4 +1,8 @@
-import { Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NestMiddleware,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 
 @Injectable()
@@ -21,7 +25,10 @@ export class BasicAuthMiddleware implements NestMiddleware {
       throw new UnauthorizedException('Basic authentication required');
     }
 
-    const credentials = Buffer.from(authHeader.substring(6), 'base64').toString();
+    const credentials = Buffer.from(
+      authHeader.substring(6),
+      'base64',
+    ).toString();
     const [username, password] = credentials.split(':');
 
     const expectedUsername = process.env.BASIC_AUTH_USERNAME;

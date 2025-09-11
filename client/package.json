@@ -1,15 +1,12 @@
 {
-  "name": "$AFAWI NETT",
+  "name": "SAFAWI NET",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start -p 3001",
-    "lint": "next lint --fix",
-    "analyze": "cross-env ANALYZE=true npm run build",
-    "analyze:server": "cross-env ANALYZE=true npm run build && npm run start",
-    "lighthouse": "lighthouse http://localhost:3001 --output html --output-path ./lighthouse-report.html"
+    "lint": "next lint --fix"
   },
   "dependencies": {
     "bufferutil": "^4.0.9",
@@ -23,21 +20,17 @@
     "utf-8-validate": "^5.0.10"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^13.4.9",
     "@types/node": "18.11.8",
     "@types/react": "18.0.24",
     "@types/react-dom": "18.0.8",
     "autoprefixer": "^10.4.13",
-    "cross-env": "^7.0.3",
     "eslint": "^8.28.0",
     "eslint-config-next": "^13.4.9",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
-    "lighthouse": "^11.6.0",
     "postcss": "^8.4.19",
     "prettier": "^2.8.0",
     "tailwindcss": "^3.2.4",
-    "typescript": "4.8.4",
-    "webpack-bundle-analyzer": "^4.10.1"
+    "typescript": "4.8.4"
   }
 }

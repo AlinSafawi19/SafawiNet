@@ -1,7 +1,21 @@
-import { Controller, Get, Query, UseGuards, Request, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  UseGuards,
+  Request,
+  ParseIntPipe,
+  DefaultValuePipe,
+} from '@nestjs/common';
 import { LoyaltyService } from './loyalty.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 
 @ApiTags('Loyalty')
 @Controller('v1/loyalty')
@@ -12,8 +26,8 @@ export class LoyaltyController {
 
   @Get('me')
   @ApiOperation({ summary: 'Get current user loyalty account information' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Returns current tier and balances',
     schema: {
       type: 'object',
@@ -54,10 +68,19 @@ export class LoyaltyController {
 
   @Get('transactions')
   @ApiOperation({ summary: 'Get user loyalty transaction history' })
-  @ApiQuery({ name: 'cursor', required: false, description: 'Cursor for pagination' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Number of transactions to return (max 100)', type: Number })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiQuery({
+    name: 'cursor',
+    required: false,
+    description: 'Cursor for pagination',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of transactions to return (max 100)',
+    type: Number,
+  })
+  @ApiResponse({
+    status: 200,
     description: 'Returns paginated transaction history',
     schema: {
       type: 'object',
@@ -73,7 +96,11 @@ export class LoyaltyController {
               description: { type: 'string' },
               metadata: { type: 'object' },
               orderId: { type: 'string', nullable: true },
-              expiresAt: { type: 'string', format: 'date-time', nullable: true },
+              expiresAt: {
+                type: 'string',
+                format: 'date-time',
+                nullable: true,
+              },
               createdAt: { type: 'string', format: 'date-time' },
             },
           },

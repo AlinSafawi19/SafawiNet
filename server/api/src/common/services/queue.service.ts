@@ -91,7 +91,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         connection,
         prefix,
         concurrency: 5,
-      }
+      },
     );
 
     this.securityWorker = new Worker<SecurityJobData>(
@@ -103,7 +103,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         connection,
         prefix,
         concurrency: 3,
-      }
+      },
     );
 
     this.maintenanceWorker = new Worker<MaintenanceJobData>(
@@ -115,7 +115,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         connection,
         prefix,
         concurrency: 2,
-      }
+      },
     );
 
     // Set up event handlers
@@ -135,27 +135,42 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   private setupQueueEvents() {
-    [this.emailQueue, this.securityQueue, this.maintenanceQueue].forEach((queue) => {
-      (queue as any).on('completed', (job: any) => {
-        this.logger.log(`Job ${job.id} completed successfully`, 'QueueService');
-      });
+    [this.emailQueue, this.securityQueue, this.maintenanceQueue].forEach(
+      (queue) => {
+        (queue as any).on('completed', (job: any) => {
+          this.logger.log(
+            `Job ${job.id} completed successfully`,
+            'QueueService',
+          );
+        });
 
-      (queue as any).on('failed', (job: any, err: any) => {
-        this.logger.error(`Job ${job?.id} failed: ${err.message}`, err.stack, 'QueueService');
-      });
-    });
+        (queue as any).on('failed', (job: any, err: any) => {
+          this.logger.error(
+            `Job ${job?.id} failed: ${err.message}`,
+            err.stack,
+            'QueueService',
+          );
+        });
+      },
+    );
   }
 
   private setupWorkerEvents() {
-    [this.emailWorker, this.securityWorker, this.maintenanceWorker].forEach((worker) => {
-      worker.on('completed', (job) => {
-        this.logger.log(`Worker completed job ${job.id}`, 'QueueService');
-      });
+    [this.emailWorker, this.securityWorker, this.maintenanceWorker].forEach(
+      (worker) => {
+        worker.on('completed', (job) => {
+          this.logger.log(`Worker completed job ${job.id}`, 'QueueService');
+        });
 
-      worker.on('failed', (job, err) => {
-        this.logger.error(`Worker failed job ${job?.id}: ${err.message}`, err.stack, 'QueueService');
-      });
-    });
+        worker.on('failed', (job, err) => {
+          this.logger.error(
+            `Worker failed job ${job?.id}: ${err.message}`,
+            err.stack,
+            'QueueService',
+          );
+        });
+      },
+    );
   }
 
   // Queue methods
@@ -173,18 +188,24 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
 
   // Job processing methods
   private async processEmailJob(job: Job<EmailJobData>) {
-    this.logger.log(`Processing email job ${job.id} to ${job.data.to}`, 'QueueService');
-    
+    this.logger.log(
+      `Processing email job ${job.id} to ${job.data.to}`,
+      'QueueService',
+    );
+
     // TODO: Implement actual email sending logic
     // This would integrate with your existing EmailService
-    
-    await new Promise(resolve => setTimeout(resolve, 100)); // Simulate processing
+
+    await new Promise((resolve) => setTimeout(resolve, 100)); // Simulate processing
     this.logger.log(`Email job ${job.id} completed`, 'QueueService');
   }
 
   private async processSecurityJob(job: Job<SecurityJobData>) {
-    this.logger.log(`Processing security job ${job.id} of type ${job.data.type}`, 'QueueService');
-    
+    this.logger.log(
+      `Processing security job ${job.id} of type ${job.data.type}`,
+      'QueueService',
+    );
+
     switch (job.data.type) {
       case 'token_cleanup':
         // TODO: Implement token cleanup logic
@@ -196,14 +217,17 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         // TODO: Implement notification cleanup logic
         break;
     }
-    
-    await new Promise(resolve => setTimeout(resolve, 200)); // Simulate processing
+
+    await new Promise((resolve) => setTimeout(resolve, 200)); // Simulate processing
     this.logger.log(`Security job ${job.id} completed`, 'QueueService');
   }
 
   private async processMaintenanceJob(job: Job<MaintenanceJobData>) {
-    this.logger.log(`Processing maintenance job ${job.id} of type ${job.data.type}`, 'QueueService');
-    
+    this.logger.log(
+      `Processing maintenance job ${job.id} of type ${job.data.type}`,
+      'QueueService',
+    );
+
     switch (job.data.type) {
       case 'db_cleanup':
         // TODO: Implement database cleanup logic
@@ -215,8 +239,8 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         // TODO: Implement health check logic
         break;
     }
-    
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate processing
+
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate processing
     this.logger.log(`Maintenance job ${job.id} completed`, 'QueueService');
   }
 

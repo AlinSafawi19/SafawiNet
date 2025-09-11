@@ -22,7 +22,8 @@ export interface PerformanceBudget {
 
 @Injectable()
 export class PerformanceService implements OnModuleInit {
-  private readonly performanceBudgets: Map<string, PerformanceBudget> = new Map();
+  private readonly performanceBudgets: Map<string, PerformanceBudget> =
+    new Map();
   private readonly meter: any;
   private readonly histogram: any;
   private readonly counter: any;
@@ -35,7 +36,7 @@ export class PerformanceService implements OnModuleInit {
   ) {
     // Initialize performance budgets
     this.initializePerformanceBudgets();
-    
+
     // Initialize OpenTelemetry metrics
     this.meter = this.telemetry.getMeter('performance');
     this.histogram = this.meter.createHistogram('http_request_duration', {
@@ -114,10 +115,13 @@ export class PerformanceService implements OnModuleInit {
 
       // Check performance budget violations
       this.checkPerformanceBudget(metrics);
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error('Failed to record performance metrics', errorMessage, 'PerformanceService');
+      this.logger.error(
+        'Failed to record performance metrics',
+        errorMessage,
+        'PerformanceService',
+      );
     }
   }
 
@@ -125,37 +129,49 @@ export class PerformanceService implements OnModuleInit {
     try {
       // Check if Redis is connected before attempting to store metrics
       if (!this.redis.isRedisConnected()) {
-        this.logger.warn('Redis not connected, skipping metrics storage', 'PerformanceService');
+        this.logger.warn(
+          'Redis not connected, skipping metrics storage',
+          'PerformanceService',
+        );
         return;
       }
 
       const key = `perf:${metrics.route}:${metrics.method}`;
       const data = JSON.stringify(metrics);
-      
+
       // Store in sorted set by timestamp for time-based analysis
-      await this.redis.getClient().zadd(
-        `perf:${metrics.route}:${metrics.method}:timeline`,
-        metrics.timestamp,
-        data
-      );
+      await this.redis
+        .getClient()
+        .zadd(
+          `perf:${metrics.route}:${metrics.method}:timeline`,
+          metrics.timestamp,
+          data,
+        );
 
       // Keep only last 1000 metrics per route
-      await this.redis.getClient().zremrangebyrank(
-        `perf:${metrics.route}:${metrics.method}:timeline`,
-        0,
-        -1001
-      );
+      await this.redis
+        .getClient()
+        .zremrangebyrank(
+          `perf:${metrics.route}:${metrics.method}:timeline`,
+          0,
+          -1001,
+        );
 
       // Store current metrics for real-time monitoring
-      await this.redis.getClient().hset(
-        `perf:${metrics.route}:${metrics.method}:current`,
-        metrics.timestamp.toString(),
-        data
-      );
-
+      await this.redis
+        .getClient()
+        .hset(
+          `perf:${metrics.route}:${metrics.method}:current`,
+          metrics.timestamp.toString(),
+          data,
+        );
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error('Failed to store metrics in Redis', errorMessage, 'PerformanceService');
+      this.logger.error(
+        'Failed to store metrics in Redis',
+        errorMessage,
+        'PerformanceService',
+      );
       // Don't throw error to avoid breaking the application flow
     }
   }
@@ -168,14 +184,14 @@ export class PerformanceService implements OnModuleInit {
     if (metrics.duration > budget.p99Threshold) {
       this.logger.warn(
         `Performance budget exceeded for ${metrics.route}: ${metrics.duration}ms > ${budget.p99Threshold}ms`,
-        'PerformanceService'
+        'PerformanceService',
       );
     }
 
     // Check burst rate (simplified - in practice you'd use a sliding window)
     const burstKey = `burst:${metrics.route}:${metrics.method}`;
     const currentBurst = await this.redis.getClient().incr(burstKey);
-    
+
     if (currentBurst === 1) {
       // Set expiry for burst counting window (1 second)
       await this.redis.getClient().expire(burstKey, 1);
@@ -184,21 +200,27 @@ export class PerformanceService implements OnModuleInit {
     if (currentBurst > budget.burstLimit) {
       this.logger.warn(
         `Burst rate exceeded for ${metrics.route}: ${currentBurst} > ${budget.burstLimit}`,
-        'PerformanceService'
+        'PerformanceService',
       );
     }
   }
 
   // Get performance statistics for a route
-  async getRoutePerformance(route: string, method: string, timeWindow: number = 3600000) {
+  async getRoutePerformance(
+    route: string,
+    method: string,
+    timeWindow: number = 3600000,
+  ) {
     try {
       const key = `perf:${route}:${method}:timeline`;
       const now = Date.now();
       const cutoff = now - timeWindow;
 
       // Get metrics within time window
-      const metrics = await this.redis.getClient().zrangebyscore(key, cutoff, '+inf');
-      
+      const metrics = await this.redis
+        .getClient()
+        .zrangebyscore(key, cutoff, '+inf');
+
       if (metrics.length === 0) {
         return {
           route,
@@ -212,9 +234,15 @@ export class PerformanceService implements OnModuleInit {
         };
       }
 
-      const parsedMetrics = metrics.map(m => JSON.parse(m) as PerformanceMetrics);
-      const durations = parsedMetrics.map(m => m.duration).sort((a, b) => a - b);
-      const errorCount = parsedMetrics.filter(m => m.statusCode >= 400).length;
+      const parsedMetrics = metrics.map(
+        (m) => JSON.parse(m) as PerformanceMetrics,
+      );
+      const durations = parsedMetrics
+        .map((m) => m.duration)
+        .sort((a, b) => a - b);
+      const errorCount = parsedMetrics.filter(
+        (m) => m.statusCode >= 400,
+      ).length;
 
       return {
         route,
@@ -226,10 +254,13 @@ export class PerformanceService implements OnModuleInit {
         p99Duration: this.percentile(durations, 99),
         errorRate: (errorCount / parsedMetrics.length) * 100,
       };
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error('Failed to get route performance', errorMessage, 'PerformanceService');
+      this.logger.error(
+        'Failed to get route performance',
+        errorMessage,
+        'PerformanceService',
+      );
       throw error;
     }
   }
@@ -240,19 +271,31 @@ export class PerformanceService implements OnModuleInit {
       const routes = Array.from(this.performanceBudgets.keys());
       const stats = await Promise.all(
         routes.map(async (route) => {
-          const getStats = await this.getRoutePerformance(route, 'POST', timeWindow);
-          const postStats = await this.getRoutePerformance(route, 'GET', timeWindow);
+          const getStats = await this.getRoutePerformance(
+            route,
+            'POST',
+            timeWindow,
+          );
+          const postStats = await this.getRoutePerformance(
+            route,
+            'GET',
+            timeWindow,
+          );
           return { route, get: getStats, post: postStats };
-        })
+        }),
       );
 
       return stats;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error('Failed to get all performance stats', errorMessage, 'PerformanceService');
+      this.logger.error(
+        'Failed to get all performance stats',
+        errorMessage,
+        'PerformanceService',
+      );
       throw error;
     }
-    }
+  }
 
   // Calculate percentile
   private percentile(sortedArray: number[], percentile: number): number {
@@ -261,35 +304,46 @@ export class PerformanceService implements OnModuleInit {
   }
 
   // Check if performance budgets are being met
-  async checkPerformanceBudgets(): Promise<{ route: string; violations: string[] }[]> {
+  async checkPerformanceBudgets(): Promise<
+    { route: string; violations: string[] }[]
+  > {
     const results: { route: string; violations: string[] }[] = [];
-    
+
     for (const [route, budget] of this.performanceBudgets) {
       const violations: string[] = [];
-      
+
       try {
         const stats = await this.getRoutePerformance(route, 'POST', 3600000); // Last hour
-        
+
         if (stats.p99Duration > budget.p99Threshold) {
-          violations.push(`P99 duration ${stats.p99Duration}ms exceeds threshold ${budget.p99Threshold}ms`);
+          violations.push(
+            `P99 duration ${stats.p99Duration}ms exceeds threshold ${budget.p99Threshold}ms`,
+          );
         }
-        
+
         if (stats.count > 0) {
           const avgQueries = stats.count; // Simplified - in practice you'd track actual DB queries
           if (avgQueries > budget.maxQueries) {
-            violations.push(`Average queries ${avgQueries} exceeds threshold ${budget.maxQueries}`);
+            violations.push(
+              `Average queries ${avgQueries} exceeds threshold ${budget.maxQueries}`,
+            );
           }
         }
-        
+
         if (violations.length > 0) {
           results.push({ route, violations });
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.stack : String(error);
-        this.logger.error(`Failed to check performance budget for ${route}`, errorMessage, 'PerformanceService');
+        const errorMessage =
+          error instanceof Error ? error.stack : String(error);
+        this.logger.error(
+          `Failed to check performance budget for ${route}`,
+          errorMessage,
+          'PerformanceService',
+        );
       }
     }
-    
+
     return results;
   }
 
@@ -299,21 +353,27 @@ export class PerformanceService implements OnModuleInit {
       const routes = Array.from(this.performanceBudgets.keys());
       const burstRates = await Promise.all(
         routes.map(async (route) => {
-          const getBurst = await this.redis.getClient().get(`burst:${route}:GET`) || '0';
-          const postBurst = await this.redis.getClient().get(`burst:${route}:POST`) || '0';
-          
+          const getBurst =
+            (await this.redis.getClient().get(`burst:${route}:GET`)) || '0';
+          const postBurst =
+            (await this.redis.getClient().get(`burst:${route}:POST`)) || '0';
+
           return {
             route,
             get: parseInt(getBurst),
             post: parseInt(postBurst),
           };
-        })
+        }),
       );
-      
+
       return burstRates;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error('Failed to get current burst rates', errorMessage, 'PerformanceService');
+      this.logger.error(
+        'Failed to get current burst rates',
+        errorMessage,
+        'PerformanceService',
+      );
       throw error;
     }
   }

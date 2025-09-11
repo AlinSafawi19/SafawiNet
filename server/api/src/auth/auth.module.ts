@@ -38,7 +38,14 @@ import { UsersModule } from '../users/users.module';
     }),
     forwardRef(() => UsersModule),
   ],
-  controllers: [AuthController, SessionsController, NotificationsController, EmailMonitoringController, AdminController, CustomerController],
+  controllers: [
+    AuthController,
+    SessionsController,
+    NotificationsController,
+    EmailMonitoringController,
+    AdminController,
+    CustomerController,
+  ],
   providers: [
     AuthService,
     TwoFactorService,
@@ -56,6 +63,15 @@ import { UsersModule } from '../users/users.module';
     SecurityUtils,
     AuthWebSocketGateway,
   ],
-  exports: [AuthService, TwoFactorService, SessionsService, NotificationsService, JwtModule, JwtStrategy, RolesGuard, AuthWebSocketGateway],
+  exports: [
+    AuthService,
+    TwoFactorService,
+    SessionsService,
+    NotificationsService,
+    JwtModule,
+    JwtStrategy,
+    RolesGuard,
+    AuthWebSocketGateway,
+  ],
 })
 export class AuthModule {}

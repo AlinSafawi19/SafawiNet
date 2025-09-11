@@ -1,8 +1,17 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { SessionListDto, SessionDeleteDto, SessionRevokeAllDto } from './schemas/auth.schemas';
+import {
+  SessionListDto,
+  SessionDeleteDto,
+  SessionRevokeAllDto,
+} from './schemas/auth.schemas';
 
 export interface DeviceInfo {
   deviceFingerprint?: string;
@@ -53,8 +62,9 @@ export class SessionsService {
    */
   extractDeviceInfo(req: Request): DeviceInfo {
     const userAgent = req.headers['user-agent'];
-    const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
-    
+    const ipAddress =
+      req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+
     // Parse user agent to extract device info
     const deviceInfo: DeviceInfo = {
       userAgent,
@@ -63,7 +73,11 @@ export class SessionsService {
 
     if (userAgent) {
       // Simple device type detection
-      if (userAgent.includes('Mobile') || userAgent.includes('Android') || userAgent.includes('iPhone')) {
+      if (
+        userAgent.includes('Mobile') ||
+        userAgent.includes('Android') ||
+        userAgent.includes('iPhone')
+      ) {
         deviceInfo.deviceType = 'mobile';
       } else if (userAgent.includes('Tablet') || userAgent.includes('iPad')) {
         deviceInfo.deviceType = 'tablet';
@@ -126,8 +140,13 @@ export class SessionsService {
       try {
         await this.prisma.userSession.findFirst();
       } catch (tableError) {
-        this.logger.error('userSession table does not exist or is not accessible:', tableError);
-        throw new Error('Database table userSession not found. Please run database migrations.');
+        this.logger.error(
+          'userSession table does not exist or is not accessible:',
+          tableError,
+        );
+        throw new Error(
+          'Database table userSession not found. Please run database migrations.',
+        );
       }
 
       // Mark all existing sessions as not current
@@ -203,9 +222,11 @@ export class SessionsService {
 
     const hasMore = sessions.length > limit;
     const sessionsToReturn = hasMore ? sessions.slice(0, limit) : sessions;
-    const nextCursor = hasMore ? sessionsToReturn[sessionsToReturn.length - 1].id : undefined;
+    const nextCursor = hasMore
+      ? sessionsToReturn[sessionsToReturn.length - 1].id
+      : undefined;
 
-    const mappedSessions: SessionInfo[] = sessionsToReturn.map(s => ({
+    const mappedSessions: SessionInfo[] = sessionsToReturn.map((s) => ({
       id: s.id,
       deviceFingerprint: nullToUndefined(s.deviceFingerprint),
       userAgent: nullToUndefined(s.userAgent),
@@ -265,7 +286,7 @@ export class SessionsService {
     keepCurrent: boolean = true,
   ): Promise<{ revokedCount: number }> {
     const where: any = { userId };
-    
+
     if (keepCurrent) {
       where.isCurrent = false;
     }
@@ -281,7 +302,7 @@ export class SessionsService {
     }
 
     // Mark refresh sessions as inactive
-    const refreshTokenIds = sessionsToRevoke.map(s => s.refreshTokenId);
+    const refreshTokenIds = sessionsToRevoke.map((s) => s.refreshTokenId);
     await this.prisma.refreshSession.updateMany({
       where: { tokenId: { in: refreshTokenIds } },
       data: { isActive: false },
@@ -290,7 +311,9 @@ export class SessionsService {
     // Delete user sessions
     await this.prisma.userSession.deleteMany({ where });
 
-    this.logger.log(`Revoked ${sessionsToRevoke.length} sessions for user ${userId}`);
+    this.logger.log(
+      `Revoked ${sessionsToRevoke.length} sessions for user ${userId}`,
+    );
 
     return { revokedCount: sessionsToRevoke.length };
   }
@@ -298,7 +321,9 @@ export class SessionsService {
   /**
    * Get session by refresh token ID
    */
-  async getSessionByRefreshToken(refreshTokenId: string): Promise<SessionInfo | null> {
+  async getSessionByRefreshToken(
+    refreshTokenId: string,
+  ): Promise<SessionInfo | null> {
     const session = await this.prisma.userSession.findUnique({
       where: { refreshTokenId },
       select: {
@@ -354,7 +379,7 @@ export class SessionsService {
       return { cleanedCount: 0 };
     }
 
-    const refreshTokenIds = expiredSessions.map(s => s.tokenId);
+    const refreshTokenIds = expiredSessions.map((s) => s.tokenId);
 
     // Mark refresh sessions as inactive
     await this.prisma.refreshSession.updateMany({
@@ -387,10 +412,12 @@ export class SessionsService {
       const revokedUserSessions = await tx.userSession.updateMany({
         where: {
           refreshTokenId: {
-            in: await tx.refreshSession.findMany({
-              where: { familyId },
-              select: { tokenId: true },
-            }).then(sessions => sessions.map(s => s.tokenId)),
+            in: await tx.refreshSession
+              .findMany({
+                where: { familyId },
+                select: { tokenId: true },
+              })
+              .then((sessions) => sessions.map((s) => s.tokenId)),
           },
         },
         data: { isCurrent: false },
@@ -401,14 +428,19 @@ export class SessionsService {
       };
     });
 
-    this.logger.warn(`Revoked token family ${familyId}: ${result.revokedCount} sessions`);
+    this.logger.warn(
+      `Revoked token family ${familyId}: ${result.revokedCount} sessions`,
+    );
     return result;
   }
 
   /**
    * Revoke all sessions for a specific user (admin security action)
    */
-  async revokeAllUserSessions(userId: string, reason?: string): Promise<{ revokedCount: number }> {
+  async revokeAllUserSessions(
+    userId: string,
+    reason?: string,
+  ): Promise<{ revokedCount: number }> {
     const result = await this.prisma.$transaction(async (tx) => {
       // Revoke all refresh sessions for the user
       const revokedSessions = await tx.refreshSession.updateMany({
@@ -428,7 +460,9 @@ export class SessionsService {
           userId,
           type: 'security_alert',
           title: 'All Sessions Revoked',
-          message: reason || 'All your active sessions have been revoked for security reasons. Please log in again.',
+          message:
+            reason ||
+            'All your active sessions have been revoked for security reasons. Please log in again.',
           priority: 'high',
           metadata: {
             reason,
@@ -443,14 +477,19 @@ export class SessionsService {
       };
     });
 
-    this.logger.warn(`Revoked all sessions for user ${userId}: ${result.revokedCount} sessions. Reason: ${reason || 'No reason provided'}`);
+    this.logger.warn(
+      `Revoked all sessions for user ${userId}: ${result.revokedCount} sessions. Reason: ${reason || 'No reason provided'}`,
+    );
     return result;
   }
 
   /**
    * Revoke sessions by user ID list (bulk admin action)
    */
-  async revokeSessionsByUserIds(userIds: string[], reason?: string): Promise<{ [userId: string]: number }> {
+  async revokeSessionsByUserIds(
+    userIds: string[],
+    reason?: string,
+  ): Promise<{ [userId: string]: number }> {
     const results: { [userId: string]: number } = {};
 
     for (const userId of userIds) {
@@ -458,7 +497,10 @@ export class SessionsService {
         const result = await this.revokeAllUserSessions(userId, reason);
         results[userId] = result.revokedCount;
       } catch (error) {
-        this.logger.error(`Failed to revoke sessions for user ${userId}:`, error);
+        this.logger.error(
+          `Failed to revoke sessions for user ${userId}:`,
+          error,
+        );
         results[userId] = 0;
       }
     }

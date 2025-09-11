@@ -2,36 +2,69 @@ import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 
 export const RegisterSchema = z.object({
-  email: z.string().email('Invalid email format').describe('User email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters').describe('User password (minimum 8 characters)'),
-  name: z.string().min(1, 'Name is required').max(100, 'Name too long').describe('User full name'),
+  email: z
+    .string()
+    .email('Invalid email format')
+    .describe('User email address'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .describe('User password (minimum 8 characters)'),
+  name: z
+    .string()
+    .min(1, 'Name is required')
+    .max(100, 'Name too long')
+    .describe('User full name'),
 });
 
 export const VerifyEmailSchema = z.object({
-  token: z.string().min(1, 'Token is required').describe('Email verification token received via email'),
+  token: z
+    .string()
+    .min(1, 'Token is required')
+    .describe('Email verification token received via email'),
 });
 
 export const LoginSchema = z.object({
-  email: z.string().email('Invalid email format').describe('User email address'),
+  email: z
+    .string()
+    .email('Invalid email format')
+    .describe('User email address'),
   password: z.string().min(1, 'Password is required').describe('User password'),
 });
 
 export const RefreshTokenSchema = z.object({
-  refreshToken: z.string().min(1, 'Refresh token is required').describe('Refresh token for obtaining new access token'),
+  refreshToken: z
+    .string()
+    .min(1, 'Refresh token is required')
+    .describe('Refresh token for obtaining new access token'),
 });
 
 export const ForgotPasswordSchema = z.object({
-  email: z.string().email('Invalid email format').describe('User email address for password reset'),
+  email: z
+    .string()
+    .email('Invalid email format')
+    .describe('User email address for password reset'),
 });
 
-export const ResetPasswordSchema = z.object({
-  token: z.string().min(1, 'Token is required').describe('Password reset token received via email'),
-  password: z.string().min(8, 'Password must be at least 8 characters').describe('New password (minimum 8 characters)'),
-  confirmPassword: z.string().min(1, 'Password confirmation is required').describe('Confirm new password'),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "New password and confirmation password don't match",
-  path: ["confirmPassword"],
-});
+export const ResetPasswordSchema = z
+  .object({
+    token: z
+      .string()
+      .min(1, 'Token is required')
+      .describe('Password reset token received via email'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .describe('New password (minimum 8 characters)'),
+    confirmPassword: z
+      .string()
+      .min(1, 'Password confirmation is required')
+      .describe('Confirm new password'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "New password and confirmation password don't match",
+    path: ['confirmPassword'],
+  });
 
 // DTOs for Swagger documentation
 export class RegisterDto extends createZodDto(RegisterSchema) {
@@ -41,9 +74,9 @@ export class RegisterDto extends createZodDto(RegisterSchema) {
       value: {
         email: 'user@safawinet.com',
         password: 'user123456',
-        name: 'Test User'
-      }
-    }
+        name: 'Test User',
+      },
+    },
   };
 }
 
@@ -52,9 +85,10 @@ export class VerifyEmailDto extends createZodDto(VerifyEmailSchema) {
     verifyEmail: {
       summary: 'Verify email with token',
       value: {
-        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
-      }
-    }
+        token:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+      },
+    },
   };
 }
 
@@ -64,9 +98,9 @@ export class LoginDto extends createZodDto(LoginSchema) {
       summary: 'Login with email and password',
       value: {
         email: 'user@safawinet.com',
-        password: 'user123456'
-      }
-    }
+        password: 'user123456',
+      },
+    },
   };
 }
 
@@ -75,9 +109,10 @@ export class RefreshTokenDto extends createZodDto(RefreshTokenSchema) {
     refreshToken: {
       summary: 'Refresh access token',
       value: {
-        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
-      }
-    }
+        refreshToken:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+      },
+    },
   };
 }
 
@@ -86,9 +121,9 @@ export class ForgotPasswordDto extends createZodDto(ForgotPasswordSchema) {
     forgotPassword: {
       summary: 'Request password reset',
       value: {
-        email: 'user@safawinet.com'
-      }
-    }
+        email: 'user@safawinet.com',
+      },
+    },
   };
 }
 
@@ -97,18 +132,23 @@ export class ResetPasswordDto extends createZodDto(ResetPasswordSchema) {
     resetPassword: {
       summary: 'Reset password with token',
       value: {
-        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+        token:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
         password: 'newSecurePassword123',
-        confirmPassword: 'newSecurePassword123'
-      }
-    }
+        confirmPassword: 'newSecurePassword123',
+      },
+    },
   };
 }
 
 // 2FA DTOs
-export const TwoFactorSetupDto = z.object({
-  // No body required for setup - user is identified from JWT token
-}).describe('No request body required - user is identified from JWT token in Authorization header');
+export const TwoFactorSetupDto = z
+  .object({
+    // No body required for setup - user is identified from JWT token
+  })
+  .describe(
+    'No request body required - user is identified from JWT token in Authorization header',
+  );
 
 export const TwoFactorEnableDto = z.object({
   code: z.string().length(6, 'TOTP code must be 6 digits'),
@@ -124,17 +164,27 @@ export const TwoFactorLoginDto = z.object({
 });
 
 // Simple 2FA DTOs (email-based)
-export const SimpleTwoFactorEnableDto = z.object({
-  // No body required for enable - user is identified from JWT token
-}).describe('No request body required - user is identified from JWT token in Authorization header');
+export const SimpleTwoFactorEnableDto = z
+  .object({
+    // No body required for enable - user is identified from JWT token
+  })
+  .describe(
+    'No request body required - user is identified from JWT token in Authorization header',
+  );
 
 export const SimpleTwoFactorDisableDto = z.object({
-  currentPassword: z.string().min(1, 'Current password is required').describe('Current user password for verification'),
+  currentPassword: z
+    .string()
+    .min(1, 'Current password is required')
+    .describe('Current user password for verification'),
 });
 
 export const TwoFactorCodeDto = z.object({
   userId: z.string().min(1, 'User ID is required'),
-  code: z.string().length(6, '2FA code must be 6 digits').describe('6-digit code received via email'),
+  code: z
+    .string()
+    .length(6, '2FA code must be 6 digits')
+    .describe('6-digit code received via email'),
 });
 
 // Schema exports
@@ -146,13 +196,12 @@ export const SimpleTwoFactorEnableSchema = SimpleTwoFactorEnableDto;
 export const SimpleTwoFactorDisableSchema = SimpleTwoFactorDisableDto;
 export const TwoFactorCodeSchema = TwoFactorCodeDto;
 
-
 export class TwoFactorSetupDtoClass extends createZodDto(TwoFactorSetupDto) {
   static examples = {
     twoFactorSetup: {
       summary: 'Setup 2FA (no body required)',
-      value: {}
-    }
+      value: {},
+    },
   };
 }
 
@@ -161,20 +210,22 @@ export class TwoFactorEnableDtoClass extends createZodDto(TwoFactorEnableDto) {
     twoFactorEnable: {
       summary: 'Enable 2FA with TOTP code',
       value: {
-        code: '123456'
-      }
-    }
+        code: '123456',
+      },
+    },
   };
 }
 
-export class TwoFactorDisableDtoClass extends createZodDto(TwoFactorDisableDto) {
+export class TwoFactorDisableDtoClass extends createZodDto(
+  TwoFactorDisableDto,
+) {
   static examples = {
     twoFactorDisable: {
       summary: 'Disable 2FA with TOTP code',
       value: {
-        code: '123456'
-      }
-    }
+        code: '123456',
+      },
+    },
   };
 }
 
@@ -184,30 +235,34 @@ export class TwoFactorLoginDtoClass extends createZodDto(TwoFactorLoginDto) {
       summary: 'Login with 2FA code',
       value: {
         userId: 'user_id_from_previous_login',
-        code: '123456'
-      }
-    }
+        code: '123456',
+      },
+    },
   };
 }
 
 // Simple 2FA DTO classes
-export class SimpleTwoFactorEnableDtoClass extends createZodDto(SimpleTwoFactorEnableDto) {
+export class SimpleTwoFactorEnableDtoClass extends createZodDto(
+  SimpleTwoFactorEnableDto,
+) {
   static examples = {
     simpleTwoFactorEnable: {
       summary: 'Enable 2FA (no body required)',
-      value: {}
-    }
+      value: {},
+    },
   };
 }
 
-export class SimpleTwoFactorDisableDtoClass extends createZodDto(SimpleTwoFactorDisableDto) {
+export class SimpleTwoFactorDisableDtoClass extends createZodDto(
+  SimpleTwoFactorDisableDto,
+) {
   static examples = {
     simpleTwoFactorDisable: {
       summary: 'Disable 2FA with current password',
       value: {
-        currentPassword: 'yourCurrentPassword'
-      }
-    }
+        currentPassword: 'yourCurrentPassword',
+      },
+    },
   };
 }
 
@@ -217,9 +272,9 @@ export class TwoFactorCodeDtoClass extends createZodDto(TwoFactorCodeDto) {
       summary: 'Complete login with email 2FA code',
       value: {
         userId: 'user_id_from_previous_login',
-        code: '123456'
-      }
-    }
+        code: '123456',
+      },
+    },
   };
 }
 
@@ -228,42 +283,59 @@ export type TwoFactorEnableDto = z.infer<typeof TwoFactorEnableDto>;
 export type TwoFactorDisableDto = z.infer<typeof TwoFactorDisableDto>;
 export type TwoFactorLoginDto = z.infer<typeof TwoFactorLoginDto>;
 export type SimpleTwoFactorEnableDto = z.infer<typeof SimpleTwoFactorEnableDto>;
-export type SimpleTwoFactorDisableDto = z.infer<typeof SimpleTwoFactorDisableDto>;
+export type SimpleTwoFactorDisableDto = z.infer<
+  typeof SimpleTwoFactorDisableDto
+>;
 export type TwoFactorCodeDto = z.infer<typeof TwoFactorCodeDto>;
 
 // Session management schemas
 export const SessionListSchema = z.object({
   cursor: z.string().optional().describe('Cursor for pagination'),
-  limit: z.preprocess(
-    (val) => (val === undefined ? 20 : parseInt(String(val), 10)),
-    z.number().min(1).max(100)
-  ).describe('Number of sessions to return (max 100)'),
+  limit: z
+    .preprocess(
+      (val) => (val === undefined ? 20 : parseInt(String(val), 10)),
+      z.number().min(1).max(100),
+    )
+    .describe('Number of sessions to return (max 100)'),
 });
 
 export const SessionDeleteSchema = z.object({
-  id: z.string().min(1, 'Session ID is required').describe('Session ID to delete'),
+  id: z
+    .string()
+    .min(1, 'Session ID is required')
+    .describe('Session ID to delete'),
 });
 
 export const SessionRevokeAllSchema = z.object({
-  keepCurrent: z.boolean().default(true).describe('Whether to keep the current session'),
+  keepCurrent: z
+    .boolean()
+    .default(true)
+    .describe('Whether to keep the current session'),
 });
 
 // Notification schemas
 export const NotificationListSchema = z.object({
   cursor: z.string().optional().describe('Cursor for pagination'),
-  limit: z.preprocess(
-    (val) => (val === undefined ? 20 : parseInt(String(val), 10)),
-    z.number().min(1).max(100)
-  ).describe('Number of notifications to return (max 100)'),
+  limit: z
+    .preprocess(
+      (val) => (val === undefined ? 20 : parseInt(String(val), 10)),
+      z.number().min(1).max(100),
+    )
+    .describe('Number of notifications to return (max 100)'),
   type: z.string().optional().describe('Filter by notification type'),
-  isRead: z.preprocess(
-    (val) => val === undefined ? undefined : val === 'true',
-    z.boolean().optional()
-  ).describe('Filter by read status'),
+  isRead: z
+    .preprocess(
+      (val) => (val === undefined ? undefined : val === 'true'),
+      z.boolean().optional(),
+    )
+    .describe('Filter by read status'),
 });
 
 export const NotificationMarkReadSchema = z.object({
-  id: z.string().min(1, 'Notification ID is required').describe('Notification ID to mark as read'),
+  id: z
+    .string()
+    .min(1, 'Notification ID is required')
+    .describe('Notification ID to mark as read'),
 });
 
 // DTOs for session management
@@ -272,10 +344,11 @@ export class SessionListDto extends createZodDto(SessionListSchema) {
     listSessions: {
       summary: 'List user sessions',
       value: {
-        cursor: 'eyJpZCI6ImN1aWQxMjM0NTY3ODkwIiwidXNlcklkIjoiY3VpZGFiY2RlZmdoaSJ9',
-        limit: 20
-      }
-    }
+        cursor:
+          'eyJpZCI6ImN1aWQxMjM0NTY3ODkwIiwidXNlcklkIjoiY3VpZGFiY2RlZmdoaSJ9',
+        limit: 20,
+      },
+    },
   };
 }
 
@@ -284,9 +357,9 @@ export class SessionDeleteDto extends createZodDto(SessionDeleteSchema) {
     deleteSession: {
       summary: 'Delete a specific session',
       value: {
-        id: 'cuidsession123456789'
-      }
-    }
+        id: 'cuidsession123456789',
+      },
+    },
   };
 }
 
@@ -295,9 +368,9 @@ export class SessionRevokeAllDto extends createZodDto(SessionRevokeAllSchema) {
     revokeAllSessions: {
       summary: 'Revoke all sessions except current',
       value: {
-        keepCurrent: true
-      }
-    }
+        keepCurrent: true,
+      },
+    },
   };
 }
 
@@ -307,22 +380,25 @@ export class NotificationListDto extends createZodDto(NotificationListSchema) {
     listNotifications: {
       summary: 'List user notifications',
       value: {
-        cursor: 'eyJpZCI6ImN1aWQxMjM0NTY3ODkwIiwidXNlcklkIjoiY3VpZGFiY2RlZmdoaSJ9',
+        cursor:
+          'eyJpZCI6ImN1aWQxMjM0NTY3ODkwIiwidXNlcklkIjoiY3VpZGFiY2RlZmdoaSJ9',
         limit: 20,
         type: 'security_alert',
-        isRead: false
-      }
-    }
+        isRead: false,
+      },
+    },
   };
 }
 
-export class NotificationMarkReadDto extends createZodDto(NotificationMarkReadSchema) {
+export class NotificationMarkReadDto extends createZodDto(
+  NotificationMarkReadSchema,
+) {
   static examples = {
     markRead: {
       summary: 'Mark notification as read',
       value: {
-        id: 'cuidsession123456789'
-      }
-    }
+        id: 'cuidsession123456789',
+      },
+    },
   };
 }

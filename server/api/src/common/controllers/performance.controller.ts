@@ -1,5 +1,10 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { PerformanceService } from '../services/performance.service';
 import { QueueService } from '../services/queue.service';
@@ -18,7 +23,10 @@ export class PerformanceController {
 
   @Get('stats')
   @ApiOperation({ summary: 'Get performance statistics for all routes' })
-  @ApiResponse({ status: 200, description: 'Performance statistics retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Performance statistics retrieved successfully',
+  })
   async getPerformanceStats(@Query('timeWindow') timeWindow?: string) {
     const window = timeWindow ? parseInt(timeWindow) : 3600000; // Default 1 hour
     return this.performanceService.getAllPerformanceStats(window);
@@ -26,7 +34,10 @@ export class PerformanceController {
 
   @Get('stats/:route')
   @ApiOperation({ summary: 'Get performance statistics for a specific route' })
-  @ApiResponse({ status: 200, description: 'Route performance statistics retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Route performance statistics retrieved successfully',
+  })
   async getRoutePerformance(
     @Query('route') route: string,
     @Query('method') method: string = 'POST',
@@ -38,21 +49,30 @@ export class PerformanceController {
 
   @Get('budgets')
   @ApiOperation({ summary: 'Check performance budget compliance' })
-  @ApiResponse({ status: 200, description: 'Performance budget check completed' })
+  @ApiResponse({
+    status: 200,
+    description: 'Performance budget check completed',
+  })
   async checkPerformanceBudgets() {
     return this.performanceService.checkPerformanceBudgets();
   }
 
   @Get('burst-rates')
   @ApiOperation({ summary: 'Get current burst rates for all routes' })
-  @ApiResponse({ status: 200, description: 'Current burst rates retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current burst rates retrieved successfully',
+  })
   async getCurrentBurstRates() {
     return this.performanceService.getCurrentBurstRates();
   }
 
   @Get('queues')
   @ApiOperation({ summary: 'Get queue status for background jobs' })
-  @ApiResponse({ status: 200, description: 'Queue status retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Queue status retrieved successfully',
+  })
   async getQueueStatus() {
     return this.queueService.getQueueStatus();
   }

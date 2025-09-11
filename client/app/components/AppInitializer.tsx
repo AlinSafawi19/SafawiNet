@@ -37,29 +37,29 @@ const LoadingMarquee: React.FC = () => {
                 INITIALIZING
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
             </h1>
             <h1 className="my-4 flex space-x-8">
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
                 INITIALIZING
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
             </h1>
             <h1 className="my-4 flex space-x-8">
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
                 INITIALIZING
@@ -70,29 +70,29 @@ const LoadingMarquee: React.FC = () => {
                 INITIALIZING
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
             </h1>
             <h1 className="my-4 flex space-x-8">
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
                 INITIALIZING
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
             </h1>
             <h1 className="my-4 flex space-x-8">
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
                 INITIALIZING
@@ -107,29 +107,29 @@ const LoadingMarquee: React.FC = () => {
                 INITIALIZING
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
             </h1>
             <h1 className="my-4 flex space-x-8">
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
                 INITIALIZING
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
             </h1>
             <h1 className="my-4 flex space-x-8">
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
                 INITIALIZING
@@ -140,29 +140,29 @@ const LoadingMarquee: React.FC = () => {
                 INITIALIZING
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
             </h1>
             <h1 className="my-4 flex space-x-8">
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
                 INITIALIZING
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
             </h1>
             <h1 className="my-4 flex space-x-8">
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black">
-                SAFAWI NETT
+                SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
                 INITIALIZING

@@ -1,5 +1,22 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UsePipes, UseGuards, Request, BadRequestException, Res } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UsePipes,
+  UseGuards,
+  Request,
+  BadRequestException,
+  Res,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
@@ -56,10 +73,10 @@ export class AuthController {
         value: {
           email: 'user@safawinet.com',
           password: 'user123456',
-          name: 'Test User'
-        }
-      }
-    }
+          name: 'Test User',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 201,
@@ -100,10 +117,11 @@ export class AuthController {
       verifyEmail: {
         summary: 'Verify email with token',
         value: {
-          token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
-        }
-      }
-    }
+          token:
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -156,10 +174,10 @@ export class AuthController {
       resendVerification: {
         summary: 'Resend verification email',
         value: {
-          email: 'user@safawinet.com'
-        }
-      }
-    }
+          email: 'user@safawinet.com',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -193,10 +211,10 @@ export class AuthController {
         summary: 'Login with email and password',
         value: {
           email: 'user@safawinet.com',
-          password: 'user123456'
-        }
-      }
-    }
+          password: 'user123456',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -244,9 +262,13 @@ export class AuthController {
     description: 'Invalid credentials or account locked',
   })
   @UsePipes(new ZodValidationPipe(LoginSchema))
-  async login(@Body() loginDto: LoginDto, @Request() req: any, @Res({ passthrough: true }) res: Response) {
+  async login(
+    @Body() loginDto: LoginDto,
+    @Request() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const result = await this.authService.login(loginDto, req);
-    
+
     // If login was successful and tokens were generated, set them as HTTP-only cookies
     if (result.tokens) {
       this.authService.setAuthCookies(res, result.tokens);
@@ -254,7 +276,7 @@ export class AuthController {
       const { tokens, ...responseWithoutTokens } = result;
       return responseWithoutTokens;
     }
-    
+
     return result;
   }
 
@@ -275,16 +297,19 @@ export class AuthController {
     status: 401,
     description: 'Invalid refresh token',
   })
-  async refreshToken(@Request() req: any, @Res({ passthrough: true }) res: Response) {
+  async refreshToken(
+    @Request() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const refreshToken = req.cookies?.refreshToken;
-    
+
     if (!refreshToken) {
       throw new BadRequestException('No refresh token provided');
     }
-    
+
     const tokens = await this.authService.refreshToken({ refreshToken });
     this.authService.setAuthCookies(res, tokens);
-    
+
     return { message: 'Token refreshed successfully' };
   }
 
@@ -297,10 +322,10 @@ export class AuthController {
       forgotPassword: {
         summary: 'Request password reset',
         value: {
-          email: 'user@safawinet.com'
-        }
-      }
-    }
+          email: 'user@safawinet.com',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -326,12 +351,13 @@ export class AuthController {
       resetPassword: {
         summary: 'Reset password with token',
         value: {
-          token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+          token:
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
           password: 'newSecurePassword123',
-          confirmPassword: 'newSecurePassword123'
-        }
-      }
-    }
+          confirmPassword: 'newSecurePassword123',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -357,18 +383,19 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Enable two-factor authentication',
-    description: 'Enable email-based 2FA for the authenticated user. No password required. Requires a valid JWT token in the Authorization header.'
+    description:
+      'Enable email-based 2FA for the authenticated user. No password required. Requires a valid JWT token in the Authorization header.',
   })
   @ApiBody({
     description: 'No request body required - user is identified from JWT token',
     examples: {
       enable2FA: {
         summary: 'Enable 2FA (no body required)',
-        value: {}
-      }
-    }
+        value: {},
+      },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -396,9 +423,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Disable two-factor authentication',
-    description: 'Disable email-based 2FA for the authenticated user. Requires current password. Requires a valid JWT token in the Authorization header.'
+    description:
+      'Disable email-based 2FA for the authenticated user. Requires current password. Requires a valid JWT token in the Authorization header.',
   })
   @ApiBody({
     description: '2FA disable data',
@@ -406,10 +434,10 @@ export class AuthController {
       disable2FA: {
         summary: 'Disable 2FA with current password',
         value: {
-          currentPassword: 'yourCurrentPassword'
-        }
-      }
-    }
+          currentPassword: 'yourCurrentPassword',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -427,11 +455,18 @@ export class AuthController {
   })
   @ApiResponse({
     status: 401,
-    description: 'Invalid current password or unauthorized - Invalid or missing JWT token',
+    description:
+      'Invalid current password or unauthorized - Invalid or missing JWT token',
   })
   @UsePipes(new ZodValidationPipe(SimpleTwoFactorDisableSchema))
-  async disableTwoFactor(@Request() req, @Body() twoFactorDisableDto: SimpleTwoFactorDisableDto) {
-    return this.simpleTwoFactorService.disableTwoFactor(req.user.sub, twoFactorDisableDto.currentPassword);
+  async disableTwoFactor(
+    @Request() req,
+    @Body() twoFactorDisableDto: SimpleTwoFactorDisableDto,
+  ) {
+    return this.simpleTwoFactorService.disableTwoFactor(
+      req.user.sub,
+      twoFactorDisableDto.currentPassword,
+    );
   }
 
   @Post('2fa/login')
@@ -444,10 +479,10 @@ export class AuthController {
         summary: 'Complete login with email 2FA code',
         value: {
           userId: 'user_id_from_previous_login',
-          code: '123456'
-        }
-      }
-    }
+          code: '123456',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -483,9 +518,17 @@ export class AuthController {
     description: 'Invalid 2FA code',
   })
   @UsePipes(new ZodValidationPipe(TwoFactorLoginSchema))
-  async twoFactorLogin(@Body() twoFactorLoginDto: TwoFactorLoginDto, @Request() req: any, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.twoFactorLogin(twoFactorLoginDto.userId, twoFactorLoginDto, req);
-    
+  async twoFactorLogin(
+    @Body() twoFactorLoginDto: TwoFactorLoginDto,
+    @Request() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.twoFactorLogin(
+      twoFactorLoginDto.userId,
+      twoFactorLoginDto,
+      req,
+    );
+
     // If login was successful and tokens were generated, set them as HTTP-only cookies
     if (result.tokens) {
       this.authService.setAuthCookies(res, result.tokens);
@@ -493,10 +536,9 @@ export class AuthController {
       const { tokens, ...responseWithoutTokens } = result;
       return responseWithoutTokens;
     }
-    
+
     return result;
   }
-
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
@@ -514,25 +556,24 @@ export class AuthController {
   async logout(@Request() req: any, @Res({ passthrough: true }) res: Response) {
     try {
       const refreshToken = req.cookies?.refreshToken;
-      
+
       if (refreshToken) {
         // Invalidate the refresh token
         await this.authService.invalidateRefreshToken(refreshToken);
       }
-      
+
       // Clear cookies regardless of whether refresh token exists
       this.authService.clearAuthCookies(res);
-      
+
       return { message: 'Logged out successfully' };
     } catch (error) {
       // Log the error but don't fail the logout
       console.error('Error during logout:', error);
-      
+
       // Still clear cookies even if token invalidation fails
       this.authService.clearAuthCookies(res);
-      
+
       return { message: 'Logged out successfully' };
     }
   }
-
 }

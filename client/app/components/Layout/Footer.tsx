@@ -72,7 +72,7 @@ const Footer = () => {
       <div className="bg-turquoise-100 dark:bg-dark-surface text-black dark:text-white text-center py-6 sm:py-8 px-4">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-wider">
-            $AFAWI NETT
+            SAFAWI NET
           </h2>
           <p className="text-xs sm:text-sm md:text-base mt-2 text-gray-700 dark:text-gray-300 px-4 max-w-2xl mx-auto">
             {t('footer.tagline')}
@@ -164,12 +164,12 @@ const Footer = () => {
         <p className="font-default text-xs sm:text-sm">
           {locale === 'ar' ? (
             <>
-              © 2025 SAFAWI NETT {t('footer.copyright.allRightsReserved')}.{' '}
+              © 2025 SAFAWI NET {t('footer.copyright.allRightsReserved')}.{' '}
               {t('footer.copyright.by')}
             </>
           ) : (
             <>
-              © 2025 {t('footer.copyright.by')} SAFAWI NETT.{' '}
+              © 2025 {t('footer.copyright.by')} SAFAWI NET.{' '}
               {t('footer.copyright.allRightsReserved')}
             </>
           )}

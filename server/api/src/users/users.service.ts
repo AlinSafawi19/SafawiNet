@@ -1,15 +1,22 @@
-import { Injectable, Logger, ConflictException, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/services/prisma.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { EmailService } from '../common/services/email.service';
 import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
-import { 
-  CreateUserDto, 
-  UpdateProfileDto, 
-  UpdatePreferencesDto, 
+import {
+  CreateUserDto,
+  UpdateProfileDto,
+  UpdatePreferencesDto,
   UpdateNotificationPreferencesDto,
-  ChangePasswordDto
+  ChangePasswordDto,
 } from './schemas/user.schemas';
 import { User, Role } from '@prisma/client';
 
@@ -24,7 +31,9 @@ export class UsersService {
     private readonly webSocketGateway: AuthWebSocketGateway,
   ) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
+  async createUser(
+    createUserDto: CreateUserDto,
+  ): Promise<Omit<User, 'password'>> {
     const { email, password, name } = createUserDto;
 
     // Check if user already exists
@@ -58,19 +67,19 @@ export class UsersService {
         marketing: false,
         security: true,
         updates: true,
-        weeklyDigest: false
+        weeklyDigest: false,
       },
       push: {
         enabled: true,
         marketing: false,
         security: true,
-        updates: true
+        updates: true,
       },
       sms: {
         enabled: false,
         security: true,
-        twoFactor: true
-      }
+        twoFactor: true,
+      },
     };
 
     // Create user with ADMIN role (this endpoint is for admin user creation)
@@ -100,7 +109,9 @@ export class UsersService {
           tierUpgradedAt: new Date(),
         },
       });
-      this.logger.log(`Created loyalty account for new admin user: ${user.email}`);
+      this.logger.log(
+        `Created loyalty account for new admin user: ${user.email}`,
+      );
     }
 
     // Generate verification token
@@ -119,14 +130,20 @@ export class UsersService {
 
     // Send verification email
     try {
-      const frontendDomain = this.configService.get('FRONTEND_DOMAIN', 'localhost:3001');
+      const frontendDomain = this.configService.get(
+        'FRONTEND_DOMAIN',
+        'localhost:3001',
+      );
       const verificationUrl = `http://${frontendDomain}/verify-email?token=${verificationToken}`;
       await this.emailService.sendEmailVerification(user.email, {
         name: user.name || 'User',
         verificationUrl,
       });
     } catch (error) {
-      this.logger.error(`Failed to send verification email to ${user.email}:`, error);
+      this.logger.error(
+        `Failed to send verification email to ${user.email}:`,
+        error,
+      );
       // Don't fail user creation if email fails
     }
 
@@ -137,7 +154,7 @@ export class UsersService {
 
   async getCurrentUser(userId: string): Promise<Omit<User, 'password'>> {
     console.log('👤 UsersService - getCurrentUser called with userId:', userId);
-    
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -150,7 +167,7 @@ export class UsersService {
     }
 
     console.log('✅ UsersService - User retrieved successfully:', user.email);
-    
+
     // Provide default values for preferences and notificationPreferences if they are null
     const userWithDefaults = {
       ...user,
@@ -170,29 +187,31 @@ export class UsersService {
           marketing: false,
           security: true,
           updates: true,
-          weeklyDigest: false
+          weeklyDigest: false,
         },
         push: {
           enabled: true,
           marketing: false,
           security: true,
-          updates: true
+          updates: true,
         },
         sms: {
           enabled: false,
           security: true,
-          twoFactor: true
-        }
-      }
+          twoFactor: true,
+        },
+      },
     };
-    
+
     const { password: _, ...userWithoutPassword } = userWithDefaults;
     return userWithoutPassword;
   }
 
-  async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<Omit<User, 'password'>> {
+  async updateProfile(
+    userId: string,
+    updateProfileDto: UpdateProfileDto,
+  ): Promise<Omit<User, 'password'>> {
     const { name } = updateProfileDto;
-
 
     const user = await this.prisma.user.update({
       where: { id: userId },
@@ -205,7 +224,10 @@ export class UsersService {
     return userWithoutPassword;
   }
 
-  async updatePreferences(userId: string, updatePreferencesDto: UpdatePreferencesDto): Promise<Omit<User, 'password'>> {
+  async updatePreferences(
+    userId: string,
+    updatePreferencesDto: UpdatePreferencesDto,
+  ): Promise<Omit<User, 'password'>> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { preferences: true },
@@ -216,8 +238,11 @@ export class UsersService {
     }
 
     // Merge existing preferences with new ones
-    const currentPreferences = user.preferences as any || {};
-    const updatedPreferences = { ...currentPreferences, ...updatePreferencesDto };
+    const currentPreferences = (user.preferences as any) || {};
+    const updatedPreferences = {
+      ...currentPreferences,
+      ...updatePreferencesDto,
+    };
 
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
@@ -228,7 +253,10 @@ export class UsersService {
     return userWithoutPassword;
   }
 
-  async updateNotificationPreferences(userId: string, updateNotificationPreferencesDto: UpdateNotificationPreferencesDto): Promise<Omit<User, 'password'>> {
+  async updateNotificationPreferences(
+    userId: string,
+    updateNotificationPreferencesDto: UpdateNotificationPreferencesDto,
+  ): Promise<Omit<User, 'password'>> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { preferences: true },
@@ -241,9 +269,15 @@ export class UsersService {
     // Get current preferences and merge notification preferences
     const currentPreferences = (user.preferences as any) || {};
     const currentNotifications = currentPreferences.notifications || {};
-    
-    const updatedNotifications = { ...currentNotifications, ...updateNotificationPreferencesDto };
-    const updatedPreferences = { ...currentPreferences, notifications: updatedNotifications };
+
+    const updatedNotifications = {
+      ...currentNotifications,
+      ...updateNotificationPreferencesDto,
+    };
+    const updatedPreferences = {
+      ...currentPreferences,
+      notifications: updatedNotifications,
+    };
 
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
@@ -254,82 +288,110 @@ export class UsersService {
     return userWithoutPassword;
   }
 
-  async changePassword(userId: string, changePasswordDto: ChangePasswordDto): Promise<{ message: string; messageKey: string }> {
+  async changePassword(
+    userId: string,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<{ message: string; messageKey: string }> {
     try {
       this.logger.log(`Changing password for user ${userId}`);
-      const { currentPassword, newPassword, confirmNewPassword } = changePasswordDto;
+      const { currentPassword, newPassword, confirmNewPassword } =
+        changePasswordDto;
 
-    // Get user with password
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
+      // Get user with password
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
 
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
 
-    // Verify current password
-      this.logger.log(`Verifying password for user ${userId}, hash format: ${user.password.substring(0, 20)}...`);
+      // Verify current password
+      this.logger.log(
+        `Verifying password for user ${userId}, hash format: ${user.password.substring(0, 20)}...`,
+      );
       let isCurrentPasswordValid = false;
       try {
-        isCurrentPasswordValid = await SecurityUtils.verifyPassword(user.password, currentPassword);
+        isCurrentPasswordValid = await SecurityUtils.verifyPassword(
+          user.password,
+          currentPassword,
+        );
       } catch (error) {
-        this.logger.warn(`Password verification failed for user ${userId}:`, error instanceof Error ? error.message : String(error));
+        this.logger.warn(
+          `Password verification failed for user ${userId}:`,
+          error instanceof Error ? error.message : String(error),
+        );
         // If verification fails due to hash format issues, treat as incorrect password
         isCurrentPasswordValid = false;
       }
-      
-    if (!isCurrentPasswordValid) {
-      throw new UnauthorizedException('Current password is incorrect');
-    }
 
-    // Hash new password
-    const hashedNewPassword = await SecurityUtils.hashPassword(newPassword);
+      if (!isCurrentPasswordValid) {
+        throw new UnauthorizedException('Current password is incorrect');
+      }
 
-    // Update password
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { 
-        password: hashedNewPassword,
-      },
-    });
+      // Hash new password
+      const hashedNewPassword = await SecurityUtils.hashPassword(newPassword);
 
-    // Revoke all refresh tokens for this user
-    await this.revokeRefreshTokens(userId);
-
-    // Send password change security alert email
-    try {
-      await this.emailService.sendTemplateEmail('security-alert', user.email, {
-        name: user.name || 'User',
-        appName: 'Safawinet',
-        supportEmail: 'support@safawinet.com',
-        event: 'Password Changed',
-        message: 'Your password has been successfully changed. If you did not make this change, please contact support immediately.',
-        timestamp: new Date().toLocaleString(),
+      // Update password
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          password: hashedNewPassword,
+        },
       });
-    } catch (error) {
-      this.logger.error(`Failed to send password change security alert to ${user.email}:`, error);
-      // Don't fail password change if email fails
-    }
 
-    // Emit logout event to all user's devices
-    try {
-      // Emit to user's personal room (for all logged-in devices)
-      await this.webSocketGateway.emitLogoutToUserDevices(userId, 'password_changed');
-      
-      // Also emit global logout to catch any devices that might not be in the user's room
-      await this.webSocketGateway.emitGlobalLogout('password_changed');
-      
-      this.logger.log(`Logout events emitted for password change - user: ${user.email}`);
-    } catch (error) {
-      this.logger.error(`Failed to emit logout events for password change - user: ${user.email}:`, error);
-      // Don't fail the password change if WebSocket emission fails
-    }
+      // Revoke all refresh tokens for this user
+      await this.revokeRefreshTokens(userId);
 
-    return { 
-      message: 'Password changed successfully',
-      messageKey: 'account.loginSecurity.password.success'
-    };
+      // Send password change security alert email
+      try {
+        await this.emailService.sendTemplateEmail(
+          'security-alert',
+          user.email,
+          {
+            name: user.name || 'User',
+            appName: 'Safawinet',
+            supportEmail: 'support@safawinet.com',
+            event: 'Password Changed',
+            message:
+              'Your password has been successfully changed. If you did not make this change, please contact support immediately.',
+            timestamp: new Date().toLocaleString(),
+          },
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to send password change security alert to ${user.email}:`,
+          error,
+        );
+        // Don't fail password change if email fails
+      }
+
+      // Emit logout event to all user's devices
+      try {
+        // Emit to user's personal room (for all logged-in devices)
+        await this.webSocketGateway.emitLogoutToUserDevices(
+          userId,
+          'password_changed',
+        );
+
+        // Also emit global logout to catch any devices that might not be in the user's room
+        await this.webSocketGateway.emitGlobalLogout('password_changed');
+
+        this.logger.log(
+          `Logout events emitted for password change - user: ${user.email}`,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to emit logout events for password change - user: ${user.email}:`,
+          error,
+        );
+        // Don't fail the password change if WebSocket emission fails
+      }
+
+      return {
+        message: 'Password changed successfully',
+        messageKey: 'account.loginSecurity.password.success',
+      };
     } catch (error) {
       this.logger.error(`Error changing password for user ${userId}:`, error);
       throw error;
@@ -367,7 +429,9 @@ export class UsersService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return users.map(({ password: _, ...userWithoutPassword }) => userWithoutPassword);
+    return users.map(
+      ({ password: _, ...userWithoutPassword }) => userWithoutPassword,
+    );
   }
 
   async findAllAdmins(): Promise<Omit<User, 'password'>[]> {
@@ -380,7 +444,9 @@ export class UsersService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return admins.map(({ password: _, ...userWithoutPassword }) => userWithoutPassword);
+    return admins.map(
+      ({ password: _, ...userWithoutPassword }) => userWithoutPassword,
+    );
   }
 
   async findAllCustomers(): Promise<Omit<User, 'password'>[]> {
@@ -393,7 +459,9 @@ export class UsersService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return customers.map(({ password: _, ...userWithoutPassword }) => userWithoutPassword);
+    return customers.map(
+      ({ password: _, ...userWithoutPassword }) => userWithoutPassword,
+    );
   }
 
   async verifyEmail(token: string): Promise<boolean> {

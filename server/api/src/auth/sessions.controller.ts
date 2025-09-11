@@ -47,10 +47,20 @@ export class SessionsController {
   @Get()
   @ApiOperation({
     summary: 'List user sessions',
-    description: 'Get a paginated list of all user sessions with device information',
+    description:
+      'Get a paginated list of all user sessions with device information',
   })
-  @ApiQuery({ name: 'cursor', required: false, description: 'Cursor for pagination' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Number of sessions to return (max 100)', type: Number })
+  @ApiQuery({
+    name: 'cursor',
+    required: false,
+    description: 'Cursor for pagination',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of sessions to return (max 100)',
+    type: Number,
+  })
   @ApiResponse({
     status: 200,
     description: 'Sessions retrieved successfully',
@@ -94,7 +104,8 @@ export class SessionsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete a specific session',
-    description: 'Delete a user session by ID. Cannot delete the current session.',
+    description:
+      'Delete a user session by ID. Cannot delete the current session.',
   })
   @ApiParam({ name: 'id', description: 'Session ID to delete' })
   @ApiResponse({ status: 204, description: 'Session deleted successfully' })
@@ -120,7 +131,8 @@ export class SessionsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Revoke all sessions except current',
-    description: 'Revoke all user sessions except the current one. Optionally keep the current session.',
+    description:
+      'Revoke all user sessions except the current one. Optionally keep the current session.',
   })
   @ApiBody({
     schema: {
@@ -175,11 +187,12 @@ export class SessionsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Revoke token family',
-    description: 'Revoke all sessions in a specific token family (security incident response)',
+    description:
+      'Revoke all sessions in a specific token family (security incident response)',
   })
   @ApiParam({ name: 'familyId', description: 'Token family ID to revoke' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Token family revoked successfully',
     schema: {
       type: 'object',
@@ -190,7 +203,10 @@ export class SessionsController {
     },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
   async revokeTokenFamily(
     @Param('familyId') familyId: string,
     @Request() req: ExpressRequest & { user: { sub: string } },
@@ -207,7 +223,8 @@ export class SessionsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Revoke all user sessions',
-    description: 'Revoke all active sessions for a specific user (admin security action)',
+    description:
+      'Revoke all active sessions for a specific user (admin security action)',
   })
   @ApiParam({ name: 'userId', description: 'User ID to revoke sessions for' })
   @ApiBody({
@@ -218,8 +235,8 @@ export class SessionsController {
       },
     },
   })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'User sessions revoked successfully',
     schema: {
       type: 'object',
@@ -230,14 +247,20 @@ export class SessionsController {
     },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
   async revokeUserSessions(
     @Param('userId') userId: string,
     @Body() body: { reason?: string },
     @Request() req: ExpressRequest & { user: { sub: string } },
   ) {
     // TODO: Add admin role check here
-    const result = await this.sessionsService.revokeAllUserSessions(userId, body.reason);
+    const result = await this.sessionsService.revokeAllUserSessions(
+      userId,
+      body.reason,
+    );
     return {
       revokedCount: result.revokedCount,
       message: `Successfully revoked ${result.revokedCount} sessions for user ${userId}`,
@@ -250,8 +273,8 @@ export class SessionsController {
     description: 'Get security audit information for a specific user',
   })
   @ApiParam({ name: 'userId', description: 'User ID to audit' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Security audit information retrieved successfully',
     schema: {
       type: 'object',
@@ -264,7 +287,10 @@ export class SessionsController {
     },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
   async getSecurityAuditInfo(
     @Param('userId') userId: string,
     @Request() req: ExpressRequest & { user: { sub: string } },

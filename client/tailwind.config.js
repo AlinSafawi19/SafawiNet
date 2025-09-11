@@ -48,8 +48,8 @@ module.exports = {
       },
       animation: {
         'fade-in': 'fade 3s ease-in-out',
-        'marquee': 'marquee 20s linear infinite',
-        'marquee2': 'marquee2 20s linear infinite',
+        marquee: 'marquee 20s linear infinite',
+        marquee2: 'marquee2 20s linear infinite',
         'marquee-vertical': 'marquee-vertical 20s linear infinite',
         'marquee-vertical2': 'marquee-vertical2 20s linear infinite',
       },

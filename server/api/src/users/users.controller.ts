@@ -1,5 +1,25 @@
-import { Controller, Post, Body, Get, Param, UseGuards, UsePipes, HttpCode, HttpStatus, Patch, Put, Request, Logger } from '@nestjs/common';
-import { ApiBody, ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  UseGuards,
+  UsePipes,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Put,
+  Request,
+  Logger,
+} from '@nestjs/common';
+import {
+  ApiBody,
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -45,10 +65,10 @@ export class UsersController {
         value: {
           email: 'admin@safawinet.com',
           password: 'admin123456',
-          name: 'John Smith'
-        }
-      }
-    }
+          name: 'John Smith',
+        },
+      },
+    },
   })
   @ApiResponse({ status: 201, description: 'Admin user created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
@@ -67,7 +87,10 @@ export class UsersController {
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all admin users' })
-  @ApiResponse({ status: 200, description: 'List of admin users retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of admin users retrieved successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
   async findAllAdmins() {
@@ -80,7 +103,10 @@ export class UsersController {
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all customer users' })
-  @ApiResponse({ status: 200, description: 'List of customer users retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of customer users retrieved successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
   async findAllCustomers() {
@@ -92,12 +118,15 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, description: 'Current user profile retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current user profile retrieved successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getCurrentUser(@Request() req: any) {
     this.logger.log('🚀 /users/me endpoint reached!');
     this.logger.log('🚀 Request user object:', req.user);
-    
+
     const user = await this.usersService.getCurrentUser(req.user.sub);
     return { user };
   }
@@ -122,10 +151,11 @@ export class UsersController {
       verifyEmail: {
         summary: 'Verify email with token',
         value: {
-          token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
-        }
-      }
-    }
+          token:
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+        },
+      },
+    },
   })
   @ApiResponse({ status: 200, description: 'Email verified successfully' })
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
@@ -145,17 +175,22 @@ export class UsersController {
     description: 'Password reset request data',
     examples: {
       requestReset: {
-    summary: 'Request password reset',
+        summary: 'Request password reset',
         value: {
-          email: 'user@safawinet.com'
-        }
-      }
-    }
+          email: 'user@safawinet.com',
+        },
+      },
+    },
   })
-  @ApiResponse({ status: 200, description: 'Password reset email sent if user exists' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset email sent if user exists',
+  })
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(RequestPasswordResetSchema))
-  async requestPasswordReset(@Body() requestPasswordResetDto: RequestPasswordResetDto) {
+  async requestPasswordReset(
+    @Body() requestPasswordResetDto: RequestPasswordResetDto,
+  ) {
     await this.usersService.requestPasswordReset(requestPasswordResetDto.email);
     return { message: 'Password reset email sent if user exists' };
   }
@@ -168,12 +203,13 @@ export class UsersController {
       resetPassword: {
         summary: 'Reset password with token',
         value: {
-          token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+          token:
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
           newPassword: 'newSecurePassword123',
-          confirmNewPassword: 'newSecurePassword123'
-        }
-      }
-    }
+          confirmNewPassword: 'newSecurePassword123',
+        },
+      },
+    },
   })
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
@@ -201,16 +237,22 @@ export class UsersController {
         summary: 'Update user profile',
         value: {
           name: 'John Smith',
-        }
-      }
-    }
+        },
+      },
+    },
   })
   @ApiResponse({ status: 200, description: 'Profile updated successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UsePipes(new ZodValidationPipe(UpdateProfileSchema))
-  async updateProfile(@Request() req: any, @Body() updateProfileDto: UpdateProfileDto) {
-    const user = await this.usersService.updateProfile(req.user.sub, updateProfileDto);
+  async updateProfile(
+    @Request() req: any,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
+    const user = await this.usersService.updateProfile(
+      req.user.sub,
+      updateProfileDto,
+    );
     return {
       message: 'Profile updated successfully',
       user,
@@ -234,18 +276,24 @@ export class UsersController {
           timeFormat: '12h',
           notifications: {
             sound: true,
-            desktop: true
-          }
-        }
-      }
-    }
+            desktop: true,
+          },
+        },
+      },
+    },
   })
   @ApiResponse({ status: 200, description: 'Preferences updated successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UsePipes(new ZodValidationPipe(UpdatePreferencesSchema))
-  async updatePreferences(@Request() req: any, @Body() updatePreferencesDto: UpdatePreferencesDto) {
-    const user = await this.usersService.updatePreferences(req.user.sub, updatePreferencesDto);
+  async updatePreferences(
+    @Request() req: any,
+    @Body() updatePreferencesDto: UpdatePreferencesDto,
+  ) {
+    const user = await this.usersService.updatePreferences(
+      req.user.sub,
+      updatePreferencesDto,
+    );
     return {
       message: 'Preferences updated successfully',
       user,
@@ -266,35 +314,43 @@ export class UsersController {
             marketing: false,
             security: true,
             updates: true,
-            weeklyDigest: false
+            weeklyDigest: false,
           },
           push: {
             enabled: true,
             marketing: false,
             security: true,
-            updates: true
+            updates: true,
           },
           sms: {
             enabled: false,
             security: true,
-            twoFactor: true
-          }
-        }
-      }
-    }
+            twoFactor: true,
+          },
+        },
+      },
+    },
   })
-  @ApiResponse({ status: 200, description: 'Notification preferences updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Notification preferences updated successfully',
+  })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UsePipes(new ZodValidationPipe(UpdateNotificationPreferencesSchema))
-  async updateNotificationPreferences(@Request() req: any, @Body() updateNotificationPreferencesDto: UpdateNotificationPreferencesDto) {
-    const user = await this.usersService.updateNotificationPreferences(req.user.sub, updateNotificationPreferencesDto);
+  async updateNotificationPreferences(
+    @Request() req: any,
+    @Body() updateNotificationPreferencesDto: UpdateNotificationPreferencesDto,
+  ) {
+    const user = await this.usersService.updateNotificationPreferences(
+      req.user.sub,
+      updateNotificationPreferencesDto,
+    );
     return {
       message: 'Notification preferences updated successfully',
       user,
     };
   }
-
 
   @Post('me/change-password')
   @UseGuards(JwtAuthGuard)
@@ -308,18 +364,26 @@ export class UsersController {
         value: {
           currentPassword: 'user123456',
           newPassword: 'newPassword123',
-          confirmNewPassword: 'newPassword123'
-        }
-      }
-    }
+          confirmNewPassword: 'newPassword123',
+        },
+      },
+    },
   })
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  @ApiResponse({ status: 401, description: 'Unauthorized or incorrect current password' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized or incorrect current password',
+  })
   @UsePipes(new ZodValidationPipe(ChangePasswordSchema))
-  async changePassword(@Request() req: any, @Body() changePasswordDto: ChangePasswordDto) {
-    const result = await this.usersService.changePassword(req.user.sub, changePasswordDto);
+  async changePassword(
+    @Request() req: any,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    const result = await this.usersService.changePassword(
+      req.user.sub,
+      changePasswordDto,
+    );
     return result;
   }
-
 }

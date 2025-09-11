@@ -28,7 +28,6 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-
     // Forward cookies from the request to the backend
     const cookieHeader = request.headers.get('cookie');
     if (!cookieHeader) {

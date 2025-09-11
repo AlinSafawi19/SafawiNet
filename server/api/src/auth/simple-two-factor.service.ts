@@ -1,4 +1,9 @@
-import { Injectable, Logger, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/services/prisma.service';
 import { EmailService } from '../common/services/email.service';
@@ -52,7 +57,10 @@ export class SimpleTwoFactorService {
   /**
    * Disable 2FA for a user - requires current password
    */
-  async disableTwoFactor(userId: string, currentPassword: string): Promise<{ message: string }> {
+  async disableTwoFactor(
+    userId: string,
+    currentPassword: string,
+  ): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -67,7 +75,10 @@ export class SimpleTwoFactorService {
 
     // Verify current password
     this.logger.log(`Verifying password for user ${user.email}`);
-    const isPasswordValid = await SecurityUtils.verifyPassword(user.password, currentPassword);
+    const isPasswordValid = await SecurityUtils.verifyPassword(
+      user.password,
+      currentPassword,
+    );
     if (!isPasswordValid) {
       this.logger.warn(`Password verification failed for user ${user.email}`);
       throw new UnauthorizedException('Invalid current password');
@@ -102,29 +113,43 @@ export class SimpleTwoFactorService {
         appName: 'Safawinet',
         supportEmail: 'support@safawinet.com',
         event: 'Two-Factor Authentication Disabled',
-        message: 'Two-factor authentication has been disabled for your account. If you did not make this change, please contact support immediately.',
+        message:
+          'Two-factor authentication has been disabled for your account. If you did not make this change, please contact support immediately.',
         timestamp: new Date().toLocaleString(),
       });
     } catch (error) {
-      this.logger.error(`Failed to send 2FA disabled notification to ${user.email}:`, error);
+      this.logger.error(
+        `Failed to send 2FA disabled notification to ${user.email}:`,
+        error,
+      );
       // Don't fail 2FA disable if email fails
     }
 
     // Emit logout event to all user's devices (same as password change)
     try {
       // Emit to user's personal room (for all logged-in devices)
-      await this.webSocketGateway.emitLogoutToUserDevices(userId, '2fa_disabled');
-      
+      await this.webSocketGateway.emitLogoutToUserDevices(
+        userId,
+        '2fa_disabled',
+      );
+
       // Also emit global logout to catch any devices that might not be in the user's room
       await this.webSocketGateway.emitGlobalLogout('2fa_disabled');
-      
-      this.logger.log(`Logout events emitted for 2FA disable - user: ${user.email}`);
+
+      this.logger.log(
+        `Logout events emitted for 2FA disable - user: ${user.email}`,
+      );
     } catch (error) {
-      this.logger.error(`Failed to emit logout events for 2FA disable - user: ${user.email}:`, error);
+      this.logger.error(
+        `Failed to emit logout events for 2FA disable - user: ${user.email}:`,
+        error,
+      );
       // Don't fail the 2FA disable if WebSocket emission fails
     }
 
-    this.logger.log(`2FA disabled for user ${user.email} - all sessions invalidated`);
+    this.logger.log(
+      `2FA disabled for user ${user.email} - all sessions invalidated`,
+    );
     return { message: 'Two-factor authentication disabled successfully' };
   }
 
@@ -146,11 +171,13 @@ export class SimpleTwoFactorService {
 
     // Generate a 6-digit code
     const code = this.generateCode();
-    const expiresAt = new Date(Date.now() + this.codeExpirationMinutes * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + this.codeExpirationMinutes * 60 * 1000,
+    );
 
     // Store the code in the database (hashed for security)
     const codeHash = SecurityUtils.hashToken(code);
-    
+
     await this.prisma.oneTimeToken.upsert({
       where: {
         hash: codeHash,
@@ -181,7 +208,10 @@ export class SimpleTwoFactorService {
   /**
    * Validate a 2FA code
    */
-  async validateTwoFactorCode(userId: string, code: string): Promise<{ isValid: boolean }> {
+  async validateTwoFactorCode(
+    userId: string,
+    code: string,
+  ): Promise<{ isValid: boolean }> {
     const codeHash = SecurityUtils.hashToken(code);
 
     // Find the token
@@ -215,9 +245,9 @@ export class SimpleTwoFactorService {
    */
   private async revokeRefreshTokens(userId: string): Promise<void> {
     await this.prisma.refreshSession.updateMany({
-      where: { 
+      where: {
         userId,
-        isActive: true 
+        isActive: true,
       },
       data: { isActive: false },
     });
@@ -227,7 +257,9 @@ export class SimpleTwoFactorService {
       where: { userId },
     });
 
-    this.logger.log(`Revoked all refresh tokens and sessions for user ${userId}`);
+    this.logger.log(
+      `Revoked all refresh tokens and sessions for user ${userId}`,
+    );
   }
 
   /**

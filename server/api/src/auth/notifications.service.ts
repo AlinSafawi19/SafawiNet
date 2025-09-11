@@ -1,6 +1,9 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
-import { NotificationListDto, NotificationMarkReadDto } from './schemas/auth.schemas';
+import {
+  NotificationListDto,
+  NotificationMarkReadDto,
+} from './schemas/auth.schemas';
 
 export interface NotificationInfo {
   id: string;
@@ -41,14 +44,14 @@ function nullToUndefined<T>(value: T | null): T | undefined {
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Create a new notification
    */
-  async createNotification(data: CreateNotificationData): Promise<NotificationInfo> {
+  async createNotification(
+    data: CreateNotificationData,
+  ): Promise<NotificationInfo> {
     const notification = await this.prisma.notification.create({
       data: {
         userId: data.userId,
@@ -61,7 +64,9 @@ export class NotificationsService {
       },
     });
 
-    this.logger.log(`Created notification ${notification.id} for user ${data.userId}`);
+    this.logger.log(
+      `Created notification ${notification.id} for user ${data.userId}`,
+    );
 
     return {
       id: notification.id,
@@ -88,20 +93,17 @@ export class NotificationsService {
     const { cursor, limit, type, isRead } = query;
 
     const where: any = { userId };
-    
+
     if (type) {
       where.type = type;
     }
-    
+
     if (isRead !== undefined) {
       where.isRead = isRead;
     }
 
     // Filter out expired notifications
-    where.OR = [
-      { expiresAt: null },
-      { expiresAt: { gt: new Date() } },
-    ];
+    where.OR = [{ expiresAt: null }, { expiresAt: { gt: new Date() } }];
 
     const take = limit + 1; // Take one extra to check if there are more
 
@@ -113,11 +115,15 @@ export class NotificationsService {
     });
 
     const hasMore = notifications.length > limit;
-    const notificationsToReturn = hasMore ? notifications.slice(0, limit) : notifications;
-    const nextCursor = hasMore ? notificationsToReturn[notificationsToReturn.length - 1].id : undefined;
+    const notificationsToReturn = hasMore
+      ? notifications.slice(0, limit)
+      : notifications;
+    const nextCursor = hasMore
+      ? notificationsToReturn[notificationsToReturn.length - 1].id
+      : undefined;
 
     return {
-      notifications: notificationsToReturn.map(n => ({
+      notifications: notificationsToReturn.map((n) => ({
         id: n.id,
         type: n.type,
         title: n.title,
@@ -159,13 +165,18 @@ export class NotificationsService {
       },
     });
 
-    this.logger.log(`Marked notification ${notificationId} as read for user ${userId}`);
+    this.logger.log(
+      `Marked notification ${notificationId} as read for user ${userId}`,
+    );
   }
 
   /**
    * Mark multiple notifications as read
    */
-  async markMultipleAsRead(userId: string, notificationIds: string[]): Promise<{ updatedCount: number }> {
+  async markMultipleAsRead(
+    userId: string,
+    notificationIds: string[],
+  ): Promise<{ updatedCount: number }> {
     const result = await this.prisma.notification.updateMany({
       where: {
         id: { in: notificationIds },
@@ -178,7 +189,9 @@ export class NotificationsService {
       },
     });
 
-    this.logger.log(`Marked ${result.count} notifications as read for user ${userId}`);
+    this.logger.log(
+      `Marked ${result.count} notifications as read for user ${userId}`,
+    );
 
     return { updatedCount: result.count };
   }
@@ -191,10 +204,7 @@ export class NotificationsService {
       where: {
         userId,
         isRead: false,
-        OR: [
-          { expiresAt: null },
-          { expiresAt: { gt: new Date() } },
-        ],
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
       data: {
         isRead: true,
@@ -215,10 +225,7 @@ export class NotificationsService {
       where: {
         userId,
         isRead: false,
-        OR: [
-          { expiresAt: null },
-          { expiresAt: { gt: new Date() } },
-        ],
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
     });
 

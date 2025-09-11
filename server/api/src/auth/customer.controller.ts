@@ -58,7 +58,8 @@ export class CustomerController {
   @HttpCode(HttpStatus.OK)
   async updateProfile(
     @Request() req: any,
-    @Body() body: {
+    @Body()
+    body: {
       name?: string;
       preferences?: any;
       notificationPreferences?: any;
@@ -153,7 +154,8 @@ export class CustomerController {
   @Post('support/ticket')
   async createSupportTicket(
     @Request() req: any,
-    @Body() body: {
+    @Body()
+    body: {
       subject: string;
       message: string;
       priority: 'low' | 'normal' | 'high' | 'urgent';
@@ -162,7 +164,7 @@ export class CustomerController {
   ) {
     // This is a placeholder for future support ticket implementation
     // For now, we'll create a notification for the customer
-    
+
     await this.notificationsService.createNotification({
       userId: req.user.sub,
       type: 'support_ticket_created',
@@ -175,7 +177,9 @@ export class CustomerController {
       },
     });
 
-    this.logger.log(`Customer ${req.user.email} created support ticket: ${body.subject}`);
+    this.logger.log(
+      `Customer ${req.user.email} created support ticket: ${body.subject}`,
+    );
 
     return {
       message: 'Support ticket created successfully',
@@ -212,8 +216,12 @@ export class CustomerController {
       throw new UnauthorizedException('User not found');
     }
 
-    const activeSessions = user.userSessions.filter(session => session.isCurrent);
-    const otherSessions = user.userSessions.filter(session => !session.isCurrent);
+    const activeSessions = user.userSessions.filter(
+      (session) => session.isCurrent,
+    );
+    const otherSessions = user.userSessions.filter(
+      (session) => !session.isCurrent,
+    );
 
     return {
       emailVerified: user.isVerified,
@@ -226,11 +234,11 @@ export class CustomerController {
 
   private calculateSecurityScore(user: any): number {
     let score = 0;
-    
+
     if (user.isVerified) score += 25;
     if (user.twoFactorEnabled) score += 50;
     if (user.userSessions.length <= 3) score += 25; // Fewer sessions = better security
-    
+
     return Math.min(score, 100);
   }
 
