@@ -5,24 +5,40 @@ import {
   PerformanceMetrics,
 } from '../services/performance.service';
 
+// Interface for authenticated request with user properties
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    sub: string;
+    email: string;
+    name: string;
+    verified: boolean;
+    roles: string[];
+    refreshTokenId: string;
+  };
+}
+
 @Injectable()
 export class PerformanceMiddleware implements NestMiddleware {
   constructor(private performanceService: PerformanceService) {}
 
-  use(req: Request, res: Response, next: NextFunction) {
+  use(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     const startTime = Date.now();
-    const requestId = (req as any).requestId;
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
 
     // Override res.end to capture response time
-    const originalEnd = res.end;
+    const originalEnd = res.end.bind(res) as (...args: unknown[]) => Response;
     const performanceService = this.performanceService;
-    res.end = function (chunk?: any, encoding?: any) {
+    res.end = function (
+      chunk?: unknown,
+      encoding?: BufferEncoding | (() => void),
+      cb?: () => void,
+    ): Response {
       const duration = Date.now() - startTime;
 
       // Record performance metrics
       const metrics: PerformanceMetrics = {
-        route: req.route?.path || req.path,
+        route: (req.route as { path?: string })?.path || req.path,
         method: req.method,
         duration,
         statusCode: res.statusCode,
@@ -36,7 +52,7 @@ export class PerformanceMiddleware implements NestMiddleware {
       });
 
       // Call original end method
-      return originalEnd.call(res, chunk, encoding);
+      return originalEnd(chunk, encoding, cb);
     };
 
     next();

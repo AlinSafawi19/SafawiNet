@@ -6,7 +6,7 @@ import * as Sentry from '@sentry/node';
 export class SentryService implements OnModuleInit {
   constructor(private configService: ConfigService) {}
 
-  async onModuleInit() {
+  onModuleInit() {
     const dsn = this.configService.get<string>('SENTRY_DSN');
     const environment = this.configService.get<string>(
       'SENTRY_ENVIRONMENT',
@@ -52,7 +52,7 @@ export class SentryService implements OnModuleInit {
     message: string,
     level: Sentry.SeverityLevel = 'info',
     context?: Record<string, any>,
-  ) {
+  ): void {
     Sentry.captureMessage(message, { level, extra: context });
   }
 

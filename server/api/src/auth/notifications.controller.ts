@@ -23,10 +23,13 @@ import { NotificationsService } from './notifications.service';
 import {
   NotificationListDto,
   NotificationMarkReadDto,
+  NotificationListResponseDto,
+  UnreadCountResponseDto,
 } from './schemas/auth.schemas';
-import { Request as ExpressRequest } from 'express';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { NotificationListSchema } from './schemas/auth.schemas';
+import { AuthenticatedRequest } from './types/auth.types';
+import { PaginatedNotifications } from './notifications.service';
 
 @ApiTags('Notifications')
 @Controller('v1/notifications')
@@ -66,43 +69,14 @@ export class NotificationsController {
   @ApiResponse({
     status: 200,
     description: 'Notifications retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        notifications: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              type: { type: 'string' },
-              title: { type: 'string' },
-              message: { type: 'string' },
-              isRead: { type: 'boolean' },
-              readAt: { type: 'string', format: 'date-time', nullable: true },
-              metadata: { type: 'object', nullable: true },
-              priority: { type: 'string' },
-              expiresAt: {
-                type: 'string',
-                format: 'date-time',
-                nullable: true,
-              },
-              createdAt: { type: 'string', format: 'date-time' },
-              updatedAt: { type: 'string', format: 'date-time' },
-            },
-          },
-        },
-        nextCursor: { type: 'string', nullable: true },
-        hasMore: { type: 'boolean' },
-      },
-    },
+    type: NotificationListResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UsePipes(new ZodValidationPipe(NotificationListSchema))
   async listNotifications(
-    @Request() req: ExpressRequest & { user: { sub: string } },
+    @Request() req: AuthenticatedRequest,
     @Query() query: NotificationListDto,
-  ) {
+  ): Promise<PaginatedNotifications> {
     return this.notificationsService.listNotifications(req.user.sub, query);
   }
 
@@ -120,10 +94,10 @@ export class NotificationsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Notification not found' })
   async markAsRead(
-    @Request() req: ExpressRequest & { user: { sub: string } },
+    @Request() req: AuthenticatedRequest,
     @Param() params: NotificationMarkReadDto,
-  ) {
-    await this.notificationsService.markAsRead(req.user.sub, params.id);
+  ): Promise<void> {
+    await this.notificationsService.markAsRead(req.user.sub, String(params.id));
   }
 
   @Get('unread-count')
@@ -135,17 +109,12 @@ export class NotificationsController {
   @ApiResponse({
     status: 200,
     description: 'Unread count retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        count: { type: 'number' },
-      },
-    },
+    type: UnreadCountResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getUnreadCount(
-    @Request() req: ExpressRequest & { user: { sub: string } },
-  ) {
+    @Request() req: AuthenticatedRequest,
+  ): Promise<{ count: number }> {
     const count = await this.notificationsService.getUnreadCount(req.user.sub);
     return { count };
   }

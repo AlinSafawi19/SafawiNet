@@ -12,10 +12,161 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard, Roles } from './guards/roles.guard';
-import { Role } from '@prisma/client';
+import {
+  Role,
+  LoyaltyAccount,
+  LoyaltyTransaction,
+  Notification,
+  LoyaltyTier,
+  Prisma,
+} from '@prisma/client';
 import { PrismaService } from '../common/services/prisma.service';
 import { PinoLoggerService } from '../common/services/logger.service';
 import { NotificationsService } from './notifications.service';
+import { AuthenticatedRequest } from './types/auth.types';
+
+// Type definitions for user preferences and notification preferences
+interface UserPreferences {
+  theme: 'light' | 'dark';
+  language: string;
+  timezone: string;
+  dateFormat: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD';
+  timeFormat: '12h' | '24h';
+  notifications: {
+    sound: boolean;
+    desktop: boolean;
+  };
+  [key: string]: unknown; // Index signature for Prisma JSON compatibility
+}
+
+interface UserNotificationPreferences {
+  email: {
+    marketing: boolean;
+    security: boolean;
+    updates: boolean;
+    weeklyDigest: boolean;
+  };
+  push: {
+    enabled: boolean;
+    marketing: boolean;
+    security: boolean;
+    updates: boolean;
+  };
+  sms: {
+    enabled: boolean;
+    security: boolean;
+    twoFactor: boolean;
+  };
+  [key: string]: unknown; // Index signature for Prisma JSON compatibility
+}
+
+// Type definitions for customer controller
+interface UserProfile {
+  id: string;
+  email: string;
+  name: string | null;
+  roles: Role[];
+  isVerified: boolean;
+  twoFactorEnabled: boolean;
+  preferences: UserPreferences | null;
+  notificationPreferences: UserNotificationPreferences | null;
+  createdAt: Date;
+  updatedAt: Date;
+  loyaltyAccounts:
+    | (LoyaltyAccount & {
+        currentTier: LoyaltyTier;
+      })
+    | null;
+}
+
+interface UpdateProfileRequest {
+  name?: string;
+  preferences?: Partial<UserPreferences>;
+  notificationPreferences?: Partial<UserNotificationPreferences>;
+}
+
+interface UpdateProfileResponse {
+  id: string;
+  email: string;
+  name: string | null;
+  preferences: UserPreferences | null;
+  notificationPreferences: UserNotificationPreferences | null;
+  updatedAt: Date;
+}
+
+interface LoyaltyAccountWithTier extends LoyaltyAccount {
+  currentTier: LoyaltyTier;
+  transactions: LoyaltyTransaction[];
+}
+
+interface LoyaltyTransactionsRequest {
+  page?: number;
+  limit?: number;
+}
+
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+interface LoyaltyTransactionsResponse {
+  transactions: LoyaltyTransaction[];
+  pagination: PaginationInfo;
+}
+
+interface SupportTicketRequest {
+  subject: string;
+  message: string;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  category: string;
+}
+
+interface SupportTicketResponse {
+  message: string;
+  ticketId: string;
+}
+
+interface SecurityStatusResponse {
+  emailVerified: boolean;
+  twoFactorEnabled: boolean;
+  currentSession: SelectedUserSession | null;
+  otherSessions: SelectedUserSession[];
+  securityScore: number;
+}
+
+interface AccountActivityRequest {
+  page?: number;
+  limit?: number;
+}
+
+interface AccountActivityResponse {
+  notifications: Notification[];
+  pagination: PaginationInfo;
+}
+
+interface MarkNotificationReadRequest {
+  id: string;
+}
+
+interface SelectedUserSession {
+  id: string;
+  deviceType: string | null;
+  browser: string | null;
+  os: string | null;
+  ipAddress: string | null;
+  location: string | null;
+  isCurrent: boolean;
+  lastActiveAt: Date;
+  createdAt: Date;
+}
+
+interface SecurityUser {
+  isVerified: boolean;
+  twoFactorEnabled: boolean;
+  userSessions: SelectedUserSession[];
+}
 
 @Controller('customer')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -29,7 +180,9 @@ export class CustomerController {
 
   // Profile Management
   @Get('profile')
-  async getProfile(@Request() req: any) {
+  async getProfile(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<UserProfile | null> {
     const user = await this.prisma.user.findUnique({
       where: { id: req.user.sub },
       select: {
@@ -51,28 +204,37 @@ export class CustomerController {
       },
     });
 
-    return user;
+    if (!user) {
+      return null;
+    }
+
+    return {
+      ...user,
+      preferences: user.preferences as UserPreferences | null,
+      notificationPreferences:
+        user.notificationPreferences as UserNotificationPreferences | null,
+    };
   }
 
   @Put('profile')
   @HttpCode(HttpStatus.OK)
   async updateProfile(
-    @Request() req: any,
-    @Body()
-    body: {
-      name?: string;
-      preferences?: any;
-      notificationPreferences?: any;
-    },
-  ) {
+    @Request() req: AuthenticatedRequest,
+    @Body() body: UpdateProfileRequest,
+  ): Promise<UpdateProfileResponse> {
     const { name, preferences, notificationPreferences } = body;
 
     const updatedUser = await this.prisma.user.update({
       where: { id: req.user.sub },
       data: {
         ...(name && { name }),
-        ...(preferences && { preferences }),
-        ...(notificationPreferences && { notificationPreferences }),
+        ...(preferences && {
+          preferences: preferences as Prisma.InputJsonValue,
+        }),
+        ...(notificationPreferences && {
+          notificationPreferences:
+            notificationPreferences as Prisma.InputJsonValue,
+        }),
       },
       select: {
         id: true,
@@ -86,12 +248,22 @@ export class CustomerController {
 
     this.logger.log(`Customer ${req.user.email} updated their profile`);
 
-    return updatedUser;
+    return {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      preferences: updatedUser.preferences as UserPreferences | null,
+      notificationPreferences:
+        updatedUser.notificationPreferences as UserNotificationPreferences | null,
+      updatedAt: updatedUser.updatedAt,
+    };
   }
 
   // Loyalty Account
   @Get('loyalty')
-  async getLoyaltyAccount(@Request() req: any) {
+  async getLoyaltyAccount(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<LoyaltyAccountWithTier | { error: string }> {
     const loyaltyAccount = await this.prisma.loyaltyAccount.findUnique({
       where: { userId: req.user.sub },
       include: {
@@ -112,9 +284,9 @@ export class CustomerController {
 
   @Get('loyalty/transactions')
   async getLoyaltyTransactions(
-    @Request() req: any,
-    @Body() body: { page?: number; limit?: number },
-  ) {
+    @Request() req: AuthenticatedRequest,
+    @Body() body: LoyaltyTransactionsRequest,
+  ): Promise<LoyaltyTransactionsResponse | { error: string }> {
     const { page = 1, limit = 20 } = body;
     const skip = (page - 1) * limit;
 
@@ -153,21 +325,15 @@ export class CustomerController {
   // Support Tickets (placeholder for future implementation)
   @Post('support/ticket')
   async createSupportTicket(
-    @Request() req: any,
-    @Body()
-    body: {
-      subject: string;
-      message: string;
-      priority: 'low' | 'normal' | 'high' | 'urgent';
-      category: string;
-    },
-  ) {
+    @Request() req: AuthenticatedRequest,
+    @Body() body: SupportTicketRequest,
+  ): Promise<SupportTicketResponse> {
     // This is a placeholder for future support ticket implementation
     // For now, we'll create a notification for the customer
 
     await this.notificationsService.createNotification({
       userId: req.user.sub,
-      type: 'support_ticket_created',
+      type: 'system_message',
       title: 'Support Ticket Created',
       message: `Your support ticket "${body.subject}" has been created and is being reviewed.`,
       metadata: {
@@ -189,7 +355,9 @@ export class CustomerController {
 
   // Account Security
   @Get('security/status')
-  async getSecurityStatus(@Request() req: any) {
+  async getSecurityStatus(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<SecurityStatusResponse> {
     const user = await this.prisma.user.findUnique({
       where: { id: req.user.sub },
       select: {
@@ -232,7 +400,7 @@ export class CustomerController {
     };
   }
 
-  private calculateSecurityScore(user: any): number {
+  private calculateSecurityScore(user: SecurityUser): number {
     let score = 0;
 
     if (user.isVerified) score += 25;
@@ -245,9 +413,9 @@ export class CustomerController {
   // Account Activity
   @Get('activity')
   async getAccountActivity(
-    @Request() req: any,
-    @Body() body: { page?: number; limit?: number },
-  ) {
+    @Request() req: AuthenticatedRequest,
+    @Body() body: AccountActivityRequest,
+  ): Promise<AccountActivityResponse> {
     const { page = 1, limit = 20 } = body;
     const skip = (page - 1) * limit;
 
@@ -277,9 +445,9 @@ export class CustomerController {
   @Put('notifications/:id/read')
   @HttpCode(HttpStatus.OK)
   async markNotificationAsRead(
-    @Request() req: any,
-    @Body() body: { id: string },
-  ) {
+    @Request() req: AuthenticatedRequest,
+    @Body() body: MarkNotificationReadRequest,
+  ): Promise<Notification> {
     const notification = await this.prisma.notification.update({
       where: {
         id: body.id,

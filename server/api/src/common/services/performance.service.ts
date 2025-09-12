@@ -1,5 +1,4 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { PinoLoggerService } from './logger.service';
 import { RedisService } from './redis.service';
 import { TelemetryService } from './telemetry.service';
@@ -20,35 +19,49 @@ export interface PerformanceBudget {
   burstLimit: number;
 }
 
+export interface RoutePerformanceStats {
+  route: string;
+  method: string;
+  count: number;
+  avgDuration: number;
+  p50Duration: number;
+  p95Duration: number;
+  p99Duration: number;
+  errorRate: number;
+}
+
+export interface AllPerformanceStats {
+  route: string;
+  get: RoutePerformanceStats;
+  post: RoutePerformanceStats;
+}
+
+export interface BurstRate {
+  route: string;
+  get: number;
+  post: number;
+}
+
+export interface PerformanceBudgetViolation {
+  route: string;
+  violations: string[];
+}
+
 @Injectable()
 export class PerformanceService implements OnModuleInit {
   private readonly performanceBudgets: Map<string, PerformanceBudget> =
     new Map();
-  private readonly meter: any;
-  private readonly histogram: any;
-  private readonly counter: any;
 
   constructor(
-    private configService: ConfigService,
     private logger: PinoLoggerService,
     private redis: RedisService,
     private telemetry: TelemetryService,
   ) {
     // Initialize performance budgets
     this.initializePerformanceBudgets();
-
-    // Initialize OpenTelemetry metrics
-    this.meter = this.telemetry.getMeter('performance');
-    this.histogram = this.meter.createHistogram('http_request_duration', {
-      description: 'HTTP request duration in milliseconds',
-      unit: 'ms',
-    });
-    this.counter = this.meter.createCounter('http_requests_total', {
-      description: 'Total HTTP requests',
-    });
   }
 
-  async onModuleInit() {
+  onModuleInit() {
     this.logger.log('Performance service initialized', 'PerformanceService');
   }
 
@@ -95,26 +108,11 @@ export class PerformanceService implements OnModuleInit {
   // Record performance metrics
   recordMetrics(metrics: PerformanceMetrics) {
     try {
-      // Record to OpenTelemetry
-      this.histogram.record(metrics.duration, {
-        route: metrics.route,
-        method: metrics.method,
-        status_code: metrics.statusCode.toString(),
-        user_id: metrics.userId || 'anonymous',
-      });
-
-      this.counter.add(1, {
-        route: metrics.route,
-        method: metrics.method,
-        status_code: metrics.statusCode.toString(),
-        user_id: metrics.userId || 'anonymous',
-      });
-
       // Store in Redis for performance analysis
-      this.storeMetricsInRedis(metrics);
+      void this.storeMetricsInRedis(metrics);
 
       // Check performance budget violations
-      this.checkPerformanceBudget(metrics);
+      void this.checkPerformanceBudget(metrics);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
       this.logger.error(
@@ -136,7 +134,6 @@ export class PerformanceService implements OnModuleInit {
         return;
       }
 
-      const key = `perf:${metrics.route}:${metrics.method}`;
       const data = JSON.stringify(metrics);
 
       // Store in sorted set by timestamp for time-based analysis
@@ -210,7 +207,7 @@ export class PerformanceService implements OnModuleInit {
     route: string,
     method: string,
     timeWindow: number = 3600000,
-  ) {
+  ): Promise<RoutePerformanceStats> {
     try {
       const key = `perf:${route}:${method}:timeline`;
       const now = Date.now();
@@ -266,7 +263,9 @@ export class PerformanceService implements OnModuleInit {
   }
 
   // Get all performance statistics
-  async getAllPerformanceStats(timeWindow: number = 3600000) {
+  async getAllPerformanceStats(
+    timeWindow: number = 3600000,
+  ): Promise<AllPerformanceStats[]> {
     try {
       const routes = Array.from(this.performanceBudgets.keys());
       const stats = await Promise.all(
@@ -304,10 +303,8 @@ export class PerformanceService implements OnModuleInit {
   }
 
   // Check if performance budgets are being met
-  async checkPerformanceBudgets(): Promise<
-    { route: string; violations: string[] }[]
-  > {
-    const results: { route: string; violations: string[] }[] = [];
+  async checkPerformanceBudgets(): Promise<PerformanceBudgetViolation[]> {
+    const results: PerformanceBudgetViolation[] = [];
 
     for (const [route, budget] of this.performanceBudgets) {
       const violations: string[] = [];
@@ -348,7 +345,7 @@ export class PerformanceService implements OnModuleInit {
   }
 
   // Get current burst rates
-  async getCurrentBurstRates() {
+  async getCurrentBurstRates(): Promise<BurstRate[]> {
     try {
       const routes = Array.from(this.performanceBudgets.keys());
       const burstRates = await Promise.all(

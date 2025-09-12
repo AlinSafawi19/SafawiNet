@@ -1,8 +1,7 @@
 # =============================================================================
-# Development Dockerfile for Safawinet API
+# Production Dockerfile for Safawinet API
 # =============================================================================
-# This Dockerfile is optimized for development with hot reloading and debugging
-# capabilities. It includes all development dependencies and tools.
+# This Dockerfile is optimized for production with minimal size and security
 # =============================================================================
 
 # Base image with Node.js 20 on Alpine Linux for smaller image size
@@ -11,7 +10,7 @@ FROM node:20-alpine
 # =============================================================================
 # System Dependencies
 # =============================================================================
-# Install system packages required for development tools and scripts
+# Install system packages required for production
 RUN apk add --no-cache \
     bash \
     curl \
@@ -38,24 +37,23 @@ RUN npm config set registry https://registry.npmjs.org/ && \
 # Dependencies Installation
 # =============================================================================
 # Copy package files first for better Docker layer caching
-# This allows Docker to reuse the dependency layer when only source code changes
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install all dependencies (including dev dependencies for development)
-# Use npm install with legacy peer deps to handle OpenTelemetry conflicts
-RUN npm install --legacy-peer-deps --no-audit --no-fund --maxsockets 1 --timeout 300000 || \
-    (npm cache clean --force && npm install --legacy-peer-deps --no-audit --no-fund --maxsockets 1)
+# Install only production dependencies
+RUN npm ci --only=production --no-audit --no-fund --prefer-offline
 
-# Generate Prisma client after dependencies are installed
+# Generate Prisma client
 RUN npx prisma generate
 
 # =============================================================================
 # Application Code
 # =============================================================================
-# Copy source code and templates
-# This is done after dependencies to maximize layer caching
+# Copy source code
 COPY . .
+
+# Build the application
+RUN npm run build
 
 # Make startup script executable
 RUN chmod +x startup.sh
@@ -63,10 +61,20 @@ RUN chmod +x startup.sh
 # =============================================================================
 # Environment Configuration
 # =============================================================================
-# Set environment variables for development
-ENV NODE_ENV=development
-ENV NODE_OPTIONS="--max-old-space-size=2048"
-ENV PRISMA_CLIENT_ENGINE_TYPE="dataproxy"
+# Set environment variables for production
+ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=1024"
+
+# =============================================================================
+# Security
+# =============================================================================
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001
+
+# Change ownership of the app directory
+RUN chown -R nestjs:nodejs /app
+USER nestjs
 
 # =============================================================================
 # Network Configuration

@@ -5,6 +5,15 @@ import pino from 'pino-http';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import { Request, Response } from 'express';
+
+// Extended Request type for custom properties
+type ExtendedRequest = Request & {
+  requestId?: string;
+  user?: {
+    id: string;
+  };
+};
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -50,7 +59,10 @@ async function bootstrap() {
   ];
 
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
@@ -77,32 +89,35 @@ async function bootstrap() {
   app.use(
     pino({
       level: process.env.LOG_LEVEL || 'info',
-      customLogLevel: (req, res, err) => {
+      customLogLevel: (req: ExtendedRequest, res: Response): string => {
         if (res.statusCode >= 400 && res.statusCode < 500) return 'warn';
         if (res.statusCode >= 500) return 'error';
         if (res.statusCode >= 300 && res.statusCode < 400) return 'silent';
         return 'info';
       },
-      customSuccessMessage: (req, res) => {
+      customSuccessMessage: (req: ExtendedRequest, res: Response): string => {
         return `${req.method} ${req.url} ${res.statusCode}`;
       },
-      customErrorMessage: (req, res, err) => {
+      customErrorMessage: (
+        req: ExtendedRequest,
+        res: Response,
+        err: Error,
+      ): string => {
         return `${req.method} ${req.url} ${res.statusCode} - ${err.message}`;
       },
-      customProps: (req, res) => {
+      customProps: (req: ExtendedRequest, res: Response) => {
         return {
-          requestId: (req as any).requestId,
-          userId: (req as any).user?.id,
-          userAgent:
-            (req as any).get?.('User-Agent') || req.headers['user-agent'],
-          ip: (req as any).ip || req.connection?.remoteAddress,
+          requestId: req.requestId,
+          userId: req.user?.id,
+          userAgent: req.get?.('User-Agent') || req.headers['user-agent'],
+          ip: req.ip || req.connection?.remoteAddress,
           method: req.method,
           url: req.url,
           statusCode: res.statusCode,
         };
       },
       serializers: {
-        req: (req) => ({
+        req: (req: ExtendedRequest) => ({
           id: req.requestId,
           method: req.method,
           url: req.url,
@@ -110,7 +125,7 @@ async function bootstrap() {
           remoteAddress: req.connection?.remoteAddress || req.ip,
           remotePort: req.connection?.remotePort,
         }),
-        res: (res) => ({
+        res: (res: Response) => ({
           statusCode: res.statusCode,
           headers: res.getHeaders ? res.getHeaders() : {},
         }),
@@ -140,4 +155,4 @@ async function bootstrap() {
     );
   }
 }
-bootstrap();
+void bootstrap();

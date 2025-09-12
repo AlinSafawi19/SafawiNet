@@ -1,6 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
 
+export interface LoyaltyTierBenefits {
+  [key: string]: string | number | boolean | string[] | number[];
+}
+
 export interface LoyaltyAccountInfo {
   id: string;
   currentTier: {
@@ -8,7 +12,7 @@ export interface LoyaltyAccountInfo {
     name: string;
     minPoints: number;
     maxPoints: number | null;
-    benefits: any;
+    benefits: LoyaltyTierBenefits;
     color: string | null;
     icon: string | null;
   };
@@ -22,12 +26,16 @@ export interface LoyaltyAccountInfo {
   } | null;
 }
 
+export interface LoyaltyTransactionMetadata {
+  [key: string]: string | number | boolean | string[] | number[] | Date | null;
+}
+
 export interface LoyaltyTransaction {
   id: string;
   type: string;
   points: number;
   description: string;
-  metadata: any;
+  metadata: LoyaltyTransactionMetadata;
   orderId: string | null;
   expiresAt: Date | null;
   createdAt: Date;
@@ -74,7 +82,10 @@ export class LoyaltyService {
 
     const result: LoyaltyAccountInfo = {
       id: loyaltyAccount.id,
-      currentTier: loyaltyAccount.currentTier,
+      currentTier: {
+        ...loyaltyAccount.currentTier,
+        benefits: loyaltyAccount.currentTier.benefits as LoyaltyTierBenefits,
+      },
       currentPoints: loyaltyAccount.currentPoints,
       lifetimePoints: loyaltyAccount.lifetimePoints,
       tierUpgradedAt: loyaltyAccount.tierUpgradedAt,
@@ -160,7 +171,7 @@ export class LoyaltyService {
         type: t.type,
         points: t.points,
         description: t.description,
-        metadata: t.metadata,
+        metadata: t.metadata as LoyaltyTransactionMetadata,
         orderId: t.orderId,
         expiresAt: t.expiresAt,
         createdAt: t.createdAt,

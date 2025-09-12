@@ -24,7 +24,7 @@ export class PrismaService
     await this.$disconnect();
   }
 
-  async cleanDatabase() {
+  async cleanDatabase(): Promise<void> {
     if (process.env.NODE_ENV === 'test') {
       const tablenames = await this.$queryRaw<Array<{ tablename: string }>>`
         SELECT tablename FROM pg_tables WHERE schemaname='public'

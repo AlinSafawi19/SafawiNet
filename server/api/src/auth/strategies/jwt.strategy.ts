@@ -3,13 +3,43 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/services/prisma.service';
+import { Request } from 'express';
+import { User, UserSession, Role } from '@prisma/client';
 
 export interface JwtPayload {
   sub: string;
   email: string;
   name: string;
   verified: boolean;
-  roles: string[];
+  roles: Role[];
+  refreshTokenId: string;
+  iat: number;
+  exp: number;
+}
+
+// Type for request object with cookies
+interface RequestWithCookies extends Request {
+  cookies: {
+    accessToken?: string;
+    [key: string]: string | undefined;
+  };
+}
+
+// Type for user data returned from Prisma query
+type UserWithRoles = Pick<User, 'id' | 'email' | 'name' | 'isVerified'> & {
+  roles: Role[];
+};
+
+// Type for user session data returned from Prisma query
+type UserSessionData = Pick<UserSession, 'id' | 'isCurrent' | 'lastActiveAt'>;
+
+// Type for the return value of validate method
+export interface ValidatedUser {
+  sub: string;
+  email: string;
+  name: string | null;
+  verified: boolean;
+  roles: Role[];
   refreshTokenId: string;
   iat: number;
   exp: number;
@@ -18,13 +48,13 @@ export interface JwtPayload {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private readonly configService: ConfigService,
+    configService: ConfigService,
     private readonly prisma: PrismaService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         // First try to extract from cookies
-        (request) => {
+        (request: RequestWithCookies): string | null => {
           if (request?.cookies?.accessToken) {
             return request.cookies.accessToken;
           }
@@ -34,11 +64,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      secretOrKey: configService.get<string>('JWT_SECRET') || 'fallback-secret',
     });
   }
 
-  async validate(payload: JwtPayload) {
+  async validate(payload: JwtPayload): Promise<ValidatedUser> {
     console.log('🔐 JWT Strategy - validate called with payload:', payload);
     console.log(
       '🔐 JWT Strategy - iat field:',
@@ -54,7 +84,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     );
 
     // Check if user still exists and is verified
-    const user = await this.prisma.user.findUnique({
+    const user: UserWithRoles | null = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       select: {
         id: true,
@@ -79,17 +109,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // Validate session against UserSession table
     if (payload.refreshTokenId) {
-      const userSession = await this.prisma.userSession.findFirst({
-        where: {
-          userId: payload.sub,
-          refreshTokenId: payload.refreshTokenId,
-        },
-        select: {
-          id: true,
-          isCurrent: true,
-          lastActiveAt: true,
-        },
-      });
+      const userSession: UserSessionData | null =
+        await this.prisma.userSession.findFirst({
+          where: {
+            userId: payload.sub,
+            refreshTokenId: payload.refreshTokenId,
+          },
+          select: {
+            id: true,
+            isCurrent: true,
+            lastActiveAt: true,
+          },
+        });
 
       if (!userSession) {
         console.log(
@@ -117,7 +148,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           '🔄 JWT Strategy - Updated session activity for session:',
           userSession.id,
         );
-      } catch (error) {
+      } catch (error: unknown) {
         console.log(
           '⚠️ JWT Strategy - Failed to update session activity:',
           error,

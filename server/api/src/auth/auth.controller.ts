@@ -20,45 +20,74 @@ import {
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthService } from './auth.service';
-import { TwoFactorService } from './two-factor.service';
 import { SimpleTwoFactorService } from './simple-two-factor.service';
 import { Response } from 'express';
 import {
   RegisterSchema,
   VerifyEmailSchema,
   LoginSchema,
-  RefreshTokenSchema,
   ForgotPasswordSchema,
   ResetPasswordSchema,
-  TwoFactorSetupSchema,
-  TwoFactorEnableSchema,
-  TwoFactorDisableSchema,
-  TwoFactorLoginSchema,
-  SimpleTwoFactorEnableSchema,
   SimpleTwoFactorDisableSchema,
   TwoFactorCodeSchema,
   RegisterDto,
   VerifyEmailDto,
   LoginDto,
-  RefreshTokenDto,
   ForgotPasswordDto,
   ResetPasswordDto,
-  TwoFactorSetupDto,
-  TwoFactorEnableDto,
-  TwoFactorDisableDto,
-  TwoFactorLoginDto,
-  SimpleTwoFactorEnableDto,
   SimpleTwoFactorDisableDto,
   TwoFactorCodeDto,
 } from './schemas/auth.schemas';
-import { z } from 'zod';
+import { AuthenticatedRequest } from './types/auth.types';
+import { User } from '@prisma/client';
+import { AuthTokens, LoginResult } from './auth.service';
+
+// Response interfaces for better type safety
+interface RegisterResponse {
+  message: string;
+  user: Omit<User, 'password'>;
+}
+
+interface VerifyEmailResponse {
+  message: string;
+  user: Omit<User, 'password'>;
+  tokens?: AuthTokens;
+}
+
+interface ResendVerificationResponse {
+  message: string;
+}
+
+interface ForgotPasswordResponse {
+  message: string;
+}
+
+interface ResetPasswordResponse {
+  message: string;
+  email: string;
+}
+
+interface TwoFactorEnableResponse {
+  message: string;
+}
+
+interface TwoFactorDisableResponse {
+  message: string;
+}
+
+interface RefreshTokenResponse {
+  message: string;
+}
+
+interface LogoutResponse {
+  message: string;
+}
 
 @ApiTags('Authentication')
 @Controller('v1/auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly twoFactorService: TwoFactorService,
     private readonly simpleTwoFactorService: SimpleTwoFactorService,
   ) {}
 
@@ -104,7 +133,7 @@ export class AuthController {
     description: 'User with this email already exists',
   })
   @UsePipes(new ZodValidationPipe(RegisterSchema))
-  async register(@Body() registerDto: RegisterDto) {
+  async register(@Body() registerDto: RegisterDto): Promise<RegisterResponse> {
     return this.authService.register(registerDto);
   }
 
@@ -161,7 +190,9 @@ export class AuthController {
     description: 'Invalid or expired verification token',
   })
   @UsePipes(new ZodValidationPipe(VerifyEmailSchema))
-  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+  async verifyEmail(
+    @Body() verifyEmailDto: VerifyEmailDto,
+  ): Promise<VerifyEmailResponse> {
     return this.authService.verifyEmail(verifyEmailDto);
   }
 
@@ -197,8 +228,11 @@ export class AuthController {
     status: 429,
     description: 'Too many requests',
   })
-  async resendVerification(@Body() body: { email: string }) {
-    return this.authService.resendVerificationEmail(body.email);
+  @UsePipes(new ZodValidationPipe(ForgotPasswordSchema))
+  async resendVerification(
+    @Body() body: ForgotPasswordDto,
+  ): Promise<ResendVerificationResponse> {
+    return this.authService.resendVerificationEmail(body.email as string);
   }
 
   @Post('login')
@@ -264,16 +298,17 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(LoginSchema))
   async login(
     @Body() loginDto: LoginDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
-  ) {
+  ): Promise<LoginResult> {
     const result = await this.authService.login(loginDto, req);
 
     // If login was successful and tokens were generated, set them as HTTP-only cookies
     if (result.tokens) {
       this.authService.setAuthCookies(res, result.tokens);
       // Remove tokens from response body for security
-      const { tokens, ...responseWithoutTokens } = result;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { tokens: _, ...responseWithoutTokens } = result;
       return responseWithoutTokens;
     }
 
@@ -298,10 +333,10 @@ export class AuthController {
     description: 'Invalid refresh token',
   })
   async refreshToken(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
-  ) {
-    const refreshToken = req.cookies?.refreshToken;
+  ): Promise<RefreshTokenResponse> {
+    const refreshToken = req.cookies?.refreshToken as string | undefined;
 
     if (!refreshToken) {
       throw new BadRequestException('No refresh token provided');
@@ -338,7 +373,9 @@ export class AuthController {
     },
   })
   @UsePipes(new ZodValidationPipe(ForgotPasswordSchema))
-  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+  async forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<ForgotPasswordResponse> {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 
@@ -375,7 +412,9 @@ export class AuthController {
     description: 'Invalid or expired reset token',
   })
   @UsePipes(new ZodValidationPipe(ResetPasswordSchema))
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<ResetPasswordResponse> {
     return this.authService.resetPassword(resetPasswordDto);
   }
 
@@ -415,7 +454,9 @@ export class AuthController {
     status: 401,
     description: 'Unauthorized - Invalid or missing JWT token',
   })
-  async enableTwoFactor(@Request() req) {
+  async enableTwoFactor(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<TwoFactorEnableResponse> {
     return this.simpleTwoFactorService.enableTwoFactor(req.user.sub);
   }
 
@@ -460,9 +501,9 @@ export class AuthController {
   })
   @UsePipes(new ZodValidationPipe(SimpleTwoFactorDisableSchema))
   async disableTwoFactor(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Body() twoFactorDisableDto: SimpleTwoFactorDisableDto,
-  ) {
+  ): Promise<TwoFactorDisableResponse> {
     return this.simpleTwoFactorService.disableTwoFactor(
       req.user.sub,
       twoFactorDisableDto.currentPassword,
@@ -517,12 +558,12 @@ export class AuthController {
     status: 401,
     description: 'Invalid 2FA code',
   })
-  @UsePipes(new ZodValidationPipe(TwoFactorLoginSchema))
+  @UsePipes(new ZodValidationPipe(TwoFactorCodeSchema))
   async twoFactorLogin(
-    @Body() twoFactorLoginDto: TwoFactorLoginDto,
-    @Request() req: any,
+    @Body() twoFactorLoginDto: TwoFactorCodeDto,
+    @Request() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
-  ) {
+  ): Promise<LoginResult> {
     const result = await this.authService.twoFactorLogin(
       twoFactorLoginDto.userId,
       twoFactorLoginDto,
@@ -533,7 +574,8 @@ export class AuthController {
     if (result.tokens) {
       this.authService.setAuthCookies(res, result.tokens);
       // Remove tokens from response body for security
-      const { tokens, ...responseWithoutTokens } = result;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { tokens: _, ...responseWithoutTokens } = result;
       return responseWithoutTokens;
     }
 
@@ -553,9 +595,12 @@ export class AuthController {
       },
     },
   })
-  async logout(@Request() req: any, @Res({ passthrough: true }) res: Response) {
+  async logout(
+    @Request() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<LogoutResponse> {
     try {
-      const refreshToken = req.cookies?.refreshToken;
+      const refreshToken = req.cookies?.refreshToken as string | undefined;
 
       if (refreshToken) {
         // Invalidate the refresh token

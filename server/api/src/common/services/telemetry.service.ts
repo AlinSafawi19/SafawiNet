@@ -1,12 +1,10 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NodeSDK } from '@opentelemetry/sdk-node';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+// import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-otlp-http';
-import { OTLPMetricExporter } from '@opentelemetry/exporter-otlp-http';
-import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
-import { trace, metrics } from '@opentelemetry/api';
+import { trace, SpanAttributes } from '@opentelemetry/api';
 
 @Injectable()
 export class TelemetryService implements OnModuleInit, OnModuleDestroy {
@@ -14,15 +12,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
 
   constructor(private configService: ConfigService) {}
 
-  async onModuleInit() {
-    const environment = this.configService.get<string>(
-      'NODE_ENV',
-      'development',
-    );
-    const serviceName = this.configService.get<string>(
-      'OTEL_SERVICE_NAME',
-      'safawinet-api',
-    );
+  onModuleInit() {
     const otelEndpoint = this.configService.get<string>('OTEL_ENDPOINT');
 
     if (!otelEndpoint) {
@@ -32,42 +22,29 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    // Create metric exporter with forceFlush method
-    const metricExporter = new OTLPMetricExporter({
-      url: `${otelEndpoint}/v1/metrics`,
-    });
-
-    // Add forceFlush method to satisfy the interface
-    const metricExporterWithForceFlush = {
-      ...metricExporter,
-      forceFlush: async () => {
-        // OTLPMetricExporter doesn't have forceFlush, so we'll implement a no-op
-        return Promise.resolve();
-      },
-      export: metricExporter.export.bind(metricExporter),
-      shutdown: metricExporter.shutdown.bind(metricExporter),
-    };
-
-    this.sdk = new NodeSDK({
-      traceExporter: new OTLPTraceExporter({
-        url: `${otelEndpoint}/v1/traces`,
-      }) as any, // Type assertion to resolve compatibility issues
-      metricReader: new PeriodicExportingMetricReader({
-        exporter: metricExporterWithForceFlush,
-        exportIntervalMillis: 1000,
-      }),
-      instrumentations: [
-        getNodeAutoInstrumentations({
-          // The auto-instrumentations will handle HTTP and Express automatically
-        }),
-      ],
-    });
-
     try {
-      await this.sdk.start();
+      // Create trace exporter only - simpler and more reliable
+      const traceExporter = new OTLPTraceExporter({
+        url: `${otelEndpoint}/v1/traces`,
+      });
+
+      this.sdk = new NodeSDK({
+        traceExporter: traceExporter as any,
+        instrumentations: [
+          getNodeAutoInstrumentations({
+            // Disable problematic instrumentations
+            '@opentelemetry/instrumentation-fs': { enabled: false },
+            '@opentelemetry/instrumentation-dns': { enabled: false },
+            '@opentelemetry/instrumentation-net': { enabled: false },
+          }),
+        ],
+      });
+
+      this.sdk.start();
       console.log('OpenTelemetry SDK started successfully');
     } catch (error) {
       console.error('Failed to start OpenTelemetry SDK:', error);
+      // Continue without telemetry - don't crash the app
     }
   }
 
@@ -87,12 +64,13 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
     return trace.getTracer(name);
   }
 
-  getMeter(name: string) {
-    return metrics.getMeter(name);
-  }
+  // Metrics functionality removed - using traces only
+  // getMeter(name: string) {
+  //   return metrics.getMeter(name);
+  // }
 
   // Create a span for manual tracing
-  createSpan(name: string, attributes?: Record<string, any>) {
+  createSpan(name: string, attributes?: SpanAttributes) {
     const tracer = this.getTracer('safawinet-api');
     return tracer.startSpan(name, { attributes });
   }

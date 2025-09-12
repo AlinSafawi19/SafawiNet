@@ -21,8 +21,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RolesGuard, Roles } from './guards/roles.guard';
-import { Role } from '@prisma/client';
+import { RolesGuard } from './guards/roles.guard';
 import { SessionsService } from './sessions.service';
 import { NotificationsService } from './notifications.service';
 import {
@@ -30,9 +29,16 @@ import {
   SessionDeleteDto,
   SessionRevokeAllDto,
 } from './schemas/auth.schemas';
-import { Request as ExpressRequest } from 'express';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { SessionListSchema } from './schemas/auth.schemas';
+import {
+  AuthenticatedRequest,
+  RevokeUserSessionsBody,
+  RevokeResponse,
+  SecurityAuditInfo,
+  PaginatedSessionsResponse,
+  SecurityAlertMetadata,
+} from './types/auth.types';
 
 @ApiTags('Sessions')
 @Controller('v1/sessions')
@@ -94,9 +100,9 @@ export class SessionsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UsePipes(new ZodValidationPipe(SessionListSchema))
   async listSessions(
-    @Request() req: ExpressRequest & { user: { sub: string } },
+    @Request() req: AuthenticatedRequest,
     @Query() query: SessionListDto,
-  ) {
+  ): Promise<PaginatedSessionsResponse> {
     return this.sessionsService.listSessions(req.user.sub, query);
   }
 
@@ -113,17 +119,21 @@ export class SessionsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Session not found' })
   async deleteSession(
-    @Request() req: ExpressRequest & { user: { sub: string } },
+    @Request() req: AuthenticatedRequest,
     @Param() params: SessionDeleteDto,
-  ) {
-    await this.sessionsService.deleteSession(req.user.sub, params.id);
+  ): Promise<void> {
+    await this.sessionsService.deleteSession(req.user.sub, params.id as string);
 
     // Create security notification
+    const metadata: SecurityAlertMetadata = {
+      sessionId: params.id as string,
+      action: 'session_deleted',
+    };
     await this.notificationsService.createSecurityAlert(
       req.user.sub,
       'Session Terminated',
       'A device session has been terminated from your account.',
-      { sessionId: params.id, action: 'session_deleted' },
+      metadata,
     );
   }
 
@@ -159,21 +169,25 @@ export class SessionsController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async revokeAllSessions(
-    @Request() req: ExpressRequest & { user: { sub: string } },
+    @Request() req: AuthenticatedRequest,
     @Body() body: SessionRevokeAllDto,
-  ) {
+  ): Promise<RevokeResponse> {
     const { revokedCount } = await this.sessionsService.revokeAllSessions(
       req.user.sub,
-      body.keepCurrent,
+      body.keepCurrent as boolean,
     );
 
     // Create security notification
     if (revokedCount > 0) {
+      const metadata: SecurityAlertMetadata = {
+        revokedCount,
+        action: 'sessions_revoked',
+      };
       await this.notificationsService.createSecurityAlert(
         req.user.sub,
         'Multiple Sessions Revoked',
         `${revokedCount} device sessions have been revoked from your account.`,
-        { revokedCount, action: 'sessions_revoked' },
+        metadata,
       );
     }
 
@@ -209,8 +223,7 @@ export class SessionsController {
   })
   async revokeTokenFamily(
     @Param('familyId') familyId: string,
-    @Request() req: ExpressRequest & { user: { sub: string } },
-  ) {
+  ): Promise<RevokeResponse> {
     // TODO: Add admin role check here
     const result = await this.sessionsService.revokeTokenFamily(familyId);
     return {
@@ -253,9 +266,8 @@ export class SessionsController {
   })
   async revokeUserSessions(
     @Param('userId') userId: string,
-    @Body() body: { reason?: string },
-    @Request() req: ExpressRequest & { user: { sub: string } },
-  ) {
+    @Body() body: RevokeUserSessionsBody,
+  ): Promise<RevokeResponse> {
     // TODO: Add admin role check here
     const result = await this.sessionsService.revokeAllUserSessions(
       userId,
@@ -293,8 +305,7 @@ export class SessionsController {
   })
   async getSecurityAuditInfo(
     @Param('userId') userId: string,
-    @Request() req: ExpressRequest & { user: { sub: string } },
-  ) {
+  ): Promise<SecurityAuditInfo> {
     // TODO: Add admin role check here
     return this.sessionsService.getSecurityAuditInfo(userId);
   }

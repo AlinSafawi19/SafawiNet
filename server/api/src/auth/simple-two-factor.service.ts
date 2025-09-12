@@ -4,7 +4,6 @@ import {
   BadRequestException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/services/prisma.service';
 import { EmailService } from '../common/services/email.service';
 import { SecurityUtils } from '../common/security/security.utils';
@@ -23,7 +22,6 @@ export class SimpleTwoFactorService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
     private readonly emailService: EmailService,
     private readonly webSocketGateway: AuthWebSocketGateway,
   ) {}
@@ -128,13 +126,10 @@ export class SimpleTwoFactorService {
     // Emit logout event to all user's devices (same as password change)
     try {
       // Emit to user's personal room (for all logged-in devices)
-      await this.webSocketGateway.emitLogoutToUserDevices(
-        userId,
-        '2fa_disabled',
-      );
+      this.webSocketGateway.emitLogoutToUserDevices(userId, '2fa_disabled');
 
       // Also emit global logout to catch any devices that might not be in the user's room
-      await this.webSocketGateway.emitGlobalLogout('2fa_disabled');
+      this.webSocketGateway.emitGlobalLogout('2fa_disabled');
 
       this.logger.log(
         `Logout events emitted for 2FA disable - user: ${user.email}`,

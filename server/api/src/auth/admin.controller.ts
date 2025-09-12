@@ -14,10 +14,147 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard, Roles } from './guards/roles.guard';
-import { Role } from '@prisma/client';
+import { Role, EmailLog, Prisma } from '@prisma/client';
 import { PrismaService } from '../common/services/prisma.service';
-import { EmailMonitoringService } from '../common/services/email-monitoring.service';
+import {
+  EmailMonitoringService,
+  EmailMetrics,
+} from '../common/services/email-monitoring.service';
 import { PinoLoggerService } from '../common/services/logger.service';
+import { AuthenticatedRequest } from './types/auth.types';
+
+// Type definitions for admin controller
+type UserWithCounts = Prisma.UserGetPayload<{
+  select: {
+    id: true;
+    email: true;
+    name: true;
+    roles: true;
+    isVerified: true;
+    twoFactorEnabled: true;
+    createdAt: true;
+    updatedAt: true;
+    _count: {
+      select: {
+        userSessions: true;
+        notifications: true;
+      };
+    };
+  };
+}>;
+
+type UserWithDetails = Prisma.UserGetPayload<{
+  select: {
+    id: true;
+    email: true;
+    name: true;
+    roles: true;
+    isVerified: true;
+    twoFactorEnabled: true;
+    preferences: true;
+    notificationPreferences: true;
+    createdAt: true;
+    updatedAt: true;
+    userSessions: {
+      select: {
+        id: true;
+        deviceType: true;
+        browser: true;
+        os: true;
+        ipAddress: true;
+        location: true;
+        isCurrent: true;
+        lastActiveAt: true;
+        createdAt: true;
+      };
+    };
+    notifications: {
+      select: {
+        id: true;
+        type: true;
+        title: true;
+        message: true;
+        isRead: true;
+        priority: true;
+        createdAt: true;
+      };
+    };
+    loyaltyAccounts: {
+      include: {
+        currentTier: true;
+      };
+    };
+  };
+}>;
+
+type SessionWithUser = Prisma.UserSessionGetPayload<{
+  include: {
+    user: {
+      select: {
+        id: true;
+        email: true;
+        name: true;
+      };
+    };
+  };
+}>;
+
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+interface UsersResponse {
+  users: UserWithCounts[];
+  pagination: PaginationInfo;
+}
+
+interface SessionsResponse {
+  sessions: SessionWithUser[];
+  pagination: PaginationInfo;
+}
+
+interface SystemStatsResponse {
+  users: {
+    total: number;
+    verified: number;
+    with2FA: number;
+    roleDistribution: Array<{ roles: Role[]; _count: number }>;
+  };
+  sessions: {
+    active: number;
+  };
+  notifications: {
+    total: number;
+    unread: number;
+  };
+  emails: {
+    totalLogs: number;
+    recentLogs: EmailLog[];
+  };
+  loyalty: {
+    totalAccounts: number;
+  };
+}
+
+interface UpdateUserRolesBody {
+  roles: Role[];
+}
+
+interface BroadcastNotificationBody {
+  title: string;
+  message: string;
+  type: string;
+  priority: string;
+  targetRoles?: Role[];
+}
+
+interface BroadcastNotificationResponse {
+  message: string;
+  count: number;
+}
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -36,12 +173,12 @@ export class AdminController {
     @Query('limit') limit = '20',
     @Query('search') search?: string,
     @Query('role') role?: Role,
-  ) {
+  ): Promise<UsersResponse> {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const skip = (pageNum - 1) * limitNum;
 
-    const where: any = {};
+    const where: Prisma.UserWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -92,7 +229,9 @@ export class AdminController {
   }
 
   @Get('users/:id')
-  async getUserById(@Param('id') id: string) {
+  async getUserById(
+    @Param('id') id: string,
+  ): Promise<UserWithDetails | { error: string }> {
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: {
@@ -152,13 +291,13 @@ export class AdminController {
   @HttpCode(HttpStatus.OK)
   async updateUserRoles(
     @Param('id') id: string,
-    @Body() body: { roles: Role[] },
-    @Request() req: any,
-  ) {
+    @Body() body: UpdateUserRolesBody,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<{ id: string; email: string; roles: Role[]; updatedAt: Date }> {
     const { roles } = body;
 
     // Prevent admin from removing their own admin role
-    if (req.user.id === id && !roles.includes(Role.ADMIN)) {
+    if (req.user.sub === id && !roles.includes(Role.ADMIN)) {
       throw new Error('Cannot remove admin role from yourself');
     }
 
@@ -182,9 +321,12 @@ export class AdminController {
 
   @Delete('users/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteUser(@Param('id') id: string, @Request() req: any) {
+  async deleteUser(
+    @Param('id') id: string,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<void> {
     // Prevent admin from deleting themselves
-    if (req.user.id === id) {
+    if (req.user.sub === id) {
       throw new Error('Cannot delete your own account');
     }
 
@@ -195,7 +337,7 @@ export class AdminController {
 
   // System Monitoring
   @Get('system/stats')
-  async getSystemStats() {
+  async getSystemStats(): Promise<SystemStatsResponse> {
     const [
       totalUsers,
       verifiedUsers,
@@ -256,7 +398,7 @@ export class AdminController {
   }
 
   @Get('system/email-monitoring')
-  async getEmailMonitoringStats() {
+  async getEmailMonitoringStats(): Promise<EmailMetrics> {
     return this.emailMonitoring.getEmailMetrics();
   }
 
@@ -266,12 +408,12 @@ export class AdminController {
     @Query('page') page = '1',
     @Query('limit') limit = '20',
     @Query('userId') userId?: string,
-  ) {
+  ): Promise<SessionsResponse> {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const skip = (pageNum - 1) * limitNum;
 
-    const where: any = {};
+    const where: Prisma.UserSessionWhereInput = {};
     if (userId) {
       where.userId = userId;
     }
@@ -310,8 +452,8 @@ export class AdminController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async revokeSession(
     @Param('sessionId') sessionId: string,
-    @Request() req: any,
-  ) {
+    @Request() req: AuthenticatedRequest,
+  ): Promise<void> {
     await this.prisma.userSession.delete({ where: { id: sessionId } });
 
     this.logger.log(`Admin ${req.user.email} revoked session ${sessionId}`);
@@ -320,19 +462,12 @@ export class AdminController {
   // Notification Management
   @Post('notifications/broadcast')
   async broadcastNotification(
-    @Body()
-    body: {
-      title: string;
-      message: string;
-      type: string;
-      priority: string;
-      targetRoles?: Role[];
-    },
-    @Request() req: any,
-  ) {
+    @Body() body: BroadcastNotificationBody,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<BroadcastNotificationResponse> {
     const { title, message, type, priority, targetRoles } = body;
 
-    const where: any = {};
+    const where: Prisma.UserWhereInput = {};
     if (targetRoles && targetRoles.length > 0) {
       where.roles = { hasSome: targetRoles };
     }

@@ -6,6 +6,41 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../common/services/prisma.service';
+import { Request } from 'express';
+import { Role } from '@prisma/client';
+
+// Interface for JWT payload structure
+interface JwtPayload {
+  sub: string;
+  email: string;
+  name: string | null;
+  verified: boolean;
+  roles: Role[];
+  refreshTokenId: string;
+  iat: number;
+  exp: number;
+}
+
+// Interface for request with cookies
+interface RequestWithCookies extends Request {
+  cookies: {
+    accessToken?: string;
+    [key: string]: string | undefined;
+  };
+}
+
+// Interface for authenticated request with user properties
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string;
+    sub: string;
+    email: string;
+    name: string | null;
+    verified: boolean;
+    roles: Role[];
+    refreshTokenId: string;
+  };
+}
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -17,7 +52,7 @@ export class JwtAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     console.log('🛡️ JWT Guard - canActivate called');
 
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<RequestWithCookies>();
     const token = this.extractTokenFromRequest(request);
 
     if (!token) {
@@ -27,7 +62,7 @@ export class JwtAuthGuard implements CanActivate {
 
     try {
       console.log('🛡️ JWT Guard - Validating token');
-      const payload = await this.jwtService.verifyAsync(token);
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
       console.log('🛡️ JWT Guard - Token payload:', payload);
 
       // Check if user exists and is verified
@@ -107,7 +142,7 @@ export class JwtAuthGuard implements CanActivate {
       );
 
       // Attach user to request
-      request.user = {
+      (request as AuthenticatedRequest).user = {
         id: user.id,
         sub: user.id,
         email: user.email,
@@ -126,7 +161,9 @@ export class JwtAuthGuard implements CanActivate {
     }
   }
 
-  private extractTokenFromRequest(request: any): string | undefined {
+  private extractTokenFromRequest(
+    request: RequestWithCookies,
+  ): string | undefined {
     // Debug logging
     if (process.env.NODE_ENV === 'development') {
       console.log('🔍 JWT Guard - Request cookies:', request?.cookies);

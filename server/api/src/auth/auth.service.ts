@@ -4,8 +4,6 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
-  NotFoundException,
-  Res,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -13,9 +11,8 @@ import { PrismaService } from '../common/services/prisma.service';
 import { RedisService } from '../common/services/redis.service';
 import { EmailService } from '../common/services/email.service';
 import { SecurityUtils } from '../common/security/security.utils';
-import { TwoFactorService } from './two-factor.service';
 import { SimpleTwoFactorService } from './simple-two-factor.service';
-import { SessionsService, DeviceInfo } from './sessions.service';
+import { SessionsService } from './sessions.service';
 import { NotificationsService } from './notifications.service';
 import {
   RegisterDto,
@@ -24,9 +21,15 @@ import {
   RefreshTokenDto,
   ForgotPasswordDto,
   ResetPasswordDto,
-  TwoFactorLoginDto,
+  TwoFactorCodeDto,
 } from './schemas/auth.schemas';
-import { User } from '@prisma/client';
+import {
+  User,
+  OneTimeToken,
+  RefreshSession,
+  UserSession,
+  LoyaltyTier,
+} from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { Request, Response } from 'express';
 import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
@@ -44,6 +47,14 @@ export interface LoginResult {
   user?: Omit<User, 'password'>;
 }
 
+// Type for JWT payload
+interface JwtPayload {
+  sub: string;
+  email: string;
+  verified: boolean;
+  roles: string[];
+}
+
 @Injectable()
 export class AuthService {
   private readonly maxLoginAttempts = 5;
@@ -57,7 +68,6 @@ export class AuthService {
     private readonly redisService: RedisService,
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
-    private readonly twoFactorService: TwoFactorService,
     private readonly simpleTwoFactorService: SimpleTwoFactorService,
     private readonly sessionsService: SessionsService,
     private readonly notificationsService: NotificationsService,
@@ -70,8 +80,8 @@ export class AuthService {
     const { email, password, name } = registerDto;
 
     // Check if user already exists
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+    const existingUser: User | null = await this.prisma.user.findUnique({
+      where: { email: (email as string).toLowerCase() },
     });
 
     if (existingUser) {
@@ -79,7 +89,9 @@ export class AuthService {
     }
 
     // Hash password using Argon2id
-    const hashedPassword = await SecurityUtils.hashPassword(password);
+    const hashedPassword: string = await SecurityUtils.hashPassword(
+      password as string,
+    );
 
     // Default preferences
     const defaultPreferences = {
@@ -92,7 +104,7 @@ export class AuthService {
         sound: true,
         desktop: true,
       },
-    };
+    } as const;
 
     // Default notification preferences
     const defaultNotificationPreferences = {
@@ -113,66 +125,69 @@ export class AuthService {
         security: true,
         twoFactor: true,
       },
-    };
+    } as const;
 
     // Create user and verification token in a transaction
-    const result = await this.prisma.$transaction(async (tx) => {
-      // Create user
-      const user = await tx.user.create({
-        data: {
-          email: email.toLowerCase(),
-          password: hashedPassword,
-          name,
-          isVerified: false,
-          preferences: defaultPreferences,
-          notificationPreferences: defaultNotificationPreferences,
-        },
-      });
-
-      // Generate verification token (15-60 min TTL)
-      const verificationToken = SecurityUtils.generateSecureToken(32);
-      const tokenHash = SecurityUtils.hashToken(verificationToken);
-      const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
-
-      // Store verification token
-      await tx.oneTimeToken.create({
-        data: {
-          purpose: 'email_verification',
-          hash: tokenHash,
-          userId: user.id,
-          expiresAt,
-        },
-      });
-
-      // Create loyalty account for customers (users with CUSTOMER role)
-      if (user.roles.includes('CUSTOMER')) {
-        // Find the Bronze tier (default tier for new customers)
-        const bronzeTier = await tx.loyaltyTier.findFirst({
-          where: { name: 'Bronze' },
+    const result: { user: User; verificationToken: string } =
+      await this.prisma.$transaction(async (tx) => {
+        // Create user
+        const user: User = await tx.user.create({
+          data: {
+            email: (email as string).toLowerCase(),
+            password: hashedPassword,
+            name: name as string,
+            isVerified: false,
+            preferences: defaultPreferences,
+            notificationPreferences: defaultNotificationPreferences,
+          },
         });
 
-        if (bronzeTier) {
-          await tx.loyaltyAccount.create({
-            data: {
-              userId: user.id,
-              currentTierId: bronzeTier.id,
-              currentPoints: 0,
-              lifetimePoints: 0,
-              tierUpgradedAt: new Date(),
-            },
-          });
-          this.logger.log(
-            `Created loyalty account for new customer: ${user.email}`,
-          );
-        }
-      }
+        // Generate verification token (15-60 min TTL)
+        const verificationToken: string = SecurityUtils.generateSecureToken(32);
+        const tokenHash: string = SecurityUtils.hashToken(verificationToken);
+        const expiresAt: Date = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
-      return { user, verificationToken };
-    });
+        // Store verification token
+        await tx.oneTimeToken.create({
+          data: {
+            purpose: 'email_verification',
+            hash: tokenHash,
+            userId: user.id,
+            expiresAt,
+          },
+        });
+
+        // Create loyalty account for customers (users with CUSTOMER role)
+        if (user.roles.includes('CUSTOMER')) {
+          // Find the Bronze tier (default tier for new customers)
+          const bronzeTier: LoyaltyTier | null = await tx.loyaltyTier.findFirst(
+            {
+              where: { name: 'Bronze' },
+            },
+          );
+
+          if (bronzeTier) {
+            await tx.loyaltyAccount.create({
+              data: {
+                userId: user.id,
+                currentTierId: bronzeTier.id,
+                currentPoints: 0,
+                lifetimePoints: 0,
+                tierUpgradedAt: new Date(),
+              },
+            });
+            this.logger.log(
+              `Created loyalty account for new customer: ${user.email}`,
+            );
+          }
+        }
+
+        return { user, verificationToken };
+      });
 
     // Send verification email
     try {
-      const frontendDomain = this.configService.get(
+      const frontendDomain: string = this.configService.get<string>(
         'FRONTEND_DOMAIN',
         'localhost:3001',
       );
@@ -191,11 +206,12 @@ export class AuthService {
     }
 
     // Return user without password
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = result.user;
 
     // Emit WebSocket event for new user registration
     try {
-      await this.webSocketGateway.emitVerificationSuccess(
+      this.webSocketGateway.emitVerificationSuccess(
         result.user.id,
         userWithoutPassword,
       );
@@ -218,26 +234,27 @@ export class AuthService {
     tokens?: AuthTokens;
   }> {
     const { token } = verifyEmailDto;
-    const tokenHash = SecurityUtils.hashToken(token);
+    const tokenHash: string = SecurityUtils.hashToken(token as string);
 
     // Find and validate token atomically
-    const result = await this.prisma.$transaction(async (tx) => {
-      const oneTimeToken = await tx.oneTimeToken.findFirst({
-        where: {
-          hash: tokenHash,
-          purpose: 'email_verification',
-          expiresAt: { gt: new Date() },
-          usedAt: null,
-        },
-        include: { user: true },
-      });
+    const result: User = await this.prisma.$transaction(async (tx) => {
+      const oneTimeToken: (OneTimeToken & { user: User }) | null =
+        await tx.oneTimeToken.findFirst({
+          where: {
+            hash: tokenHash,
+            purpose: 'email_verification',
+            expiresAt: { gt: new Date() },
+            usedAt: null,
+          },
+          include: { user: true },
+        });
 
       if (!oneTimeToken) {
         throw new BadRequestException('Invalid or expired verification token');
       }
 
       // Regular email verification
-      const updatedUser = await tx.user.update({
+      const updatedUser: User = await tx.user.update({
         where: { id: oneTimeToken.user.id },
         data: { isVerified: true },
       });
@@ -252,7 +269,7 @@ export class AuthService {
     });
 
     // Generate tokens for automatic login
-    const tokens = await this.generateTokens(result, undefined);
+    const tokens: AuthTokens = await this.generateTokens(result, undefined);
 
     // Emit WebSocket event for real-time notification
     try {
@@ -267,7 +284,7 @@ export class AuthService {
         roomStates,
       );
 
-      await this.webSocketGateway.emitVerificationSuccess(
+      this.webSocketGateway.emitVerificationSuccess(
         result.id,
         this.excludePassword(result),
       );
@@ -280,14 +297,14 @@ export class AuthService {
         accessToken: tokens.accessToken ? 'PRESENT' : 'MISSING',
         refreshToken: tokens.refreshToken ? 'PRESENT' : 'MISSING',
       });
-      await this.webSocketGateway.emitVerificationSuccessToPendingRoom(
+      this.webSocketGateway.emitVerificationSuccessToPendingRoom(
         result.email,
         this.excludePassword(result),
         tokens,
       );
 
       // Also broadcast login to all devices
-      await this.webSocketGateway.broadcastLogin(this.excludePassword(result));
+      this.webSocketGateway.broadcastLogin(this.excludePassword(result));
       this.logger.log(
         `✅ All WebSocket events emitted successfully for user: ${result.email}`,
       );
@@ -306,7 +323,7 @@ export class AuthService {
 
     this.logger.log(`Email verified for user ${result.email}`);
 
-    const message = 'Email verified successfully';
+    const message: string = 'Email verified successfully';
 
     return {
       message,
@@ -317,11 +334,11 @@ export class AuthService {
 
   async login(loginDto: LoginDto, req?: Request): Promise<LoginResult> {
     const { email, password } = loginDto;
-    const emailKey = email.toLowerCase();
+    const emailKey: string = (email as string).toLowerCase();
 
     // Check for login attempts and lockout
-    const lockoutKey = `login_lockout:${emailKey}`;
-    const isLockedOut = await this.redisService.exists(lockoutKey);
+    const lockoutKey: string = `login_lockout:${emailKey}`;
+    const isLockedOut: boolean = await this.redisService.exists(lockoutKey);
 
     if (isLockedOut) {
       throw new UnauthorizedException(
@@ -330,7 +347,7 @@ export class AuthService {
     }
 
     // Find user
-    const user = await this.prisma.user.findUnique({
+    const user: User | null = await this.prisma.user.findUnique({
       where: { email: emailKey },
     });
 
@@ -340,9 +357,9 @@ export class AuthService {
     }
 
     // Verify password
-    const isPasswordValid = await SecurityUtils.verifyPassword(
+    const isPasswordValid: boolean = await SecurityUtils.verifyPassword(
       user.password,
-      password,
+      password as string,
     );
 
     if (!isPasswordValid) {
@@ -387,7 +404,7 @@ export class AuthService {
     await this.redisService.del(`login_attempts:${emailKey}`);
 
     // Generate tokens
-    const tokens = await this.generateTokens(user, req);
+    const tokens: AuthTokens = await this.generateTokens(user, req);
 
     this.logger.log(`User ${user.email} logged in successfully`);
 
@@ -399,13 +416,13 @@ export class AuthService {
 
   async twoFactorLogin(
     userId: string,
-    twoFactorLoginDto: TwoFactorLoginDto,
+    twoFactorLoginDto: TwoFactorCodeDto,
     req?: Request,
   ): Promise<LoginResult> {
     const { code } = twoFactorLoginDto;
 
     // Validate 2FA code using simple service
-    const validationResult =
+    const validationResult: { isValid: boolean } =
       await this.simpleTwoFactorService.validateTwoFactorCode(userId, code);
 
     if (!validationResult.isValid) {
@@ -413,7 +430,7 @@ export class AuthService {
     }
 
     // Get user
-    const user = await this.prisma.user.findUnique({
+    const user: User | null = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
@@ -422,7 +439,7 @@ export class AuthService {
     }
 
     // Generate tokens
-    const tokens = await this.generateTokens(user, req);
+    const tokens: AuthTokens = await this.generateTokens(user, req);
 
     this.logger.log(`User ${user.email} logged in successfully with 2FA`);
 
@@ -437,24 +454,27 @@ export class AuthService {
 
     try {
       // Hash the provided refresh token to compare with stored hash
-      const refreshHash = SecurityUtils.hashToken(refreshToken);
+      const refreshHash: string = SecurityUtils.hashToken(
+        refreshToken as string,
+      );
 
       // Check if refresh session exists and is valid
-      const session = await this.prisma.refreshSession.findFirst({
-        where: {
-          refreshHash,
-          isActive: true,
-          expiresAt: { gt: new Date() },
-        },
-        include: { user: true },
-      });
+      const session: (RefreshSession & { user: User }) | null =
+        await this.prisma.refreshSession.findFirst({
+          where: {
+            refreshHash,
+            isActive: true,
+            expiresAt: { gt: new Date() },
+          },
+          include: { user: true },
+        });
 
       if (!session) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
       // Generate new tokens
-      const tokens = await this.generateTokens(session.user);
+      const tokens: AuthTokens = await this.generateTokens(session.user);
 
       // Invalidate old refresh token and create new one
       await this.prisma.refreshSession.update({
@@ -464,15 +484,15 @@ export class AuthService {
 
       // Update the user session to reflect the new refresh token
       try {
-        const userSession = await this.prisma.userSession.findUnique({
-          where: { refreshTokenId: session.tokenId },
-        });
+        const userSession: UserSession | null =
+          await this.prisma.userSession.findUnique({
+            where: { refreshTokenId: session.tokenId },
+          });
 
         if (userSession) {
           // Update the session to link to the new refresh token
-          const newRefreshToken = await this.createRefreshToken(
-            session.user.id,
-          );
+          const newRefreshToken: { refreshToken: string; tokenId: string } =
+            await this.createRefreshToken(session.user.id);
           await this.prisma.userSession.update({
             where: { id: userSession.id },
             data: {
@@ -501,10 +521,10 @@ export class AuthService {
     forgotPasswordDto: ForgotPasswordDto,
   ): Promise<{ message: string }> {
     const { email } = forgotPasswordDto;
-    const emailKey = email.toLowerCase();
+    const emailKey: string = (email as string).toLowerCase();
 
     // Check if user exists
-    const user = await this.prisma.user.findUnique({
+    const user: User | null = await this.prisma.user.findUnique({
       where: { email: emailKey },
     });
 
@@ -532,9 +552,9 @@ export class AuthService {
     });
 
     // Generate new password reset token (15 min TTL)
-    const resetToken = SecurityUtils.generateSecureToken(32);
-    const tokenHash = SecurityUtils.hashToken(resetToken);
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    const resetToken: string = SecurityUtils.generateSecureToken(32);
+    const tokenHash: string = SecurityUtils.hashToken(resetToken);
+    const expiresAt: Date = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     // Store password reset token
     await this.prisma.oneTimeToken.create({
@@ -568,19 +588,20 @@ export class AuthService {
     resetPasswordDto: ResetPasswordDto,
   ): Promise<{ message: string; email: string }> {
     const { token, password } = resetPasswordDto;
-    const tokenHash = SecurityUtils.hashToken(token);
+    const tokenHash: string = SecurityUtils.hashToken(token as string);
 
     // Find and validate token atomically
-    const result = await this.prisma.$transaction(async (tx) => {
-      const oneTimeToken = await tx.oneTimeToken.findFirst({
-        where: {
-          hash: tokenHash,
-          purpose: 'password_reset',
-          expiresAt: { gt: new Date() },
-          usedAt: null,
-        },
-        include: { user: true },
-      });
+    const result: User = await this.prisma.$transaction(async (tx) => {
+      const oneTimeToken: (OneTimeToken & { user: User }) | null =
+        await tx.oneTimeToken.findFirst({
+          where: {
+            hash: tokenHash,
+            purpose: 'password_reset',
+            expiresAt: { gt: new Date() },
+            usedAt: null,
+          },
+          include: { user: true },
+        });
 
       if (!oneTimeToken) {
         throw new BadRequestException(
@@ -595,7 +616,9 @@ export class AuthService {
       });
 
       // Hash new password
-      const hashedPassword = await SecurityUtils.hashPassword(password);
+      const hashedPassword: string = await SecurityUtils.hashPassword(
+        password as string,
+      );
 
       // Update user password
       await tx.user.update({
@@ -644,22 +667,22 @@ export class AuthService {
 
     // Emit logout event to password reset room and user's devices
     // Use setTimeout to allow client to join room first
-    setTimeout(async () => {
+    setTimeout(() => {
       try {
         // Emit to password reset room (for devices that requested reset)
-        await this.webSocketGateway.emitLogoutToPasswordResetRoom(
+        this.webSocketGateway.emitLogoutToPasswordResetRoom(
           result.email,
           'password_reset',
         );
 
         // Emit to user's personal room (for all logged-in devices)
-        await this.webSocketGateway.emitLogoutToUserDevices(
+        this.webSocketGateway.emitLogoutToUserDevices(
           result.id,
           'password_reset',
         );
 
         // Also emit global logout to catch any devices that might not be in either room
-        await this.webSocketGateway.emitGlobalLogout('password_reset');
+        this.webSocketGateway.emitGlobalLogout('password_reset');
 
         this.logger.log(
           `Logout events emitted for password reset - user: ${result.email}`,
@@ -681,15 +704,16 @@ export class AuthService {
   }
 
   private async generateTokens(user: User, req?: Request): Promise<AuthTokens> {
-    const payload = {
+    const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       verified: user.isVerified,
       roles: user.roles,
     };
 
-    const accessToken = this.jwtService.sign(payload);
-    const { refreshToken, tokenId } = await this.createRefreshToken(user.id);
+    const accessToken: string = this.jwtService.sign(payload);
+    const { refreshToken, tokenId }: { refreshToken: string; tokenId: string } =
+      await this.createRefreshToken(user.id);
 
     // Create user session if request is provided
     if (req) {
@@ -698,7 +722,7 @@ export class AuthService {
         await this.sessionsService.createSession(user.id, tokenId, deviceInfo);
 
         // Create login notification
-        await this.notificationsService.createAccountUpdate(
+        void this.notificationsService.createAccountUpdate(
           user.id,
           'New Login Detected',
           'A new device has logged into your account.',
@@ -724,12 +748,12 @@ export class AuthService {
   private async createRefreshToken(
     userId: string,
   ): Promise<{ refreshToken: string; tokenId: string }> {
-    const familyId = randomUUID();
-    const tokenId = randomUUID();
-    const refreshToken = randomUUID();
+    const familyId: string = randomUUID();
+    const tokenId: string = randomUUID();
+    const refreshToken: string = randomUUID();
 
     // Hash the refresh token for storage
-    const refreshHash = SecurityUtils.hashToken(refreshToken);
+    const refreshHash: string = SecurityUtils.hashToken(refreshToken);
 
     // Store refresh session
     await this.prisma.refreshSession.create({
@@ -746,15 +770,15 @@ export class AuthService {
   }
 
   private async recordFailedLoginAttempt(email: string): Promise<void> {
-    const attemptsKey = `login_attempts:${email}`;
-    const attempts = await this.redisService.incr(attemptsKey);
+    const attemptsKey: string = `login_attempts:${email}`;
+    const attempts: number = await this.redisService.incr(attemptsKey);
 
     if (attempts === 1) {
       await this.redisService.expire(attemptsKey, 60 * 60); // 1 hour window
     }
 
     if (attempts >= this.maxLoginAttempts) {
-      const lockoutKey = `login_lockout:${email}`;
+      const lockoutKey: string = `login_lockout:${email}`;
       await this.redisService.set(lockoutKey, 'locked', this.lockoutDuration);
       this.logger.warn(
         `Account locked for ${email} due to too many failed login attempts`,
@@ -764,7 +788,7 @@ export class AuthService {
 
   async invalidateRefreshToken(refreshToken: string): Promise<void> {
     try {
-      const refreshHash = SecurityUtils.hashToken(refreshToken);
+      const refreshHash: string = SecurityUtils.hashToken(refreshToken);
 
       // Find and deactivate the refresh session
       await this.prisma.refreshSession.updateMany({
@@ -778,10 +802,11 @@ export class AuthService {
       });
 
       // Also deactivate any associated user sessions
-      const session = await this.prisma.refreshSession.findFirst({
-        where: { refreshHash },
-        select: { tokenId: true },
-      });
+      const session: { tokenId: string } | null =
+        await this.prisma.refreshSession.findFirst({
+          where: { refreshHash },
+          select: { tokenId: true },
+        });
 
       if (session) {
         await this.prisma.userSession.updateMany({
@@ -800,7 +825,7 @@ export class AuthService {
   async resendVerificationEmail(email: string): Promise<{ message: string }> {
     try {
       // Find user by email
-      const user = await this.prisma.user.findUnique({
+      const user: User | null = await this.prisma.user.findUnique({
         where: { email },
       });
 
@@ -825,9 +850,9 @@ export class AuthService {
       });
 
       // Generate new verification token
-      const verificationToken = SecurityUtils.generateSecureToken(32);
-      const tokenHash = SecurityUtils.hashToken(verificationToken);
-      const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+      const verificationToken: string = SecurityUtils.generateSecureToken(32);
+      const tokenHash: string = SecurityUtils.hashToken(verificationToken);
+      const expiresAt: Date = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
       // Store new verification token
       await this.prisma.oneTimeToken.create({
@@ -840,7 +865,7 @@ export class AuthService {
       });
 
       // Send verification email
-      const frontendDomain = this.configService.get(
+      const frontendDomain: string = this.configService.get<string>(
         'FRONTEND_DOMAIN',
         'localhost:3001',
       );
@@ -876,9 +901,9 @@ export class AuthService {
       });
 
       // Generate new verification token
-      const verificationToken = SecurityUtils.generateSecureToken(32);
-      const tokenHash = SecurityUtils.hashToken(verificationToken);
-      const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+      const verificationToken: string = SecurityUtils.generateSecureToken(32);
+      const tokenHash: string = SecurityUtils.hashToken(verificationToken);
+      const expiresAt: Date = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
       // Store new verification token
       await this.prisma.oneTimeToken.create({
@@ -891,7 +916,7 @@ export class AuthService {
       });
 
       // Send verification email
-      const frontendDomain = this.configService.get(
+      const frontendDomain: string = this.configService.get<string>(
         'FRONTEND_DOMAIN',
         'localhost:3001',
       );
@@ -913,7 +938,7 @@ export class AuthService {
     userId: string,
     code: string,
   ): Promise<void> {
-    const codeHash = SecurityUtils.hashToken(code);
+    const codeHash: string = SecurityUtils.hashToken(code);
     await this.prisma.backupCode.updateMany({
       where: {
         userId,
@@ -928,14 +953,16 @@ export class AuthService {
   }
 
   private excludePassword(user: User): Omit<User, 'password'> {
-    const { password, ...userWithoutPassword } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
 
   setAuthCookies(res: Response, tokens: AuthTokens): void {
-    const isProduction =
+    const isProduction: boolean =
       this.configService.get<string>('NODE_ENV') === 'production';
-    const domain = this.configService.get<string>('COOKIE_DOMAIN');
+    const domain: string | undefined =
+      this.configService.get<string>('COOKIE_DOMAIN');
 
     // Set access token cookie (HTTP-only, secure in production)
     res.cookie('accessToken', tokens.accessToken, {
@@ -959,9 +986,10 @@ export class AuthService {
   }
 
   clearAuthCookies(res: Response): void {
-    const isProduction =
+    const isProduction: boolean =
       this.configService.get<string>('NODE_ENV') === 'production';
-    const domain = this.configService.get<string>('COOKIE_DOMAIN');
+    const domain: string | undefined =
+      this.configService.get<string>('COOKIE_DOMAIN');
 
     res.clearCookie('accessToken', {
       httpOnly: true,

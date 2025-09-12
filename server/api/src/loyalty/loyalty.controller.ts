@@ -7,7 +7,12 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
 } from '@nestjs/common';
-import { LoyaltyService } from './loyalty.service';
+import { Request as ExpressRequest } from 'express';
+import {
+  LoyaltyService,
+  LoyaltyAccountInfo,
+  PaginatedTransactions,
+} from './loyalty.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
   ApiTags,
@@ -16,6 +21,19 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
+
+// Interface for authenticated request with user properties
+interface AuthenticatedRequest extends ExpressRequest {
+  user: {
+    id: string;
+    sub: string;
+    email: string;
+    name: string;
+    verified: boolean;
+    roles: string[];
+    refreshTokenId: string;
+  };
+}
 
 @ApiTags('Loyalty')
 @Controller('v1/loyalty')
@@ -62,7 +80,9 @@ export class LoyaltyController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Loyalty account not found' })
-  async getMyLoyaltyAccount(@Request() req) {
+  async getMyLoyaltyAccount(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<LoyaltyAccountInfo> {
     return this.loyaltyService.getUserLoyaltyAccount(req.user.id);
   }
 
@@ -120,10 +140,10 @@ export class LoyaltyController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Loyalty account not found' })
   async getMyTransactions(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Query('cursor') cursor?: string,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
-  ) {
+  ): Promise<PaginatedTransactions> {
     return this.loyaltyService.getUserTransactions(req.user.id, cursor, limit);
   }
 }

@@ -3,7 +3,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { TwoFactorService } from './two-factor.service';
 import { SimpleTwoFactorService } from './simple-two-factor.service';
 import { SessionsController } from './sessions.controller';
 import { NotificationsController } from './notifications.controller';
@@ -28,7 +27,7 @@ import { UsersModule } from '../users/users.module';
   imports: [
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
           expiresIn: configService.get<string>('JWT_ACCESS_EXPIRES_IN', '15m'),
@@ -48,7 +47,6 @@ import { UsersModule } from '../users/users.module';
   ],
   providers: [
     AuthService,
-    TwoFactorService,
     SimpleTwoFactorService,
     SessionsService,
     NotificationsService,
@@ -65,7 +63,6 @@ import { UsersModule } from '../users/users.module';
   ],
   exports: [
     AuthService,
-    TwoFactorService,
     SessionsService,
     NotificationsService,
     JwtModule,

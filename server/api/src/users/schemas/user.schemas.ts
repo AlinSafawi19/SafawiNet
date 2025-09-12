@@ -4,30 +4,30 @@ import { createZodDto } from 'nestjs-zod';
 export const CreateUserSchema = z.object({
   email: z
     .string()
-    .email('Invalid email format')
+    .email({ message: 'Invalid email format' })
     .describe('User email address'),
   password: z
     .string()
-    .min(8, 'Password must be at least 8 characters')
+    .min(8, { message: 'Password must be at least 8 characters' })
     .describe('User password (minimum 8 characters)'),
   name: z
     .string()
-    .min(1, 'Name is required')
-    .max(100, 'Name too long')
+    .min(1, { message: 'Name is required' })
+    .max(100, { message: 'Name too long' })
     .describe('User full name'),
 });
 
 export const VerifyEmailSchema = z.object({
   token: z
     .string()
-    .min(1, 'Token is required')
+    .min(1, { message: 'Token is required' })
     .describe('Email verification token received via email'),
 });
 
 export const RequestPasswordResetSchema = z.object({
   email: z
     .string()
-    .email('Invalid email format')
+    .email({ message: 'Invalid email format' })
     .describe('Email address to send password reset link to'),
 });
 
@@ -35,15 +35,15 @@ export const ResetPasswordSchema = z
   .object({
     token: z
       .string()
-      .min(1, 'Token is required')
+      .min(1, { message: 'Token is required' })
       .describe('Password reset token received via email'),
     newPassword: z
       .string()
-      .min(8, 'Password must be at least 8 characters')
+      .min(8, { message: 'Password must be at least 8 characters' })
       .describe('New password (minimum 8 characters)'),
     confirmNewPassword: z
       .string()
-      .min(1, 'Password confirmation is required')
+      .min(1, { message: 'Password confirmation is required' })
       .describe('Confirm new password'),
   })
   .refine((data) => data.newPassword === data.confirmNewPassword, {
@@ -55,8 +55,8 @@ export const ResetPasswordSchema = z
 export const UpdateProfileSchema = z.object({
   name: z
     .string()
-    .min(1, 'Name is required')
-    .max(100, 'Name too long')
+    .min(1, { message: 'Name is required' })
+    .max(100, { message: 'Name too long' })
     .optional(),
 });
 
@@ -64,12 +64,12 @@ export const UpdatePreferencesSchema = z.object({
   theme: z.enum(['light', 'dark']).optional(),
   language: z
     .string()
-    .min(2, 'Language code must be at least 2 characters')
-    .max(5, 'Language code too long')
+    .min(2, { message: 'Language code must be at least 2 characters' })
+    .max(5, { message: 'Language code too long' })
     .optional(),
   timezone: z
     .string()
-    .min(1, 'Timezone must not be empty if provided')
+    .min(1, { message: 'Timezone must not be empty if provided' })
     .optional(),
   dateFormat: z.enum(['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD']).optional(),
   timeFormat: z.enum(['12h', '24h']).optional(),
@@ -111,15 +111,15 @@ export const ChangePasswordSchema = z
   .object({
     currentPassword: z
       .string()
-      .min(1, 'Current password is required')
+      .min(1, { message: 'Current password is required' })
       .describe('Current password'),
     newPassword: z
       .string()
-      .min(8, 'New password must be at least 8 characters')
+      .min(8, { message: 'New password must be at least 8 characters' })
       .describe('New password'),
     confirmNewPassword: z
       .string()
-      .min(1, 'Password confirmation is required')
+      .min(1, { message: 'Password confirmation is required' })
       .describe('Confirm new password'),
   })
   .refine((data) => data.newPassword === data.confirmNewPassword, {

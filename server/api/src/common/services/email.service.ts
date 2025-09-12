@@ -19,6 +19,77 @@ export interface EmailData {
   from?: string;
 }
 
+// Template data interfaces
+export interface EmailVerificationData {
+  name: string;
+  verificationUrl: string;
+  appName?: string;
+  supportEmail?: string;
+}
+
+export interface PasswordResetData {
+  name: string;
+  resetUrl: string;
+  appName?: string;
+  supportEmail?: string;
+}
+
+export interface TwoFactorCodeData {
+  name: string;
+  code: string;
+  expirationMinutes: number;
+  appName?: string;
+  supportEmail?: string;
+}
+
+export interface SecurityAlertData {
+  name: string;
+  event: string;
+  location: string;
+  timestamp: string;
+  appName?: string;
+  supportEmail?: string;
+}
+
+export interface PasswordChangeNotificationData {
+  name: string;
+  appName?: string;
+  supportEmail?: string;
+  timestamp: string;
+}
+
+// Union type for all template data
+export type TemplateData =
+  | EmailVerificationData
+  | PasswordResetData
+  | TwoFactorCodeData
+  | SecurityAlertData
+  | PasswordChangeNotificationData
+  | Record<string, unknown>;
+
+// Nodemailer configuration types
+export interface NodemailerConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  ignoreTLS?: boolean;
+  auth?: {
+    user: string;
+    pass: string;
+  };
+}
+
+export interface NodemailerAuthConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  ignoreTLS?: boolean;
+  auth: {
+    user: string;
+    pass: string;
+  };
+}
+
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
@@ -26,8 +97,8 @@ export class EmailService {
   private templates: Map<string, handlebars.TemplateDelegate> = new Map();
 
   constructor(private configService: ConfigService) {
-    this.initializeTransporter();
-    this.loadTemplates();
+    void this.initializeTransporter();
+    void this.loadTemplates();
   }
 
   private async initializeTransporter() {
@@ -35,24 +106,36 @@ export class EmailService {
 
     if (isDevelopment) {
       // Use Mailhog for development - no authentication required
-      this.transporter = nodemailer.createTransport({
+      const mailhogConfig: NodemailerConfig = {
         host: this.configService.get('EMAIL_HOST', 'mailhog'),
         port: this.configService.get('EMAIL_PORT', 1025),
         secure: false,
         ignoreTLS: true,
-        auth: false, // Mailhog doesn't require authentication
-      } as any);
+      };
+      this.transporter = nodemailer.createTransport(mailhogConfig);
     } else {
       // Use SES for production
-      this.transporter = nodemailer.createTransport({
-        host: this.configService.get('EMAIL_HOST'),
-        port: this.configService.get('EMAIL_PORT', 587),
-        secure: this.configService.get('EMAIL_SECURE', false),
+      const emailHost = this.configService.get<string>('EMAIL_HOST');
+      const sesAccessKeyId =
+        this.configService.get<string>('SES_ACCESS_KEY_ID');
+      const sesSecretAccessKey = this.configService.get<string>(
+        'SES_SECRET_ACCESS_KEY',
+      );
+
+      if (!emailHost || !sesAccessKeyId || !sesSecretAccessKey) {
+        throw new Error('Missing required email configuration for production');
+      }
+
+      const sesConfig: NodemailerAuthConfig = {
+        host: emailHost,
+        port: this.configService.get<number>('EMAIL_PORT', 587),
+        secure: this.configService.get<boolean>('EMAIL_SECURE', false),
         auth: {
-          user: this.configService.get('SES_ACCESS_KEY_ID'),
-          pass: this.configService.get('SES_SECRET_ACCESS_KEY'),
+          user: sesAccessKeyId,
+          pass: sesSecretAccessKey,
         },
-      } as any);
+      };
+      this.transporter = nodemailer.createTransport(sesConfig);
     }
 
     // Verify connection
@@ -102,7 +185,7 @@ export class EmailService {
           this.logger.log(`Email templates loaded from: ${templatesDir}`);
           break;
         }
-      } catch (error) {
+      } catch {
         // Continue to next path
         continue;
       }
@@ -160,7 +243,9 @@ export class EmailService {
         text: emailData.text || this.htmlToText(emailData.html),
       };
 
-      const result = await this.transporter.sendMail(mailOptions);
+      const result = (await this.transporter.sendMail(mailOptions)) as {
+        messageId?: string;
+      };
       this.logger.log(
         `Email sent successfully to ${emailData.to}: ${result.messageId}`,
       );
@@ -173,7 +258,7 @@ export class EmailService {
   async sendTemplateEmail(
     templateName: string,
     to: string,
-    data: Record<string, any>,
+    data: TemplateData,
     subject?: string,
   ): Promise<void> {
     const template = this.templates.get(templateName);
@@ -183,7 +268,7 @@ export class EmailService {
     }
 
     const html = template(data);
-    const emailSubject = subject || this.getDefaultSubject(templateName, data);
+    const emailSubject = subject || this.getDefaultSubject(templateName);
 
     await this.sendEmail({
       to,
@@ -195,7 +280,7 @@ export class EmailService {
   // Predefined email methods
   async sendEmailVerification(
     to: string,
-    data: { name: string; verificationUrl: string },
+    data: EmailVerificationData,
   ): Promise<void> {
     await this.sendTemplateEmail('email-verification', to, {
       ...data,
@@ -209,7 +294,7 @@ export class EmailService {
     to: string,
     verificationToken: string,
   ): Promise<void> {
-    const frontendDomain = this.configService.get(
+    const frontendDomain = this.configService.get<string>(
       'FRONTEND_DOMAIN',
       'localhost:3001',
     );
@@ -220,10 +305,7 @@ export class EmailService {
     });
   }
 
-  async sendPasswordReset(
-    to: string,
-    data: { name: string; resetUrl: string },
-  ): Promise<void> {
+  async sendPasswordReset(to: string, data: PasswordResetData): Promise<void> {
     await this.sendTemplateEmail('password-reset', to, {
       ...data,
       appName: 'Safawinet',
@@ -233,7 +315,7 @@ export class EmailService {
 
   // Alias method for backward compatibility
   async sendPasswordResetEmail(to: string, resetToken: string): Promise<void> {
-    const frontendDomain = this.configService.get(
+    const frontendDomain = this.configService.get<string>(
       'FRONTEND_DOMAIN',
       'localhost:3001',
     );
@@ -253,10 +335,7 @@ export class EmailService {
     });
   }
 
-  async sendSecurityAlert(
-    to: string,
-    data: { name: string; event: string; location: string; timestamp: string },
-  ): Promise<void> {
+  async sendSecurityAlert(to: string, data: SecurityAlertData): Promise<void> {
     await this.sendTemplateEmail('security-alert', to, {
       ...data,
       appName: 'Safawinet',
@@ -265,10 +344,7 @@ export class EmailService {
   }
 
   // Development preview methods
-  async previewTemplate(
-    templateName: string,
-    data: Record<string, any>,
-  ): Promise<EmailTemplate> {
+  previewTemplate(templateName: string, data: TemplateData): EmailTemplate {
     const template = this.templates.get(templateName);
 
     if (!template) {
@@ -276,7 +352,7 @@ export class EmailService {
     }
 
     const html = template(data);
-    const subject = this.getDefaultSubject(templateName, data);
+    const subject = this.getDefaultSubject(templateName);
 
     return {
       subject,
@@ -285,24 +361,18 @@ export class EmailService {
     };
   }
 
-  async previewAllTemplates(): Promise<Record<string, EmailTemplate>> {
+  previewAllTemplates(): Record<string, EmailTemplate> {
     const previews: Record<string, EmailTemplate> = {};
 
     for (const [templateName] of this.templates) {
       const sampleData = this.getSampleData(templateName);
-      previews[templateName] = await this.previewTemplate(
-        templateName,
-        sampleData,
-      );
+      previews[templateName] = this.previewTemplate(templateName, sampleData);
     }
 
     return previews;
   }
 
-  private getDefaultSubject(
-    templateName: string,
-    data: Record<string, any>,
-  ): string {
+  private getDefaultSubject(templateName: string): string {
     const subjects: Record<string, string> = {
       'email-verification': 'Verify your email address',
       'password-reset': 'Reset your password',
@@ -313,8 +383,8 @@ export class EmailService {
     return subjects[templateName] || 'Message from Safawinet';
   }
 
-  private getSampleData(templateName: string): Record<string, any> {
-    const sampleData: Record<string, any> = {
+  private getSampleData(templateName: string): TemplateData {
+    const sampleData: Record<string, TemplateData> = {
       'email-verification': {
         name: 'John Doe',
         verificationUrl: 'https://safawinet.com/verify?token=sample-token',

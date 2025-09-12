@@ -3,7 +3,6 @@ import {
   Logger,
   ConflictException,
   NotFoundException,
-  BadRequestException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -18,7 +17,42 @@ import {
   UpdateNotificationPreferencesDto,
   ChangePasswordDto,
 } from './schemas/user.schemas';
-import { User, Role } from '@prisma/client';
+import { User, Role, Prisma } from '@prisma/client';
+
+// Type definitions for user preferences and notification preferences
+interface UserPreferences {
+  theme: 'light' | 'dark';
+  language: string;
+  timezone: string;
+  dateFormat: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD';
+  timeFormat: '12h' | '24h';
+  notifications: {
+    sound: boolean;
+    desktop: boolean;
+  };
+  [key: string]: unknown; // Index signature for Prisma JSON compatibility
+}
+
+interface UserNotificationPreferences {
+  email: {
+    marketing: boolean;
+    security: boolean;
+    updates: boolean;
+    weeklyDigest: boolean;
+  };
+  push: {
+    enabled: boolean;
+    marketing: boolean;
+    security: boolean;
+    updates: boolean;
+  };
+  sms: {
+    enabled: boolean;
+    security: boolean;
+    twoFactor: boolean;
+  };
+  [key: string]: unknown; // Index signature for Prisma JSON compatibility
+}
 
 @Injectable()
 export class UsersService {
@@ -38,7 +72,7 @@ export class UsersService {
 
     // Check if user already exists
     const existingUser = await this.prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email: (email as string).toLowerCase() },
     });
 
     if (existingUser) {
@@ -46,10 +80,10 @@ export class UsersService {
     }
 
     // Hash password
-    const hashedPassword = await SecurityUtils.hashPassword(password);
+    const hashedPassword = await SecurityUtils.hashPassword(password as string);
 
     // Default preferences
-    const defaultPreferences = {
+    const defaultPreferences: UserPreferences = {
       theme: 'light',
       language: 'en',
       timezone: 'Asia/Beirut',
@@ -62,7 +96,7 @@ export class UsersService {
     };
 
     // Default notification preferences
-    const defaultNotificationPreferences = {
+    const defaultNotificationPreferences: UserNotificationPreferences = {
       email: {
         marketing: false,
         security: true,
@@ -85,12 +119,13 @@ export class UsersService {
     // Create user with ADMIN role (this endpoint is for admin user creation)
     const user = await this.prisma.user.create({
       data: {
-        email: email.toLowerCase(),
+        email: (email as string).toLowerCase(),
         password: hashedPassword,
-        name,
+        name: name as string,
         roles: [Role.ADMIN, Role.CUSTOMER], // Admin users also get customer role for customer features
-        preferences: defaultPreferences,
-        notificationPreferences: defaultNotificationPreferences,
+        preferences: defaultPreferences as Prisma.InputJsonValue,
+        notificationPreferences:
+          defaultNotificationPreferences as Prisma.InputJsonValue,
       },
     });
 
@@ -130,7 +165,7 @@ export class UsersService {
 
     // Send verification email
     try {
-      const frontendDomain = this.configService.get(
+      const frontendDomain = this.configService.get<string>(
         'FRONTEND_DOMAIN',
         'localhost:3001',
       );
@@ -148,6 +183,7 @@ export class UsersService {
     }
 
     // Return user without password
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
@@ -169,41 +205,51 @@ export class UsersService {
     console.log('✅ UsersService - User retrieved successfully:', user.email);
 
     // Provide default values for preferences and notificationPreferences if they are null
-    const userWithDefaults = {
-      ...user,
-      preferences: user.preferences || {
-        theme: 'light',
-        language: 'en',
-        timezone: 'UTC',
-        dateFormat: 'MM/DD/YYYY',
-        timeFormat: '12h',
-        notifications: {
-          sound: true,
-          desktop: true,
-        },
-      },
-      notificationPreferences: user.notificationPreferences || {
-        email: {
-          marketing: false,
-          security: true,
-          updates: true,
-          weeklyDigest: false,
-        },
-        push: {
-          enabled: true,
-          marketing: false,
-          security: true,
-          updates: true,
-        },
-        sms: {
-          enabled: false,
-          security: true,
-          twoFactor: true,
-        },
+    const defaultPreferences: UserPreferences = {
+      theme: 'light',
+      language: 'en',
+      timezone: 'UTC',
+      dateFormat: 'MM/DD/YYYY',
+      timeFormat: '12h',
+      notifications: {
+        sound: true,
+        desktop: true,
       },
     };
 
-    const { password: _, ...userWithoutPassword } = userWithDefaults;
+    const defaultNotificationPreferences: UserNotificationPreferences = {
+      email: {
+        marketing: false,
+        security: true,
+        updates: true,
+        weeklyDigest: false,
+      },
+      push: {
+        enabled: true,
+        marketing: false,
+        security: true,
+        updates: true,
+      },
+      sms: {
+        enabled: false,
+        security: true,
+        twoFactor: true,
+      },
+    };
+
+    const userWithDefaults = {
+      ...user,
+      preferences:
+        (user.preferences as unknown as UserPreferences) || defaultPreferences,
+      notificationPreferences:
+        (user.notificationPreferences as unknown as UserNotificationPreferences) ||
+        defaultNotificationPreferences,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...userWithoutPassword } = userWithDefaults as User & {
+      password: string;
+    };
     return userWithoutPassword;
   }
 
@@ -216,10 +262,11 @@ export class UsersService {
     const user = await this.prisma.user.update({
       where: { id: userId },
       data: {
-        ...(name !== undefined && { name }),
+        ...(name !== undefined && { name: name as string }),
       },
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
@@ -238,17 +285,20 @@ export class UsersService {
     }
 
     // Merge existing preferences with new ones
-    const currentPreferences = (user.preferences as any) || {};
-    const updatedPreferences = {
+    const currentPreferences =
+      (user.preferences as unknown as UserPreferences) ||
+      ({} as Partial<UserPreferences>);
+    const updatedPreferences: UserPreferences = {
       ...currentPreferences,
       ...updatePreferencesDto,
-    };
+    } as UserPreferences;
 
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
-      data: { preferences: updatedPreferences },
+      data: { preferences: updatedPreferences as Prisma.InputJsonValue },
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = updatedUser;
     return userWithoutPassword;
   }
@@ -267,23 +317,26 @@ export class UsersService {
     }
 
     // Get current preferences and merge notification preferences
-    const currentPreferences = (user.preferences as any) || {};
+    const currentPreferences =
+      (user.preferences as unknown as UserPreferences) ||
+      ({} as Partial<UserPreferences>);
     const currentNotifications = currentPreferences.notifications || {};
 
     const updatedNotifications = {
       ...currentNotifications,
       ...updateNotificationPreferencesDto,
     };
-    const updatedPreferences = {
+    const updatedPreferences: UserPreferences = {
       ...currentPreferences,
       notifications: updatedNotifications,
-    };
+    } as UserPreferences;
 
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
-      data: { preferences: updatedPreferences },
+      data: { preferences: updatedPreferences as Prisma.InputJsonValue },
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = updatedUser;
     return userWithoutPassword;
   }
@@ -294,8 +347,7 @@ export class UsersService {
   ): Promise<{ message: string; messageKey: string }> {
     try {
       this.logger.log(`Changing password for user ${userId}`);
-      const { currentPassword, newPassword, confirmNewPassword } =
-        changePasswordDto;
+      const { currentPassword, newPassword } = changePasswordDto;
 
       // Get user with password
       const user = await this.prisma.user.findUnique({
@@ -314,7 +366,7 @@ export class UsersService {
       try {
         isCurrentPasswordValid = await SecurityUtils.verifyPassword(
           user.password,
-          currentPassword,
+          String(currentPassword),
         );
       } catch (error) {
         this.logger.warn(
@@ -330,7 +382,9 @@ export class UsersService {
       }
 
       // Hash new password
-      const hashedNewPassword = await SecurityUtils.hashPassword(newPassword);
+      const hashedNewPassword = await SecurityUtils.hashPassword(
+        String(newPassword),
+      );
 
       // Update password
       await this.prisma.user.update({
@@ -369,13 +423,13 @@ export class UsersService {
       // Emit logout event to all user's devices
       try {
         // Emit to user's personal room (for all logged-in devices)
-        await this.webSocketGateway.emitLogoutToUserDevices(
+        this.webSocketGateway.emitLogoutToUserDevices(
           userId,
           'password_changed',
         );
 
         // Also emit global logout to catch any devices that might not be in the user's room
-        await this.webSocketGateway.emitGlobalLogout('password_changed');
+        this.webSocketGateway.emitGlobalLogout('password_changed');
 
         this.logger.log(
           `Logout events emitted for password change - user: ${user.email}`,
@@ -414,12 +468,13 @@ export class UsersService {
       return null;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
 
   async findUserByEmail(email: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
+    return await this.prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
   }
@@ -430,6 +485,7 @@ export class UsersService {
     });
 
     return users.map(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ({ password: _, ...userWithoutPassword }) => userWithoutPassword,
     );
   }
@@ -445,7 +501,9 @@ export class UsersService {
     });
 
     return admins.map(
-      ({ password: _, ...userWithoutPassword }) => userWithoutPassword,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      ({ password: _, ...userWithoutPassword }) =>
+        userWithoutPassword as Omit<User, 'password'>,
     );
   }
 
@@ -460,6 +518,7 @@ export class UsersService {
     });
 
     return customers.map(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ({ password: _, ...userWithoutPassword }) => userWithoutPassword,
     );
   }
@@ -555,7 +614,7 @@ export class UsersService {
   }
 
   async countAdminUsers(): Promise<number> {
-    return this.prisma.user.count({
+    return await this.prisma.user.count({
       where: {
         roles: {
           has: Role.ADMIN,

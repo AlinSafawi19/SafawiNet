@@ -23,7 +23,58 @@ import {
   EmailMonitoringService,
   BounceInfo,
   ComplaintInfo,
+  EmailMetrics,
+  HealthReport,
 } from '../common/services/email-monitoring.service';
+import { EmailLog } from '@prisma/client';
+
+// SES Webhook Payload Types
+interface SesBounceRecipient {
+  emailAddress: string;
+}
+
+interface SesBounceData {
+  bounceType: 'Permanent' | 'Transient';
+  bounceSubType: string;
+  bouncedRecipients: SesBounceRecipient[];
+  timestamp: string;
+  feedbackId: string;
+}
+
+interface SesBouncePayload {
+  bounce: SesBounceData;
+}
+
+interface SesComplaintRecipient {
+  emailAddress: string;
+}
+
+interface SesComplaintData {
+  complainedRecipients: SesComplaintRecipient[];
+  complaintFeedbackType: string;
+  timestamp: string;
+  feedbackId: string;
+}
+
+interface SesComplaintPayload {
+  complaint: SesComplaintData;
+}
+
+// Response Types
+interface ProcessResult {
+  email: string;
+  status: string;
+  error?: string;
+}
+
+interface ProcessResponse {
+  processed: ProcessResult[];
+}
+
+interface EmailLogsResponse {
+  logs: EmailLog[];
+  total: number;
+}
 
 @ApiTags('Email Monitoring')
 @Controller('v1/email-monitoring')
@@ -71,7 +122,7 @@ export class EmailMonitoringController {
     status: 403,
     description: 'Forbidden - Admin access required',
   })
-  async getEmailHealth() {
+  async getEmailHealth(): Promise<HealthReport> {
     // TODO: Add admin role check here
     return this.emailMonitoringService.getHealthReport();
   }
@@ -104,7 +155,7 @@ export class EmailMonitoringController {
     status: 403,
     description: 'Forbidden - Admin access required',
   })
-  async getEmailMetrics() {
+  async getEmailMetrics(): Promise<EmailMetrics> {
     // TODO: Add admin role check here
     return this.emailMonitoringService.getEmailMetrics();
   }
@@ -171,7 +222,7 @@ export class EmailMonitoringController {
     @Query('status') status?: string,
     @Query('limit') limit: number = 100,
     @Query('offset') offset: number = 0,
-  ) {
+  ): Promise<EmailLogsResponse> {
     // TODO: Add admin role check here
     return this.emailMonitoringService.getEmailLogs(
       email,
@@ -214,7 +265,9 @@ export class EmailMonitoringController {
   })
   @ApiResponse({ status: 200, description: 'Bounce processed successfully' })
   @ApiResponse({ status: 400, description: 'Invalid bounce data' })
-  async processSesBounce(@Body() body: any) {
+  async processSesBounce(
+    @Body() body: SesBouncePayload,
+  ): Promise<ProcessResponse> {
     // TODO: Add SES webhook signature verification here
 
     const bounce = body.bounce;
@@ -222,8 +275,7 @@ export class EmailMonitoringController {
       throw new Error('Invalid bounce data');
     }
 
-    const results: Array<{ email: string; status: string; error?: string }> =
-      [];
+    const results: ProcessResult[] = [];
 
     for (const recipient of bounce.bouncedRecipients) {
       const bounceInfo: BounceInfo = {
@@ -283,7 +335,9 @@ export class EmailMonitoringController {
   })
   @ApiResponse({ status: 200, description: 'Complaint processed successfully' })
   @ApiResponse({ status: 400, description: 'Invalid complaint data' })
-  async processSesComplaint(@Body() body: any) {
+  async processSesComplaint(
+    @Body() body: SesComplaintPayload,
+  ): Promise<ProcessResponse> {
     // TODO: Add SES webhook signature verification here
 
     const complaint = body.complaint;
@@ -291,8 +345,7 @@ export class EmailMonitoringController {
       throw new Error('Invalid complaint data');
     }
 
-    const results: Array<{ email: string; status: string; error?: string }> =
-      [];
+    const results: ProcessResult[] = [];
 
     for (const recipient of complaint.complainedRecipients) {
       const complaintInfo: ComplaintInfo = {

@@ -10,12 +10,16 @@ import { Role } from '@prisma/client';
 export const ROLES_KEY = 'roles';
 
 export const Roles = (...roles: Role[]) => {
-  return (target: any, key?: string, descriptor?: any) => {
+  return (
+    target: unknown,
+    key?: string | symbol,
+    descriptor?: PropertyDescriptor,
+  ): any => {
     if (descriptor) {
-      Reflect.defineMetadata(ROLES_KEY, roles, descriptor.value);
+      Reflect.defineMetadata(ROLES_KEY, roles, descriptor.value as object);
       return descriptor;
     }
-    Reflect.defineMetadata(ROLES_KEY, roles, target);
+    Reflect.defineMetadata(ROLES_KEY, roles, target as object);
     return target;
   };
 };
@@ -34,7 +38,8 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const { user } = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
 
     if (!user) {
       throw new ForbiddenException('User not authenticated');

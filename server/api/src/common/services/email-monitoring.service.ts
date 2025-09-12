@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from './prisma.service';
 import { RedisService } from './redis.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { EmailLog, Prisma } from '@prisma/client';
 
 export interface EmailMetrics {
   sent: number;
@@ -31,6 +32,15 @@ export interface ComplaintInfo {
   feedbackId: string;
 }
 
+export interface HealthReport {
+  timestamp: Date;
+  environment: string;
+  healthy: boolean;
+  issues: string[];
+  metrics: EmailMetrics;
+  recommendations: string[];
+}
+
 @Injectable()
 export class EmailMonitoringService {
   private readonly logger = new Logger(EmailMonitoringService.name);
@@ -50,7 +60,7 @@ export class EmailMonitoringService {
     // Try to get from cache first
     const cached = await this.redisService.get(this.metricsCacheKey);
     if (cached) {
-      return JSON.parse(cached);
+      return JSON.parse(cached) as EmailMetrics;
     }
 
     // Calculate fresh metrics
@@ -321,7 +331,10 @@ export class EmailMonitoringService {
     recommendations: string[];
   }> {
     const health = await this.isEmailDeliveryHealthy();
-    const environment = this.configService.get('NODE_ENV', 'development');
+    const environment = this.configService.get<string>(
+      'NODE_ENV',
+      'development',
+    );
 
     const recommendations: string[] = [];
 
@@ -347,7 +360,7 @@ export class EmailMonitoringService {
 
     return {
       timestamp: new Date(),
-      environment,
+      environment: environment,
       ...health,
       recommendations,
     };
@@ -371,7 +384,7 @@ export class EmailMonitoringService {
 
         // In production, you might want to send alerts here
         if (health.environment === 'production') {
-          await this.sendHealthAlert(health);
+          this.sendHealthAlert(health);
         }
       } else {
         this.logger.log('Email delivery health check passed');
@@ -384,7 +397,7 @@ export class EmailMonitoringService {
   /**
    * Send health alert (placeholder for alerting system)
    */
-  private async sendHealthAlert(health: any): Promise<void> {
+  private sendHealthAlert(health: HealthReport): void {
     // TODO: Implement alerting system (Slack, PagerDuty, etc.)
     this.logger.error('EMAIL HEALTH ALERT:', {
       environment: health.environment,
@@ -403,10 +416,10 @@ export class EmailMonitoringService {
     limit: number = 100,
     offset: number = 0,
   ): Promise<{
-    logs: any[];
+    logs: EmailLog[];
     total: number;
   }> {
-    const where: any = {};
+    const where: Prisma.EmailLogWhereInput = {};
 
     if (email) {
       where.email = email;

@@ -5,13 +5,9 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
-import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import {
-  SessionListDto,
-  SessionDeleteDto,
-  SessionRevokeAllDto,
-} from './schemas/auth.schemas';
+import { SessionListDto } from './schemas/auth.schemas';
+import { Prisma } from '@prisma/client';
 
 export interface DeviceInfo {
   deviceFingerprint?: string;
@@ -52,10 +48,7 @@ function nullToUndefined<T>(value: T | null): T | undefined {
 export class SessionsService {
   private readonly logger = new Logger(SessionsService.name);
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Extract device information from request
@@ -156,19 +149,21 @@ export class SessionsService {
       });
 
       // Create new session
+      const sessionData: Prisma.UserSessionCreateInput = {
+        user: { connect: { id: userId } },
+        refreshTokenId,
+        deviceFingerprint: deviceInfo.deviceFingerprint,
+        userAgent: deviceInfo.userAgent,
+        ipAddress: deviceInfo.ipAddress,
+        location: deviceInfo.location,
+        deviceType: deviceInfo.deviceType,
+        browser: deviceInfo.browser,
+        os: deviceInfo.os,
+        isCurrent: true,
+      };
+
       await this.prisma.userSession.create({
-        data: {
-          userId,
-          refreshTokenId,
-          deviceFingerprint: deviceInfo.deviceFingerprint,
-          userAgent: deviceInfo.userAgent,
-          ipAddress: deviceInfo.ipAddress,
-          location: deviceInfo.location,
-          deviceType: deviceInfo.deviceType,
-          browser: deviceInfo.browser,
-          os: deviceInfo.os,
-          isCurrent: true,
-        },
+        data: sessionData,
       });
 
       this.logger.log(`Created new session for user ${userId}`);
@@ -182,9 +177,14 @@ export class SessionsService {
    * Update session activity
    */
   async updateSessionActivity(sessionId: string): Promise<void> {
+    const whereClause: Prisma.UserSessionWhereUniqueInput = { id: sessionId };
+    const updateData: Prisma.UserSessionUpdateInput = {
+      lastActiveAt: new Date(),
+    };
+
     await this.prisma.userSession.update({
-      where: { id: sessionId },
-      data: { lastActiveAt: new Date() },
+      where: whereClause,
+      data: updateData,
     });
   }
 
@@ -194,16 +194,32 @@ export class SessionsService {
   async listSessions(
     userId: string,
     query: SessionListDto,
-  ): Promise<PaginatedSessions> {
+  ): Promise<{
+    sessions: {
+      id: string;
+      deviceFingerprint?: string;
+      userAgent?: string;
+      ipAddress?: string;
+      location?: string;
+      deviceType?: string;
+      browser?: string;
+      os?: string;
+      isCurrent: boolean;
+      lastActiveAt: string; // ISO date string for API responses
+      createdAt: string; // ISO date string for API responses
+    }[];
+    nextCursor?: string;
+    hasMore: boolean;
+  }> {
     const { cursor, limit } = query;
 
-    const where = { userId };
-    const take = limit + 1; // Take one extra to check if there are more
+    const where: Prisma.UserSessionWhereInput = { userId };
+    const take = (limit as number) + 1; // Take one extra to check if there are more
 
     const sessions = await this.prisma.userSession.findMany({
       where,
       take,
-      cursor: cursor ? { id: cursor } : undefined,
+      cursor: cursor ? { id: cursor as string } : undefined,
       orderBy: { lastActiveAt: 'desc' },
       select: {
         id: true,
@@ -220,13 +236,15 @@ export class SessionsService {
       },
     });
 
-    const hasMore = sessions.length > limit;
-    const sessionsToReturn = hasMore ? sessions.slice(0, limit) : sessions;
+    const hasMore = sessions.length > (limit as number);
+    const sessionsToReturn = hasMore
+      ? sessions.slice(0, limit as number)
+      : sessions;
     const nextCursor = hasMore
       ? sessionsToReturn[sessionsToReturn.length - 1].id
       : undefined;
 
-    const mappedSessions: SessionInfo[] = sessionsToReturn.map((s) => ({
+    const mappedSessions = sessionsToReturn.map((s) => ({
       id: s.id,
       deviceFingerprint: nullToUndefined(s.deviceFingerprint),
       userAgent: nullToUndefined(s.userAgent),
@@ -236,8 +254,8 @@ export class SessionsService {
       browser: nullToUndefined(s.browser),
       os: nullToUndefined(s.os),
       isCurrent: s.isCurrent,
-      lastActiveAt: s.lastActiveAt,
-      createdAt: s.createdAt,
+      lastActiveAt: s.lastActiveAt.toISOString(),
+      createdAt: s.createdAt.toISOString(),
     }));
 
     return {
@@ -251,8 +269,9 @@ export class SessionsService {
    * Delete a specific session
    */
   async deleteSession(userId: string, sessionId: string): Promise<void> {
+    const whereClause: Prisma.UserSessionWhereInput = { id: sessionId, userId };
     const session = await this.prisma.userSession.findFirst({
-      where: { id: sessionId, userId },
+      where: whereClause,
     });
 
     if (!session) {
@@ -265,14 +284,21 @@ export class SessionsService {
     }
 
     // Mark the refresh session as inactive
+    const refreshSessionWhere: Prisma.RefreshSessionWhereUniqueInput = {
+      tokenId: session.refreshTokenId,
+    };
+    const refreshSessionData: Prisma.RefreshSessionUpdateInput = {
+      isActive: false,
+    };
     await this.prisma.refreshSession.update({
-      where: { tokenId: session.refreshTokenId },
-      data: { isActive: false },
+      where: refreshSessionWhere,
+      data: refreshSessionData,
     });
 
     // Delete the user session
+    const deleteWhere: Prisma.UserSessionWhereUniqueInput = { id: sessionId };
     await this.prisma.userSession.delete({
-      where: { id: sessionId },
+      where: deleteWhere,
     });
 
     this.logger.log(`Deleted session ${sessionId} for user ${userId}`);
@@ -285,7 +311,7 @@ export class SessionsService {
     userId: string,
     keepCurrent: boolean = true,
   ): Promise<{ revokedCount: number }> {
-    const where: any = { userId };
+    const where: Prisma.UserSessionWhereInput = { userId };
 
     if (keepCurrent) {
       where.isCurrent = false;
@@ -324,21 +350,24 @@ export class SessionsService {
   async getSessionByRefreshToken(
     refreshTokenId: string,
   ): Promise<SessionInfo | null> {
+    const whereClause: Prisma.UserSessionWhereUniqueInput = { refreshTokenId };
+    const selectClause: Prisma.UserSessionSelect = {
+      id: true,
+      deviceFingerprint: true,
+      userAgent: true,
+      ipAddress: true,
+      location: true,
+      deviceType: true,
+      browser: true,
+      os: true,
+      isCurrent: true,
+      lastActiveAt: true,
+      createdAt: true,
+    };
+
     const session = await this.prisma.userSession.findUnique({
-      where: { refreshTokenId },
-      select: {
-        id: true,
-        deviceFingerprint: true,
-        userAgent: true,
-        ipAddress: true,
-        location: true,
-        deviceType: true,
-        browser: true,
-        os: true,
-        isCurrent: true,
-        lastActiveAt: true,
-        createdAt: true,
-      },
+      where: whereClause,
+      select: selectClause,
     });
 
     if (!session) {
@@ -367,12 +396,15 @@ export class SessionsService {
    */
   async cleanupExpiredSessions(): Promise<{ cleanedCount: number }> {
     // Find expired refresh sessions
+    const expiredWhere: Prisma.RefreshSessionWhereInput = {
+      expiresAt: { lt: new Date() },
+      isActive: true,
+    };
+    const expiredSelect: Prisma.RefreshSessionSelect = { tokenId: true };
+
     const expiredSessions = await this.prisma.refreshSession.findMany({
-      where: {
-        expiresAt: { lt: new Date() },
-        isActive: true,
-      },
-      select: { tokenId: true },
+      where: expiredWhere,
+      select: expiredSelect,
     });
 
     if (expiredSessions.length === 0) {
@@ -382,14 +414,23 @@ export class SessionsService {
     const refreshTokenIds = expiredSessions.map((s) => s.tokenId);
 
     // Mark refresh sessions as inactive
+    const updateWhere: Prisma.RefreshSessionWhereInput = {
+      tokenId: { in: refreshTokenIds },
+    };
+    const updateData: Prisma.RefreshSessionUpdateManyMutationInput = {
+      isActive: false,
+    };
     await this.prisma.refreshSession.updateMany({
-      where: { tokenId: { in: refreshTokenIds } },
-      data: { isActive: false },
+      where: updateWhere,
+      data: updateData,
     });
 
     // Delete corresponding user sessions
+    const deleteWhere: Prisma.UserSessionWhereInput = {
+      refreshTokenId: { in: refreshTokenIds },
+    };
     await this.prisma.userSession.deleteMany({
-      where: { refreshTokenId: { in: refreshTokenIds } },
+      where: deleteWhere,
     });
 
     this.logger.log(`Cleaned up ${expiredSessions.length} expired sessions`);
@@ -403,24 +444,37 @@ export class SessionsService {
   async revokeTokenFamily(familyId: string): Promise<{ revokedCount: number }> {
     const result = await this.prisma.$transaction(async (tx) => {
       // Revoke all refresh sessions in the family
+      const refreshWhere: Prisma.RefreshSessionWhereInput = {
+        familyId,
+        isActive: true,
+      };
+      const refreshData: Prisma.RefreshSessionUpdateManyMutationInput = {
+        isActive: false,
+      };
       const revokedSessions = await tx.refreshSession.updateMany({
-        where: { familyId, isActive: true },
-        data: { isActive: false },
+        where: refreshWhere,
+        data: refreshData,
       });
 
       // Update user sessions to mark them as inactive
-      const revokedUserSessions = await tx.userSession.updateMany({
-        where: {
-          refreshTokenId: {
-            in: await tx.refreshSession
-              .findMany({
-                where: { familyId },
-                select: { tokenId: true },
-              })
-              .then((sessions) => sessions.map((s) => s.tokenId)),
-          },
-        },
-        data: { isCurrent: false },
+      const tokenWhere: Prisma.RefreshSessionWhereInput = { familyId };
+      const tokenSelect: Prisma.RefreshSessionSelect = { tokenId: true };
+      const tokenIds = await tx.refreshSession
+        .findMany({
+          where: tokenWhere,
+          select: tokenSelect,
+        })
+        .then((sessions) => sessions.map((s) => s.tokenId));
+
+      const userSessionWhere: Prisma.UserSessionWhereInput = {
+        refreshTokenId: { in: tokenIds },
+      };
+      const userSessionData: Prisma.UserSessionUpdateManyMutationInput = {
+        isCurrent: false,
+      };
+      await tx.userSession.updateMany({
+        where: userSessionWhere,
+        data: userSessionData,
       });
 
       return {
@@ -443,33 +497,45 @@ export class SessionsService {
   ): Promise<{ revokedCount: number }> {
     const result = await this.prisma.$transaction(async (tx) => {
       // Revoke all refresh sessions for the user
+      const refreshWhere: Prisma.RefreshSessionWhereInput = {
+        userId,
+        isActive: true,
+      };
+      const refreshData: Prisma.RefreshSessionUpdateManyMutationInput = {
+        isActive: false,
+      };
       const revokedSessions = await tx.refreshSession.updateMany({
-        where: { userId, isActive: true },
-        data: { isActive: false },
+        where: refreshWhere,
+        data: refreshData,
       });
 
       // Update user sessions to mark them as inactive
-      const revokedUserSessions = await tx.userSession.updateMany({
-        where: { userId },
-        data: { isCurrent: false },
+      const userSessionWhere: Prisma.UserSessionWhereInput = { userId };
+      const userSessionData: Prisma.UserSessionUpdateManyMutationInput = {
+        isCurrent: false,
+      };
+      await tx.userSession.updateMany({
+        where: userSessionWhere,
+        data: userSessionData,
       });
 
       // Create security notification for the user
-      await tx.notification.create({
-        data: {
-          userId,
-          type: 'security_alert',
-          title: 'All Sessions Revoked',
-          message:
-            reason ||
-            'All your active sessions have been revoked for security reasons. Please log in again.',
-          priority: 'high',
-          metadata: {
-            reason,
-            revokedAt: new Date().toISOString(),
-            sessionCount: revokedSessions.count,
-          },
+      const notificationData: Prisma.NotificationCreateInput = {
+        user: { connect: { id: userId } },
+        type: 'security_alert',
+        title: 'All Sessions Revoked',
+        message:
+          reason ||
+          'All your active sessions have been revoked for security reasons. Please log in again.',
+        priority: 'high',
+        metadata: {
+          reason,
+          revokedAt: new Date().toISOString(),
+          sessionCount: revokedSessions.count,
         },
+      };
+      await tx.notification.create({
+        data: notificationData,
       });
 
       return {
@@ -517,17 +583,30 @@ export class SessionsService {
     lastLogin: Date | null;
     suspiciousActivity: boolean;
   }> {
+    const activeWhere: Prisma.RefreshSessionWhereInput = {
+      userId,
+      isActive: true,
+    };
+    const totalWhere: Prisma.RefreshSessionWhereInput = { userId };
+    const lastLoginWhere: Prisma.UserSessionWhereInput = { userId };
+    const lastLoginOrderBy: Prisma.UserSessionOrderByWithRelationInput = {
+      lastActiveAt: 'desc',
+    };
+    const lastLoginSelect: Prisma.UserSessionSelect = {
+      lastActiveAt: true,
+    };
+
     const [activeSessions, totalSessions, lastLogin] = await Promise.all([
       this.prisma.refreshSession.count({
-        where: { userId, isActive: true },
+        where: activeWhere,
       }),
       this.prisma.refreshSession.count({
-        where: { userId },
+        where: totalWhere,
       }),
       this.prisma.userSession.findFirst({
-        where: { userId },
-        orderBy: { lastActiveAt: 'desc' },
-        select: { lastActiveAt: true },
+        where: lastLoginWhere,
+        orderBy: lastLoginOrderBy,
+        select: lastLoginSelect,
       }),
     ]);
 

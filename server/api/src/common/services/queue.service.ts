@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Queue, Worker, Job } from 'bullmq';
+import { Queue, Worker, Job, JobsOptions } from 'bullmq';
 import { RedisService } from './redis.service';
 import { PinoLoggerService } from './logger.service';
 
@@ -8,18 +8,31 @@ export interface EmailJobData {
   to: string;
   subject: string;
   template: string;
-  context: Record<string, any>;
+  context: Record<string, string | number | boolean | null | undefined>;
 }
 
 export interface SecurityJobData {
   type: 'token_cleanup' | 'session_cleanup' | 'notification_cleanup';
   userId?: string;
-  data?: Record<string, any>;
+  data?: Record<string, string | number | boolean | null | undefined>;
 }
 
 export interface MaintenanceJobData {
   type: 'db_cleanup' | 'log_rotation' | 'health_check';
-  data?: Record<string, any>;
+  data?: Record<string, string | number | boolean | null | undefined>;
+}
+
+export interface QueueStatus {
+  waiting: Job[];
+  active: Job[];
+  completed: Job[];
+  failed: Job[];
+}
+
+export interface AllQueuesStatus {
+  email: QueueStatus;
+  security: QueueStatus;
+  maintenance: QueueStatus;
 }
 
 @Injectable()
@@ -38,7 +51,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     private logger: PinoLoggerService,
   ) {}
 
-  async onModuleInit() {
+  onModuleInit() {
     const prefix = this.configService.get<string>('BULLMQ_PREFIX', 'safawinet');
     const connection = this.redisService.getClient();
 
@@ -135,34 +148,18 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   private setupQueueEvents() {
-    [this.emailQueue, this.securityQueue, this.maintenanceQueue].forEach(
-      (queue) => {
-        (queue as any).on('completed', (job: any) => {
-          this.logger.log(
-            `Job ${job.id} completed successfully`,
-            'QueueService',
-          );
-        });
-
-        (queue as any).on('failed', (job: any, err: any) => {
-          this.logger.error(
-            `Job ${job?.id} failed: ${err.message}`,
-            err.stack,
-            'QueueService',
-          );
-        });
-      },
-    );
+    // Queue events are handled by workers, not queues directly
+    // This method is kept for future queue-specific events if needed
   }
 
   private setupWorkerEvents() {
     [this.emailWorker, this.securityWorker, this.maintenanceWorker].forEach(
       (worker) => {
-        worker.on('completed', (job) => {
+        worker.on('completed', (job: Job) => {
           this.logger.log(`Worker completed job ${job.id}`, 'QueueService');
         });
 
-        worker.on('failed', (job, err) => {
+        worker.on('failed', (job: Job | undefined, err: Error) => {
           this.logger.error(
             `Worker failed job ${job?.id}: ${err.message}`,
             err.stack,
@@ -174,15 +171,15 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Queue methods
-  async addEmailJob(data: EmailJobData, options?: any) {
+  async addEmailJob(data: EmailJobData, options?: JobsOptions) {
     return this.emailQueue.add('send-email', data, options);
   }
 
-  async addSecurityJob(data: SecurityJobData, options?: any) {
+  async addSecurityJob(data: SecurityJobData, options?: JobsOptions) {
     return this.securityQueue.add('security-task', data, options);
   }
 
-  async addMaintenanceJob(data: MaintenanceJobData, options?: any) {
+  async addMaintenanceJob(data: MaintenanceJobData, options?: JobsOptions) {
     return this.maintenanceQueue.add('maintenance-task', data, options);
   }
 
@@ -245,7 +242,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Queue status methods
-  async getQueueStatus() {
+  async getQueueStatus(): Promise<AllQueuesStatus> {
     return {
       email: {
         waiting: await this.emailQueue.getWaiting(),

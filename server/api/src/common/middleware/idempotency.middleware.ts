@@ -2,21 +2,46 @@ import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { RedisService } from '../services/redis.service';
 
+interface CachedResponse {
+  status: number;
+  body: Record<string, unknown> | string | number | boolean | null;
+}
+
+interface ProcessingResponse {
+  status: number;
+  body: { message: string };
+}
+
+type IdempotencyError = Error & {
+  code?: string;
+  errno?: number;
+};
+
+interface IdempotencyRequest extends Request {
+  headers: Request['headers'] & {
+    'idempotency-key'?: string;
+    'Idempotency-Key'?: string;
+  };
+}
+
 @Injectable()
 export class IdempotencyMiddleware implements NestMiddleware {
   private readonly logger = new Logger(IdempotencyMiddleware.name);
 
   constructor(private readonly redisService: RedisService) {}
 
-  async use(req: Request, res: Response, next: NextFunction) {
+  async use(
+    req: IdempotencyRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     // Only apply to POST requests
     if (req.method !== 'POST') {
       return next();
     }
 
-    const idempotencyKey =
-      req.headers['idempotency-key'] ||
-      (req.headers['Idempotency-Key'] as string);
+    const idempotencyKey: string | undefined =
+      req.headers['idempotency-key'] || req.headers['Idempotency-Key'];
 
     if (!idempotencyKey) {
       return next();
@@ -24,7 +49,7 @@ export class IdempotencyMiddleware implements NestMiddleware {
 
     try {
       // Check if we've seen this key before
-      const existingResponse = await this.redisService.get(
+      const existingResponse: string | null = await this.redisService.get(
         `idempotency:${idempotencyKey}`,
       );
 
@@ -32,26 +57,42 @@ export class IdempotencyMiddleware implements NestMiddleware {
         this.logger.log(`Idempotency key ${idempotencyKey} already processed`);
 
         // Return the cached response
-        const parsed = JSON.parse(existingResponse);
+        const parsed: CachedResponse = JSON.parse(
+          existingResponse,
+        ) as CachedResponse;
         res.status(parsed.status).json(parsed.body);
         return;
       }
 
       // Store the request for idempotency (5 minute TTL)
+      const processingResponse: ProcessingResponse = {
+        status: 200,
+        body: { message: 'Processing' },
+      };
+
       await this.redisService.set(
         `idempotency:${idempotencyKey}`,
-        JSON.stringify({ status: 200, body: { message: 'Processing' } }),
+        JSON.stringify(processingResponse),
         300, // 5 minutes
       );
 
       // Override res.json to capture the response
-      const originalJson = res.json.bind(res);
+      const originalJson = res.json.bind(res) as (body: unknown) => Response;
       const redisService = this.redisService;
-      res.json = function (body: any) {
+      const key = `idempotency:${idempotencyKey}`;
+
+      res.json = function (
+        body: Record<string, unknown> | string | number | boolean | null,
+      ): Response {
         // Store the actual response
-        redisService.set(
-          `idempotency:${idempotencyKey}`,
-          JSON.stringify({ status: res.statusCode, body }),
+        const responseToCache: CachedResponse = {
+          status: res.statusCode,
+          body,
+        };
+
+        void redisService.set(
+          key,
+          JSON.stringify(responseToCache),
           300, // 5 minutes
         );
 
@@ -59,8 +100,14 @@ export class IdempotencyMiddleware implements NestMiddleware {
       };
 
       next();
-    } catch (error) {
-      this.logger.error(`Error in idempotency middleware:`, error);
+    } catch (error: unknown) {
+      const idempotencyError = error as IdempotencyError;
+      this.logger.error(`Error in idempotency middleware:`, {
+        message: idempotencyError.message,
+        code: idempotencyError.code,
+        errno: idempotencyError.errno,
+        stack: idempotencyError.stack,
+      });
       // Continue without idempotency if Redis fails
       next();
     }

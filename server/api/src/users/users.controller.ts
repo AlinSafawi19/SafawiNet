@@ -20,11 +20,12 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Request as ExpressRequest } from 'express';
 import { UsersService } from './users.service';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles } from '../auth/guards/roles.guard';
-import { Role } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 import {
   CreateUserSchema,
   CreateUserDto,
@@ -43,6 +44,19 @@ import {
   ChangePasswordSchema,
   ChangePasswordDto,
 } from './schemas/user.schemas';
+
+// Interface for authenticated request with user properties
+interface AuthenticatedRequest extends ExpressRequest {
+  user: {
+    id: string;
+    sub: string;
+    email: string;
+    name: string;
+    verified: boolean;
+    roles: string[];
+    refreshTokenId: string;
+  };
+}
 
 @ApiTags('Users')
 @Controller('users')
@@ -74,7 +88,9 @@ export class UsersController {
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 409, description: 'User already exists' })
   @UsePipes(new ZodValidationPipe(CreateUserSchema))
-  async createUser(@Body() createUserDto: CreateUserDto) {
+  async createUser(
+    @Body() createUserDto: CreateUserDto,
+  ): Promise<{ message: string; user: Omit<User, 'password'> }> {
     const user = await this.usersService.createUser(createUserDto);
     return {
       message: 'Admin user created successfully',
@@ -93,7 +109,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
-  async findAllAdmins() {
+  async findAllAdmins(): Promise<{ admins: Omit<User, 'password'>[] }> {
     const admins = await this.usersService.findAllAdmins();
     return { admins };
   }
@@ -109,7 +125,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
-  async findAllCustomers() {
+  async findAllCustomers(): Promise<{ customers: Omit<User, 'password'>[] }> {
     const customers = await this.usersService.findAllCustomers();
     return { customers };
   }
@@ -123,7 +139,9 @@ export class UsersController {
     description: 'Current user profile retrieved successfully',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getCurrentUser(@Request() req: any) {
+  async getCurrentUser(
+    @Request() req: AuthenticatedRequest,
+  ): Promise<{ user: Omit<User, 'password'> }> {
     this.logger.log('🚀 /users/me endpoint reached!');
     this.logger.log('🚀 Request user object:', req.user);
 
@@ -135,7 +153,9 @@ export class UsersController {
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'User found successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async findUserById(@Param('id') id: string) {
+  async findUserById(
+    @Param('id') id: string,
+  ): Promise<{ message: string } | { user: Omit<User, 'password'> }> {
     const user = await this.usersService.findUserById(id);
     if (!user) {
       return { message: 'User not found' };
@@ -161,8 +181,12 @@ export class UsersController {
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(VerifyEmailSchema))
-  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
-    const success = await this.usersService.verifyEmail(verifyEmailDto.token);
+  async verifyEmail(
+    @Body() verifyEmailDto: VerifyEmailDto,
+  ): Promise<{ message: string }> {
+    const success = await this.usersService.verifyEmail(
+      String(verifyEmailDto.token),
+    );
     if (success) {
       return { message: 'Email verified successfully' };
     }
@@ -190,8 +214,10 @@ export class UsersController {
   @UsePipes(new ZodValidationPipe(RequestPasswordResetSchema))
   async requestPasswordReset(
     @Body() requestPasswordResetDto: RequestPasswordResetDto,
-  ) {
-    await this.usersService.requestPasswordReset(requestPasswordResetDto.email);
+  ): Promise<{ message: string }> {
+    await this.usersService.requestPasswordReset(
+      String(requestPasswordResetDto.email),
+    );
     return { message: 'Password reset email sent if user exists' };
   }
 
@@ -215,10 +241,12 @@ export class UsersController {
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(ResetPasswordSchema))
-  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
     const success = await this.usersService.resetPassword(
-      resetPasswordDto.token,
-      resetPasswordDto.newPassword,
+      String(resetPasswordDto.token),
+      String(resetPasswordDto.newPassword),
     );
     if (success) {
       return { message: 'Password reset successfully' };
@@ -246,9 +274,9 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UsePipes(new ZodValidationPipe(UpdateProfileSchema))
   async updateProfile(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Body() updateProfileDto: UpdateProfileDto,
-  ) {
+  ): Promise<{ message: string; user: Omit<User, 'password'> }> {
     const user = await this.usersService.updateProfile(
       req.user.sub,
       updateProfileDto,
@@ -287,9 +315,9 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UsePipes(new ZodValidationPipe(UpdatePreferencesSchema))
   async updatePreferences(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Body() updatePreferencesDto: UpdatePreferencesDto,
-  ) {
+  ): Promise<{ message: string; user: Omit<User, 'password'> }> {
     const user = await this.usersService.updatePreferences(
       req.user.sub,
       updatePreferencesDto,
@@ -339,9 +367,9 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UsePipes(new ZodValidationPipe(UpdateNotificationPreferencesSchema))
   async updateNotificationPreferences(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Body() updateNotificationPreferencesDto: UpdateNotificationPreferencesDto,
-  ) {
+  ): Promise<{ message: string; user: Omit<User, 'password'> }> {
     const user = await this.usersService.updateNotificationPreferences(
       req.user.sub,
       updateNotificationPreferencesDto,
@@ -377,9 +405,9 @@ export class UsersController {
   })
   @UsePipes(new ZodValidationPipe(ChangePasswordSchema))
   async changePassword(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Body() changePasswordDto: ChangePasswordDto,
-  ) {
+  ): Promise<{ message: string; messageKey: string }> {
     const result = await this.usersService.changePassword(
       req.user.sub,
       changePasswordDto,

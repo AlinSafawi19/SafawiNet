@@ -1,26 +1,22 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { QueueService } from './queue.service';
 import { PinoLoggerService } from './logger.service';
 import { PrismaService } from './prisma.service';
-import { RedisService } from './redis.service';
 
 @Injectable()
 export class CronService implements OnModuleInit, OnModuleDestroy {
   constructor(
-    private configService: ConfigService,
     private queueService: QueueService,
     private logger: PinoLoggerService,
     private prisma: PrismaService,
-    private redis: RedisService,
   ) {}
 
-  async onModuleInit() {
+  onModuleInit() {
     this.logger.log('Cron service initialized', 'CronService');
   }
 
-  async onModuleDestroy() {
+  onModuleDestroy() {
     this.logger.log('Cron service destroyed', 'CronService');
   }
 
