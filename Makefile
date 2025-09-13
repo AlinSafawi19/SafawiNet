@@ -1,7 +1,7 @@
 # Safawinet Makefile
-# Common commands for development, staging, and production
+# Common commands for development and production
 
-.PHONY: help dev dev-down staging staging-down prod prod-down test lint build clean logs migrate-seed
+.PHONY: help dev dev-down prod prod-down test lint build clean logs migrate-seed
 
 # Default target
 help:
@@ -12,11 +12,6 @@ help:
 	@echo "  dev          - Start development environment"
 	@echo "  dev-down     - Stop development environment"
 	@echo "  dev-logs     - View development logs"
-	@echo ""
-	@echo "Staging:"
-	@echo "  staging      - Start staging environment (local)"
-	@echo "  staging-down - Stop staging environment"
-	@echo "  staging-logs - View staging logs"
 	@echo ""
 	@echo "Production:"
 	@echo "  prod         - Start production environment (local)"
@@ -62,25 +57,6 @@ dev-down:
 dev-logs:
 	docker-compose logs -f api
 
-# Staging Environment (Local)
-staging:
-	@echo "🚀 Starting staging environment..."
-	@if [ ! -f .env.staging ]; then \
-		echo "❌ .env.staging file not found. Please create it from env.staging template"; \
-		exit 1; \
-	fi
-	docker-compose -f docker-compose.staging.yml up -d
-	@echo "✅ Staging environment started!"
-	@echo "📚 API: http://localhost:3000"
-	@echo "📖 Docs: http://localhost:3000/docs"
-
-staging-down:
-	@echo "🛑 Stopping staging environment..."
-	docker-compose -f docker-compose.staging.yml down
-	@echo "✅ Staging environment stopped"
-
-staging-logs:
-	docker-compose -f docker-compose.staging.yml logs -f api
 
 # Production Environment (Local)
 prod:
@@ -194,9 +170,6 @@ health-dev:
 	@echo "🏥 Checking development health..."
 	curl -f http://localhost:3000/health || echo "❌ Health check failed"
 
-health-staging:
-	@echo "🏥 Checking staging health..."
-	curl -f https://api-stg.safawinet.com/health || echo "❌ Health check failed"
 
 health-prod:
 	@echo "🏥 Checking production health..."
@@ -209,10 +182,6 @@ setup-dev:
 	@echo "✅ Please edit .env with your development values"
 	@echo "🚀 Run 'make dev' to start the environment"
 
-setup-staging:
-	@echo "⚙️ Setting up staging environment..."
-	cp env.staging .env.staging
-	@echo "✅ Please edit .env.staging with your staging values"
 
 setup-prod:
 	@echo "⚙️ Setting up production environment..."

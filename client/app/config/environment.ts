@@ -1,5 +1,5 @@
 // Environment Configuration
-// This file can be modified for different environments (dev, staging, prod)
+// This file can be modified for different environments (dev, prod)
 
 export const ENV_CONFIG = {
   // API Configuration

@@ -12,7 +12,7 @@ if "%1"=="" (
     echo   test      - Run all tests
     echo   perf      - Run performance tests
     echo   migrate   - Run database migrations
-    echo   deploy    - Deploy migrations (staging/prod)
+    echo   deploy    - Deploy migrations (prod)
     exit /b 1
 )
 
@@ -40,7 +40,7 @@ if "%1"=="start" (
     npm run prisma:generate
     npm run db:migrate
 ) else if "%1"=="deploy" (
-    echo Deploying database migrations (staging/prod)...
+    echo Deploying database migrations (prod)...
     npm run db:migrate:deploy
 ) else (
     echo Unknown command: %1
