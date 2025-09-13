@@ -167,7 +167,10 @@
           "passwordPlaceholder": "Current password",
           "cancel": "Cancel",
           "disable": "Disable 2FA",
-          "disabling": "Disabling..."
+          "disabling": "Disabling...",
+          "passwordRequired": "Current password is required",
+          "disableFailed": "Failed to disable 2FA",
+          "disableError": "An error occurred while disabling 2FA"
         }
       }
     }
@@ -297,6 +300,7 @@
       "twoFactorNotEnabled": "2FA is not enabled",
       "invalidCode": "Invalid code",
       "twoFactorDisabled": "Two-factor authentication disabled successfully",
+      "invalidCurrentPassword": "Invalid current password",
       "emailAlreadyInUse": "Email address is already in use by another account",
       "invalidVerificationToken": "Invalid or expired verification token",
       "tokenRefreshed": "Token refreshed successfully",

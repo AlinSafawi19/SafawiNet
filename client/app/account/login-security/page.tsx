@@ -279,6 +279,16 @@ export default function LoginSecurityPage() {
     }
   };
 
+  // Helper function to map backend messages to translation keys
+  const mapBackendMessageToKey = (message: string): string => {
+    const messageMap: { [key: string]: string } = {
+      'User not found': 'auth.messages.userNotFound',
+      '2FA is not enabled': 'auth.messages.twoFactorNotEnabled',
+      'Invalid current password': 'auth.messages.invalidCurrentPassword',
+    };
+    return messageMap[message] || 'account.loginSecurity.twoFactor.disableModal.disableFailed';
+  };
+
   // 2FA handlers
   const handleEnable2FA = async () => {
     setIs2FALoading(true);
@@ -322,7 +332,7 @@ export default function LoginSecurityPage() {
 
   const handleDisable2FA = async () => {
     if (!disablePassword.trim()) {
-      setDisablePasswordError('Current password is required');
+      setDisablePasswordError(t('account.loginSecurity.twoFactor.disableModal.passwordRequired'));
       return;
     }
 
@@ -358,10 +368,12 @@ export default function LoginSecurityPage() {
           updateUser(finalUserData);
         }
       } else {
-        setDisablePasswordError(data.message || 'Failed to disable 2FA');
+        const errorMessage = data.message || 'Failed to disable 2FA';
+        const errorKey = mapBackendMessageToKey(errorMessage);
+        setDisablePasswordError(t(errorKey));
       }
     } catch (error) {
-      setDisablePasswordError('An error occurred while disabling 2FA');
+      setDisablePasswordError(t('account.loginSecurity.twoFactor.disableModal.disableError'));
     } finally {
       setIs2FALoading(false);
     }
