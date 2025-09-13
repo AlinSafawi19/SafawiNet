@@ -12,7 +12,7 @@ export const LoadingPage: React.FC = () => {
           <div className="flex flex-col animate-marquee-vertical whitespace-nowrap items-center">
             <h1 className="my-4 flex space-x-8">
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
-                LOADING
+                Loading
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
                 SAFAWI NET
@@ -26,7 +26,7 @@ export const LoadingPage: React.FC = () => {
                 SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
-                LOADING
+                Loading
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
                 SAFAWI NET
@@ -40,26 +40,15 @@ export const LoadingPage: React.FC = () => {
                 SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
-                LOADING
+                Loading
               </span>
             </h1>
             <h1 className="my-4 flex space-x-8">
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
-                LOADING
+                Loading
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
                 SAFAWI NET
-              </span>
-              <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
-                SAFAWI NET
-              </span>
-            </h1>
-            <h1 className="my-4 flex space-x-8">
-              <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
-                SAFAWI NET
-              </span>
-              <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
-                LOADING
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
                 SAFAWI NET
@@ -69,11 +58,22 @@ export const LoadingPage: React.FC = () => {
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
                 SAFAWI NET
               </span>
+              <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
+                Loading
+              </span>
+              <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
+                SAFAWI NET
+              </span>
+            </h1>
+            <h1 className="my-4 flex space-x-8">
+              <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
+                SAFAWI NET
+              </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
                 SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
-                LOADING
+                Loading
               </span>
             </h1>
           </div>
@@ -82,7 +82,7 @@ export const LoadingPage: React.FC = () => {
           <div className="absolute top-0 flex flex-col animate-marquee-vertical2 whitespace-nowrap items-center">
             <h1 className="my-4 flex space-x-8">
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
-                LOADING
+                Loading
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
                 SAFAWI NET
@@ -96,7 +96,7 @@ export const LoadingPage: React.FC = () => {
                 SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
-                LOADING
+                Loading
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
                 SAFAWI NET
@@ -110,26 +110,15 @@ export const LoadingPage: React.FC = () => {
                 SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
-                LOADING
+                Loading
               </span>
             </h1>
             <h1 className="my-4 flex space-x-8">
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
-                LOADING
+                Loading
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
                 SAFAWI NET
-              </span>
-              <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
-                SAFAWI NET
-              </span>
-            </h1>
-            <h1 className="my-4 flex space-x-8">
-              <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
-                SAFAWI NET
-              </span>
-              <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
-                LOADING
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
                 SAFAWI NET
@@ -139,11 +128,22 @@ export const LoadingPage: React.FC = () => {
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
                 SAFAWI NET
               </span>
+              <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
+                Loading
+              </span>
+              <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
+                SAFAWI NET
+              </span>
+            </h1>
+            <h1 className="my-4 flex space-x-8">
+              <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
+                SAFAWI NET
+              </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-black dark:text-white">
                 SAFAWI NET
               </span>
               <span className="text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none font-bold text-purple-500">
-                LOADING
+                Loading
               </span>
             </h1>
           </div>

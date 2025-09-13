@@ -361,6 +361,10 @@
     "copyright": {
       "by": "BY",
       "allRightsReserved": "ALL RIGHTS RESERVED."
+    },
+    "preferences": {
+      "theme": "Theme",
+      "language": "Language"
     }
   },
   "admin": {

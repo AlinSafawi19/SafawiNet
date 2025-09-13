@@ -150,7 +150,7 @@ const Header = () => {
           {/* Main Navigation - Hidden for admin users */}
           {!isAdmin && (
             <nav
-              className={`hidden lg:flex items-center ${
+              className={`hidden lg-tablet:flex items-center ${
                 locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''
               } space-x-8`}
             >
@@ -182,9 +182,9 @@ const Header = () => {
           )}
 
           {/* Desktop Navigation & Mobile Menu Button */}
-          <div className="flex justify-end items-center space-x-2 sm:space-x-4 lg:space-x-6">
+          <div className="flex justify-end items-center space-x-2 sm:space-x-4 md-tablet:space-x-3 lg-tablet:space-x-6">
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-6">
+            <nav className="hidden lg-tablet:flex items-center space-x-4 xl:space-x-6">
               <button
                 className="hover:text-purple-500 transition-colors"
                 aria-label={t('header.actions.notifications')}
@@ -232,7 +232,7 @@ const Header = () => {
             </nav>
 
             {/* Mobile Auth Section - Show Login/Register or User Dropdown next to menu button */}
-            <div className="lg:hidden flex items-center space-x-2">
+            <div className="lg-tablet:hidden flex items-center space-x-2">
               {user ? (
                 <UserDropdown user={user} />
               ) : (
@@ -248,7 +248,7 @@ const Header = () => {
             {/* Mobile Menu Button */}
             <button
               onClick={toggleMobileMenu}
-              className="lg:hidden p-2 hover:text-purple-500 transition-colors"
+              className="lg-tablet:hidden p-2 hover:text-purple-500 transition-colors"
               aria-label="Toggle mobile menu"
             >
               <div className="relative w-8 h-8">
@@ -280,7 +280,7 @@ const Header = () => {
 
         {/* Mobile Menu Overlay */}
         <div
-          className={`fixed top-0 left-0 right-0 bottom-0 w-screen h-screen bg-black z-[9999] lg:hidden transition-all duration-300 ease-in-out ${
+          className={`fixed top-0 left-0 right-0 bottom-0 w-screen h-screen bg-black z-[9999] lg-tablet:hidden transition-all duration-300 ease-in-out ${
             isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
           }`}
         >

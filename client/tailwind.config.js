@@ -8,6 +8,10 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
+      screens: {
+        'md-tablet': '768px',
+        'lg-tablet': '1185px',
+      },
       colors: {
         'yellow-100': '#ffc657',
         'blue-100': '#5362ac',

@@ -361,6 +361,10 @@
     "copyright": {
       "by": "بواسطة",
       "allRightsReserved": ".جميع الحقوق محفوظة"
+    },
+    "preferences": {
+      "theme": "المظهر",
+      "language": "اللغة"
     }
   },
   "admin": {
