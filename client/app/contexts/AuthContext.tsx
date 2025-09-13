@@ -142,6 +142,188 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [isRefreshing]);
 
+  const loginWithTokens = useCallback(
+    async (tokens: {
+      accessToken: string;
+      refreshToken: string;
+      expiresIn: number;
+    }): Promise<{ success: boolean; message?: string }> => {
+      try {
+        // Set cookies for the tokens - use names that match the backend JWT guard
+        document.cookie = `accessToken=${tokens.accessToken}; path=/; max-age=${tokens.expiresIn}; secure; samesite=strict`;
+        document.cookie = `refreshToken=${
+          tokens.refreshToken
+        }; path=/; max-age=${tokens.expiresIn * 2}; secure; samesite=strict`;
+
+        // Fetch user data to set the user state
+        const response = await fetch(
+          buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
+          {
+            method: 'GET',
+            credentials: 'include',
+          }
+        );
+
+        if (response.ok) {
+          const userData = await response.json();
+          const finalUserData = userData.user || userData;
+
+          // Check if user is verified before setting login state
+          if (!finalUserData.isVerified) {
+            return { success: false, message: 'Email verification required' };
+          }
+
+          setUser(finalUserData);
+
+          // Broadcast login to other tabs and devices
+          broadcastAuthChange('login', finalUserData);
+
+          return { success: true, message: 'Login successful' };
+        } else {
+          const errorText = await response.text();
+          throw new Error(
+            `Failed to fetch user data: ${response.status} ${errorText}`
+          );
+        }
+      } catch (error) {
+        return { success: false, message: 'Failed to login with tokens' };
+      }
+    },
+    []
+  );
+
+  const logout = useCallback(async () => {
+    try {
+      // Call the logout endpoint to invalidate the session on the server
+      await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGOUT), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies for session management
+      });
+    } catch (error) {
+      // Silent fail on logout
+    } finally {
+      // Clear user state (cookies are handled by the server)
+      setUser(null);
+    }
+  }, []);
+
+  // Define force logout handler before useEffect to avoid scope issues
+  const handleForceLogout = useCallback(
+    async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log(
+        '🚪 Force logout event received via custom event:',
+        customEvent.detail
+      );
+
+      // Use existing logout function
+      await logout();
+
+      // Redirect to login page
+      window.location.href = '/auth';
+    },
+    [logout]
+  );
+
+  // Function to check for offline messages
+  const checkOfflineMessages = useCallback(async () => {
+    try {
+      const response = await fetch(buildApiUrl('/v1/auth/offline-messages'), {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📬 Offline messages retrieved:', data);
+
+        if (data.messages && data.messages.length > 0) {
+          console.log(`📬 Processing ${data.messages.length} offline messages`);
+
+          // Process each message
+          for (const message of data.messages) {
+            console.log('📬 Processing offline message:', message);
+
+            // Handle different message types
+            switch (message.event) {
+              case 'emailVerified':
+                console.log('📧 Processing offline email verification');
+                if (message.payload.success && message.payload.user) {
+                  if (message.payload.tokens) {
+                    console.log(
+                      '🔑 Processing offline email verification with tokens'
+                    );
+                    try {
+                      const loginResult = await loginWithTokens(
+                        message.payload.tokens
+                      );
+                      if (loginResult.success) {
+                        console.log(
+                          '✅ Offline email verification login successful'
+                        );
+                      }
+                    } catch (error) {
+                      console.error(
+                        '❌ Error during offline email verification login:',
+                        error
+                      );
+                    }
+                  } else if (message.payload.user.isVerified) {
+                    console.log(
+                      '✅ Setting user from offline email verification'
+                    );
+                    setUser(message.payload.user);
+                  }
+                }
+                break;
+
+              case 'forceLogout':
+                console.log('🚪 Processing offline force logout');
+                handleForceLogout(
+                  new CustomEvent('forceLogout', { detail: message.payload })
+                );
+                break;
+
+              default:
+                console.log('📬 Unknown offline message type:', message.event);
+            }
+          }
+
+          // Mark all messages as processed
+          try {
+            const messageIds = data.messages.map((msg: any) => msg.id);
+            await fetch(buildApiUrl('/v1/auth/offline-messages/mark-processed'), {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ messageIds }),
+            });
+            console.log('✅ Offline messages marked as processed');
+          } catch (error) {
+            console.error(
+              '❌ Failed to mark offline messages as processed:',
+              error
+            );
+          }
+        } else {
+          console.log('📬 No offline messages found');
+        }
+      } else {
+        console.log('📬 No offline messages or error fetching messages');
+      }
+    } catch (error) {
+      console.error('❌ Error checking offline messages:', error);
+    }
+  }, [loginWithTokens, handleForceLogout]);
+
   const checkAuthStatus = useCallback(async () => {
     // Prevent multiple calls during initialization to avoid duplicate API calls
     // This fixes the performance issue where /users/me and /v1/auth/refresh were called twice
@@ -190,6 +372,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         setUser(finalUserData);
+
+        // Check for offline messages after successful authentication
+        setTimeout(() => {
+          checkOfflineMessages();
+        }, 1000); // Small delay to ensure user state is set
       } else if (response.status === 401) {
         // Token might be expired, try to refresh it silently
         if (process.env.NODE_ENV === 'development') {
@@ -223,7 +410,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setHasInitialized(true);
       isInitializingRef.current = false; // Reset the ref after initialization
     }
-  }, [hasInitialized, refreshToken]);
+  }, [hasInitialized, refreshToken, checkOfflineMessages]);
 
   const login = async (
     email: string,
@@ -278,6 +465,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // User is verified and no 2FA required, set login state
         setUser(userData);
+
+        // Check for offline messages after successful authentication
+        setTimeout(() => {
+          checkOfflineMessages();
+        }, 1000); // Small delay to ensure user state is set
 
         return { success: true, user: userData };
       } else {
@@ -343,6 +535,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
 
           setUser(finalUserData);
+
+          // Check for offline messages after successful authentication
+          setTimeout(() => {
+            checkOfflineMessages();
+          }, 1000); // Small delay to ensure user state is set
 
           // Broadcast login to other tabs and devices
           broadcastAuthChange('login', finalUserData);
@@ -659,24 +856,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     [autoRefreshToken]
   );
 
-  const logout = useCallback(async () => {
-    try {
-      // Call the logout endpoint to invalidate the session on the server
-      await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGOUT), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies for session management
-      });
-    } catch (error) {
-      // Silent fail on logout
-    } finally {
-      // Clear user state (cookies are handled by the server)
-      setUser(null);
-    }
-  }, []);
-
   // Utility function to join pending verification room for cross-browser sync
   const joinPendingVerificationRoom = async (email: string) => {
     try {
@@ -711,74 +890,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Failed to broadcast auth change
     }
   };
-
-  const loginWithTokens = useCallback(
-    async (tokens: {
-      accessToken: string;
-      refreshToken: string;
-      expiresIn: number;
-    }): Promise<{ success: boolean; message?: string }> => {
-      try {
-        // Set cookies for the tokens - use names that match the backend JWT guard
-        document.cookie = `accessToken=${tokens.accessToken}; path=/; max-age=${tokens.expiresIn}; secure; samesite=strict`;
-        document.cookie = `refreshToken=${
-          tokens.refreshToken
-        }; path=/; max-age=${tokens.expiresIn * 2}; secure; samesite=strict`;
-
-        // Fetch user data to set the user state
-        const response = await fetch(
-          buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
-          {
-            method: 'GET',
-            credentials: 'include',
-          }
-        );
-
-        if (response.ok) {
-          const userData = await response.json();
-          const finalUserData = userData.user || userData;
-
-          // Check if user is verified before setting login state
-          if (!finalUserData.isVerified) {
-            return { success: false, message: 'Email verification required' };
-          }
-
-          setUser(finalUserData);
-
-          // Broadcast login to other tabs and devices
-          broadcastAuthChange('login', finalUserData);
-
-          return { success: true, message: 'Login successful' };
-        } else {
-          const errorText = await response.text();
-          throw new Error(
-            `Failed to fetch user data: ${response.status} ${errorText}`
-          );
-        }
-      } catch (error) {
-        return { success: false, message: 'Failed to login with tokens' };
-      }
-    },
-    []
-  );
-
-  // Define force logout handler before useEffect to avoid scope issues
-  const handleForceLogout = useCallback(
-    async (event: Event) => {
-      const customEvent = event as CustomEvent;
-      console.log(
-        '🚪 Force logout event received via custom event:',
-        customEvent.detail
-      );
-
-      // Use existing logout function
-      await logout();
-
-      // Redirect to login page
-      window.location.href = '/auth';
-    },
-    [logout]
-  );
 
   useEffect(() => {
     let isMounted = true;

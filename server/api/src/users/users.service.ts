@@ -423,7 +423,7 @@ export class UsersService {
       // Emit logout event to all user's devices
       try {
         // Emit to user's personal room (for all logged-in devices)
-        this.webSocketGateway.emitLogoutToUserDevices(
+        await this.webSocketGateway.emitLogoutToUserDevices(
           userId,
           'password_changed',
         );

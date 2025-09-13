@@ -129,19 +129,37 @@ const Footer = () => {
 
       {/* Theme and Language Toggles */}
       <div className="bg-turquoise-100 dark:bg-dark-surface text-center py-4 px-4">
-        <div className={`flex justify-center items-center ${locale === 'ar' ? 'flex-row-reverse space-x-6 space-x-reverse' : 'space-x-6'}`}>
-           <div className={`flex items-center space-x-2 ${locale === 'ar' ? 'space-x-reverse flex-row-reverse' : ''}`}>
-             <span className="text-sm text-black dark:text-white font-medium">
-               {locale === 'ar' ? `:${t('footer.preferences.theme')}` : `${t('footer.preferences.theme')}:`}
-             </span>
-             <ThemeToggle />
-           </div>
-           <div className={`flex items-center space-x-2 ${locale === 'ar' ? 'space-x-reverse flex-row-reverse' : ''}`}>
-             <span className="text-sm text-black dark:text-white font-medium">
-               {locale === 'ar' ? `:${t('footer.preferences.language')}` : `${t('footer.preferences.language')}:`}
-             </span>
-             <LanguageToggle />
-           </div>
+        <div
+          className={`flex justify-center items-center ${
+            locale === 'ar'
+              ? 'flex-row-reverse space-x-6 space-x-reverse'
+              : 'space-x-6'
+          }`}
+        >
+          <div
+            className={`flex items-center space-x-2 ${
+              locale === 'ar' ? 'space-x-reverse flex-row-reverse' : ''
+            }`}
+          >
+            <span className="text-sm text-black dark:text-white font-medium">
+              {locale === 'ar'
+                ? `:${t('footer.preferences.theme')}`
+                : `${t('footer.preferences.theme')}:`}
+            </span>
+            <ThemeToggle />
+          </div>
+          <div
+            className={`flex items-center space-x-2 ${
+              locale === 'ar' ? 'space-x-reverse flex-row-reverse' : ''
+            }`}
+          >
+            <span className="text-sm text-black dark:text-white font-medium">
+              {locale === 'ar'
+                ? `:${t('footer.preferences.language')}`
+                : `${t('footer.preferences.language')}:`}
+            </span>
+            <LanguageToggle />
+          </div>
         </div>
       </div>
 

@@ -211,7 +211,7 @@ export class AuthService {
 
     // Emit WebSocket event for new user registration
     try {
-      this.webSocketGateway.emitVerificationSuccess(
+      await this.webSocketGateway.emitVerificationSuccess(
         result.user.id,
         userWithoutPassword,
       );
@@ -284,7 +284,7 @@ export class AuthService {
         roomStates,
       );
 
-      this.webSocketGateway.emitVerificationSuccess(
+      await this.webSocketGateway.emitVerificationSuccess(
         result.id,
         this.excludePassword(result),
       );
@@ -667,7 +667,7 @@ export class AuthService {
 
     // Emit logout event to password reset room and user's devices
     // Use setTimeout to allow client to join room first
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         // Emit to password reset room (for devices that requested reset)
         this.webSocketGateway.emitLogoutToPasswordResetRoom(
@@ -676,7 +676,7 @@ export class AuthService {
         );
 
         // Emit to user's personal room (for all logged-in devices)
-        this.webSocketGateway.emitLogoutToUserDevices(
+        await this.webSocketGateway.emitLogoutToUserDevices(
           result.id,
           'password_reset',
         );

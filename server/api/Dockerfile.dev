@@ -59,8 +59,7 @@ COPY . .
 
 # Make startup script executable and ensure it exists
 RUN chmod +x startup.sh && \
-    ls -la startup.sh && \
-    file startup.sh
+    ls -la startup.sh
 
 # =============================================================================
 # Environment Configuration

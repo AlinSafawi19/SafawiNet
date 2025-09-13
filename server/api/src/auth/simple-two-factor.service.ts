@@ -126,7 +126,10 @@ export class SimpleTwoFactorService {
     // Emit logout event to all user's devices (same as password change)
     try {
       // Emit to user's personal room (for all logged-in devices)
-      this.webSocketGateway.emitLogoutToUserDevices(userId, '2fa_disabled');
+      await this.webSocketGateway.emitLogoutToUserDevices(
+        userId,
+        '2fa_disabled',
+      );
 
       // Also emit global logout to catch any devices that might not be in the user's room
       this.webSocketGateway.emitGlobalLogout('2fa_disabled');

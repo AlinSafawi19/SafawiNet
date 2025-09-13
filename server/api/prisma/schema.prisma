@@ -26,6 +26,7 @@ model User {
   refreshSessions         RefreshSession[]
   twoFactorSecret         TwoFactorSecret?
   userSessions            UserSession[]
+  offlineMessages         OfflineMessage[]
 
   @@map("users")
 }
@@ -198,6 +199,29 @@ model EmailLog {
   @@index([status, createdAt])
   @@index([type, createdAt])
   @@map("email_logs")
+}
+
+model OfflineMessage {
+  id          String    @id @default(cuid())
+  userId      String
+  type        String
+  event       String
+  payload     Json
+  priority    String    @default("normal")
+  expiresAt   DateTime?
+  isProcessed Boolean   @default(false)
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([event])
+  @@index([isProcessed])
+  @@index([expiresAt])
+  @@index([userId, isProcessed, createdAt])
+  @@map("offline_messages")
 }
 
 enum Role {

@@ -223,10 +223,10 @@ export default function ResetPasswordPage() {
           </div>
 
           {/* Security Notice */}
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
+          <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
             <div className="flex items-start space-x-2 sm:space-x-3">
               <svg
-                className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 mt-0.5 flex-shrink-0"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 mt-0.5 flex-shrink-0"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -237,10 +237,10 @@ export default function ResetPasswordPage() {
                 />
               </svg>
               <div>
-                <p className="text-blue-400 text-xs sm:text-sm font-medium mb-1">
+                <p className="text-purple-400 text-xs sm:text-sm font-medium mb-1">
                   {t('auth.form.securityNotice')}
                 </p>
-                <p className="text-blue-300/80 text-xs sm:text-sm">
+                <p className="text-purple-300/80 text-xs sm:text-sm">
                   {t('auth.form.securityNoticeMessage')}
                 </p>
               </div>

@@ -286,7 +286,10 @@ export default function LoginSecurityPage() {
       '2FA is not enabled': 'auth.messages.twoFactorNotEnabled',
       'Invalid current password': 'auth.messages.invalidCurrentPassword',
     };
-    return messageMap[message] || 'account.loginSecurity.twoFactor.disableModal.disableFailed';
+    return (
+      messageMap[message] ||
+      'account.loginSecurity.twoFactor.disableModal.disableFailed'
+    );
   };
 
   // 2FA handlers
@@ -311,7 +314,7 @@ export default function LoginSecurityPage() {
           method: 'GET',
           credentials: 'include',
         });
-        
+
         if (userResponse.ok) {
           const userData = await userResponse.json();
           const finalUserData = userData.user || userData;
@@ -332,7 +335,9 @@ export default function LoginSecurityPage() {
 
   const handleDisable2FA = async () => {
     if (!disablePassword.trim()) {
-      setDisablePasswordError(t('account.loginSecurity.twoFactor.disableModal.passwordRequired'));
+      setDisablePasswordError(
+        t('account.loginSecurity.twoFactor.disableModal.passwordRequired')
+      );
       return;
     }
 
@@ -361,7 +366,7 @@ export default function LoginSecurityPage() {
           method: 'GET',
           credentials: 'include',
         });
-        
+
         if (userResponse.ok) {
           const userData = await userResponse.json();
           const finalUserData = userData.user || userData;
@@ -373,7 +378,9 @@ export default function LoginSecurityPage() {
         setDisablePasswordError(t(errorKey));
       }
     } catch (error) {
-      setDisablePasswordError(t('account.loginSecurity.twoFactor.disableModal.disableError'));
+      setDisablePasswordError(
+        t('account.loginSecurity.twoFactor.disableModal.disableError')
+      );
     } finally {
       setIs2FALoading(false);
     }
@@ -535,7 +542,9 @@ export default function LoginSecurityPage() {
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
-                      {passwordSuccessKey ? t(passwordSuccessKey) : passwordSuccessMessage}
+                      {passwordSuccessKey
+                        ? t(passwordSuccessKey)
+                        : passwordSuccessMessage}
                     </p>
                   </div>
                 )}
@@ -694,9 +703,7 @@ export default function LoginSecurityPage() {
                       className="w-full bg-white text-black font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center"
                     >
                       {isPasswordFormLoading ? (
-                        <>
-                          {t('account.loginSecurity.password.changing')}
-                        </>
+                        <>{t('account.loginSecurity.password.changing')}</>
                       ) : (
                         t('account.loginSecurity.password.changePassword')
                       )}
@@ -766,9 +773,11 @@ export default function LoginSecurityPage() {
 
                 {/* 2FA Status Section */}
                 <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
-                  <div className={`flex items-center justify-between ${
-                    locale === 'ar' ? 'flex-row-reverse' : ''
-                  }`}>
+                  <div
+                    className={`flex items-center justify-between ${
+                      locale === 'ar' ? 'flex-row-reverse' : ''
+                    }`}
+                  >
                     <div
                       className={`${
                         locale === 'ar' ? 'text-right' : 'text-left'
@@ -791,7 +800,9 @@ export default function LoginSecurityPage() {
                       <p className="text-sm text-gray-300 mb-4">
                         {user?.twoFactorEnabled
                           ? t('account.loginSecurity.twoFactor.enabledMessage')
-                          : t('account.loginSecurity.twoFactor.disabledMessage')}
+                          : t(
+                              'account.loginSecurity.twoFactor.disabledMessage'
+                            )}
                       </p>
                       <div
                         className={`flex items-center ${
@@ -814,9 +825,13 @@ export default function LoginSecurityPage() {
                               : 'text-gray-400'
                           }`}
                         >
-                          {user?.twoFactorEnabled 
-                            ? t('account.loginSecurity.twoFactor.status.enabled')
-                            : t('account.loginSecurity.twoFactor.status.disabled')}
+                          {user?.twoFactorEnabled
+                            ? t(
+                                'account.loginSecurity.twoFactor.status.enabled'
+                              )
+                            : t(
+                                'account.loginSecurity.twoFactor.status.disabled'
+                              )}
                         </span>
                       </div>
                     </div>
@@ -840,7 +855,9 @@ export default function LoginSecurityPage() {
                       >
                         {is2FALoading ? (
                           <>
-                            {t('account.loginSecurity.twoFactor.actions.loading')}
+                            {t(
+                              'account.loginSecurity.twoFactor.actions.loading'
+                            )}
                           </>
                         ) : user?.twoFactorEnabled ? (
                           t('account.loginSecurity.twoFactor.actions.disable')
@@ -859,7 +876,7 @@ export default function LoginSecurityPage() {
 
       {/* Disable 2FA Modal */}
       {showDisableModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
@@ -870,14 +887,18 @@ export default function LoginSecurityPage() {
           }}
         >
           <div className="bg-white/90 dark:bg-black/20 backdrop-blur-sm rounded-xl p-6 max-w-md w-full mx-4 border border-gray-200 dark:border-white/10 shadow-lg dark:shadow-none">
-            <h3 className={`text-lg font-semibold text-gray-900 dark:text-white mb-4 ${
-              locale === 'ar' ? 'text-right' : 'text-left'
-            }`}>
+            <h3
+              className={`text-lg font-semibold text-gray-900 dark:text-white mb-4 ${
+                locale === 'ar' ? 'text-right' : 'text-left'
+              }`}
+            >
               {t('account.loginSecurity.twoFactor.disableModal.title')}
             </h3>
-            <p className={`text-gray-600 dark:text-gray-300 mb-6 ${
-              locale === 'ar' ? 'text-right' : 'text-left'
-            }`}>
+            <p
+              className={`text-gray-600 dark:text-gray-300 mb-6 ${
+                locale === 'ar' ? 'text-right' : 'text-left'
+              }`}
+            >
               {t('account.loginSecurity.twoFactor.disableModal.message')}
             </p>
             <div className="space-y-6">
@@ -886,16 +907,20 @@ export default function LoginSecurityPage() {
                   type="password"
                   value={disablePassword}
                   onChange={(e) => setDisablePassword(e.target.value)}
-                  placeholder={t('account.loginSecurity.twoFactor.disableModal.passwordPlaceholder')}
+                  placeholder={t(
+                    'account.loginSecurity.twoFactor.disableModal.passwordPlaceholder'
+                  )}
                   className={`w-full px-4 py-3 rounded-lg text-gray-900 dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base bg-gray-100 dark:bg-white/10 border border-gray-300 dark:border-white/20 placeholder-gray-500 dark:placeholder-white/50 focus:border-purple-500 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                   dir={locale === 'ar' ? 'rtl' : 'ltr'}
                 />
                 {disablePasswordError && (
-                  <p className={`text-red-500 dark:text-red-400 text-xs mt-1 ${
-                    locale === 'ar' ? 'text-right' : 'text-left'
-                  }`}>
+                  <p
+                    className={`text-red-500 dark:text-red-400 text-xs mt-1 ${
+                      locale === 'ar' ? 'text-right' : 'text-left'
+                    }`}
+                  >
                     {disablePasswordError}
                   </p>
                 )}
@@ -917,10 +942,11 @@ export default function LoginSecurityPage() {
                   className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm font-medium"
                   disabled={is2FALoading}
                 >
-                  {is2FALoading 
-                    ? t('account.loginSecurity.twoFactor.disableModal.disabling')
-                    : t('account.loginSecurity.twoFactor.disableModal.disable')
-                  }
+                  {is2FALoading
+                    ? t(
+                        'account.loginSecurity.twoFactor.disableModal.disabling'
+                      )
+                    : t('account.loginSecurity.twoFactor.disableModal.disable')}
                 </button>
               </div>
             </div>

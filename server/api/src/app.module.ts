@@ -20,6 +20,7 @@ import { CronService } from './common/services/cron.service';
 import { PerformanceService } from './common/services/performance.service';
 import { PrismaService } from './common/services/prisma.service';
 import { EmailMonitoringService } from './common/services/email-monitoring.service';
+import { OfflineMessageService } from './common/services/offline-message.service';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { IdempotencyMiddleware } from './common/middleware/idempotency.middleware';
 import { SecurityMiddleware } from './common/middleware/security.middleware';
@@ -60,6 +61,7 @@ import { PerformanceController } from './common/controllers/performance.controll
     PerformanceService,
     PrismaService,
     EmailMonitoringService,
+    OfflineMessageService,
   ],
 })
 export class AppModule {

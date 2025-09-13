@@ -61,39 +61,53 @@ export function AuthForm() {
       'Invalid email format': 'auth.messages.invalidEmailFormat',
       'Password is too weak': 'auth.messages.passwordTooWeak',
       'Server error occurred': 'auth.messages.serverError',
-      'Account temporarily locked due to too many failed attempts': 'auth.messages.accountLocked',
+      'Account temporarily locked due to too many failed attempts':
+        'auth.messages.accountLocked',
       'Invalid 2FA code': 'auth.messages.invalidTwoFactorCode',
-      'Invalid or expired password reset token': 'auth.messages.invalidPasswordResetToken',
-      'If an account with this email exists, a password reset link has been sent.': 'auth.messages.passwordResetEmailSent',
-      'Password reset successfully. Please log in with your new password.': 'auth.messages.passwordResetSuccess',
+      'Invalid or expired password reset token':
+        'auth.messages.invalidPasswordResetToken',
+      'If an account with this email exists, a password reset link has been sent.':
+        'auth.messages.passwordResetEmailSent',
+      'Password reset successfully. Please log in with your new password.':
+        'auth.messages.passwordResetSuccess',
       'Email verified successfully': 'auth.messages.emailVerified',
-      'Verification email sent successfully': 'auth.messages.verificationEmailSent',
-      'Please verify your email before signing in': 'auth.messages.emailVerificationRequired',
+      'Verification email sent successfully':
+        'auth.messages.verificationEmailSent',
+      'Please verify your email before signing in':
+        'auth.messages.emailVerificationRequired',
       'Two-factor authentication required': 'auth.messages.twoFactorRequired',
       'Invalid refresh token': 'auth.messages.invalidRefreshToken',
       'User not found': 'auth.messages.userNotFound',
       '2FA is already enabled': 'auth.messages.twoFactorAlreadyEnabled',
-      '2FA setup not found. Please run setup first.': 'auth.messages.twoFactorSetupNotFound',
+      '2FA setup not found. Please run setup first.':
+        'auth.messages.twoFactorSetupNotFound',
       'Invalid TOTP code': 'auth.messages.invalidTOTPCode',
-      'Two-factor authentication enabled successfully': 'auth.messages.twoFactorEnabled',
+      'Two-factor authentication enabled successfully':
+        'auth.messages.twoFactorEnabled',
       '2FA is not enabled': 'auth.messages.twoFactorNotEnabled',
       'Invalid code': 'auth.messages.invalidCode',
-      'Two-factor authentication disabled successfully': 'auth.messages.twoFactorDisabled',
-      'Email address is already in use by another account': 'auth.messages.emailAlreadyInUse',
-      'Invalid or expired verification token': 'auth.messages.invalidVerificationToken',
+      'Two-factor authentication disabled successfully':
+        'auth.messages.twoFactorDisabled',
+      'Email address is already in use by another account':
+        'auth.messages.emailAlreadyInUse',
+      'Invalid or expired verification token':
+        'auth.messages.invalidVerificationToken',
       'Token refreshed successfully': 'auth.messages.tokenRefreshed',
       'Logged out successfully': 'auth.messages.loggedOut',
       'No refresh token provided': 'auth.messages.noRefreshTokenProvided',
       'User is already verified': 'auth.messages.userAlreadyVerified',
       'Session not found': 'auth.messages.sessionNotFound',
-      'Cannot delete current session': 'auth.messages.cannotDeleteCurrentSession',
+      'Cannot delete current session':
+        'auth.messages.cannotDeleteCurrentSession',
       'Notification not found': 'auth.messages.notificationNotFound',
       // Registration messages
-      'Registration successful! Please check your email to verify your account before signing in.': 'auth.messages.registrationSuccess',
-      'Registration failed. Please try again.': 'auth.messages.registrationFailed',
+      'Registration successful! Please check your email to verify your account before signing in.':
+        'auth.messages.registrationSuccess',
+      'Registration failed. Please try again.':
+        'auth.messages.registrationFailed',
       'An error occurred. Please try again.': 'auth.messages.generalError',
     };
-    
+
     return messageMap[message] || 'auth.messages.generalError';
   };
 
@@ -637,7 +651,9 @@ export function AuthForm() {
                 disabled={is2FALoading}
                 className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-md transition-colors"
               >
-                {is2FALoading ? t('auth.twoFactor.verifying') : t('auth.twoFactor.verifyCode')}
+                {is2FALoading
+                  ? t('auth.twoFactor.verifying')
+                  : t('auth.twoFactor.verifyCode')}
               </button>
 
               <button

@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { QueueService } from './queue.service';
 import { PinoLoggerService } from './logger.service';
 import { PrismaService } from './prisma.service';
+import { OfflineMessageService } from './offline-message.service';
 
 @Injectable()
 export class CronService implements OnModuleInit, OnModuleDestroy {
@@ -10,6 +11,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
     private queueService: QueueService,
     private logger: PinoLoggerService,
     private prisma: PrismaService,
+    private offlineMessageService: OfflineMessageService,
   ) {}
 
   onModuleInit() {
@@ -246,6 +248,80 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
       const errorMessage = error instanceof Error ? error.stack : String(error);
       this.logger.error(
         'Failed to cleanup old notifications',
+        errorMessage,
+        'CronService',
+      );
+      throw error;
+    }
+  }
+
+  // Clean up expired offline messages every hour
+  @Cron(CronExpression.EVERY_HOUR)
+  async cleanupExpiredOfflineMessages() {
+    try {
+      this.logger.log(
+        'Starting expired offline message cleanup',
+        'CronService',
+      );
+
+      const expiredCount =
+        await this.offlineMessageService.cleanupExpiredMessages();
+      this.logger.log(
+        `Cleaned up ${expiredCount} expired offline messages`,
+        'CronService',
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.stack : String(error);
+      this.logger.error(
+        'Failed to cleanup expired offline messages',
+        errorMessage,
+        'CronService',
+      );
+    }
+  }
+
+  // Clean up old processed offline messages daily at 3 AM
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async cleanupOldProcessedOfflineMessages() {
+    try {
+      this.logger.log(
+        'Starting old processed offline message cleanup',
+        'CronService',
+      );
+
+      const oldCount =
+        await this.offlineMessageService.cleanupOldProcessedMessages();
+      this.logger.log(
+        `Cleaned up ${oldCount} old processed offline messages`,
+        'CronService',
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.stack : String(error);
+      this.logger.error(
+        'Failed to cleanup old processed offline messages',
+        errorMessage,
+        'CronService',
+      );
+    }
+  }
+
+  // Manual cleanup methods for offline messages
+  async manualOfflineMessageCleanup() {
+    try {
+      const expiredCount =
+        await this.offlineMessageService.cleanupExpiredMessages();
+      const oldCount =
+        await this.offlineMessageService.cleanupOldProcessedMessages();
+
+      this.logger.log(
+        `Manual cleanup: ${expiredCount} expired, ${oldCount} old processed offline messages`,
+        'CronService',
+      );
+      return { expiredCount, oldCount };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.stack : String(error);
+      this.logger.error(
+        'Failed to manually cleanup offline messages',
         errorMessage,
         'CronService',
       );

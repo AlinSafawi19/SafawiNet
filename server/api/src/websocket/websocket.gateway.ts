@@ -15,6 +15,7 @@ import { ConfigService } from '@nestjs/config';
 import { Role } from '@prisma/client';
 import { AuthenticatedSocket } from '../auth/guards/ws-jwt.guard';
 import { isJwtPayload } from '../auth/types/jwt.types';
+import { OfflineMessageService } from '../common/services/offline-message.service';
 
 // User data interface for WebSocket events
 interface UserData {
@@ -97,6 +98,7 @@ export class AuthWebSocketGateway
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly offlineMessageService: OfflineMessageService,
   ) {}
 
   afterInit(server: Server) {
@@ -478,7 +480,7 @@ export class AuthWebSocketGateway
   }
 
   // Method to emit verification success to all sockets in a user's verification room
-  emitVerificationSuccess(userId: string, userData: UserData) {
+  async emitVerificationSuccess(userId: string, userData: UserData) {
     if (!this.server) {
       this.logger.error(
         'WebSocket server not initialized, cannot emit verification success',
@@ -497,8 +499,13 @@ export class AuthWebSocketGateway
 
         this.server.to(`verification:${userId}`).emit('emailVerified', payload);
 
-        // Also emit to user's personal room
-        this.server.to(`user:${userId}`).emit('emailVerified', payload);
+        // Also emit to user's personal room or store offline
+        await this.emitOrStoreOffline(userId, 'emailVerified', payload, () =>
+          this.offlineMessageService.createEmailVerificationMessage(
+            userId,
+            userData,
+          ),
+        );
 
         this.logger.log(`Verification success emitted to user ${userId}`);
       } catch (error) {
@@ -507,6 +514,20 @@ export class AuthWebSocketGateway
           error,
         );
       }
+    } else {
+      // No verification room, but still try to emit to user or store offline
+      const payload: VerificationSuccessPayload = {
+        success: true,
+        user: userData,
+        message: 'Email verified successfully. You are now logged in.',
+      };
+
+      await this.emitOrStoreOffline(userId, 'emailVerified', payload, () =>
+        this.offlineMessageService.createEmailVerificationMessage(
+          userId,
+          userData,
+        ),
+      );
     }
   }
 
@@ -688,7 +709,10 @@ export class AuthWebSocketGateway
   }
 
   // Method to emit logout event to all user's devices (for password change)
-  emitLogoutToUserDevices(userId: string, reason: string = 'password_changed') {
+  async emitLogoutToUserDevices(
+    userId: string,
+    reason: string = 'password_changed',
+  ) {
     if (!this.server) {
       this.logger.error(
         'WebSocket server not initialized, cannot emit logout to user devices',
@@ -713,10 +737,22 @@ export class AuthWebSocketGateway
         timestamp: new Date().toISOString(),
       };
 
-      this.server.to(`user:${userId}`).emit('forceLogout', payload);
+      // For security events, always create offline message AND emit to online users
+      // This ensures the message is delivered even if WebSocket fails
+      const offlineMessage = await this.offlineMessageService.createForceLogoutMessage(
+        userId,
+        reason,
+        message,
+      );
+
+      // Also emit to online users if they're connected
+      if (this.isUserOnline(userId)) {
+        this.server.to(`user:${userId}`).emit('forceLogout', payload);
+        this.logger.log(`Emitted forceLogout to online user ${userId}`);
+      }
 
       this.logger.log(
-        `Logout emitted to all devices for user ${userId} - reason: ${reason}`,
+        `Offline message created and logout emitted for user ${userId} - reason: ${reason}`,
       );
     } catch (error) {
       this.logger.error(
@@ -830,6 +866,40 @@ export class AuthWebSocketGateway
       );
     } catch (error) {
       this.logger.error(`Failed to emit global logout:`, error);
+    }
+  }
+
+  // Helper method to check if a user is online
+  private isUserOnline(userId: string): boolean {
+    if (!this.server) return false;
+
+    // Check if user is in their personal room
+    const userRoom = this.server.sockets.adapter.rooms.get(`user:${userId}`);
+    return Boolean(userRoom && userRoom.size > 0);
+  }
+
+  // Helper method to emit message or store offline
+  private async emitOrStoreOffline(
+    userId: string,
+    event: string,
+    payload: any,
+    createOfflineMessage: () => Promise<any>,
+  ): Promise<void> {
+    if (this.isUserOnline(userId)) {
+      // User is online, emit directly
+      this.server.to(`user:${userId}`).emit(event, payload);
+      this.logger.log(`Emitted ${event} to online user ${userId}`);
+    } else {
+      // User is offline, store message
+      try {
+        await createOfflineMessage();
+        this.logger.log(`Stored offline message ${event} for user ${userId}`);
+      } catch (error) {
+        this.logger.error(
+          `Failed to store offline message for user ${userId}:`,
+          error,
+        );
+      }
     }
   }
 
