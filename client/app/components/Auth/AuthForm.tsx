@@ -52,6 +52,51 @@ export function AuthForm() {
   const nameRef = useRef<HTMLInputElement>(null);
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
+  // Helper function to map backend messages to translation keys
+  const mapBackendMessageToKey = (message: string): string => {
+    const messageMap: { [key: string]: string } = {
+      // Authentication messages
+      'Invalid email or password': 'auth.messages.invalidCredentials',
+      'User with this email already exists': 'auth.messages.userAlreadyExists',
+      'Invalid email format': 'auth.messages.invalidEmailFormat',
+      'Password is too weak': 'auth.messages.passwordTooWeak',
+      'Server error occurred': 'auth.messages.serverError',
+      'Account temporarily locked due to too many failed attempts': 'auth.messages.accountLocked',
+      'Invalid 2FA code': 'auth.messages.invalidTwoFactorCode',
+      'Invalid or expired password reset token': 'auth.messages.invalidPasswordResetToken',
+      'If an account with this email exists, a password reset link has been sent.': 'auth.messages.passwordResetEmailSent',
+      'Password reset successfully. Please log in with your new password.': 'auth.messages.passwordResetSuccess',
+      'Email verified successfully': 'auth.messages.emailVerified',
+      'Verification email sent successfully': 'auth.messages.verificationEmailSent',
+      'Please verify your email before signing in': 'auth.messages.emailVerificationRequired',
+      'Two-factor authentication required': 'auth.messages.twoFactorRequired',
+      'Invalid refresh token': 'auth.messages.invalidRefreshToken',
+      'User not found': 'auth.messages.userNotFound',
+      '2FA is already enabled': 'auth.messages.twoFactorAlreadyEnabled',
+      '2FA setup not found. Please run setup first.': 'auth.messages.twoFactorSetupNotFound',
+      'Invalid TOTP code': 'auth.messages.invalidTOTPCode',
+      'Two-factor authentication enabled successfully': 'auth.messages.twoFactorEnabled',
+      '2FA is not enabled': 'auth.messages.twoFactorNotEnabled',
+      'Invalid code': 'auth.messages.invalidCode',
+      'Two-factor authentication disabled successfully': 'auth.messages.twoFactorDisabled',
+      'Email address is already in use by another account': 'auth.messages.emailAlreadyInUse',
+      'Invalid or expired verification token': 'auth.messages.invalidVerificationToken',
+      'Token refreshed successfully': 'auth.messages.tokenRefreshed',
+      'Logged out successfully': 'auth.messages.loggedOut',
+      'No refresh token provided': 'auth.messages.noRefreshTokenProvided',
+      'User is already verified': 'auth.messages.userAlreadyVerified',
+      'Session not found': 'auth.messages.sessionNotFound',
+      'Cannot delete current session': 'auth.messages.cannotDeleteCurrentSession',
+      'Notification not found': 'auth.messages.notificationNotFound',
+      // Registration messages
+      'Registration successful! Please check your email to verify your account before signing in.': 'auth.messages.registrationSuccess',
+      'Registration failed. Please try again.': 'auth.messages.registrationFailed',
+      'An error occurred. Please try again.': 'auth.messages.generalError',
+    };
+    
+    return messageMap[message] || 'auth.messages.generalError';
+  };
+
   // Redirect logged-in users
   useEffect(() => {
     if (!isLoading && user) {
@@ -301,8 +346,8 @@ export function AuthForm() {
             setErrorKey(result.messageKey);
             setError('');
           } else if (result.message) {
-            setError(result.message);
-            setErrorKey('');
+            setErrorKey(mapBackendMessageToKey(result.message));
+            setError('');
           } else {
             setErrorKey('auth.messages.invalidCredentials');
             setError('');
@@ -322,8 +367,8 @@ export function AuthForm() {
             setSuccessKey(result.messageKey);
             setSuccessMessage('');
           } else if (result.message) {
-            setSuccessMessage(result.message);
-            setSuccessKey('');
+            setSuccessKey(mapBackendMessageToKey(result.message));
+            setSuccessMessage('');
           } else {
             setSuccessKey('auth.messages.registrationSuccess');
             setSuccessMessage('');
@@ -347,8 +392,8 @@ export function AuthForm() {
             setErrorKey(result.messageKey);
             setError('');
           } else if (result.message) {
-            setError(result.message);
-            setErrorKey('');
+            setErrorKey(mapBackendMessageToKey(result.message));
+            setError('');
           } else {
             setErrorKey('auth.messages.registrationFailed');
             setError('');
@@ -371,7 +416,8 @@ export function AuthForm() {
     setIs2FALoading(true);
 
     if (!twoFactorCode.trim()) {
-      setError('Please enter the 2FA code');
+      setErrorKey('auth.twoFactor.codeRequired');
+      setError('');
       setIs2FALoading(false);
       return;
     }
@@ -405,8 +451,8 @@ export function AuthForm() {
           setErrorKey(result.messageKey);
           setError('');
         } else if (result.message) {
-          setError(result.message);
-          setErrorKey('');
+          setErrorKey(mapBackendMessageToKey(result.message));
+          setError('');
         } else {
           setErrorKey('auth.messages.invalid2FACode');
           setError('');
@@ -528,14 +574,14 @@ export function AuthForm() {
           <div className="auth-screen text-center mb-4 sm:mb-6 md:mb-8">
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-2">
               {show2FAForm
-                ? 'Two-Factor Authentication'
+                ? t('auth.twoFactor.title')
                 : isLogin
                 ? t('auth.form.welcomeBack')
                 : t('auth.form.joinUs')}
             </h1>
             <p className="text-white/70 text-xs sm:text-sm md:text-base">
               {show2FAForm
-                ? 'Please enter the 6-digit code sent to your email'
+                ? t('auth.twoFactor.subtitle')
                 : isLogin
                 ? t('auth.form.signInSubtitle')
                 : t('auth.form.createAccountSubtitle')}
@@ -546,7 +592,7 @@ export function AuthForm() {
           {(error || errorKey) && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
               <p className="text-red-400 text-xs sm:text-sm">
-                {error || (errorKey ? t(errorKey) : '')}
+                {errorKey ? t(errorKey) : error}
               </p>
             </div>
           )}
@@ -555,7 +601,7 @@ export function AuthForm() {
           {(successMessage || successKey) && (
             <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
               <p className="text-green-400 text-xs sm:text-sm">
-                {successMessage || (successKey ? t(successKey) : '')}
+                {successKey ? t(successKey) : successMessage}
               </p>
             </div>
           )}
@@ -571,7 +617,7 @@ export function AuthForm() {
                   htmlFor="twoFactorCode"
                   className="block text-sm font-medium text-white mb-1"
                 >
-                  Verification Code
+                  {t('auth.twoFactor.verificationCode')}
                 </label>
                 <input
                   type="text"
@@ -579,19 +625,19 @@ export function AuthForm() {
                   name="twoFactorCode"
                   value={twoFactorCode}
                   onChange={(e) => setTwoFactorCode(e.target.value)}
-                  placeholder="Enter 6-digit code"
+                  placeholder={t('auth.twoFactor.verificationCodePlaceholder')}
                   maxLength={6}
-                  className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   disabled={is2FALoading}
                 />
               </div>
 
               <button
                 type="submit"
-                disabled={is2FALoading || !twoFactorCode.trim()}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-md transition-colors"
+                disabled={is2FALoading}
+                className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-md transition-colors"
               >
-                {is2FALoading ? 'Verifying...' : 'Verify Code'}
+                {is2FALoading ? t('auth.twoFactor.verifying') : t('auth.twoFactor.verifyCode')}
               </button>
 
               <button
@@ -604,7 +650,7 @@ export function AuthForm() {
                 }}
                 className="w-full bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-2 px-4 rounded-md transition-colors"
               >
-                Back to Login
+                {t('auth.twoFactor.backToLogin')}
               </button>
             </form>
           )}
