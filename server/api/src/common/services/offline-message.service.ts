@@ -248,25 +248,6 @@ export class OfflineMessageService {
   /**
    * Create specific offline message types
    */
-  async createEmailVerificationMessage(
-    userId: string,
-    userData: any,
-    tokens?: any,
-  ): Promise<OfflineMessage> {
-    return this.createMessage({
-      userId,
-      type: 'auth',
-      event: 'emailVerified',
-      payload: {
-        success: true,
-        user: userData,
-        tokens,
-        message: 'Email verified successfully! You are now logged in.',
-      },
-      priority: 'high',
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-    });
-  }
 
   async createForceLogoutMessage(
     userId: string,

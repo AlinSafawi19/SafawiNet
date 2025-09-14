@@ -252,37 +252,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
             // Handle different message types
             switch (message.event) {
-              case 'emailVerified':
-                console.log('📧 Processing offline email verification');
-                if (message.payload.success && message.payload.user) {
-                  if (message.payload.tokens) {
-                    console.log(
-                      '🔑 Processing offline email verification with tokens'
-                    );
-                    try {
-                      const loginResult = await loginWithTokens(
-                        message.payload.tokens
-                      );
-                      if (loginResult.success) {
-                        console.log(
-                          '✅ Offline email verification login successful'
-                        );
-                      }
-                    } catch (error) {
-                      console.error(
-                        '❌ Error during offline email verification login:',
-                        error
-                      );
-                    }
-                  } else if (message.payload.user.isVerified) {
-                    console.log(
-                      '✅ Setting user from offline email verification'
-                    );
-                    setUser(message.payload.user);
-                  }
-                }
-                break;
-
               case 'forceLogout':
                 console.log('🚪 Processing offline force logout');
                 handleForceLogout(
