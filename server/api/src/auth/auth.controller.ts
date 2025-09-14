@@ -74,6 +74,7 @@ interface TwoFactorEnableResponse {
 
 interface TwoFactorDisableResponse {
   message: string;
+  forceLogout: boolean;
 }
 
 interface RefreshTokenResponse {
@@ -489,6 +490,7 @@ export class AuthController {
       type: 'object',
       properties: {
         message: { type: 'string' },
+        forceLogout: { type: 'boolean' },
       },
     },
   })

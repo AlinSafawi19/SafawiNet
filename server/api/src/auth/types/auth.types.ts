@@ -8,9 +8,13 @@ export interface JwtPayload {
   email: string;
   iat: number; // Issued at
   exp: number; // Expires at
-  type: 'access' | 'refresh';
+  type?: 'access' | 'refresh';
   familyId?: string;
   sessionId?: string;
+  refreshTokenId?: string;
+  verified?: boolean;
+  roles?: string[];
+  name?: string;
 }
 
 /**

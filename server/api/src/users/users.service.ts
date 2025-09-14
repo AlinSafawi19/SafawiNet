@@ -344,7 +344,7 @@ export class UsersService {
   async changePassword(
     userId: string,
     changePasswordDto: ChangePasswordDto,
-  ): Promise<{ message: string; messageKey: string }> {
+  ): Promise<{ message: string; messageKey: string; forceLogout: boolean }> {
     try {
       this.logger.log(`Changing password for user ${userId}`);
       const { currentPassword, newPassword } = changePasswordDto;
@@ -428,9 +428,6 @@ export class UsersService {
           'password_changed',
         );
 
-        // Also emit global logout to catch any devices that might not be in the user's room
-        this.webSocketGateway.emitGlobalLogout('password_changed');
-
         this.logger.log(
           `Logout events emitted for password change - user: ${user.email}`,
         );
@@ -445,6 +442,7 @@ export class UsersService {
       return {
         message: 'Password changed successfully',
         messageKey: 'account.loginSecurity.password.success',
+        forceLogout: true,
       };
     } catch (error) {
       this.logger.error(`Error changing password for user ${userId}:`, error);

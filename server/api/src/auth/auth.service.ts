@@ -53,6 +53,7 @@ interface JwtPayload {
   email: string;
   verified: boolean;
   roles: string[];
+  refreshTokenId?: string;
 }
 
 @Injectable()
@@ -681,9 +682,6 @@ export class AuthService {
           'password_reset',
         );
 
-        // Also emit global logout to catch any devices that might not be in either room
-        this.webSocketGateway.emitGlobalLogout('password_reset');
-
         this.logger.log(
           `Logout events emitted for password reset - user: ${result.email}`,
         );
@@ -704,16 +702,18 @@ export class AuthService {
   }
 
   private async generateTokens(user: User, req?: Request): Promise<AuthTokens> {
+    const { refreshToken, tokenId }: { refreshToken: string; tokenId: string } =
+      await this.createRefreshToken(user.id);
+
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
       verified: user.isVerified,
       roles: user.roles,
+      refreshTokenId: tokenId,
     };
 
     const accessToken: string = this.jwtService.sign(payload);
-    const { refreshToken, tokenId }: { refreshToken: string; tokenId: string } =
-      await this.createRefreshToken(user.id);
 
     // Create user session if request is provided
     if (req) {

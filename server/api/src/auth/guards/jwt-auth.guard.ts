@@ -134,6 +134,10 @@ export class JwtAuthGuard implements CanActivate {
           );
           // Don't fail validation if session update fails
         }
+      } else {
+        console.log(
+          '⚠️ JWT Guard - No refreshTokenId in payload, skipping session validation',
+        );
       }
 
       console.log(

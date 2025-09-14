@@ -58,7 +58,7 @@ export class SimpleTwoFactorService {
   async disableTwoFactor(
     userId: string,
     currentPassword: string,
-  ): Promise<{ message: string }> {
+  ): Promise<{ message: string; forceLogout: boolean }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -131,9 +131,6 @@ export class SimpleTwoFactorService {
         '2fa_disabled',
       );
 
-      // Also emit global logout to catch any devices that might not be in the user's room
-      this.webSocketGateway.emitGlobalLogout('2fa_disabled');
-
       this.logger.log(
         `Logout events emitted for 2FA disable - user: ${user.email}`,
       );
@@ -148,7 +145,10 @@ export class SimpleTwoFactorService {
     this.logger.log(
       `2FA disabled for user ${user.email} - all sessions invalidated`,
     );
-    return { message: 'Two-factor authentication disabled successfully' };
+    return { 
+      message: 'Two-factor authentication disabled successfully',
+      forceLogout: true
+    };
   }
 
   /**

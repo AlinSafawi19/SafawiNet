@@ -7,6 +7,7 @@ export interface JwtPayload {
   verified: boolean;
   iat?: number;
   exp?: number;
+  refreshTokenId?: string;
 }
 
 /**
@@ -18,6 +19,8 @@ export function isJwtPayload(payload: unknown): payload is JwtPayload {
     payload !== null &&
     typeof (payload as JwtPayload).sub === 'string' &&
     typeof (payload as JwtPayload).email === 'string' &&
-    typeof (payload as JwtPayload).verified === 'boolean'
+    typeof (payload as JwtPayload).verified === 'boolean' &&
+    ((payload as JwtPayload).refreshTokenId === undefined ||
+      typeof (payload as JwtPayload).refreshTokenId === 'string')
   );
 }

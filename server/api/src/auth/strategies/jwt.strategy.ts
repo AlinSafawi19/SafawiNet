@@ -5,17 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/services/prisma.service';
 import { Request } from 'express';
 import { User, UserSession, Role } from '@prisma/client';
-
-export interface JwtPayload {
-  sub: string;
-  email: string;
-  name: string;
-  verified: boolean;
-  roles: Role[];
-  refreshTokenId: string;
-  iat: number;
-  exp: number;
-}
+import { JwtPayload } from '../types/auth.types';
 
 // Type for request object with cookies
 interface RequestWithCookies extends Request {
@@ -40,7 +30,7 @@ export interface ValidatedUser {
   name: string | null;
   verified: boolean;
   roles: Role[];
-  refreshTokenId: string;
+  refreshTokenId?: string;
   iat: number;
   exp: number;
 }
@@ -155,6 +145,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         );
         // Don't fail validation if session update fails
       }
+    } else {
+      console.log(
+        '⚠️ JWT Strategy - No refreshTokenId in payload, skipping session validation',
+      );
     }
 
     console.log(
