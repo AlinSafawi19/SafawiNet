@@ -5,7 +5,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { LoadingPage } from '../../components/LoadingPage';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { useTheme } from '../../contexts/ThemeContext';
 import {
   Breadcrumb,
   generateBreadcrumbItems,
@@ -22,7 +21,6 @@ interface ValidationErrors {
 export default function LoginSecurityPage() {
   const { user, isLoading, logout, updateUser } = useAuth();
   const { t, locale } = useLanguage();
-  const { isDark } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -56,6 +54,10 @@ export default function LoginSecurityPage() {
   const [showDisableModal, setShowDisableModal] = useState(false);
   const [disablePassword, setDisablePassword] = useState('');
   const [disablePasswordError, setDisablePasswordError] = useState('');
+  const [currentPasswordType, setCurrentPasswordType] = useState<'text' | 'password'>('text');
+  const [disablePasswordType, setDisablePasswordType] = useState<'text' | 'password'>('text');
+  const [currentPasswordValue, setCurrentPasswordValue] = useState('');
+  const [disablePasswordValue, setDisablePasswordValue] = useState('');
 
   useEffect(() => {
     // Redirect unauthenticated users to login
@@ -63,6 +65,56 @@ export default function LoginSecurityPage() {
       router.push('/auth');
     }
   }, [user, isLoading, router]);
+
+  // Effect to prevent auto-fill by clearing fields periodically
+  useEffect(() => {
+    const preventAutoFill = () => {
+      // Clear any auto-filled values in password fields
+      if (passwordFormData.currentPassword && passwordFormData.currentPassword.length > 0) {
+        // Check if the value was auto-filled (common patterns)
+        const commonPasswords = ['password', '123456', 'admin', 'test'];
+        if (commonPasswords.includes(passwordFormData.currentPassword.toLowerCase())) {
+          setPasswordFormData(prev => ({ ...prev, currentPassword: '' }));
+          setCurrentPasswordValue('');
+        }
+      }
+      
+      if (disablePassword && disablePassword.length > 0) {
+        const commonPasswords = ['password', '123456', 'admin', 'test'];
+        if (commonPasswords.includes(disablePassword.toLowerCase())) {
+          setDisablePassword('');
+          setDisablePasswordValue('');
+        }
+      }
+    };
+
+    const interval = setInterval(preventAutoFill, 500);
+    return () => clearInterval(interval);
+  }, [passwordFormData.currentPassword, disablePassword]);
+
+  // Additional effect to clear fields on focus if they contain auto-filled content
+  useEffect(() => {
+    const handleFocus = (e: FocusEvent) => {
+      const target = e.target as HTMLInputElement;
+      if (target && (target.id === 'currentPassword' || target.name === 'disablePassword')) {
+        // Clear field if it contains common auto-filled values
+        const commonPasswords = ['password', '123456', 'admin', 'test', 'user', 'login'];
+        if (commonPasswords.includes(target.value.toLowerCase())) {
+          target.value = '';
+          if (target.id === 'currentPassword') {
+            setCurrentPasswordValue('');
+            setPasswordFormData(prev => ({ ...prev, currentPassword: '' }));
+          } else {
+            setDisablePasswordValue('');
+            setDisablePassword('');
+          }
+        }
+      }
+    };
+
+    document.addEventListener('focusin', handleFocus);
+    return () => document.removeEventListener('focusin', handleFocus);
+  }, []);
 
   // Show loading page while checking authentication
   if (isLoading) {
@@ -567,6 +619,32 @@ export default function LoginSecurityPage() {
                 )}
 
                 <form onSubmit={handlePasswordSubmit} className="space-y-6">
+                  {/* Hidden dummy fields to prevent auto-fill */}
+                  <div className="hidden">
+                    <label htmlFor="hidden-username" className="sr-only">
+                      Hidden username field
+                    </label>
+                    <input 
+                      id="hidden-username"
+                      type="text" 
+                      name="username" 
+                      autoComplete="username" 
+                      aria-hidden="true"
+                      tabIndex={-1}
+                    />
+                    <label htmlFor="hidden-password" className="sr-only">
+                      Hidden password field
+                    </label>
+                    <input 
+                      id="hidden-password"
+                      type="password" 
+                      name="password" 
+                      autoComplete="current-password" 
+                      aria-hidden="true"
+                      tabIndex={-1}
+                    />
+                  </div>
+                  
                   {/* Current Password Field */}
                   <div>
                     <label
@@ -588,19 +666,61 @@ export default function LoginSecurityPage() {
                         {t('account.loginSecurity.password.currentPassword')}
                       </div>
                     </label>
-                    <input
-                      type="password"
-                      id="currentPassword"
-                      name="currentPassword"
-                      value={passwordFormData.currentPassword}
-                      onChange={handlePasswordInputChange}
-                      onBlur={handlePasswordBlur}
-                      className={getPasswordInputClass('currentPassword')}
-                      placeholder={t(
-                        'account.loginSecurity.password.currentPasswordPlaceholder'
-                      )}
-                      dir={locale === 'ar' ? 'rtl' : 'ltr'}
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        id="currentPassword"
+                        name="currentPassword"
+                        value={currentPasswordValue}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setCurrentPasswordValue(value);
+                          setPasswordFormData(prev => ({ ...prev, currentPassword: value }));
+                          // Switch to password type after user starts typing
+                          if (currentPasswordType === 'text' && value.length > 0) {
+                            setCurrentPasswordType('password');
+                          }
+                        }}
+                        onBlur={(e) => {
+                          handlePasswordBlur(e);
+                        }}
+                        onFocus={() => {
+                          // Switch to password type when focused
+                          setCurrentPasswordType('password');
+                        }}
+                        className={getPasswordInputClass('currentPassword')}
+                        placeholder={t(
+                          'account.loginSecurity.password.currentPasswordPlaceholder'
+                        )}
+                        dir={locale === 'ar' ? 'rtl' : 'ltr'}
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck="false"
+                        data-form-type="other"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-bwignore="true"
+                        data-dashlane-ignore="true"
+                        data-bitwarden-ignore="true"
+                        data-keeppass-ignore="true"
+                        data-keepass-ignore="true"
+                        data-roboform-ignore="true"
+                        data-enpass-ignore="true"
+                        data-nordpass-ignore="true"
+                        data-protonpass-ignore="true"
+                        data-ignore="true"
+                        data-save="false"
+                        data-saved="false"
+                        data-autofill="false"
+                        data-autocomplete="false"
+                        style={{ 
+                          // Inline styles required for text security feature
+                          WebkitTextSecurity: currentPasswordType === 'password' ? 'disc' : 'none',
+                          textSecurity: currentPasswordType === 'password' ? 'disc' : 'none'
+                        } as React.CSSProperties}
+                      />
+                    </div>
                     {passwordTouched.currentPassword &&
                       passwordValidationErrors.currentPassword && (
                         <p
@@ -863,7 +983,7 @@ export default function LoginSecurityPage() {
                             handleEnable2FA();
                           }
                         }}
-                        className={`px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 min-h-[48px] flex items-center justify-center ${
+                        className={`px-6 py-3 rounded-lg text-sm font-bold transition-all duration-300 min-h-[48px] flex items-center justify-center ${
                           user?.twoFactorEnabled
                             ? 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 hover:border-red-500/50'
                             : 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 hover:border-green-500/50'
@@ -894,7 +1014,7 @@ export default function LoginSecurityPage() {
       {/* Disable 2FA Modal */}
       {showDisableModal && (
         <div
-          className="fixed inset-0 bg-black/50 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowDisableModal(false);
@@ -903,38 +1023,104 @@ export default function LoginSecurityPage() {
             }
           }}
         >
-          <div className="bg-white/90 dark:bg-black/20 backdrop-blur-sm rounded-xl p-6 max-w-md w-full mx-4 border border-gray-200 dark:border-white/10 shadow-lg dark:shadow-none">
+          <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6 max-w-md w-full mx-4 border border-white/10 shadow-none">
             <h3
-              className={`text-lg font-semibold text-gray-900 dark:text-white mb-4 ${
+              className={`text-lg font-semibold text-white mb-4 ${
                 locale === 'ar' ? 'text-right' : 'text-left'
               }`}
             >
               {t('account.loginSecurity.twoFactor.disableModal.title')}
             </h3>
             <p
-              className={`text-gray-600 dark:text-gray-300 mb-6 ${
+              className={`text-gray-300 mb-6 ${
                 locale === 'ar' ? 'text-right' : 'text-left'
               }`}
             >
               {t('account.loginSecurity.twoFactor.disableModal.message')}
             </p>
             <div className="space-y-6">
-              <div>
-                <input
-                  type="password"
-                  value={disablePassword}
-                  onChange={(e) => setDisablePassword(e.target.value)}
-                  placeholder={t(
-                    'account.loginSecurity.twoFactor.disableModal.passwordPlaceholder'
-                  )}
-                  className={`w-full px-4 py-3 rounded-lg text-gray-900 dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base bg-gray-100 dark:bg-white/10 border border-gray-300 dark:border-white/20 placeholder-gray-500 dark:placeholder-white/50 focus:border-purple-500 ${
-                    locale === 'ar' ? 'text-right' : 'text-left'
-                  }`}
-                  dir={locale === 'ar' ? 'rtl' : 'ltr'}
+              {/* Hidden dummy fields to prevent auto-fill */}
+              <div className="hidden">
+                <label htmlFor="hidden-username-modal" className="sr-only">
+                  Hidden username field
+                </label>
+                <input 
+                  id="hidden-username-modal"
+                  type="text" 
+                  name="username" 
+                  autoComplete="username" 
+                  aria-hidden="true"
+                  tabIndex={-1}
                 />
+                <label htmlFor="hidden-password-modal" className="sr-only">
+                  Hidden password field
+                </label>
+                <input 
+                  id="hidden-password-modal"
+                  type="password" 
+                  name="password" 
+                  autoComplete="current-password" 
+                  aria-hidden="true"
+                  tabIndex={-1}
+                />
+              </div>
+              
+              <div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={disablePasswordValue}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setDisablePasswordValue(value);
+                      setDisablePassword(value);
+                      // Switch to password type after user starts typing
+                      if (disablePasswordType === 'text' && value.length > 0) {
+                        setDisablePasswordType('password');
+                      }
+                    }}
+                    onFocus={() => {
+                      // Switch to password type when focused
+                      setDisablePasswordType('password');
+                    }}
+                    placeholder={t(
+                      'account.loginSecurity.twoFactor.disableModal.passwordPlaceholder'
+                    )}
+                    className={`w-full px-4 py-3 rounded-lg text-white focus:bg-white/15 transition-all duration-300 text-sm sm:text-base bg-white/10 border border-white/20 placeholder-white/50 focus:border-purple-500 ${
+                      locale === 'ar' ? 'text-right' : 'text-left'
+                    }`}
+                    dir={locale === 'ar' ? 'rtl' : 'ltr'}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck="false"
+                    data-form-type="other"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-bwignore="true"
+                    data-dashlane-ignore="true"
+                    data-bitwarden-ignore="true"
+                    data-keeppass-ignore="true"
+                    data-keepass-ignore="true"
+                    data-roboform-ignore="true"
+                    data-enpass-ignore="true"
+                    data-nordpass-ignore="true"
+                    data-protonpass-ignore="true"
+                    data-ignore="true"
+                    data-save="false"
+                    data-saved="false"
+                    data-autofill="false"
+                    data-autocomplete="false"
+                    style={{ 
+                      // Inline styles required for text security feature
+                      WebkitTextSecurity: disablePasswordType === 'password' ? 'disc' : 'none',
+                      textSecurity: disablePasswordType === 'password' ? 'disc' : 'none'
+                    } as React.CSSProperties}
+                  />
+                </div>
                 {disablePasswordError && (
                   <p
-                    className={`text-red-500 dark:text-red-400 text-xs mt-1 ${
+                    className={`text-red-400 text-xs mt-1 ${
                       locale === 'ar' ? 'text-right' : 'text-left'
                     }`}
                   >
@@ -949,14 +1135,14 @@ export default function LoginSecurityPage() {
                     setDisablePassword('');
                     setDisablePasswordError('');
                   }}
-                  className="flex-1 px-4 py-3 bg-gray-100 dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm font-medium"
+                  className="flex-1 px-4 py-3 bg-white/10 border border-white/20 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm font-medium"
                   disabled={is2FALoading}
                 >
                   {t('account.loginSecurity.twoFactor.disableModal.cancel')}
                 </button>
                 <button
                   onClick={handleDisable2FA}
-                  className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm font-medium"
+                  className="flex-1 px-4 py-3 bg-white text-black rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm font-bold"
                   disabled={is2FALoading}
                 >
                   {is2FALoading
