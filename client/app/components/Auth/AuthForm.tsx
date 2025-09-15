@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
 import { LoadingPage } from '../LoadingPage';
+import { ParallaxImage } from '../ParallaxImage';
 
 interface ValidationErrors {
   name?: string; // Translation key
@@ -110,6 +110,7 @@ export function AuthForm() {
 
     return messageMap[message] || 'auth.messages.generalError';
   };
+
 
   // Redirect logged-in users
   useEffect(() => {
@@ -839,27 +840,13 @@ export function AuthForm() {
         </div>
       </div>
 
-      {/* Right side - Image */}
-      <div className="flex-1 lg:basis-1/2 relative hidden sm:block">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 to-pink-900/80 z-10"></div>
-        <Image
-          src="https://static.wixstatic.com/media/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg/v1/fill/w_918,h_585,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg"
-          alt={t('auth.hero.imageAlt')}
-          className="w-full h-full object-cover"
-          width={1000}
-          height={800}
-        />
-        <div className="auth-screen absolute inset-0 z-20 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8">
-          <div className="text-center text-white">
-            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 md:mb-4">
-              {t('auth.hero.title')}
-            </h1>
-            <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/80 max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md">
-              {t('auth.hero.subtitle')}
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Right side - Image with Parallax */}
+      <ParallaxImage
+        src="https://static.wixstatic.com/media/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg/v1/fill/w_918,h_585,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg"
+        alt={t('auth.hero.imageAlt')}
+        title={t('auth.hero.title')}
+        subtitle={t('auth.hero.subtitle')}
+      />
     </div>
   );
 }
