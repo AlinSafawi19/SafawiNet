@@ -145,9 +145,9 @@ export class SimpleTwoFactorService {
     this.logger.log(
       `2FA disabled for user ${user.email} - all sessions invalidated`,
     );
-    return { 
+    return {
       message: 'Two-factor authentication disabled successfully',
-      forceLogout: true
+      forceLogout: true,
     };
   }
 

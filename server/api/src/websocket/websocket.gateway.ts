@@ -85,7 +85,8 @@ interface RoomStates {
   namespace: '/auth',
 })
 export class AuthWebSocketGateway
-  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
+{
   @WebSocketServer()
   server!: Server;
 
@@ -98,7 +99,7 @@ export class AuthWebSocketGateway
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly offlineMessageService: OfflineMessageService,
-  ) { }
+  ) {}
 
   afterInit(server: Server) {
     this.logger.log('WebSocket Gateway initialized');
@@ -479,7 +480,7 @@ export class AuthWebSocketGateway
   }
 
   // Method to emit verification success to all sockets in a user's verification room
-  async emitVerificationSuccess(userId: string, userData: UserData) {
+  emitVerificationSuccess(userId: string, userData: UserData) {
     if (!this.server) {
       this.logger.error(
         'WebSocket server not initialized, cannot emit verification success',
@@ -507,7 +508,9 @@ export class AuthWebSocketGateway
       }
     } else {
       // No verification room - user is not connected via WebSocket
-      this.logger.log(`No verification room found for user ${userId} - user not connected via WebSocket`);
+      this.logger.log(
+        `No verification room found for user ${userId} - user not connected via WebSocket`,
+      );
     }
   }
 
@@ -547,13 +550,13 @@ export class AuthWebSocketGateway
         const payload:
           | VerificationSuccessPayload
           | VerificationSuccessWithTokensPayload = tokens
-            ? {
+          ? {
               success: true,
               user: userData,
               tokens: tokens,
               message: 'Email verified successfully! You are now logged in.',
             }
-            : {
+          : {
               success: true,
               user: userData,
               message: 'Email verified successfully! You are now logged in.',
@@ -846,7 +849,6 @@ export class AuthWebSocketGateway
       this.logger.error(`Failed to emit global logout:`, error);
     }
   }
-
 
   // Debug method to get current room states
   getRoomStates(): RoomStates {

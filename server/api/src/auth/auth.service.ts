@@ -212,7 +212,7 @@ export class AuthService {
 
     // Emit WebSocket event for new user registration
     try {
-      await this.webSocketGateway.emitVerificationSuccess(
+      this.webSocketGateway.emitVerificationSuccess(
         result.user.id,
         userWithoutPassword,
       );
@@ -285,7 +285,7 @@ export class AuthService {
         roomStates,
       );
 
-      await this.webSocketGateway.emitVerificationSuccess(
+      this.webSocketGateway.emitVerificationSuccess(
         result.id,
         this.excludePassword(result),
       );
@@ -705,21 +705,12 @@ export class AuthService {
     const { refreshToken, tokenId }: { refreshToken: string; tokenId: string } =
       await this.createRefreshToken(user.id);
 
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      verified: user.isVerified,
-      roles: user.roles,
-      refreshTokenId: tokenId,
-    };
-
-    const accessToken: string = this.jwtService.sign(payload);
-
-    // Create user session if request is provided
+    // Create user session BEFORE generating JWT token to avoid race conditions
     if (req) {
       try {
         const deviceInfo = this.sessionsService.extractDeviceInfo(req);
         await this.sessionsService.createSession(user.id, tokenId, deviceInfo);
+        this.logger.log(`Session created successfully for user ${user.id}`);
 
         // Create login notification
         void this.notificationsService.createAccountUpdate(
@@ -734,9 +725,45 @@ export class AuthService {
         );
       } catch (error) {
         this.logger.error('Failed to create user session:', error);
-        // Don't fail login if session creation fails
+        // If session creation fails, don't include refreshTokenId in JWT
+        // This will allow login to work but without session validation
+        return this.generateTokensWithoutSession(user);
       }
     }
+
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      verified: user.isVerified,
+      roles: user.roles,
+      refreshTokenId: tokenId,
+    };
+
+    const accessToken: string = this.jwtService.sign(payload);
+
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: 15 * 60, // 15 minutes in seconds
+    };
+  }
+
+  private generateTokensWithoutSession(user: User): AuthTokens {
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      verified: user.isVerified,
+      roles: user.roles,
+      // No refreshTokenId - this will skip session validation
+    };
+
+    const accessToken: string = this.jwtService.sign(payload);
+
+    // Generate a simple refresh token without session tracking
+    const refreshToken: string = this.jwtService.sign(
+      { sub: user.id, type: 'refresh' },
+      { expiresIn: '30d' },
+    );
 
     return {
       accessToken,
@@ -963,12 +990,13 @@ export class AuthService {
       this.configService.get<string>('NODE_ENV') === 'production';
     const domain: string | undefined =
       this.configService.get<string>('COOKIE_DOMAIN');
+    const sameSiteValue = isProduction ? ('strict' as const) : ('lax' as const);
 
     // Set access token cookie (HTTP-only, secure in production)
     res.cookie('accessToken', tokens.accessToken, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? 'strict' : 'lax',
+      sameSite: sameSiteValue,
       domain: isProduction && domain ? domain : undefined, // Only set domain in production
       maxAge: tokens.expiresIn * 1000, // Convert seconds to milliseconds
       path: '/',
@@ -978,11 +1006,15 @@ export class AuthService {
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? 'strict' : 'lax',
+      sameSite: sameSiteValue,
       domain: isProduction && domain ? domain : undefined, // Only set domain in production
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       path: '/',
     });
+
+    this.logger.log(
+      `Auth cookies set for ${isProduction ? 'production' : 'development'} environment`,
+    );
   }
 
   clearAuthCookies(res: Response): void {

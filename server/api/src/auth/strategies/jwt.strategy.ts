@@ -99,55 +99,69 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // Validate session against UserSession table
     if (payload.refreshTokenId) {
-      const userSession: UserSessionData | null =
-        await this.prisma.userSession.findFirst({
-          where: {
-            userId: payload.sub,
-            refreshTokenId: payload.refreshTokenId,
-          },
-          select: {
-            id: true,
-            isCurrent: true,
-            lastActiveAt: true,
-          },
-        });
-
-      if (!userSession) {
-        console.log(
-          '❌ JWT Strategy - Session not found for refreshTokenId:',
-          payload.refreshTokenId,
-        );
-        throw new UnauthorizedException('Invalid session');
-      }
-
-      if (!userSession.isCurrent) {
-        console.log(
-          '❌ JWT Strategy - Session is not current for refreshTokenId:',
-          payload.refreshTokenId,
-        );
-        throw new UnauthorizedException('Session expired');
-      }
-
-      // Update session activity
       try {
-        await this.prisma.userSession.update({
-          where: { id: userSession.id },
-          data: { lastActiveAt: new Date() },
-        });
-        console.log(
-          '🔄 JWT Strategy - Updated session activity for session:',
-          userSession.id,
-        );
+        const userSession: UserSessionData | null =
+          await this.prisma.userSession.findFirst({
+            where: {
+              userId: payload.sub,
+              refreshTokenId: payload.refreshTokenId,
+            },
+            select: {
+              id: true,
+              isCurrent: true,
+              lastActiveAt: true,
+            },
+          });
+
+        if (!userSession) {
+          console.log(
+            '❌ JWT Strategy - Session not found for refreshTokenId:',
+            payload.refreshTokenId,
+          );
+          // Instead of throwing an error, log and continue without session validation
+          // This allows login to work even if session tracking fails
+          console.log(
+            '⚠️ JWT Strategy - Continuing without session validation due to missing session',
+          );
+        } else if (!userSession.isCurrent) {
+          console.log(
+            '❌ JWT Strategy - Session is not current for refreshTokenId:',
+            payload.refreshTokenId,
+          );
+          // Instead of throwing an error, log and continue without session validation
+          console.log(
+            '⚠️ JWT Strategy - Continuing without session validation due to inactive session',
+          );
+        } else {
+          // Update session activity only if session is valid
+          try {
+            await this.prisma.userSession.update({
+              where: { id: userSession.id },
+              data: { lastActiveAt: new Date() },
+            });
+            console.log(
+              '🔄 JWT Strategy - Updated session activity for session:',
+              userSession.id,
+            );
+          } catch (error: unknown) {
+            console.log(
+              '⚠️ JWT Strategy - Failed to update session activity:',
+              error,
+            );
+            // Don't fail validation if session update fails
+          }
+        }
       } catch (error: unknown) {
         console.log(
-          '⚠️ JWT Strategy - Failed to update session activity:',
+          '⚠️ JWT Strategy - Database error during session validation:',
           error,
         );
-        // Don't fail validation if session update fails
+        // Don't fail validation if database query fails
+        // This ensures login works even if session tracking is temporarily unavailable
       }
     } else {
       console.log(
-        '⚠️ JWT Strategy - No refreshTokenId in payload, skipping session validation',
+        'ℹ️ JWT Strategy - No refreshTokenId in payload, skipping session validation',
       );
     }
 

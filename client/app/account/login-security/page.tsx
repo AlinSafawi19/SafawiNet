@@ -236,7 +236,7 @@ export default function LoginSecurityPage() {
           window.location.href = '/auth';
           return;
         }
-        
+
         setPasswordSuccessKey('account.loginSecurity.password.success');
         setPasswordSuccessMessage('');
         setPasswordError('');
@@ -369,7 +369,7 @@ export default function LoginSecurityPage() {
       if (response.ok) {
         setShowDisableModal(false);
         setDisablePassword('');
-        
+
         // Check if force logout is required
         if (data.forceLogout) {
           // Force logout immediately
@@ -377,7 +377,7 @@ export default function LoginSecurityPage() {
           window.location.href = '/auth';
           return;
         }
-        
+
         // Refresh user data to get updated 2FA status without reloading page
         const userResponse = await fetch(buildApiUrl('/users/me'), {
           method: 'GET',

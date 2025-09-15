@@ -102,10 +102,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const refreshToken = useCallback(async (): Promise<boolean> => {
     // Prevent multiple simultaneous refresh attempts
     if (isRefreshing) {
+      console.log('🔄 AuthContext - Refresh already in progress, skipping');
       return false;
     }
 
     try {
+      console.log('🔄 AuthContext - Starting token refresh');
       setIsRefreshing(true);
       const response = await fetch(
         buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.REFRESH),
@@ -118,24 +120,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       );
 
+      console.log('🔄 AuthContext - Refresh response status:', response.status);
+
       if (response.ok) {
+        console.log('🔄 AuthContext - Token refreshed successfully');
         // Token refreshed successfully, but don't call /users/me again
         // The user will remain in their current state, and the next API call
         // will use the refreshed token automatically
         return true;
       } else if (response.status === 400) {
+        console.log(
+          '🔄 AuthContext - 400 response (no refresh token available)'
+        );
         // This is normal for new visitors with no refresh token
         // 400 responses won't show as errors in console for better UX
-        setUser(null);
+        // Don't set user to null immediately - let the next auth check handle it
         return false;
       } else {
+        console.log(
+          '🔄 AuthContext - Refresh failed with status:',
+          response.status
+        );
         // Only log actual errors (not 400s)
-        setUser(null);
+        // Don't set user to null immediately - let the next auth check handle it
         return false;
       }
     } catch (error) {
+      console.error('🔄 AuthContext - Refresh error:', error);
       // Only log actual network/technical errors
-      setUser(null);
+      // Don't set user to null immediately - let the next auth check handle it
       return false;
     } finally {
       setIsRefreshing(false);
@@ -267,14 +280,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Mark all messages as processed
           try {
             const messageIds = data.messages.map((msg: any) => msg.id);
-            await fetch(buildApiUrl('/v1/auth/offline-messages/mark-processed'), {
-              method: 'POST',
-              credentials: 'include',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ messageIds }),
-            });
+            await fetch(
+              buildApiUrl('/v1/auth/offline-messages/mark-processed'),
+              {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ messageIds }),
+              }
+            );
             console.log('✅ Offline messages marked as processed');
           } catch (error) {
             console.error(
@@ -291,7 +307,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('❌ Error checking offline messages:', error);
     }
-  }, [loginWithTokens, handleForceLogout]);
+  }, [handleForceLogout]);
 
   const checkAuthStatus = useCallback(async () => {
     // Prevent multiple calls during initialization to avoid duplicate API calls
@@ -340,6 +356,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return;
         }
 
+        console.log('🔍 Setting user state in checkAuthStatus:', finalUserData);
         setUser(finalUserData);
 
         // Check for offline messages after successful authentication
@@ -359,8 +376,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
           setUser(null);
         }
+      } else if (response.status === 403) {
+        // Forbidden - user might be logged out due to session issues
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔍 403 response, user session may be invalid');
+        }
+        setUser(null);
       } else {
-        // Only log actual errors (not 401s)
+        // Only log actual errors (not 401s or 403s)
         if (process.env.NODE_ENV === 'development') {
           console.log('🔍 Unexpected response status:', response.status);
         }
@@ -391,6 +414,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user?: User;
   }> => {
     try {
+      console.log('🔐 AuthContext - Starting login process for:', email);
+
       const response = await fetch(
         buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN),
         {
@@ -403,8 +428,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       );
 
+      console.log('🔐 AuthContext - Login response status:', response.status);
+      console.log('🔐 AuthContext - Login response ok:', response.ok);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('🔐 AuthContext - Login response data:', data);
+
         const {
           user: userData,
           requiresTwoFactor,
@@ -413,6 +443,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Check if user is verified before setting login state
         if (requiresVerification) {
+          console.log('🔐 AuthContext - User requires verification');
           // User is not verified, don't set login state
           return {
             success: false,
@@ -423,6 +454,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Check if 2FA is required
         if (requiresTwoFactor) {
+          console.log('🔐 AuthContext - User requires 2FA');
           // User needs to enter 2FA code
           return {
             success: false,
@@ -432,6 +464,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           } as any;
         }
 
+        console.log('🔐 AuthContext - Setting user state:', userData);
         // User is verified and no 2FA required, set login state
         setUser(userData);
 
@@ -440,9 +473,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           checkOfflineMessages();
         }, 1000); // Small delay to ensure user state is set
 
+        console.log('🔐 AuthContext - Login successful, returning success');
         return { success: true, user: userData };
       } else {
         const errorData = await response.json();
+        console.log('🔐 AuthContext - Login failed with error:', errorData);
         // Map server error messages to translation keys
         const messageKey = mapServerErrorToTranslationKey(errorData.message);
         return {
@@ -452,6 +487,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
       }
     } catch (error) {
+      console.error('🔐 AuthContext - Login error:', error);
       return {
         success: false,
         messageKey: 'auth.messages.generalError',
@@ -1138,14 +1174,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     if (!user) return;
 
+    console.log(
+      '⏰ AuthContext - Setting up automatic refresh timer for user:',
+      user.email
+    );
+
     // Refresh token every 14 minutes (assuming 15-minute token lifetime)
     const refreshInterval = setInterval(async () => {
       if (user) {
+        console.log(
+          '⏰ AuthContext - Automatic refresh triggered for user:',
+          user.email
+        );
         await autoRefreshToken();
       }
     }, 14 * 60 * 1000); // 14 minutes
 
-    return () => clearInterval(refreshInterval);
+    return () => {
+      console.log('⏰ AuthContext - Clearing refresh timer');
+      clearInterval(refreshInterval);
+    };
   }, [user, autoRefreshToken]);
 
   const updateUser = useCallback((updatedUser: User) => {
