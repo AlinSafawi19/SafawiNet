@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { LoadingPage } from '../../components/LoadingPage';
 import { useLanguage } from '../../contexts/LanguageContext';
 import {
   Breadcrumb,
-  generateBreadcrumbItems,
+  useBreadcrumbItems,
 } from '../../components/Breadcrumb';
 import { HiUser, HiEnvelope } from 'react-icons/hi2';
 
@@ -16,7 +16,7 @@ interface ValidationErrors {
 }
 
 export default function AccountInformationPage() {
-  const { user, isLoading, updateUser } = useAuth();
+  const { user, isLoading, updateUser, authenticatedFetch } = useAuth();
   const { t, locale } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
@@ -37,17 +37,26 @@ export default function AccountInformationPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorKey, setErrorKey] = useState('');
   const [successKey, setSuccessKey] = useState('');
-  const hasInitialized = useRef(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize form data only once when user first loads
+  // Show page immediately, don't wait for auth loading
   useEffect(() => {
-    if (user && !hasInitialized.current) {
+    const startTime = performance.now();
+    console.log('🚀 Profile Settings: Component mounting at', startTime);
+    
+    const endTime = performance.now();
+    console.log('🚀 Profile Settings: Page showing after', endTime - startTime, 'ms');
+  }, []);
+
+  // Initialize form data when user becomes available
+  useEffect(() => {
+    if (user && !isInitialized) {
       setFormData({
         name: user.name || '',
       });
-      hasInitialized.current = true;
+      setIsInitialized(true);
     }
-  }, [user]); // Depend on user object
+  }, [user, isInitialized]);
 
   useEffect(() => {
     // Redirect unauthenticated users to login
@@ -56,18 +65,8 @@ export default function AccountInformationPage() {
     }
   }, [user, isLoading, router]);
 
-  // Show loading page while checking authentication
-  if (isLoading) {
-    return <LoadingPage />;
-  }
-
-  // Don't render anything if user is not authenticated (will redirect)
-  if (!user) {
-    return null;
-  }
-
-  // Validation functions
-  const validateName = (name: string): string | undefined => {
+  // Validation functions - memoized for performance
+  const validateName = useCallback((name: string): string | undefined => {
     if (!name.trim()) {
       return 'account.validation.nameRequired';
     }
@@ -75,10 +74,10 @@ export default function AccountInformationPage() {
       return 'account.validation.nameTooLong';
     }
     return undefined;
-  };
+  }, []);
 
   // Validate all fields
-  const validateForm = (): boolean => {
+  const validateForm = useCallback((): boolean => {
     const errors: ValidationErrors = {};
 
     const nameError = validateName(formData.name);
@@ -86,10 +85,10 @@ export default function AccountInformationPage() {
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
-  };
+  }, [formData.name, validateName]);
 
   // Validate single field
-  const validateField = (name: string, value: string) => {
+  const validateField = useCallback((name: string, value: string) => {
     let error: string | undefined;
 
     switch (name) {
@@ -102,10 +101,10 @@ export default function AccountInformationPage() {
       ...prev,
       [name]: error,
     }));
-  };
+  }, [validateName]);
 
-  // Handle form data changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle form data changes - memoized for performance
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -119,20 +118,20 @@ export default function AccountInformationPage() {
         [name]: undefined,
       }));
     }
-  };
+  }, [validationErrors]);
 
-  // Handle field blur for validation
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  // Handle field blur for validation - memoized for performance
+  const handleBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setTouched((prev) => ({
       ...prev,
       [name]: true,
     }));
     validateField(name, value);
-  };
+  }, [validateField]);
 
-  // Get input class based on validation state
-  const getInputClass = (fieldName: keyof ValidationErrors) => {
+  // Get input class based on validation state - memoized for performance
+  const getInputClass = useCallback((fieldName: keyof ValidationErrors) => {
     const hasError = touched[fieldName] && validationErrors[fieldName];
     const baseClasses =
       'w-full px-4 py-3 rounded-lg text-white focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
@@ -142,7 +141,65 @@ export default function AccountInformationPage() {
       : 'bg-white/10 border border-white/20 placeholder-white/50 focus:border-purple-500';
 
     return `${baseClasses} ${alignmentClasses} ${errorClasses}`;
-  };
+  }, [touched, validationErrors, locale]);
+
+  // Generate breadcrumb items - must be called before any conditional returns
+  const breadcrumbItems = useBreadcrumbItems(pathname, t, locale);
+
+  // Show skeleton while form initializes - don't wait for user data
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen account-bg">
+        <div className="p-4 sm:p-6 lg:p-8 xl:p-12">
+          <div className="account max-w-4xl mx-auto">
+            {/* Breadcrumb Skeleton */}
+            <div className="mb-6">
+              <div className="h-4 bg-white/20 rounded w-48 animate-pulse"></div>
+            </div>
+
+            {/* Title Skeleton */}
+            <div className="mb-3">
+              <div className="h-8 bg-white/20 rounded w-64 animate-pulse"></div>
+            </div>
+            <div className="mb-8">
+              <div className="h-4 bg-white/20 rounded w-96 animate-pulse"></div>
+            </div>
+
+            {/* Form Skeleton */}
+            <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6 sm:p-8 border border-white/10 shadow-none">
+              <div className="space-y-6">
+                <div>
+                  <div className="h-4 bg-white/20 rounded w-24 mb-2 animate-pulse"></div>
+                  <div className="h-12 bg-white/20 rounded animate-pulse"></div>
+                </div>
+                <div className="pt-4">
+                  <div className="h-12 bg-white/20 rounded animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading only if auth is still loading and we don't have user data
+  if (isLoading && !user) {
+    return (
+      <div className="min-h-screen account-bg flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white/70">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render anything if user is not authenticated (will redirect)
+  if (!user) {
+    return null;
+  }
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,7 +221,7 @@ export default function AccountInformationPage() {
     }
 
     try {
-      const response = await fetch('/api/users', {
+      const response = await authenticatedFetch('/api/users', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -222,7 +279,7 @@ export default function AccountInformationPage() {
               locale === 'ar' ? 'text-right flex justify-end' : 'text-left'
             }`}
           >
-            <Breadcrumb items={generateBreadcrumbItems(pathname, t, locale)} />
+            <Breadcrumb items={breadcrumbItems} />
           </div>
 
           <h1

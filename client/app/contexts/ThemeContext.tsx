@@ -41,6 +41,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Initialize theme from user preferences or localStorage
   useEffect(() => {
+    // Set loading to false immediately for better performance
+    setIsLoading(false);
+    
     const savedTheme = localStorage.getItem('theme') as Theme;
     if (
       user?.preferences?.theme &&
@@ -49,11 +52,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       setThemeState(user.preferences.theme as Theme);
     } else if (savedTheme && ['light', 'dark'].includes(savedTheme)) {
       setThemeState(savedTheme);
-    }
-    // Set loading to false when we have user data or when auth is not loading
-    // user can be null (not authenticated) but auth context is loaded
-    if (user !== undefined) {
-      setIsLoading(false);
     }
   }, [user?.preferences?.theme, user]);
 

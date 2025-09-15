@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { LoadingPage } from '../../components/LoadingPage';
@@ -58,41 +58,19 @@ export default function LoginSecurityPage() {
   const [disablePasswordType, setDisablePasswordType] = useState<'text' | 'password'>('text');
   const [currentPasswordValue, setCurrentPasswordValue] = useState('');
   const [disablePasswordValue, setDisablePasswordValue] = useState('');
+  const [isPageLoading, setIsPageLoading] = useState(true);
 
   useEffect(() => {
     // Redirect unauthenticated users to login
     if (!isLoading && !user) {
       router.push('/auth');
+    } else if (!isLoading && user) {
+      // Page is ready to render
+      setIsPageLoading(false);
     }
   }, [user, isLoading, router]);
 
-  // Effect to prevent auto-fill by clearing fields periodically
-  useEffect(() => {
-    const preventAutoFill = () => {
-      // Clear any auto-filled values in password fields
-      if (passwordFormData.currentPassword && passwordFormData.currentPassword.length > 0) {
-        // Check if the value was auto-filled (common patterns)
-        const commonPasswords = ['password', '123456', 'admin', 'test'];
-        if (commonPasswords.includes(passwordFormData.currentPassword.toLowerCase())) {
-          setPasswordFormData(prev => ({ ...prev, currentPassword: '' }));
-          setCurrentPasswordValue('');
-        }
-      }
-      
-      if (disablePassword && disablePassword.length > 0) {
-        const commonPasswords = ['password', '123456', 'admin', 'test'];
-        if (commonPasswords.includes(disablePassword.toLowerCase())) {
-          setDisablePassword('');
-          setDisablePasswordValue('');
-        }
-      }
-    };
-
-    const interval = setInterval(preventAutoFill, 500);
-    return () => clearInterval(interval);
-  }, [passwordFormData.currentPassword, disablePassword]);
-
-  // Additional effect to clear fields on focus if they contain auto-filled content
+  // Optimized auto-fill prevention - only on focus, no intervals
   useEffect(() => {
     const handleFocus = (e: FocusEvent) => {
       const target = e.target as HTMLInputElement;
@@ -116,25 +94,15 @@ export default function LoginSecurityPage() {
     return () => document.removeEventListener('focusin', handleFocus);
   }, []);
 
-  // Show loading page while checking authentication
-  if (isLoading) {
-    return <LoadingPage />;
-  }
-
-  // Don't render anything if user is not authenticated (will redirect)
-  if (!user) {
-    return null;
-  }
-
-  // Password validation functions
-  const validateCurrentPassword = (password: string): string | undefined => {
+  // Password validation functions - memoized for performance
+  const validateCurrentPassword = useCallback((password: string): string | undefined => {
     if (!password.trim()) {
       return 'account.loginSecurity.password.currentPasswordRequired';
     }
     return undefined;
-  };
+  }, []);
 
-  const validateNewPassword = (password: string): string | undefined => {
+  const validateNewPassword = useCallback((password: string): string | undefined => {
     if (!password.trim()) {
       return 'account.loginSecurity.password.newPasswordRequired';
     }
@@ -142,9 +110,9 @@ export default function LoginSecurityPage() {
       return 'account.loginSecurity.password.passwordTooShort';
     }
     return undefined;
-  };
+  }, []);
 
-  const validateConfirmNewPassword = (
+  const validateConfirmNewPassword = useCallback((
     password: string,
     confirmPassword: string
   ): string | undefined => {
@@ -155,10 +123,10 @@ export default function LoginSecurityPage() {
       return 'account.loginSecurity.password.passwordsDoNotMatch';
     }
     return undefined;
-  };
+  }, []);
 
-  // Validate all password fields
-  const validatePasswordForm = (): boolean => {
+  // Validate all password fields - memoized
+  const validatePasswordForm = useCallback((): boolean => {
     const errors: ValidationErrors = {};
 
     const currentPasswordError = validateCurrentPassword(
@@ -177,10 +145,10 @@ export default function LoginSecurityPage() {
 
     setPasswordValidationErrors(errors);
     return Object.keys(errors).length === 0;
-  };
+  }, [passwordFormData, validateCurrentPassword, validateNewPassword, validateConfirmNewPassword]);
 
-  // Validate single password field
-  const validatePasswordField = (name: string, value: string) => {
+  // Validate single password field - memoized
+  const validatePasswordField = useCallback((name: string, value: string) => {
     let error: string | undefined;
 
     switch (name) {
@@ -199,10 +167,10 @@ export default function LoginSecurityPage() {
       ...prev,
       [name]: error,
     }));
-  };
+  }, [passwordFormData.newPassword, validateCurrentPassword, validateNewPassword, validateConfirmNewPassword]);
 
-  // Handle password form data changes
-  const handlePasswordInputChange = (
+  // Handle password form data changes - memoized
+  const handlePasswordInputChange = useCallback((
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { name, value } = e.target;
@@ -218,20 +186,20 @@ export default function LoginSecurityPage() {
         [name]: undefined,
       }));
     }
-  };
+  }, [passwordValidationErrors]);
 
-  // Handle password field blur for validation
-  const handlePasswordBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  // Handle password field blur for validation - memoized
+  const handlePasswordBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPasswordTouched((prev) => ({
       ...prev,
       [name]: true,
     }));
     validatePasswordField(name, value);
-  };
+  }, [validatePasswordField]);
 
-  // Get password input class based on validation state
-  const getPasswordInputClass = (fieldName: keyof ValidationErrors) => {
+  // Get password input class based on validation state - memoized
+  const getPasswordInputClass = useCallback((fieldName: keyof ValidationErrors) => {
     const hasError =
       passwordTouched[fieldName] && passwordValidationErrors[fieldName];
     const baseClasses =
@@ -242,7 +210,31 @@ export default function LoginSecurityPage() {
       : 'bg-white/10 border border-white/20 placeholder-white/50 focus:border-purple-500';
 
     return `${baseClasses} ${alignmentClasses} ${errorClasses}`;
-  };
+  }, [passwordTouched, passwordValidationErrors, locale]);
+
+  // Memoize tabs to prevent unnecessary re-renders
+  const tabs = useMemo(() => [
+    {
+      id: 'password' as const,
+      label: t('account.loginSecurity.tabs.password'),
+      icon: HiLockClosed,
+    },
+    {
+      id: 'twoFactor' as const,
+      label: t('account.loginSecurity.tabs.twoFactor'),
+      icon: HiShieldCheck,
+    },
+  ], [t]);
+
+  // Show loading page while checking authentication or page is loading
+  if (isLoading || isPageLoading) {
+    return <LoadingPage />;
+  }
+
+  // Don't render anything if user is not authenticated (will redirect)
+  if (!user) {
+    return null;
+  }
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -454,19 +446,6 @@ export default function LoginSecurityPage() {
       setIs2FALoading(false);
     }
   };
-
-  const tabs = [
-    {
-      id: 'password' as const,
-      label: t('account.loginSecurity.tabs.password'),
-      icon: HiLockClosed,
-    },
-    {
-      id: 'twoFactor' as const,
-      label: t('account.loginSecurity.tabs.twoFactor'),
-      icon: HiShieldCheck,
-    },
-  ];
 
   return (
     <div className="min-h-screen account-bg">

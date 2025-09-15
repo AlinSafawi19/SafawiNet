@@ -22,8 +22,8 @@ import ThemeToggle from '../ThemeToggle';
 import LanguageToggle from './LanguageToggle';
 
 const Header = () => {
-  const { user, logout } = useAuth();
-  const { locale, t } = useLanguage();
+  const { user, logout, isLoading: isAuthLoading } = useAuth();
+  const { locale, t, isLoading: isLanguageLoading } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -219,7 +219,9 @@ const Header = () => {
               <LanguageToggle />
 
               {/* Login/Register or User Dropdown - Now inside the nav with proper spacing */}
-              {user ? (
+              {isAuthLoading ? (
+                <div className="w-20 h-6 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
+              ) : user ? (
                 <UserDropdown user={user} />
               ) : (
                 <Link
@@ -234,7 +236,9 @@ const Header = () => {
 
             {/* Mobile Auth Section - Show Login/Register or User Dropdown next to menu button */}
             <div className="lg-tablet:hidden flex items-center space-x-2">
-              {user ? (
+              {isAuthLoading ? (
+                <div className="w-16 h-6 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
+              ) : user ? (
                 <UserDropdown user={user} />
               ) : (
                 <Link
@@ -471,7 +475,9 @@ const Header = () => {
                 }`}
               >
                 <div className="flex flex-col items-center space-y-4">
-                  {user ? (
+                  {isAuthLoading ? (
+                    <div className="w-32 h-10 bg-white/20 rounded-full animate-pulse"></div>
+                  ) : user ? (
                     <div className="flex flex-col items-center space-y-3">
                       <div className="flex items-center text-white max-w-xs">
                         <span className="text-white font-medium truncate" title={user.name}>

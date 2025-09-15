@@ -62,6 +62,9 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
 
   // Initialize locale from user preferences or localStorage
   useEffect(() => {
+    // Set loading to false immediately for better performance
+    setIsLoading(false);
+    
     if (user?.preferences?.language) {
       setLocaleState(user.preferences.language as Locale);
     } else {
@@ -69,11 +72,6 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
       if (savedLocale && ['en', 'ar'].includes(savedLocale)) {
         setLocaleState(savedLocale);
       }
-    }
-    // Set loading to false when we have user data or when auth is not loading
-    // user can be null (not authenticated) but auth context is loaded
-    if (user !== undefined) {
-      setIsLoading(false);
     }
   }, [user]);
 

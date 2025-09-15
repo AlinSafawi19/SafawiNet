@@ -359,10 +359,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('🔍 Setting user state in checkAuthStatus:', finalUserData);
         setUser(finalUserData);
 
-        // Check for offline messages after successful authentication
+        // Check for offline messages after successful authentication - defer to avoid blocking
         setTimeout(() => {
           checkOfflineMessages();
-        }, 1000); // Small delay to ensure user state is set
+        }, 2000); // Increased delay to not block initial render
       } else if (response.status === 401) {
         // Token might be expired, try to refresh it silently
         if (process.env.NODE_ENV === 'development') {
@@ -941,17 +941,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Add event listeners
 
-    // Set up WebSocket listener for pending verification rooms
-    import('../services/socket.service').then(
-      async ({ initializeSocketService }) => {
-        console.log(
-          '🌐 Setting up global socket listener for pending verification rooms...'
-        );
-        const socketService = await initializeSocketService();
-        console.log(
-          '🌐 Socket service initialized for global listener, connecting...'
-        );
+    // Lazy load socket service only when needed - defer to avoid blocking initial render
+    const initializeSocketService = async () => {
+      // Only initialize socket service after a delay to not block initial page load
+      setTimeout(async () => {
         try {
+          const { initializeSocketService } = await import('../services/socket.service');
+          console.log(
+            '🌐 Setting up global socket listener for pending verification rooms...'
+          );
+          const socketService = await initializeSocketService();
+          console.log(
+            '🌐 Socket service initialized for global listener, connecting...'
+          );
+          
           // Connect anonymously to listen for verification events
           await socketService.connect();
           console.log(
@@ -966,201 +969,203 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           socketService.on('disconnect', () => {
             console.log('🌐 Global socket disconnected');
           });
-        } catch (error) {
-          console.error('❌ Failed to connect global socket:', error);
-          return;
-        }
 
-        // Listen for email verification events in pending rooms
-        socketService.on('emailVerified', async (data: any) => {
-          console.log('🔔 Socket received emailVerified event:', data);
-          console.log('🔔 Current user state before processing:', user);
-          console.log(
-            '🔔 Socket connection state:',
-            socketService.isSocketConnected()
-          );
-
-          if (data.success && data.user) {
-            // Check if we have tokens in the data
-            if (data.tokens) {
-              console.log('🔑 Tokens received, attempting login...');
-              console.log('🔑 Token data:', {
-                accessToken: data.tokens.accessToken ? 'PRESENT' : 'MISSING',
-                refreshToken: data.tokens.refreshToken ? 'PRESENT' : 'MISSING',
-                expiresIn: data.tokens.expiresIn,
-              });
-              try {
-                const loginResult = await loginWithTokens(data.tokens);
-                if (loginResult.success) {
-                  console.log(
-                    '✅ User successfully logged in via pending verification room'
-                  );
-                } else {
-                  console.log(
-                    '❌ Failed to login with tokens:',
-                    loginResult.message
-                  );
-                }
-              } catch (error) {
-                console.error('❌ Error during token-based login:', error);
-              }
-            } else {
-              console.log('⚠️ No tokens received, setting user state only');
-              // Only set user if they are verified
-              if (data.user.isVerified) {
-                setUser(data.user);
-                console.log('✅ User state updated with verified user');
-              } else {
-                console.log('❌ User not verified, not setting login state');
-                // User not verified, don't set login state
-                return;
-              }
-            }
-
-            // Check if user was on auth page or verify-email page and redirect based on role
-            const currentPath = window.location.pathname;
-            console.log('📍 Current path:', currentPath);
-            if (
-              currentPath === '/auth' ||
-              currentPath.startsWith('/auth/') ||
-              currentPath === '/verify-email'
-            ) {
-              console.log('🔄 Scheduling redirect in 2 seconds...');
-              setTimeout(() => {
-                if (
-                  data.user &&
-                  data.user.isVerified &&
-                  data.user.roles &&
-                  data.user.roles.includes('ADMIN')
-                ) {
-                  console.log('👑 Redirecting admin to /admin');
-                  window.location.href = '/admin';
-                } else if (data.user && data.user.isVerified) {
-                  console.log('🏠 Redirecting user to /');
-                  window.location.href = '/';
-                }
-                // If user is not verified, stay on current page
-              }, 2000);
-            } else {
-              console.log(
-                'ℹ️ Not on auth/verify-email page, no redirect needed'
-              );
-            }
-          } else {
-            // Email verification event received but data is invalid
-          }
-        });
-
-        // Auto-join pending verification rooms for users on auth page
-        const currentPath = window.location.pathname;
-        if (currentPath === '/auth' || currentPath.startsWith('/auth/')) {
-          console.log(
-            '🔍 On auth page, setting up auto-join for pending verification rooms...'
-          );
-
-          // Listen for email input changes to auto-join pending verification rooms
-          const setupEmailListener = () => {
-            const emailInputs = document.querySelectorAll(
-              'input[type="text"][name="email"]'
+          // Listen for email verification events in pending rooms
+          socketService.on('emailVerified', async (data: any) => {
+            console.log('🔔 Socket received emailVerified event:', data);
+            console.log('🔔 Current user state before processing:', user);
+            console.log(
+              '🔔 Socket connection state:',
+              socketService.isSocketConnected()
             );
-            emailInputs.forEach((input) => {
-              const emailInput = input as HTMLInputElement;
-              if (emailInput && !emailInput.dataset.pendingRoomListener) {
-                emailInput.dataset.pendingRoomListener = 'true';
 
-                const handleEmailChange = async () => {
-                  const email = emailInput.value?.trim().toLowerCase();
-                  if (email && email.includes('@') && email.includes('.')) {
+            if (data.success && data.user) {
+              // Check if we have tokens in the data
+              if (data.tokens) {
+                console.log('🔑 Tokens received, attempting login...');
+                console.log('🔑 Token data:', {
+                  accessToken: data.tokens.accessToken ? 'PRESENT' : 'MISSING',
+                  refreshToken: data.tokens.refreshToken ? 'PRESENT' : 'MISSING',
+                  expiresIn: data.tokens.expiresIn,
+                });
+                try {
+                  const loginResult = await loginWithTokens(data.tokens);
+                  if (loginResult.success) {
                     console.log(
-                      '📧 Email entered on auth page, joining pending verification room for:',
-                      email
+                      '✅ User successfully logged in via pending verification room'
                     );
-                    try {
-                      await socketService.joinPendingVerificationRoom(email);
+                  } else {
+                    console.log(
+                      '❌ Failed to login with tokens:',
+                      loginResult.message
+                    );
+                  }
+                } catch (error) {
+                  console.error('❌ Error during token-based login:', error);
+                }
+              } else {
+                console.log('⚠️ No tokens received, setting user state only');
+                // Only set user if they are verified
+                if (data.user.isVerified) {
+                  setUser(data.user);
+                  console.log('✅ User state updated with verified user');
+                } else {
+                  console.log('❌ User not verified, not setting login state');
+                  // User not verified, don't set login state
+                  return;
+                }
+              }
+
+              // Check if user was on auth page or verify-email page and redirect based on role
+              const currentPath = window.location.pathname;
+              console.log('📍 Current path:', currentPath);
+              if (
+                currentPath === '/auth' ||
+                currentPath.startsWith('/auth/') ||
+                currentPath === '/verify-email'
+              ) {
+                console.log('🔄 Scheduling redirect in 2 seconds...');
+                setTimeout(() => {
+                  if (
+                    data.user &&
+                    data.user.isVerified &&
+                    data.user.roles &&
+                    data.user.roles.includes('ADMIN')
+                  ) {
+                    console.log('👑 Redirecting admin to /admin');
+                    window.location.href = '/admin';
+                  } else if (data.user && data.user.isVerified) {
+                    console.log('🏠 Redirecting user to /');
+                    window.location.href = '/';
+                  }
+                  // If user is not verified, stay on current page
+                }, 2000);
+              } else {
+                console.log(
+                  'ℹ️ Not on auth/verify-email page, no redirect needed'
+                );
+              }
+            } else {
+              // Email verification event received but data is invalid
+            }
+          });
+
+          // Auto-join pending verification rooms for users on auth page
+          const currentPath = window.location.pathname;
+          if (currentPath === '/auth' || currentPath.startsWith('/auth/')) {
+            console.log(
+              '🔍 On auth page, setting up auto-join for pending verification rooms...'
+            );
+
+            // Listen for email input changes to auto-join pending verification rooms
+            const setupEmailListener = () => {
+              const emailInputs = document.querySelectorAll(
+                'input[type="text"][name="email"]'
+              );
+              emailInputs.forEach((input) => {
+                const emailInput = input as HTMLInputElement;
+                if (emailInput && !emailInput.dataset.pendingRoomListener) {
+                  emailInput.dataset.pendingRoomListener = 'true';
+
+                  const handleEmailChange = async () => {
+                    const email = emailInput.value?.trim().toLowerCase();
+                    if (email && email.includes('@') && email.includes('.')) {
                       console.log(
-                        '✅ Successfully joined pending verification room for:',
+                        '📧 Email entered on auth page, joining pending verification room for:',
                         email
                       );
-                    } catch (error) {
-                      console.error(
-                        '❌ Failed to join pending verification room:',
-                        error
-                      );
+                      try {
+                        await socketService.joinPendingVerificationRoom(email);
+                        console.log(
+                          '✅ Successfully joined pending verification room for:',
+                          email
+                        );
+                      } catch (error) {
+                        console.error(
+                          '❌ Failed to join pending verification room:',
+                          error
+                        );
+                      }
                     }
+                  };
+
+                  // Join room on input change (with debounce)
+                  let timeoutId: NodeJS.Timeout;
+                  emailInput.addEventListener('input', () => {
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(handleEmailChange, 1000); // 1 second debounce
+                  });
+
+                  // Also join immediately if email is already filled
+                  if (emailInput.value?.trim()) {
+                    handleEmailChange();
                   }
-                };
-
-                // Join room on input change (with debounce)
-                let timeoutId: NodeJS.Timeout;
-                emailInput.addEventListener('input', () => {
-                  clearTimeout(timeoutId);
-                  timeoutId = setTimeout(handleEmailChange, 1000); // 1 second debounce
-                });
-
-                // Also join immediately if email is already filled
-                if (emailInput.value?.trim()) {
-                  handleEmailChange();
                 }
-              }
-            });
-          };
+              });
+            };
 
-          // Set up listener immediately and also on DOM changes
-          setupEmailListener();
-
-          // Use MutationObserver to catch dynamically added email inputs
-          const observer = new MutationObserver(() => {
+            // Set up listener immediately and also on DOM changes
             setupEmailListener();
-          });
 
-          observer.observe(document.body, {
-            childList: true,
-            subtree: true,
-          });
-        }
+            // Use MutationObserver to catch dynamically added email inputs
+            const observer = new MutationObserver(() => {
+              setupEmailListener();
+            });
 
-        // Test if the connection is working
-
-        // Test if we can receive any events
-        socketService.on('connect', () => {
-          console.log('🔌 WebSocket connected in AuthContext');
-        });
-
-        socketService.on('disconnect', () => {
-          console.log('🔌 WebSocket disconnected in AuthContext');
-        });
-
-        // Test if we can receive the pending verification room joined event
-        socketService.on('pendingVerificationRoomJoined', (data: any) => {
-          // Pending verification room joined event received
-        });
-
-        // Listen for force logout events (password change/reset)
-        socketService.on('forceLogout', async (data: any) => {
-          console.log('🚪 Force logout event received via socket:', data);
-
-          // Use existing logout function
-          await logout();
-
-          // Redirect to login page
-          window.location.href = '/auth';
-        });
-
-        // Also listen for custom force logout events (for timing issues)
-        window.addEventListener('forceLogout', handleForceLogout);
-
-        // Test WebSocket communication by emitting a test event
-        setTimeout(() => {
-          if (socketService.isSocketConnected()) {
-            // Try to emit a test event to see if the connection is working
-            const socket = socketService.getSocket();
-            if (socket) {
-              socket.emit('test', { message: 'Testing WebSocket connection' });
-            }
+            observer.observe(document.body, {
+              childList: true,
+              subtree: true,
+            });
           }
-        }, 2000);
-      }
-    );
+
+          // Test if the connection is working
+
+          // Test if we can receive any events
+          socketService.on('connect', () => {
+            console.log('🔌 WebSocket connected in AuthContext');
+          });
+
+          socketService.on('disconnect', () => {
+            console.log('🔌 WebSocket disconnected in AuthContext');
+          });
+
+          // Test if we can receive the pending verification room joined event
+          socketService.on('pendingVerificationRoomJoined', (data: any) => {
+            // Pending verification room joined event received
+          });
+
+          // Listen for force logout events (password change/reset)
+          socketService.on('forceLogout', async (data: any) => {
+            console.log('🚪 Force logout event received via socket:', data);
+
+            // Use existing logout function
+            await logout();
+
+            // Redirect to login page
+            window.location.href = '/auth';
+          });
+
+          // Also listen for custom force logout events (for timing issues)
+          window.addEventListener('forceLogout', handleForceLogout);
+
+          // Test WebSocket communication by emitting a test event
+          setTimeout(() => {
+            if (socketService.isSocketConnected()) {
+              // Try to emit a test event to see if the connection is working
+              const socket = socketService.getSocket();
+              if (socket) {
+                socket.emit('test', { message: 'Testing WebSocket connection' });
+              }
+            }
+          }, 2000);
+        } catch (error) {
+          console.error('❌ Failed to initialize socket service:', error);
+        }
+      }, 3000); // Delay socket initialization by 3 seconds to not block initial render
+    };
+
+    // Initialize socket service asynchronously
+    initializeSocketService();
 
     // Return cleanup function
     return () => {

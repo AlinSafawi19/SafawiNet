@@ -6,7 +6,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { LoadingPage } from '../components/LoadingPage';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Breadcrumb, generateBreadcrumbItems } from '../components/Breadcrumb';
+import { Breadcrumb, useBreadcrumbItems } from '../components/Breadcrumb';
+import Link from 'next/link';
 import {
   HiShieldCheck,
   HiUser,
@@ -22,6 +23,15 @@ export default function MyAccountPage() {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Generate breadcrumb items - must be called before any conditional returns
+  const breadcrumbItems = useBreadcrumbItems(pathname, t, locale);
+
+  // Prefetch profile settings and login security pages immediately when component mounts
+  useEffect(() => {
+    router.prefetch('/account/profile-settings');
+    router.prefetch('/account/login-security');
+  }, [router]);
+
   useEffect(() => {
     // Redirect unauthenticated users to login
     if (!isLoading && !user) {
@@ -29,7 +39,7 @@ export default function MyAccountPage() {
     }
   }, [user, isLoading, router]);
 
-  // Show loading page while checking authentication
+  // Show loading page only briefly while checking authentication
   if (isLoading) {
     return <LoadingPage />;
   }
@@ -50,7 +60,7 @@ export default function MyAccountPage() {
               locale === 'ar' ? 'text-right flex justify-end' : 'text-left'
             }`}
           >
-            <Breadcrumb items={generateBreadcrumbItems(pathname, t, locale)} />
+            <Breadcrumb items={breadcrumbItems} />
           </div>
 
           <h1
@@ -70,10 +80,23 @@ export default function MyAccountPage() {
 
           {/* Dashboard Tiles */}
           <div className="dashboard-grid">
-            <div
-              className="dashboard-tile tile-profile group"
-              onClick={() => {
-                router.push('/account/profile-settings');
+            <Link
+              href="/account/profile-settings"
+              className="dashboard-tile tile-profile group block"
+              onMouseEnter={() => {
+                // Prefetch on hover for faster navigation
+                router.prefetch('/account/profile-settings');
+              }}
+              onClick={(e) => {
+                const startTime = performance.now();
+                console.log('🚀 Account: Profile settings clicked at', startTime);
+                
+                // Add immediate visual feedback
+                const element = e.currentTarget as HTMLElement;
+                element.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                  element.style.transform = '';
+                }, 150);
               }}
             >
               <div className="tile-content">
@@ -88,11 +111,25 @@ export default function MyAccountPage() {
                 </div>
               </div>
               <div className="tile-overlay"></div>
-            </div>
+            </Link>
 
             <div
               className="dashboard-tile tile-security group"
-              onClick={() => {
+              onMouseEnter={() => {
+                // Prefetch on hover for faster navigation
+                router.prefetch('/account/login-security');
+              }}
+              onClick={(e) => {
+                const startTime = performance.now();
+                console.log('🚀 Account: Login security clicked at', startTime);
+                
+                // Add immediate visual feedback
+                const element = e.currentTarget as HTMLElement;
+                element.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                  element.style.transform = '';
+                }, 150);
+                
                 router.push('/account/login-security');
               }}
             >

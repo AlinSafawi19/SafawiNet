@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '../contexts/LanguageContext';
 import { usePathname } from 'next/navigation';
@@ -22,8 +22,12 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
 }) => {
   const { locale } = useLanguage();
   const pathname = usePathname();
-  const isRTL = locale === 'ar';
-  const isAccountPage = pathname.startsWith('/account');
+  
+  // Memoize expensive calculations
+  const { isRTL, isAccountPage } = useMemo(() => ({
+    isRTL: locale === 'ar',
+    isAccountPage: pathname.startsWith('/account')
+  }), [locale, pathname]);
 
   return (
     <nav
@@ -143,4 +147,16 @@ export const generateBreadcrumbItems = (
   }
 
   return items;
+};
+
+// Memoized version for better performance
+export const useBreadcrumbItems = (
+  pathname: string,
+  t: (key: string) => string,
+  locale?: string
+) => {
+  return useMemo(() => 
+    generateBreadcrumbItems(pathname, t, locale), 
+    [pathname, t, locale]
+  );
 };

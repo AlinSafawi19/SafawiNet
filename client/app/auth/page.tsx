@@ -1,5 +1,11 @@
 import { AuthForm } from '../components/Auth/AuthForm';
+import { Suspense } from 'react';
+import { LoadingPage } from '../components/LoadingPage';
 
 export default function AuthPage() {
-  return <AuthForm />;
+  return (
+    <Suspense fallback={<LoadingPage />}>
+      <AuthForm />
+    </Suspense>
+  );
 }
