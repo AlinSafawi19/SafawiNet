@@ -2,33 +2,28 @@
 
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { LoadingPage } from '../components/LoadingPage';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Breadcrumb, useBreadcrumbItems } from '../components/Breadcrumb';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   HiShieldCheck,
-  HiUser,
   HiStar,
   HiMapPin,
   HiShoppingBag,
   HiCreditCard,
+  HiHeart,
 } from 'react-icons/hi2';
 
 export default function MyAccountPage() {
   const { user, isLoading } = useAuth();
   const { t, locale } = useLanguage();
   const router = useRouter();
-  const pathname = usePathname();
 
-  // Generate breadcrumb items - must be called before any conditional returns
-  const breadcrumbItems = useBreadcrumbItems(pathname, t, locale);
-
-  // Prefetch profile settings and login security pages immediately when component mounts
+  // Prefetch login security page immediately when component mounts
   useEffect(() => {
-    router.prefetch('/account/profile-settings');
     router.prefetch('/account/login-security');
   }, [router]);
 
@@ -50,180 +45,165 @@ export default function MyAccountPage() {
   }
 
   return (
-    <div className="min-h-screen account-bg">
-      {/* Main Content Area */}
-      <div className="p-4 sm:p-6 lg:p-8 xl:p-12">
-        <div className="account max-w-4xl mx-auto">
-          {/* Breadcrumb */}
-          <div
-            className={`mb-6 ${
-              locale === 'ar' ? 'text-right flex justify-end' : 'text-left'
-            }`}
+    <div
+      className={`min-h-screen flex flex-col lg:flex-row bg-zinc-900 ${locale === 'ar' ? 'rtl' : 'ltr'
+        }`}
+    >
+      {/* Left side - Dashboard Tiles */}
+      <div className="flex-1 lg:basis-1/2 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-3 sm:py-4 md:py-6 lg:py-8 xl:py-10">
+        {/* Dashboard Tiles */}
+        <div className="dashboard-grid flex-1">
+          <Link
+            href="/account/login-security"
+            className="dashboard-tile tile-security group block"
+            onMouseEnter={() => {
+              // Prefetch on hover for faster navigation
+              router.prefetch('/account/login-security');
+            }}
+            onClick={(e) => {
+              const startTime = performance.now();
+              console.log('🚀 Account: Login security clicked at', startTime);
+
+              // Add immediate visual feedback
+              const element = e.currentTarget as HTMLElement;
+              element.style.transform = 'scale(0.98)';
+              setTimeout(() => {
+                element.style.transform = '';
+              }, 150);
+            }}
           >
-            <Breadcrumb items={breadcrumbItems} />
+            <div className="tile-content">
+              <div className="tile-icon">
+                {HiShieldCheck({ className: 'w-6 h-6' })}
+              </div>
+              <div className="tile-text">
+                <h3 className="tile-title">
+                  {t('account.loginSecurity.title')}
+                </h3>
+                <p className="tile-description">
+                  {t('account.loginSecurityDesc')}
+                </p>
+              </div>
+            </div>
+            <div className="tile-overlay"></div>
+          </Link>
+
+          <div
+            className="dashboard-tile tile-loyalty group"
+            onClick={() => {
+              router.push('/account/loyalty');
+            }}
+          >
+            <div className="tile-content">
+              <div className="tile-icon">
+                {HiStar({ className: 'w-6 h-6' })}
+              </div>
+              <div className="tile-text">
+                <h3 className="tile-title">{t('header.loyalty.title')}</h3>
+                <p className="tile-description">{t('account.loyaltyDesc')}</p>
+              </div>
+            </div>
+            <div className="tile-overlay"></div>
           </div>
 
-          <h1
-            className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 ${
-              locale === 'ar' ? 'text-right' : 'text-left'
-            }`}
+          <div
+            className="dashboard-tile tile-addresses group"
+            onClick={() => {
+              router.push('/account/addresses');
+            }}
           >
-            {t('account.title')}
-          </h1>
-          <p
-            className={`text-sm sm:text-base text-gray-300 mb-6 ${
-              locale === 'ar' ? 'text-right' : 'text-left'
-            }`}
+            <div className="tile-content">
+              <div className="tile-icon">
+                {HiMapPin({ className: 'w-6 h-6' })}
+              </div>
+              <div className="tile-text">
+                <h3 className="tile-title">{t('account.addresses')}</h3>
+                <p className="tile-description">
+                  {t('account.addressesDesc')}
+                </p>
+              </div>
+            </div>
+            <div className="tile-overlay"></div>
+          </div>
+
+          <div
+            className="dashboard-tile tile-orders group"
+            onClick={() => {
+              router.push('/account/orders');
+            }}
           >
-            {t('account.subtitle')}
-          </p>
-
-          {/* Dashboard Tiles */}
-          <div className="dashboard-grid">
-            <Link
-              href="/account/profile-settings"
-              className="dashboard-tile tile-profile group block"
-              onMouseEnter={() => {
-                // Prefetch on hover for faster navigation
-                router.prefetch('/account/profile-settings');
-              }}
-              onClick={(e) => {
-                const startTime = performance.now();
-                console.log('🚀 Account: Profile settings clicked at', startTime);
-                
-                // Add immediate visual feedback
-                const element = e.currentTarget as HTMLElement;
-                element.style.transform = 'scale(0.98)';
-                setTimeout(() => {
-                  element.style.transform = '';
-                }, 150);
-              }}
-            >
-              <div className="tile-content">
-                <div className="tile-icon">
-                  {HiUser({ className: 'w-8 h-8' })}
-                </div>
-                <div className="tile-text">
-                  <h3 className="tile-title">{t('account.profileSettings')}</h3>
-                  <p className="tile-description">
-                    {t('account.profileSettingsDesc')}
-                  </p>
-                </div>
+            <div className="tile-content">
+              <div className="tile-icon">
+                {HiShoppingBag({ className: 'w-6 h-6' })}
               </div>
-              <div className="tile-overlay"></div>
-            </Link>
-
-            <div
-              className="dashboard-tile tile-security group"
-              onMouseEnter={() => {
-                // Prefetch on hover for faster navigation
-                router.prefetch('/account/login-security');
-              }}
-              onClick={(e) => {
-                const startTime = performance.now();
-                console.log('🚀 Account: Login security clicked at', startTime);
-                
-                // Add immediate visual feedback
-                const element = e.currentTarget as HTMLElement;
-                element.style.transform = 'scale(0.98)';
-                setTimeout(() => {
-                  element.style.transform = '';
-                }, 150);
-                
-                router.push('/account/login-security');
-              }}
-            >
-              <div className="tile-content">
-                <div className="tile-icon">
-                  {HiShieldCheck({ className: 'w-8 h-8' })}
-                </div>
-                <div className="tile-text">
-                  <h3 className="tile-title">
-                    {t('account.loginSecurity.title')}
-                  </h3>
-                  <p className="tile-description">
-                    {t('account.loginSecurityDesc')}
-                  </p>
-                </div>
+              <div className="tile-text">
+                <h3 className="tile-title">{t('account.orders')}</h3>
+                <p className="tile-description">{t('account.ordersDesc')}</p>
               </div>
-              <div className="tile-overlay"></div>
             </div>
+            <div className="tile-overlay"></div>
+          </div>
 
-            <div
-              className="dashboard-tile tile-loyalty group"
-              onClick={() => {
-                router.push('/account/loyalty');
-              }}
-            >
-              <div className="tile-content">
-                <div className="tile-icon">
-                  {HiStar({ className: 'w-8 h-8' })}
-                </div>
-                <div className="tile-text">
-                  <h3 className="tile-title">{t('header.loyalty.title')}</h3>
-                  <p className="tile-description">{t('account.loyaltyDesc')}</p>
-                </div>
+          <div
+            className="dashboard-tile tile-payment group"
+            onClick={() => {
+              router.push('/account/payment-methods');
+            }}
+          >
+            <div className="tile-content">
+              <div className="tile-icon">
+                {HiCreditCard({ className: 'w-6 h-6' })}
               </div>
-              <div className="tile-overlay"></div>
+              <div className="tile-text">
+                <h3 className="tile-title">{t('account.paymentMethods')}</h3>
+                <p className="tile-description">
+                  {t('account.paymentMethodsDesc')}
+                </p>
+              </div>
             </div>
+            <div className="tile-overlay"></div>
+          </div>
 
-            <div
-              className="dashboard-tile tile-addresses group"
-              onClick={() => {
-                router.push('/account/addresses');
-              }}
-            >
-              <div className="tile-content">
-                <div className="tile-icon">
-                  {HiMapPin({ className: 'w-8 h-8' })}
-                </div>
-                <div className="tile-text">
-                  <h3 className="tile-title">{t('account.addresses')}</h3>
-                  <p className="tile-description">
-                    {t('account.addressesDesc')}
-                  </p>
-                </div>
+          <div
+            className="dashboard-tile tile-wishlist group"
+            onClick={() => {
+              router.push('/wishlist');
+            }}
+          >
+            <div className="tile-content">
+              <div className="tile-icon">
+                {HiHeart({ className: 'w-6 h-6' })}
               </div>
-              <div className="tile-overlay"></div>
+              <div className="tile-text">
+                <h3 className="tile-title">{t('account.wishlist')}</h3>
+                <p className="tile-description">
+                  {t('account.wishlistDesc')}
+                </p>
+              </div>
             </div>
+            <div className="tile-overlay"></div>
+          </div>
+        </div>
+      </div>
 
-            <div
-              className="dashboard-tile tile-orders group"
-              onClick={() => {
-                router.push('/account/orders');
-              }}
-            >
-              <div className="tile-content">
-                <div className="tile-icon">
-                  {HiShoppingBag({ className: 'w-8 h-8' })}
-                </div>
-                <div className="tile-text">
-                  <h3 className="tile-title">{t('account.orders')}</h3>
-                  <p className="tile-description">{t('account.ordersDesc')}</p>
-                </div>
-              </div>
-              <div className="tile-overlay"></div>
-            </div>
-
-            <div
-              className="dashboard-tile tile-payment group"
-              onClick={() => {
-                router.push('/account/payment-methods');
-              }}
-            >
-              <div className="tile-content">
-                <div className="tile-icon">
-                  {HiCreditCard({ className: 'w-8 h-8' })}
-                </div>
-                <div className="tile-text">
-                  <h3 className="tile-title">{t('account.paymentMethods')}</h3>
-                  <p className="tile-description">
-                    {t('account.paymentMethodsDesc')}
-                  </p>
-                </div>
-              </div>
-              <div className="tile-overlay"></div>
-            </div>
+      {/* Right side - Image */}
+      <div className="flex-1 lg:basis-1/2 relative hidden sm:block">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 to-pink-900/80 z-10"></div>
+        <Image
+          src="https://static.wixstatic.com/media/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg/v1/fill/w_918,h_585,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg"
+          alt={t('auth.hero.imageAlt')}
+          className="w-full h-full object-cover"
+          width={1000}
+          height={800}
+        />
+        <div className="auth-screen absolute inset-0 z-20 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8">
+          <div className="text-center text-white">
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 md:mb-4">
+              {t('account.title')}
+            </h1>
+            <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/80 max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md">
+              {t('account.subtitle')}
+            </p>
           </div>
         </div>
       </div>

@@ -87,8 +87,6 @@
     "title": "MY ACCOUNT",
     "subtitle": "Manage your profile, security settings, and preferences",
     "loginSecurityDesc": "Manage passwords, 2FA, and security settings",
-    "profileSettings": "Profile Settings",
-    "profileSettingsDesc": "Update personal details and contact information",
     "loyaltyDesc": "View points, rewards, and loyalty program benefits",
     "addresses": "Addresses",
     "addressesDesc": "Manage shipping and billing addresses",
@@ -96,6 +94,8 @@
     "ordersDesc": "View order history and track shipments",
     "paymentMethods": "Payment Methods",
     "paymentMethodsDesc": "Manage credit cards, bank accounts, and payment preferences",
+    "wishlist": "Wishlist",
+    "wishlistDesc": "View and manage your saved items",
     "backToAccount": "Back to Account",
     "form": {
       "fullName": "Full Name",
@@ -116,9 +116,14 @@
       "title": "Login & Security",
       "subtitle": "Manage your account security settings",
       "tabs": {
+        "profile": "Profile",
         "password": "Password",
         "email": "Email",
         "twoFactor": "Two-Factor Authentication"
+      },
+      "profile": {
+        "title": "Profile Information",
+        "subtitle": "Update your personal information and contact details"
       },
       "password": {
         "title": "Change Password",

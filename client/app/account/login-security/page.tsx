@@ -1,6 +1,7 @@
+/* eslint-disable react/forbid-dom-props */
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { LoadingPage } from '../../components/LoadingPage';
@@ -10,9 +11,13 @@ import {
   generateBreadcrumbItems,
 } from '../../components/Breadcrumb';
 import { buildApiUrl } from '../../config/api';
-import { HiLockClosed, HiShieldCheck } from 'react-icons/hi2';
+import { HiLockClosed, HiShieldCheck, HiUser } from 'react-icons/hi2';
 
-interface ValidationErrors {
+interface ProfileValidationErrors {
+  name?: string;
+}
+
+interface PasswordValidationErrors {
   currentPassword?: string;
   newPassword?: string;
   confirmNewPassword?: string;
@@ -24,9 +29,26 @@ export default function LoginSecurityPage() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [activeTab, setActiveTab] = useState<'password' | 'twoFactor'>(
-    'password'
+  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'twoFactor'>(
+    'profile'
   );
+
+  // Profile form state
+  const [profileFormData, setProfileFormData] = useState({
+    name: '',
+  });
+
+  const [profileValidationErrors, setProfileValidationErrors] =
+    useState<ProfileValidationErrors>({});
+  const [profileTouched, setProfileTouched] = useState({
+    name: false,
+  });
+
+  const [isProfileFormLoading, setIsProfileFormLoading] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccessMessage, setProfileSuccessMessage] = useState('');
+  const [profileErrorKey, setProfileErrorKey] = useState('');
+  const [profileSuccessKey, setProfileSuccessKey] = useState('');
 
   // Password change form state
   const [passwordFormData, setPasswordFormData] = useState({
@@ -36,7 +58,7 @@ export default function LoginSecurityPage() {
   });
 
   const [passwordValidationErrors, setPasswordValidationErrors] =
-    useState<ValidationErrors>({});
+    useState<PasswordValidationErrors>({});
   const [passwordTouched, setPasswordTouched] = useState({
     currentPassword: false,
     newPassword: false,
@@ -59,16 +81,38 @@ export default function LoginSecurityPage() {
   const [currentPasswordValue, setCurrentPasswordValue] = useState('');
   const [disablePasswordValue, setDisablePasswordValue] = useState('');
   const [isPageLoading, setIsPageLoading] = useState(true);
+  
+  const currentPasswordRef = useRef<HTMLInputElement>(null);
+  const disablePasswordRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Redirect unauthenticated users to login
     if (!isLoading && !user) {
       router.push('/auth');
     } else if (!isLoading && user) {
+      // Initialize profile form data when user becomes available
+      setProfileFormData({
+        name: user.name || '',
+      });
       // Page is ready to render
       setIsPageLoading(false);
     }
   }, [user, isLoading, router]);
+
+  // Set text security styles via refs to avoid inline style warnings
+  useEffect(() => {
+    if (currentPasswordRef.current) {
+      (currentPasswordRef.current.style as any).webkitTextSecurity = currentPasswordType === 'password' ? 'disc' : 'none';
+      (currentPasswordRef.current.style as any).textSecurity = currentPasswordType === 'password' ? 'disc' : 'none';
+    }
+  }, [currentPasswordType]);
+
+  useEffect(() => {
+    if (disablePasswordRef.current) {
+      (disablePasswordRef.current.style as any).webkitTextSecurity = disablePasswordType === 'password' ? 'disc' : 'none';
+      (disablePasswordRef.current.style as any).textSecurity = disablePasswordType === 'password' ? 'disc' : 'none';
+    }
+  }, [disablePasswordType]);
 
   // Optimized auto-fill prevention - only on focus, no intervals
   useEffect(() => {
@@ -93,6 +137,88 @@ export default function LoginSecurityPage() {
     document.addEventListener('focusin', handleFocus);
     return () => document.removeEventListener('focusin', handleFocus);
   }, []);
+
+  // Profile validation functions - memoized for performance
+  const validateName = useCallback((name: string): string | undefined => {
+    if (!name.trim()) {
+      return 'account.validation.nameRequired';
+    }
+    if (name.length > 100) {
+      return 'account.validation.nameTooLong';
+    }
+    return undefined;
+  }, []);
+
+  // Validate all profile fields - memoized
+  const validateProfileForm = useCallback((): boolean => {
+    const errors: ProfileValidationErrors = {};
+
+    const nameError = validateName(profileFormData.name);
+    if (nameError) errors.name = nameError;
+
+    setProfileValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  }, [profileFormData.name, validateName]);
+
+  // Validate single profile field - memoized
+  const validateProfileField = useCallback((name: string, value: string) => {
+    let error: string | undefined;
+
+    switch (name) {
+      case 'name':
+        error = validateName(value);
+        break;
+    }
+
+    setProfileValidationErrors((prev) => ({
+      ...prev,
+      [name]: error,
+    }));
+  }, [validateName]);
+
+  // Handle profile form data changes - memoized
+  const handleProfileInputChange = useCallback((
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+    setProfileFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Clear error when user starts typing
+    if (name in profileValidationErrors) {
+      setProfileValidationErrors((prev) => ({
+        ...prev,
+        [name]: undefined,
+      }));
+    }
+  }, [profileValidationErrors]);
+
+  // Handle profile field blur for validation - memoized
+  const handleProfileBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setProfileTouched((prev) => ({
+      ...prev,
+      [name]: true,
+    }));
+    validateProfileField(name, value);
+  }, [validateProfileField]);
+
+  // Get profile input class based on validation state - memoized
+  const getProfileInputClass = useCallback((fieldName: keyof ProfileValidationErrors) => {
+    const hasError =
+      profileTouched[fieldName as keyof typeof profileTouched] && 
+      profileValidationErrors[fieldName];
+    const baseClasses =
+      'w-full px-4 py-3 rounded-lg text-white focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
+    const alignmentClasses = locale === 'ar' ? 'text-right' : 'text-left';
+    const errorClasses = hasError
+      ? 'bg-white/10 border border-red-500/50 placeholder-white/50 focus:border-red-500'
+      : 'bg-white/10 border border-white/20 placeholder-white/50 focus:border-purple-500';
+
+    return `${baseClasses} ${alignmentClasses} ${errorClasses}`;
+  }, [profileTouched, profileValidationErrors, locale]);
 
   // Password validation functions - memoized for performance
   const validateCurrentPassword = useCallback((password: string): string | undefined => {
@@ -127,7 +253,7 @@ export default function LoginSecurityPage() {
 
   // Validate all password fields - memoized
   const validatePasswordForm = useCallback((): boolean => {
-    const errors: ValidationErrors = {};
+    const errors: PasswordValidationErrors = {};
 
     const currentPasswordError = validateCurrentPassword(
       passwordFormData.currentPassword
@@ -180,7 +306,7 @@ export default function LoginSecurityPage() {
     }));
 
     // Clear error when user starts typing
-    if (passwordValidationErrors[name as keyof ValidationErrors]) {
+    if (name in passwordValidationErrors) {
       setPasswordValidationErrors((prev) => ({
         ...prev,
         [name]: undefined,
@@ -199,9 +325,10 @@ export default function LoginSecurityPage() {
   }, [validatePasswordField]);
 
   // Get password input class based on validation state - memoized
-  const getPasswordInputClass = useCallback((fieldName: keyof ValidationErrors) => {
+  const getPasswordInputClass = useCallback((fieldName: keyof PasswordValidationErrors) => {
     const hasError =
-      passwordTouched[fieldName] && passwordValidationErrors[fieldName];
+      passwordTouched[fieldName as keyof typeof passwordTouched] && 
+      passwordValidationErrors[fieldName];
     const baseClasses =
       'w-full px-4 py-3 rounded-lg text-white focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
     const alignmentClasses = locale === 'ar' ? 'text-right' : 'text-left';
@@ -214,6 +341,11 @@ export default function LoginSecurityPage() {
 
   // Memoize tabs to prevent unnecessary re-renders
   const tabs = useMemo(() => [
+    {
+      id: 'profile' as const,
+      label: t('account.loginSecurity.tabs.profile'),
+      icon: HiUser,
+    },
     {
       id: 'password' as const,
       label: t('account.loginSecurity.tabs.password'),
@@ -235,6 +367,74 @@ export default function LoginSecurityPage() {
   if (!user) {
     return null;
   }
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileError('');
+    setProfileErrorKey('');
+    setProfileSuccessMessage('');
+    setProfileSuccessKey('');
+    setIsProfileFormLoading(true);
+
+    // Mark all fields as touched
+    setProfileTouched({
+      name: true,
+    });
+
+    // Validate form before submission
+    if (!validateProfileForm()) {
+      setIsProfileFormLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/users', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: profileFormData.name.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Update user in context - handle nested user structure
+        const userData = data.user?.user || data.user;
+        if (userData) {
+          updateUser(userData);
+          // Directly update form data with the new values
+          setProfileFormData({
+            name: userData.name || '',
+          });
+        }
+
+        setProfileSuccessKey('account.messages.updateSuccess');
+        setProfileSuccessMessage('');
+        setProfileError('');
+        setProfileErrorKey('');
+      } else {
+        if (data.messageKey) {
+          setProfileErrorKey(data.messageKey);
+          setProfileError('');
+        } else if (data.message) {
+          setProfileError(data.message);
+          setProfileErrorKey('');
+        } else {
+          setProfileErrorKey('account.messages.updateFailed');
+          setProfileError('');
+        }
+      }
+    } catch (error) {
+      setProfileErrorKey('account.messages.generalError');
+      setProfileError('');
+    } finally {
+      setIsProfileFormLoading(false);
+    }
+  };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -511,6 +711,111 @@ export default function LoginSecurityPage() {
 
           {/* Tab Content */}
           <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6 sm:p-8 border border-white/10 shadow-none">
+            {activeTab === 'profile' && (
+              <div>
+                <h2
+                  className={`text-lg font-semibold text-white mb-2 ${
+                    locale === 'ar' ? 'text-right' : 'text-left'
+                  }`}
+                >
+                  {t('account.loginSecurity.profile.title')}
+                </h2>
+                <p
+                  className={`text-sm text-gray-300 mb-6 ${
+                    locale === 'ar' ? 'text-right' : 'text-left'
+                  }`}
+                >
+                  {t('account.loginSecurity.profile.subtitle')}
+                </p>
+
+                {/* Error Message */}
+                {(profileError || profileErrorKey) && (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
+                    <p
+                      className={`text-red-400 text-sm ${
+                        locale === 'ar' ? 'text-right' : 'text-left'
+                      }`}
+                    >
+                      {profileError || (profileErrorKey ? t(profileErrorKey) : '')}
+                    </p>
+                  </div>
+                )}
+
+                {/* Success Message */}
+                {(profileSuccessMessage || profileSuccessKey) && (
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
+                    <p
+                      className={`text-green-400 text-sm ${
+                        locale === 'ar' ? 'text-right' : 'text-left'
+                      }`}
+                    >
+                      {profileSuccessMessage || (profileSuccessKey ? t(profileSuccessKey) : '')}
+                    </p>
+                  </div>
+                )}
+
+                <form onSubmit={handleProfileSubmit} className="space-y-6">
+                  {/* Name Field */}
+                  <div>
+                    <label
+                      htmlFor="name"
+                      className={`block text-sm font-medium text-white/80 mb-2 ${
+                        locale === 'ar' ? 'text-right' : 'text-left'
+                      }`}
+                    >
+                      <div
+                        className={`flex items-center ${
+                          locale === 'ar' ? 'flex-row-reverse' : ''
+                        }`}
+                      >
+                        {HiUser({
+                          className: `w-4 h-4 ${locale === 'ar' ? 'ml-2' : 'mr-2'}`,
+                        })}
+                        {t('account.form.fullName')}
+                      </div>
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={profileFormData.name}
+                      onChange={handleProfileInputChange}
+                      onBlur={handleProfileBlur}
+                      className={getProfileInputClass('name')}
+                      placeholder={t('account.form.fullNamePlaceholder')}
+                      dir={locale === 'ar' ? 'rtl' : 'ltr'}
+                    />
+                    {profileTouched.name && profileValidationErrors.name && (
+                      <p
+                        className={`text-red-400 text-xs mt-1 ${
+                          locale === 'ar' ? 'text-right' : 'text-left'
+                        }`}
+                      >
+                        {t(profileValidationErrors.name)}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="pt-4">
+                    <button
+                      type="submit"
+                      disabled={isProfileFormLoading}
+                      className="w-full bg-white text-black font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center"
+                    >
+                      {isProfileFormLoading ? (
+                        <>
+                          {t('account.form.updating')}
+                        </>
+                      ) : (
+                        t('account.form.updateProfile')
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
             {activeTab === 'password' && (
               <div>
                 <h2
@@ -647,6 +952,7 @@ export default function LoginSecurityPage() {
                     </label>
                     <div className="relative">
                       <input
+                        ref={currentPasswordRef}
                         type="text"
                         id="currentPassword"
                         name="currentPassword"
@@ -693,11 +999,6 @@ export default function LoginSecurityPage() {
                         data-saved="false"
                         data-autofill="false"
                         data-autocomplete="false"
-                        style={{ 
-                          // Inline styles required for text security feature
-                          WebkitTextSecurity: currentPasswordType === 'password' ? 'disc' : 'none',
-                          textSecurity: currentPasswordType === 'password' ? 'disc' : 'none'
-                        } as React.CSSProperties}
                       />
                     </div>
                     {passwordTouched.currentPassword &&
@@ -1047,6 +1348,7 @@ export default function LoginSecurityPage() {
               <div>
                 <div className="relative">
                   <input
+                    ref={disablePasswordRef}
                     type="text"
                     value={disablePasswordValue}
                     onChange={(e) => {
@@ -1090,11 +1392,6 @@ export default function LoginSecurityPage() {
                     data-saved="false"
                     data-autofill="false"
                     data-autocomplete="false"
-                    style={{ 
-                      // Inline styles required for text security feature
-                      WebkitTextSecurity: disablePasswordType === 'password' ? 'disc' : 'none',
-                      textSecurity: disablePasswordType === 'password' ? 'disc' : 'none'
-                    } as React.CSSProperties}
                   />
                 </div>
                 {disablePasswordError && (

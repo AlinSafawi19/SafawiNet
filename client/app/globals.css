@@ -48,32 +48,6 @@
     @apply py-2;
   }
 
-  .account-bg {
-    @apply bg-site dark:bg-dark-bg;
-    background-image: url('https://static.wixstatic.com/media/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg/v1/fill/w_918,h_585,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    position: relative;
-  }
-
-  .account-bg::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(26, 26, 26, 0.85);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .account-bg > * {
-    position: relative;
-    z-index: 1;
-  }
 
   .btn-main[disabled] {
     @apply hover:text-white;
@@ -107,52 +81,53 @@
 
   /* Dashboard Tiles Styling */
   .dashboard-grid {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6;
-    @apply max-w-6xl mx-auto;
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4;
+    @apply w-full;
   }
 
   .dashboard-tile {
     @apply relative;
-    @apply rounded-2xl;
-    @apply p-6;
+    @apply rounded-xl;
+    @apply p-3 sm:p-4;
     @apply cursor-pointer;
     @apply transition-all duration-500 ease-out;
     @apply overflow-hidden;
-    @apply min-h-[180px];
+    @apply min-h-[160px] sm:min-h-[180px];
     @apply flex flex-col justify-between;
     @apply backdrop-blur-sm;
     @apply border border-white/10;
-    @apply hover:scale-105;
-    @apply hover:shadow-2xl;
-    @apply hover:shadow-purple-500/20;
-    @apply hover:-translate-y-2;
+    @apply hover:scale-[1.02];
+    @apply hover:shadow-lg;
+    @apply hover:shadow-purple-500/10;
+    @apply hover:-translate-y-1;
   }
 
   .dashboard-tile::before {
     content: '';
     @apply absolute inset-0;
-    @apply rounded-2xl;
+    @apply rounded-xl;
     @apply transition-all duration-500 ease-out;
     @apply opacity-0;
     @apply group-hover:opacity-100;
   }
 
   .tile-security,
-  .tile-profile,
   .tile-loyalty,
   .tile-addresses,
   .tile-orders,
-  .tile-payment {
-    @apply bg-black/20;
-    @apply hover:bg-black/30;
+  .tile-payment,
+  .tile-wishlist {
+    @apply bg-white/5;
+    @apply hover:bg-white/10;
+    @apply border border-white/20;
   }
 
   .tile-security::before,
-  .tile-profile::before,
   .tile-loyalty::before,
   .tile-addresses::before,
   .tile-orders::before,
-  .tile-payment::before {
+  .tile-payment::before,
+  .tile-wishlist::before {
     @apply bg-gradient-to-br from-white/5 to-transparent;
   }
 
@@ -163,24 +138,24 @@
   }
 
   .tile-icon {
-    @apply w-16 h-16;
-    @apply rounded-xl;
+    @apply w-12 h-12;
+    @apply rounded-lg;
     @apply flex items-center justify-center;
-    @apply mb-4;
+    @apply mb-3;
     @apply transition-all duration-300 ease-out;
-    @apply group-hover:scale-110;
-    @apply group-hover:rotate-3;
+    @apply group-hover:scale-105;
+    @apply group-hover:rotate-1;
   }
 
   .tile-security .tile-icon,
-  .tile-profile .tile-icon,
   .tile-loyalty .tile-icon,
   .tile-addresses .tile-icon,
   .tile-orders .tile-icon,
-  .tile-payment .tile-icon {
-    @apply bg-white/10;
-    @apply text-white/80;
-    @apply group-hover:bg-white/15;
+  .tile-payment .tile-icon,
+  .tile-wishlist .tile-icon {
+    @apply bg-white/15;
+    @apply text-white;
+    @apply group-hover:bg-white/25;
     @apply group-hover:text-white;
   }
 
@@ -190,24 +165,24 @@
   }
 
   .tile-title {
-    @apply text-lg font-bold;
+    @apply text-base font-semibold;
     @apply text-white;
-    @apply mb-2;
+    @apply mb-1;
     @apply transition-all duration-300 ease-out;
     @apply group-hover:text-white/90;
   }
 
   .tile-description {
-    @apply text-sm;
+    @apply text-xs;
     @apply text-white/70;
-    @apply leading-relaxed;
+    @apply leading-tight;
     @apply transition-all duration-300 ease-out;
     @apply group-hover:text-white/80;
   }
 
   .tile-overlay {
     @apply absolute inset-0;
-    @apply rounded-2xl;
+    @apply rounded-xl;
     @apply bg-gradient-to-br from-white/5 to-transparent;
     @apply opacity-0;
     @apply transition-all duration-300 ease-out;
