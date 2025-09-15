@@ -224,7 +224,8 @@ const Header = () => {
               ) : (
                 <Link
                   href="/auth"
-                  className="hover:text-purple-500 transition-colors text-base"
+                  className="hover:text-purple-500 transition-colors text-base max-w-32 sm:max-w-40 truncate"
+                  title={t('header.auth.loginRegister')}
                 >
                   {t('header.auth.loginRegister')}
                 </Link>
@@ -238,7 +239,8 @@ const Header = () => {
               ) : (
                 <Link
                   href="/auth"
-                  className="hover:text-purple-500 transition-colors text-sm font-medium px-3 py-1 rounded-md transition-all duration-200"
+                  className="hover:text-purple-500 transition-colors text-sm font-medium px-3 py-1 rounded-md transition-all duration-200 max-w-24 sm:max-w-32 truncate"
+                  title={t('header.auth.loginRegister')}
                 >
                   {t('header.auth.loginRegister')}
                 </Link>
@@ -355,7 +357,7 @@ const Header = () => {
                             className:
                               'w-5 h-5 text-white group-hover:text-purple-400 transition-colors mb-1',
                           })}
-                          <span className="text-xs font-medium text-center leading-tight">
+                          <span className="text-xs font-medium text-center leading-tight truncate max-w-full" title={t(item.label) || item.name}>
                             {t(item.label) || item.name}
                           </span>
                         </Link>
@@ -375,29 +377,33 @@ const Header = () => {
                       href="/"
                       className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
                       onClick={closeMobileMenu}
+                      title={t('header.navigation.home')}
                     >
-                      {t('header.navigation.home')}
+                      <span className="truncate">{t('header.navigation.home')}</span>
                     </Link>
                     <Link
                       href="/products"
                       className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
                       onClick={closeMobileMenu}
+                      title={t('header.navigation.products')}
                     >
-                      {t('header.navigation.products')}
+                      <span className="truncate">{t('header.navigation.products')}</span>
                     </Link>
                     <Link
                       href="/deals"
                       className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
                       onClick={closeMobileMenu}
+                      title={t('header.navigation.deals')}
                     >
-                      {t('header.navigation.deals')}
+                      <span className="truncate">{t('header.navigation.deals')}</span>
                     </Link>
                     <Link
                       href="/about"
                       className="text-center py-3 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white hover:text-purple-400 w-full h-full min-h-[48px] flex items-center justify-center text-base"
                       onClick={closeMobileMenu}
+                      title={t('header.navigation.about')}
                     >
-                      {t('header.navigation.about')}
+                      <span className="truncate">{t('header.navigation.about')}</span>
                     </Link>
                   </div>
                 )}
@@ -425,7 +431,7 @@ const Header = () => {
                       <div className="text-white group-hover:text-purple-400 transition-colors">
                         {HiHeart({ className: 'w-7 h-7' })}
                       </div>
-                      <span className="text-sm text-white/80 group-hover:text-white">
+                      <span className="text-sm text-white/80 group-hover:text-white truncate" title={t('header.actions.wishlist')}>
                         {t('header.actions.wishlist')}
                       </span>
                     </Link>
@@ -440,7 +446,7 @@ const Header = () => {
                       <div className="text-white group-hover:text-purple-400 transition-colors">
                         {HiOutlineShoppingCart({ className: 'w-7 h-7' })}
                       </div>
-                      <span className="text-sm text-white/80 group-hover:text-white">
+                      <span className="text-sm text-white/80 group-hover:text-white truncate" title={t('header.actions.cart')}>
                         {t('header.actions.cart')}
                       </span>
                     </Link>
@@ -449,7 +455,7 @@ const Header = () => {
                     <div className="text-white group-hover:text-purple-400 transition-colors">
                       {HiBell({ className: 'w-7 h-7' })}
                     </div>
-                    <span className="text-sm text-white/80 group-hover:text-white">
+                    <span className="text-sm text-white/80 group-hover:text-white truncate" title={t('header.actions.alerts')}>
                       {t('header.actions.alerts')}
                     </span>
                   </button>
@@ -467,8 +473,8 @@ const Header = () => {
                 <div className="flex flex-col items-center space-y-4">
                   {user ? (
                     <div className="flex flex-col items-center space-y-3">
-                      <div className="flex items-center text-white">
-                        <span className="text-white font-medium">
+                      <div className="flex items-center text-white max-w-xs">
+                        <span className="text-white font-medium truncate" title={user.name}>
                           {user.name}
                         </span>
                       </div>

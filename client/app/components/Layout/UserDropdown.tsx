@@ -91,14 +91,16 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => (isOpen ? closeDropdown() : openDropdown())}
-        className="flex items-center hover:text-purple-500 transition-colors text-base font-medium space-x-2"
+        className="flex items-center hover:text-purple-500 transition-colors text-base font-medium space-x-2 max-w-32 sm:max-w-40 md:max-w-48"
         aria-label="User menu"
         aria-haspopup="true"
         disabled={isAnimating}
       >
-        <span className="block">{user.name}</span>
+        <span className="block truncate" title={user.name}>
+          {user.name}
+        </span>
         {HiChevronDown({
-          className: `w-4 h-4 transition-transform duration-400 ease-out ${
+          className: `w-4 h-4 transition-transform duration-400 ease-out flex-shrink-0 ${
             isOpen ? 'rotate-180' : ''
           }`,
         })}
@@ -106,17 +108,17 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
 
       {/* Dropdown Container - Positioned to emerge from header */}
       <div
-        className={`absolute right-0 top-full w-48 z-50 overflow-hidden transition-all duration-600 ease-out dropdown-container ${
+        className={`absolute right-0 top-full w-56 sm:w-64 z-50 overflow-hidden transition-all duration-600 ease-out dropdown-container ${
           isOpen ? 'opacity-100' : 'opacity-0'
         }`}
       >
         {/* Dropdown Content - seamless extension of header */}
         <div className="bg-white dark:bg-dark-surface py-1">
           <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 text-center">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
+            <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={user.name}>
               {user.name}
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-gray-500 dark:text-gray-400 truncate" title={user.email}>
               {user.email}
             </p>
           </div>
@@ -131,15 +133,15 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
               >
                 {isRTL ? (
                   <>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    <span className="text-sm font-medium text-gray-900 dark:text-white truncate" title={t('header.loyalty.title')}>
                       {t('header.loyalty.title')}
                     </span>
-                    {HiGift({ className: 'w-4 h-4 text-purple-500 ml-2' })}
+                    {HiGift({ className: 'w-4 h-4 text-purple-500 ml-2 flex-shrink-0' })}
                   </>
                 ) : (
                   <>
-                    {HiGift({ className: 'w-4 h-4 text-purple-500 mr-2' })}
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {HiGift({ className: 'w-4 h-4 text-purple-500 mr-2 flex-shrink-0' })}
+                    <span className="text-sm font-medium text-gray-900 dark:text-white truncate" title={t('header.loyalty.title')}>
                       {t('header.loyalty.title')}
                     </span>
                   </>
@@ -152,66 +154,66 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                 </div>
               ) : loyaltyAccount ? (
                 <div className="space-y-1">
-                  <div className="flex justify-between items-center text-xs">
+                  <div className="flex justify-between items-center text-xs gap-1">
                     {isRTL ? (
                       <>
-                        <span className="font-medium text-gray-900 dark:text-white text-right">
+                        <span className="font-medium text-gray-900 dark:text-white text-right truncate" title={translateTierName(loyaltyAccount.currentTier.name)}>
                           {translateTierName(loyaltyAccount.currentTier.name)}
                         </span>
-                        <span className="text-gray-600 dark:text-gray-400 text-right">
+                        <span className="text-gray-600 dark:text-gray-400 text-right flex-shrink-0">
                           :{t('header.loyalty.currentTier')}
                         </span>
                       </>
                     ) : (
                       <>
-                        <span className="text-gray-600 dark:text-gray-400 text-left">
+                        <span className="text-gray-600 dark:text-gray-400 text-left flex-shrink-0">
                           {t('header.loyalty.currentTier')}:
                         </span>
-                        <span className="font-medium text-gray-900 dark:text-white text-right">
+                        <span className="font-medium text-gray-900 dark:text-white text-right truncate" title={translateTierName(loyaltyAccount.currentTier.name)}>
                           {translateTierName(loyaltyAccount.currentTier.name)}
                         </span>
                       </>
                     )}
                   </div>
-                  <div className="flex justify-between items-center text-xs">
+                  <div className="flex justify-between items-center text-xs gap-1">
                     {isRTL ? (
                       <>
-                        <span className="font-medium text-purple-600 dark:text-purple-400 text-right">
+                        <span className="font-medium text-purple-600 dark:text-purple-400 text-right truncate" title={loyaltyAccount.currentPoints.toLocaleString()}>
                           {loyaltyAccount.currentPoints.toLocaleString()}
                         </span>
-                        <span className="text-gray-600 dark:text-gray-400 text-right">
+                        <span className="text-gray-600 dark:text-gray-400 text-right flex-shrink-0">
                           :{t('header.loyalty.points')}
                         </span>
                       </>
                     ) : (
                       <>
-                        <span className="text-gray-600 dark:text-gray-400 text-left">
+                        <span className="text-gray-600 dark:text-gray-400 text-left flex-shrink-0">
                           {t('header.loyalty.points')}:
                         </span>
-                        <span className="font-medium text-purple-600 dark:text-purple-400 text-right">
+                        <span className="font-medium text-purple-600 dark:text-purple-400 text-right truncate" title={loyaltyAccount.currentPoints.toLocaleString()}>
                           {loyaltyAccount.currentPoints.toLocaleString()}
                         </span>
                       </>
                     )}
                   </div>
                   {loyaltyAccount.nextTier && (
-                    <div className="flex justify-between items-center text-xs">
+                    <div className="flex justify-between items-center text-xs gap-1">
                       {isRTL ? (
                         <>
-                          <span className="text-gray-900 dark:text-white font-medium text-left">
+                          <span className="text-gray-900 dark:text-white font-medium text-left truncate" title={`${loyaltyAccount.nextTier.pointsNeeded} ${t('header.loyalty.pointsNeeded')}`}>
                             {loyaltyAccount.nextTier.pointsNeeded}{' '}
                             {t('header.loyalty.pointsNeeded')}
                           </span>
-                          <span className="text-gray-600 dark:text-gray-400 text-right">
+                          <span className="text-gray-600 dark:text-gray-400 text-right flex-shrink-0">
                             :{t('header.loyalty.nextTier')}
                           </span>
                         </>
                       ) : (
                         <>
-                          <span className="text-gray-600 dark:text-gray-400 text-left">
+                          <span className="text-gray-600 dark:text-gray-400 text-left flex-shrink-0">
                             {t('header.loyalty.nextTier')}:
                           </span>
-                          <span className="text-gray-900 dark:text-white font-medium text-right">
+                          <span className="text-gray-900 dark:text-white font-medium text-right truncate" title={`${loyaltyAccount.nextTier.pointsNeeded} ${t('header.loyalty.pointsNeeded')}`}>
                             {loyaltyAccount.nextTier.pointsNeeded}{' '}
                             {t('header.loyalty.pointsNeeded')}
                           </span>
@@ -236,13 +238,13 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
           >
             {isRTL ? (
               <>
-                <span>{t('header.auth.myAccount')}</span>
-                {HiUser({ className: 'w-4 h-4 ml-3' })}
+                <span className="truncate" title={t('header.auth.myAccount')}>{t('header.auth.myAccount')}</span>
+                {HiUser({ className: 'w-4 h-4 ml-3 flex-shrink-0' })}
               </>
             ) : (
               <>
-                {HiUser({ className: 'w-4 h-4 mr-3' })}
-                <span>{t('header.auth.myAccount')}</span>
+                {HiUser({ className: 'w-4 h-4 mr-3 flex-shrink-0' })}
+                <span className="truncate" title={t('header.auth.myAccount')}>{t('header.auth.myAccount')}</span>
               </>
             )}
           </button>
@@ -255,13 +257,13 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
           >
             {isRTL ? (
               <>
-                <span>{t('header.auth.logout')}</span>
-                {HiArrowRightOnRectangle({ className: 'w-4 h-4 ml-3' })}
+                <span className="truncate" title={t('header.auth.logout')}>{t('header.auth.logout')}</span>
+                {HiArrowRightOnRectangle({ className: 'w-4 h-4 ml-3 flex-shrink-0' })}
               </>
             ) : (
               <>
-                {HiArrowRightOnRectangle({ className: 'w-4 h-4 mr-3' })}
-                <span>{t('header.auth.logout')}</span>
+                {HiArrowRightOnRectangle({ className: 'w-4 h-4 mr-3 flex-shrink-0' })}
+                <span className="truncate" title={t('header.auth.logout')}>{t('header.auth.logout')}</span>
               </>
             )}
           </button>
