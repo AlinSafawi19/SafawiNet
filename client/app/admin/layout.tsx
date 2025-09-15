@@ -33,7 +33,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main Content */}
       <div
         className={`flex-1 flex flex-col ${
-          locale === 'ar' ? 'lg:mr-64' : 'lg:ml-64'
+          locale === 'ar' ? 'lg:mr-72' : 'lg:ml-72'
         }`}
       >
         {/* Page Content */}
