@@ -211,11 +211,11 @@ export default function LoginSecurityPage() {
       profileTouched[fieldName as keyof typeof profileTouched] && 
       profileValidationErrors[fieldName];
     const baseClasses =
-      'w-full px-4 py-3 rounded-lg text-white focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
+      'w-full px-4 py-3 rounded-lg text-black dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
     const alignmentClasses = locale === 'ar' ? 'text-right' : 'text-left';
     const errorClasses = hasError
-      ? 'bg-white/10 border border-red-500/50 placeholder-white/50 focus:border-red-500'
-      : 'bg-white/10 border border-white/20 placeholder-white/50 focus:border-purple-500';
+      ? 'bg-gray-50 dark:bg-white/10 border border-red-500 dark:border-red-500/50 placeholder-gray-400 dark:placeholder-white/50 focus:border-red-500'
+      : 'bg-gray-50 dark:bg-white/10 border border-gray-300 dark:border-white/20 placeholder-gray-400 dark:placeholder-white/50 focus:border-purple-600 dark:focus:border-purple-500';
 
     return `${baseClasses} ${alignmentClasses} ${errorClasses}`;
   }, [profileTouched, profileValidationErrors, locale]);
@@ -330,11 +330,11 @@ export default function LoginSecurityPage() {
       passwordTouched[fieldName as keyof typeof passwordTouched] && 
       passwordValidationErrors[fieldName];
     const baseClasses =
-      'w-full px-4 py-3 rounded-lg text-white focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
+      'w-full px-4 py-3 rounded-lg text-black dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
     const alignmentClasses = locale === 'ar' ? 'text-right' : 'text-left';
     const errorClasses = hasError
-      ? 'bg-white/10 border border-red-500/50 placeholder-white/50 focus:border-red-500'
-      : 'bg-white/10 border border-white/20 placeholder-white/50 focus:border-purple-500';
+      ? 'bg-gray-50 dark:bg-white/10 border border-red-500 dark:border-red-500/50 placeholder-gray-400 dark:placeholder-white/50 focus:border-red-500'
+      : 'bg-gray-50 dark:bg-white/10 border border-gray-300 dark:border-white/20 placeholder-gray-400 dark:placeholder-white/50 focus:border-purple-600 dark:focus:border-purple-500';
 
     return `${baseClasses} ${alignmentClasses} ${errorClasses}`;
   }, [passwordTouched, passwordValidationErrors, locale]);
@@ -648,7 +648,7 @@ export default function LoginSecurityPage() {
   };
 
   return (
-    <div className="min-h-screen account-bg">
+    <div className="min-h-screen">
       {/* Main Content Area */}
       <div className="p-4 sm:p-6 lg:p-8 xl:p-12">
         <div className="account max-w-4xl mx-auto">
@@ -662,14 +662,14 @@ export default function LoginSecurityPage() {
           </div>
 
           <h1
-            className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 ${
+            className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-black dark:text-white mb-3 ${
               locale === 'ar' ? 'text-right' : 'text-left'
             }`}
           >
             {t('account.loginSecurity.title')}
           </h1>
           <p
-            className={`text-sm sm:text-base text-gray-300 mb-8 ${
+            className={`text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-8 ${
               locale === 'ar' ? 'text-right' : 'text-left'
             }`}
           >
@@ -678,7 +678,7 @@ export default function LoginSecurityPage() {
 
           {/* Tab Navigation */}
           <div className="mb-8">
-            <div className="border-b border-white/20">
+            <div className="border-b border-gray-300 dark:border-white/20">
               <nav
                 className={`flex ${locale === 'ar' ? 'flex-row-reverse' : ''}`}
               >
@@ -690,10 +690,10 @@ export default function LoginSecurityPage() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center px-4 py-3 text-sm font-medium border-b-2 transition-colors duration-200 ${
+                      className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 ${
                         isActive
-                          ? 'border-purple-500 text-purple-400'
-                          : 'border-transparent text-white/70 hover:text-white hover:border-white/30'
+                          ? 'border-purple-600 dark:border-purple-500 text-purple-700 dark:text-purple-400'
+                          : 'border-transparent text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white'
                       } ${locale === 'ar' ? 'flex-row-reverse' : ''}`}
                     >
                       {IconComponent({
@@ -710,18 +710,18 @@ export default function LoginSecurityPage() {
           </div>
 
           {/* Tab Content */}
-          <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6 sm:p-8 border border-white/10 shadow-none">
+          <div className="bg-white dark:bg-black/20 backdrop-blur-sm rounded-xl p-6 sm:p-8 border border-gray-200 dark:border-white/10 shadow-none">
             {activeTab === 'profile' && (
               <div>
                 <h2
-                  className={`text-lg font-semibold text-white mb-2 ${
+                  className={`text-lg font-semibold text-black dark:text-white mb-2 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
                   {t('account.loginSecurity.profile.title')}
                 </h2>
                 <p
-                  className={`text-sm text-gray-300 mb-6 ${
+                  className={`text-sm text-gray-600 dark:text-gray-300 mb-6 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
@@ -730,9 +730,9 @@ export default function LoginSecurityPage() {
 
                 {/* Error Message */}
                 {(profileError || profileErrorKey) && (
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
+                  <div className="bg-red-100 dark:bg-red-500/10 border border-red-300 dark:border-red-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
                     <p
-                      className={`text-red-400 text-sm ${
+                      className={`text-red-700 dark:text-red-400 text-sm ${
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
@@ -743,9 +743,9 @@ export default function LoginSecurityPage() {
 
                 {/* Success Message */}
                 {(profileSuccessMessage || profileSuccessKey) && (
-                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
+                  <div className="bg-green-100 dark:bg-green-500/10 border border-green-300 dark:border-green-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
                     <p
-                      className={`text-green-400 text-sm ${
+                      className={`text-green-700 dark:text-green-400 text-sm ${
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
@@ -759,7 +759,7 @@ export default function LoginSecurityPage() {
                   <div>
                     <label
                       htmlFor="name"
-                      className={`block text-sm font-medium text-white/80 mb-2 ${
+                      className={`block text-sm font-medium text-gray-700 dark:text-white/80 mb-2 ${
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
@@ -787,7 +787,7 @@ export default function LoginSecurityPage() {
                     />
                     {profileTouched.name && profileValidationErrors.name && (
                       <p
-                        className={`text-red-400 text-xs mt-1 ${
+                        className={`text-red-600 dark:text-red-400 text-xs mt-1 ${
                           locale === 'ar' ? 'text-right' : 'text-left'
                         }`}
                       >
@@ -801,7 +801,7 @@ export default function LoginSecurityPage() {
                     <button
                       type="submit"
                       disabled={isProfileFormLoading}
-                      className="w-full bg-white text-black font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center"
+                      className="w-full bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center"
                     >
                       {isProfileFormLoading ? (
                         <>
@@ -819,14 +819,14 @@ export default function LoginSecurityPage() {
             {activeTab === 'password' && (
               <div>
                 <h2
-                  className={`text-lg font-semibold text-white mb-2 ${
+                  className={`text-lg font-semibold text-black dark:text-white mb-2 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
                   {t('account.loginSecurity.password.title')}
                 </h2>
                 <p
-                  className={`text-sm text-gray-300 mb-6 ${
+                  className={`text-sm text-gray-600 dark:text-gray-300 mb-6 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
@@ -834,14 +834,14 @@ export default function LoginSecurityPage() {
                 </p>
 
                 {/* Security Notice */}
-                <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3 sm:p-4 mb-6">
+                <div className="bg-purple-100 dark:bg-purple-500/10 border border-purple-300 dark:border-purple-500/20 rounded-lg p-3 sm:p-4 mb-6">
                   <div
                     className={`flex items-start ${
                       locale === 'ar' ? 'flex-row-reverse' : ''
                     }`}
                   >
                     <svg
-                      className={`w-4 h-4 sm:w-5 sm:h-5 text-purple-400 mt-0.5 flex-shrink-0 ${
+                      className={`w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0 ${
                         locale === 'ar' ? 'ml-2 sm:ml-3' : 'mr-2 sm:mr-3'
                       }`}
                       fill="currentColor"
@@ -855,14 +855,14 @@ export default function LoginSecurityPage() {
                     </svg>
                     <div>
                       <p
-                        className={`text-purple-400 text-xs sm:text-sm font-medium mb-1 ${
+                        className={`text-purple-700 dark:text-purple-400 text-xs sm:text-sm font-medium mb-1 ${
                           locale === 'ar' ? 'text-right' : 'text-left'
                         }`}
                       >
                         {t('account.loginSecurity.password.securityNotice')}
                       </p>
                       <p
-                        className={`text-purple-300/80 text-xs sm:text-sm ${
+                        className={`text-purple-600 dark:text-purple-300/80 text-xs sm:text-sm ${
                           locale === 'ar' ? 'text-right' : 'text-left'
                         }`}
                       >
@@ -876,9 +876,9 @@ export default function LoginSecurityPage() {
 
                 {/* Error Message */}
                 {(passwordError || passwordErrorKey) && (
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
+                  <div className="bg-red-100 dark:bg-red-500/10 border border-red-300 dark:border-red-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
                     <p
-                      className={`text-red-400 text-sm ${
+                      className={`text-red-700 dark:text-red-400 text-sm ${
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
@@ -889,9 +889,9 @@ export default function LoginSecurityPage() {
 
                 {/* Success Message */}
                 {(passwordSuccessMessage || passwordSuccessKey) && (
-                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
+                  <div className="bg-green-100 dark:bg-green-500/10 border border-green-300 dark:border-green-500/20 rounded-lg p-3 mb-6 backdrop-blur-sm">
                     <p
-                      className={`text-green-400 text-sm ${
+                      className={`text-green-700 dark:text-green-400 text-sm ${
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
@@ -933,7 +933,7 @@ export default function LoginSecurityPage() {
                   <div>
                     <label
                       htmlFor="currentPassword"
-                      className={`block text-sm font-medium text-white/80 mb-2 ${
+                      className={`block text-sm font-medium text-gray-700 dark:text-white/80 mb-2 ${
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
@@ -1004,7 +1004,7 @@ export default function LoginSecurityPage() {
                     {passwordTouched.currentPassword &&
                       passwordValidationErrors.currentPassword && (
                         <p
-                          className={`text-red-400 text-xs mt-1 ${
+                          className={`text-red-600 dark:text-red-400 text-xs mt-1 ${
                             locale === 'ar' ? 'text-right' : 'text-left'
                           }`}
                         >
@@ -1017,7 +1017,7 @@ export default function LoginSecurityPage() {
                   <div>
                     <label
                       htmlFor="newPassword"
-                      className={`block text-sm font-medium text-white/80 mb-2 ${
+                      className={`block text-sm font-medium text-gray-700 dark:text-white/80 mb-2 ${
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
@@ -1050,7 +1050,7 @@ export default function LoginSecurityPage() {
                     {passwordTouched.newPassword &&
                       passwordValidationErrors.newPassword && (
                         <p
-                          className={`text-red-400 text-xs mt-1 ${
+                          className={`text-red-600 dark:text-red-400 text-xs mt-1 ${
                             locale === 'ar' ? 'text-right' : 'text-left'
                           }`}
                         >
@@ -1058,7 +1058,7 @@ export default function LoginSecurityPage() {
                         </p>
                       )}
                     <p
-                      className={`text-white/50 text-xs mt-1 ${
+                      className={`text-gray-500 dark:text-white/50 text-xs mt-1 ${
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
@@ -1070,7 +1070,7 @@ export default function LoginSecurityPage() {
                   <div>
                     <label
                       htmlFor="confirmNewPassword"
-                      className={`block text-sm font-medium text-white/80 mb-2 ${
+                      className={`block text-sm font-medium text-gray-700 dark:text-white/80 mb-2 ${
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
@@ -1103,7 +1103,7 @@ export default function LoginSecurityPage() {
                     {passwordTouched.confirmNewPassword &&
                       passwordValidationErrors.confirmNewPassword && (
                         <p
-                          className={`text-red-400 text-xs mt-1 ${
+                          className={`text-red-600 dark:text-red-400 text-xs mt-1 ${
                             locale === 'ar' ? 'text-right' : 'text-left'
                           }`}
                         >
@@ -1117,7 +1117,7 @@ export default function LoginSecurityPage() {
                     <button
                       type="submit"
                       disabled={isPasswordFormLoading}
-                      className="w-full bg-white text-black font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center"
+                      className="w-full bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center"
                     >
                       {isPasswordFormLoading ? (
                         <>{t('account.loginSecurity.password.changing')}</>
@@ -1133,14 +1133,14 @@ export default function LoginSecurityPage() {
             {activeTab === 'twoFactor' && (
               <div>
                 <h2
-                  className={`text-lg font-semibold text-white mb-2 ${
+                  className={`text-lg font-semibold text-black dark:text-white mb-2 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
                   {t('account.loginSecurity.tabs.twoFactor')}
                 </h2>
                 <p
-                  className={`text-sm text-gray-300 mb-6 ${
+                  className={`text-sm text-gray-600 dark:text-gray-300 mb-6 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
@@ -1148,14 +1148,14 @@ export default function LoginSecurityPage() {
                 </p>
 
                 {/* Security Notice */}
-                <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3 sm:p-4 mb-6">
+                <div className="bg-purple-100 dark:bg-purple-500/10 border border-purple-300 dark:border-purple-500/20 rounded-lg p-3 sm:p-4 mb-6">
                   <div
                     className={`flex items-start ${
                       locale === 'ar' ? 'flex-row-reverse' : ''
                     }`}
                   >
                     <svg
-                      className={`w-4 h-4 sm:w-5 sm:h-5 text-purple-400 mt-0.5 flex-shrink-0 ${
+                      className={`w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0 ${
                         locale === 'ar' ? 'ml-2 sm:ml-3' : 'mr-2 sm:mr-3'
                       }`}
                       fill="currentColor"
@@ -1169,14 +1169,14 @@ export default function LoginSecurityPage() {
                     </svg>
                     <div>
                       <p
-                        className={`text-purple-400 text-xs sm:text-sm font-medium mb-1 ${
+                        className={`text-purple-700 dark:text-purple-400 text-xs sm:text-sm font-medium mb-1 ${
                           locale === 'ar' ? 'text-right' : 'text-left'
                         }`}
                       >
                         {t('account.loginSecurity.twoFactor.securityNotice')}
                       </p>
                       <p
-                        className={`text-purple-300/80 text-xs sm:text-sm ${
+                        className={`text-purple-600 dark:text-purple-300/80 text-xs sm:text-sm ${
                           locale === 'ar' ? 'text-right' : 'text-left'
                         }`}
                       >
@@ -1189,7 +1189,7 @@ export default function LoginSecurityPage() {
                 </div>
 
                 {/* 2FA Status Section */}
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+                <div className="bg-white dark:bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-gray-200 dark:border-white/10">
                   <div
                     className={`flex items-center justify-between ${
                       locale === 'ar' ? 'flex-row-reverse' : ''
@@ -1206,15 +1206,15 @@ export default function LoginSecurityPage() {
                         }`}
                       >
                         {HiShieldCheck({
-                          className: `w-5 h-5 text-white/80 ${
+                          className: `w-5 h-5 text-gray-600 dark:text-white/80 ${
                             locale === 'ar' ? 'ml-2' : 'mr-2'
                           }`,
                         })}
-                        <h3 className="text-white font-semibold text-lg">
+                        <h3 className="text-black dark:text-white font-semibold text-lg">
                           {t('account.loginSecurity.twoFactor.title')}
                         </h3>
                       </div>
-                      <p className="text-sm text-gray-300 mb-4">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                         {user?.twoFactorEnabled
                           ? t('account.loginSecurity.twoFactor.enabledMessage')
                           : t(
@@ -1238,8 +1238,8 @@ export default function LoginSecurityPage() {
                         <span
                           className={`text-sm font-medium ${
                             user?.twoFactorEnabled
-                              ? 'text-green-400'
-                              : 'text-gray-400'
+                              ? 'text-green-600 dark:text-green-400'
+                              : 'text-gray-500 dark:text-gray-400'
                           }`}
                         >
                           {user?.twoFactorEnabled
@@ -1265,8 +1265,8 @@ export default function LoginSecurityPage() {
                         }}
                         className={`px-6 py-3 rounded-lg text-sm font-bold transition-all duration-300 min-h-[48px] flex items-center justify-center ${
                           user?.twoFactorEnabled
-                            ? 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 hover:border-red-500/50'
-                            : 'bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 hover:border-green-500/50'
+                            ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-500/30 hover:bg-red-200 dark:hover:bg-red-500/30 hover:border-red-400 dark:hover:border-red-500/50'
+                            : 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-500/30 hover:bg-green-200 dark:hover:bg-green-500/30 hover:border-green-400 dark:hover:border-green-500/50'
                         }`}
                         disabled={is2FALoading}
                       >
@@ -1303,16 +1303,16 @@ export default function LoginSecurityPage() {
             }
           }}
         >
-          <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6 max-w-md w-full mx-4 border border-white/10 shadow-none">
+          <div className="bg-white dark:bg-black/20 backdrop-blur-sm rounded-xl p-6 max-w-md w-full mx-4 border border-gray-200 dark:border-white/10 shadow-none">
             <h3
-              className={`text-lg font-semibold text-white mb-4 ${
+              className={`text-lg font-semibold text-black dark:text-white mb-4 ${
                 locale === 'ar' ? 'text-right' : 'text-left'
               }`}
             >
               {t('account.loginSecurity.twoFactor.disableModal.title')}
             </h3>
             <p
-              className={`text-gray-300 mb-6 ${
+              className={`text-gray-600 dark:text-gray-300 mb-6 ${
                 locale === 'ar' ? 'text-right' : 'text-left'
               }`}
             >
@@ -1367,7 +1367,7 @@ export default function LoginSecurityPage() {
                     placeholder={t(
                       'account.loginSecurity.twoFactor.disableModal.passwordPlaceholder'
                     )}
-                    className={`w-full px-4 py-3 rounded-lg text-white focus:bg-white/15 transition-all duration-300 text-sm sm:text-base bg-white/10 border border-white/20 placeholder-white/50 focus:border-purple-500 ${
+                    className={`w-full px-4 py-3 rounded-lg text-black dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base bg-gray-50 dark:bg-white/10 border border-gray-300 dark:border-white/20 placeholder-gray-400 dark:placeholder-white/50 focus:border-purple-600 dark:focus:border-purple-500 ${
                       locale === 'ar' ? 'text-right' : 'text-left'
                     }`}
                     dir={locale === 'ar' ? 'rtl' : 'ltr'}
@@ -1396,7 +1396,7 @@ export default function LoginSecurityPage() {
                 </div>
                 {disablePasswordError && (
                   <p
-                    className={`text-red-400 text-xs mt-1 ${
+                    className={`text-red-600 dark:text-red-400 text-xs mt-1 ${
                       locale === 'ar' ? 'text-right' : 'text-left'
                     }`}
                   >
@@ -1411,14 +1411,14 @@ export default function LoginSecurityPage() {
                     setDisablePassword('');
                     setDisablePasswordError('');
                   }}
-                  className="flex-1 px-4 py-3 bg-white/10 border border-white/20 text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm font-medium"
+                  className="flex-1 px-4 py-3 bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/10 dark:hover:shadow-purple-500/25 transition-all duration-300 text-sm font-medium"
                   disabled={is2FALoading}
                 >
                   {t('account.loginSecurity.twoFactor.disableModal.cancel')}
                 </button>
                 <button
                   onClick={handleDisable2FA}
-                  className="flex-1 px-4 py-3 bg-white text-black rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm font-bold"
+                  className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm font-bold"
                   disabled={is2FALoading}
                 >
                   {is2FALoading

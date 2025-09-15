@@ -46,7 +46,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
             {index > 0 && (
               <svg
                 className={`w-4 h-4 mx-2 ${isRTL ? 'rotate-180' : ''} ${
-                  isAccountPage ? 'text-gray-400' : 'text-gray-400'
+                  isAccountPage ? 'text-gray-400 dark:text-gray-400' : 'text-gray-400 dark:text-gray-400'
                 }`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
@@ -64,7 +64,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
                 href={item.href}
                 className={`transition-colors duration-200 ${
                   isAccountPage
-                    ? 'text-gray-400 hover:text-white'
+                    ? 'text-gray-400 dark:text-gray-400 hover:text-black dark:hover:text-white'
                     : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
                 }`}
               >
@@ -75,10 +75,10 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
                 className={`${
                   item.isActive
                     ? isAccountPage
-                      ? 'text-white font-medium'
+                      ? 'text-black dark:text-white font-medium'
                       : 'text-black dark:text-white font-medium'
                     : isAccountPage
-                    ? 'text-gray-400'
+                    ? 'text-gray-400 dark:text-gray-400'
                     : 'text-gray-600 dark:text-gray-400'
                 }`}
               >
@@ -100,12 +100,6 @@ export const generateBreadcrumbItems = (
 ): BreadcrumbItem[] => {
   const segments = pathname.split('/').filter(Boolean);
   const items: BreadcrumbItem[] = [];
-
-  // Always start with Home
-  items.push({
-    label: t('breadcrumb.home'),
-    href: '/',
-  });
 
   // Build breadcrumb items based on path segments
   let currentPath = '';
