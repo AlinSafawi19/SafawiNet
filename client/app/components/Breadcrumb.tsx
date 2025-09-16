@@ -31,21 +31,21 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
 
   return (
     <nav
-      className={`flex items-center space-x-2 text-sm ${
+      className={`flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
         isRTL ? 'space-x-reverse' : ''
       } ${className}`}
       aria-label={t('accessibility.breadcrumb')}
     >
       <ol
-        className={`flex items-center space-x-2 ${
+        className={`flex items-center space-x-1 sm:space-x-2 ${
           isRTL ? 'space-x-reverse' : ''
-        }`}
+        } overflow-x-auto scrollbar-hide`}
       >
         {items.map((item, index) => (
-          <li key={index} className="flex items-center">
+          <li key={index} className="flex items-center flex-shrink-0">
             {index > 0 && (
               <svg
-                className={`w-4 h-4 mx-2 ${isRTL ? 'rotate-180' : ''} ${
+                className={`w-3 h-3 sm:w-4 sm:h-4 mx-1 sm:mx-2 ${isRTL ? 'rotate-180' : ''} ${
                   isAccountPage ? 'text-gray-400 dark:text-gray-400' : 'text-gray-400 dark:text-gray-400'
                 }`}
                 fill="currentColor"
@@ -62,7 +62,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
             {item.href && !item.isActive ? (
               <Link
                 href={item.href}
-                className={`transition-colors duration-200 ${
+                className={`transition-colors duration-200 whitespace-nowrap ${
                   isAccountPage
                     ? 'text-gray-400 dark:text-gray-400 hover:text-black dark:hover:text-white'
                     : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
@@ -72,7 +72,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
               </Link>
             ) : (
               <span
-                className={`${
+                className={`whitespace-nowrap ${
                   item.isActive
                     ? isAccountPage
                       ? 'text-black dark:text-white font-medium'

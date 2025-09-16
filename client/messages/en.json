@@ -119,9 +119,12 @@
       "subtitle": "Manage your account security settings",
       "tabs": {
         "profile": "Profile",
+        "profileShort": "Profile",
         "password": "Password",
+        "passwordShort": "Password",
         "email": "Email",
-        "twoFactor": "Two-Factor Authentication"
+        "twoFactor": "Two-Factor Authentication",
+        "twoFactorShort": "2FA"
       },
       "profile": {
         "title": "Profile Information",

@@ -221,7 +221,7 @@ export default function LoginSecurityPage() {
       profileTouched[fieldName as keyof typeof profileTouched] && 
       profileValidationErrors[fieldName];
     const baseClasses =
-      'w-full px-4 py-3 rounded-lg text-black dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
+      'w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-black dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px]';
     const alignmentClasses = locale === 'ar' ? 'text-right' : 'text-left';
     const errorClasses = hasError
       ? 'bg-gray-50 dark:bg-white/10 border border-red-500 dark:border-red-500/50 placeholder-gray-400 dark:placeholder-white/50 focus:border-red-500'
@@ -340,7 +340,7 @@ export default function LoginSecurityPage() {
       passwordTouched[fieldName as keyof typeof passwordTouched] && 
       passwordValidationErrors[fieldName];
     const baseClasses =
-      'w-full px-4 py-3 rounded-lg text-black dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
+      'w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-black dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px]';
     const alignmentClasses = locale === 'ar' ? 'text-right' : 'text-left';
     const errorClasses = hasError
       ? 'bg-gray-50 dark:bg-white/10 border border-red-500 dark:border-red-500/50 placeholder-gray-400 dark:placeholder-white/50 focus:border-red-500'
@@ -671,7 +671,7 @@ export default function LoginSecurityPage() {
   return (
     <div className="min-h-screen">
       {/* Main Content Area */}
-      <div className="p-4 sm:p-6 lg:p-8 xl:p-12">
+      <div className="p-3 sm:p-4 md:p-6 lg:p-8 xl:p-12">
         <div className="account max-w-4xl mx-auto">
           {/* Breadcrumb */}
           <div
@@ -683,14 +683,14 @@ export default function LoginSecurityPage() {
           </div>
 
           <h1
-            className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-black dark:text-white mb-3 ${
+            className={`text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-black dark:text-white mb-2 sm:mb-3 ${
               locale === 'ar' ? 'text-right' : 'text-left'
             }`}
           >
             {t('account.loginSecurity.title')}
           </h1>
           <p
-            className={`text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-8 ${
+            className={`text-xs sm:text-sm md:text-base text-gray-600 dark:text-gray-300 mb-6 sm:mb-8 ${
               locale === 'ar' ? 'text-right' : 'text-left'
             }`}
           >
@@ -698,10 +698,10 @@ export default function LoginSecurityPage() {
           </p>
 
           {/* Tab Navigation */}
-          <div className="mb-8">
-            <div className="border-b border-gray-300 dark:border-white/20">
+          <div className="mb-6 sm:mb-8">
+            <div className="border-b border-gray-300 dark:border-white/20 overflow-x-auto">
               <nav
-                className={`flex ${locale === 'ar' ? 'flex-row-reverse' : ''}`}
+                className={`flex ${locale === 'ar' ? 'flex-row-reverse' : ''} min-w-max`}
               >
                 {tabs.map((tab) => {
                   const IconComponent = tab.icon;
@@ -711,18 +711,23 @@ export default function LoginSecurityPage() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 ${
+                      className={`flex items-center px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-colors duration-200 whitespace-nowrap ${
                         isActive
                           ? 'border-purple-600 dark:border-purple-500 text-purple-700 dark:text-purple-400'
                           : 'border-transparent text-gray-600 dark:text-white/70 hover:text-gray-800 dark:hover:text-white'
                       } ${locale === 'ar' ? 'flex-row-reverse' : ''}`}
                     >
                       {IconComponent({
-                        className: `w-4 h-4 ${
-                          locale === 'ar' ? 'ml-2' : 'mr-2'
+                        className: `w-3 h-3 sm:w-4 sm:h-4 ${
+                          locale === 'ar' ? 'ml-1 sm:ml-2' : 'mr-1 sm:mr-2'
                         }`,
                       })}
-                      {tab.label}
+                      <span className="hidden xs:inline">{tab.label}</span>
+                      <span className="xs:hidden">
+                        {tab.id === 'profile' ? t('account.loginSecurity.tabs.profileShort') || 'Profile' :
+                         tab.id === 'password' ? t('account.loginSecurity.tabs.passwordShort') || 'Password' :
+                         t('account.loginSecurity.tabs.twoFactorShort') || '2FA'}
+                      </span>
                     </button>
                   );
                 })}
@@ -731,18 +736,18 @@ export default function LoginSecurityPage() {
           </div>
 
           {/* Tab Content */}
-          <div className="bg-white dark:bg-black/20 backdrop-blur-sm rounded-xl p-6 sm:p-8 border border-gray-200 dark:border-white/10 shadow-none">
+          <div className="bg-white dark:bg-black/20 backdrop-blur-sm rounded-xl p-4 sm:p-6 md:p-8 border border-gray-200 dark:border-white/10 shadow-none">
             {activeTab === 'profile' && (
               <div>
                 <h2
-                  className={`text-lg font-semibold text-black dark:text-white mb-2 ${
+                  className={`text-base sm:text-lg font-semibold text-black dark:text-white mb-1 sm:mb-2 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
                   {t('account.loginSecurity.profile.title')}
                 </h2>
                 <p
-                  className={`text-sm text-gray-600 dark:text-gray-300 mb-6 ${
+                  className={`text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-4 sm:mb-6 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
@@ -775,7 +780,7 @@ export default function LoginSecurityPage() {
                   </div>
                 )}
 
-                <form onSubmit={handleProfileSubmit} className="space-y-6">
+                <form onSubmit={handleProfileSubmit} className="space-y-4 sm:space-y-6">
                   {/* Name Field */}
                   <div>
                     <label
@@ -846,14 +851,14 @@ export default function LoginSecurityPage() {
             {activeTab === 'password' && (
               <div>
                 <h2
-                  className={`text-lg font-semibold text-black dark:text-white mb-2 ${
+                  className={`text-base sm:text-lg font-semibold text-black dark:text-white mb-1 sm:mb-2 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
                   {t('account.loginSecurity.password.title')}
                 </h2>
                 <p
-                  className={`text-sm text-gray-600 dark:text-gray-300 mb-6 ${
+                  className={`text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-4 sm:mb-6 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
@@ -929,7 +934,7 @@ export default function LoginSecurityPage() {
                   </div>
                 )}
 
-                <form onSubmit={handlePasswordSubmit} className="space-y-6">
+                <form onSubmit={handlePasswordSubmit} className="space-y-4 sm:space-y-6">
                   {/* Hidden dummy fields to prevent auto-fill */}
                   <div className="hidden">
                     <label htmlFor="hidden-username" className="sr-only">
@@ -1160,14 +1165,14 @@ export default function LoginSecurityPage() {
             {activeTab === 'twoFactor' && (
               <div>
                 <h2
-                  className={`text-lg font-semibold text-black dark:text-white mb-2 ${
+                  className={`text-base sm:text-lg font-semibold text-black dark:text-white mb-1 sm:mb-2 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
                   {t('account.loginSecurity.tabs.twoFactor')}
                 </h2>
                 <p
-                  className={`text-sm text-gray-600 dark:text-gray-300 mb-6 ${
+                  className={`text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-4 sm:mb-6 ${
                     locale === 'ar' ? 'text-right' : 'text-left'
                   }`}
                 >
@@ -1216,10 +1221,10 @@ export default function LoginSecurityPage() {
                 </div>
 
                 {/* 2FA Status Section */}
-                <div className="bg-white dark:bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-gray-200 dark:border-white/10">
+                <div className="bg-white dark:bg-white/5 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-white/10">
                   <div
-                    className={`flex items-center justify-between ${
-                      locale === 'ar' ? 'flex-row-reverse' : ''
+                    className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ${
+                      locale === 'ar' ? 'sm:flex-row-reverse' : ''
                     }`}
                   >
                     <div
@@ -1279,7 +1284,7 @@ export default function LoginSecurityPage() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 w-full sm:w-auto">
                       <button
                         onClick={() => {
                           if (user?.twoFactorEnabled) {
@@ -1290,7 +1295,7 @@ export default function LoginSecurityPage() {
                             handleEnable2FA();
                           }
                         }}
-                        className={`px-6 py-3 rounded-lg text-sm font-bold transition-all duration-300 min-h-[48px] flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-60 ${
+                        className={`w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-xs sm:text-sm font-bold transition-all duration-300 min-h-[44px] sm:min-h-[48px] flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-60 ${
                           user?.twoFactorEnabled
                             ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-500/30 hover:bg-red-200 dark:hover:bg-red-500/30 hover:border-red-400 dark:hover:border-red-500/50'
                             : 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-500/30 hover:bg-green-200 dark:hover:bg-green-500/30 hover:border-green-400 dark:hover:border-green-500/50'
@@ -1321,7 +1326,7 @@ export default function LoginSecurityPage() {
       {/* Disable 2FA Modal */}
       {showDisableModal && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowDisableModal(false);
@@ -1330,22 +1335,22 @@ export default function LoginSecurityPage() {
             }
           }}
         >
-          <div className="bg-white dark:bg-black/20 backdrop-blur-sm rounded-xl p-6 max-w-md w-full mx-4 border border-gray-200 dark:border-white/10 shadow-none">
+          <div className="bg-white dark:bg-black/20 backdrop-blur-sm rounded-xl p-4 sm:p-6 max-w-md w-full border border-gray-200 dark:border-white/10 shadow-none">
             <h3
-              className={`text-lg font-semibold text-black dark:text-white mb-4 ${
+              className={`text-base sm:text-lg font-semibold text-black dark:text-white mb-3 sm:mb-4 ${
                 locale === 'ar' ? 'text-right' : 'text-left'
               }`}
             >
               {t('account.loginSecurity.twoFactor.disableModal.title')}
             </h3>
             <p
-              className={`text-gray-600 dark:text-gray-300 mb-6 ${
+              className={`text-sm text-gray-600 dark:text-gray-300 mb-4 sm:mb-6 ${
                 locale === 'ar' ? 'text-right' : 'text-left'
               }`}
             >
               {t('account.loginSecurity.twoFactor.disableModal.message')}
             </p>
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Hidden dummy fields to prevent auto-fill */}
               <div className="hidden">
                 <label htmlFor="hidden-username-modal" className="sr-only">
@@ -1394,7 +1399,7 @@ export default function LoginSecurityPage() {
                     placeholder={t(
                       'account.loginSecurity.twoFactor.disableModal.passwordPlaceholder'
                     )}
-                    className={`w-full px-4 py-3 rounded-lg text-black dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base bg-gray-50 dark:bg-white/10 border border-gray-300 dark:border-white/20 placeholder-gray-400 dark:placeholder-white/50 focus:border-purple-600 dark:focus:border-purple-500 ${
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-black dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base bg-gray-50 dark:bg-white/10 border border-gray-300 dark:border-white/20 placeholder-gray-400 dark:placeholder-white/50 focus:border-purple-600 dark:focus:border-purple-500 min-h-[44px] sm:min-h-[48px] ${
                       locale === 'ar' ? 'text-right' : 'text-left'
                     }`}
                     dir={locale === 'ar' ? 'rtl' : 'ltr'}
@@ -1431,21 +1436,21 @@ export default function LoginSecurityPage() {
                   </p>
                 )}
               </div>
-              <div className={`flex ${locale === 'ar' ? 'gap-4' : 'gap-3'}`}>
+              <div className={`flex flex-col sm:flex-row ${locale === 'ar' ? 'sm:gap-4' : 'sm:gap-3'} gap-3`}>
                 <button
                   onClick={() => {
                     setShowDisableModal(false);
                     setDisablePassword('');
                     setDisablePasswordError('');
                   }}
-                  className="flex-1 px-4 py-3 bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/10 dark:hover:shadow-purple-500/25 transition-all duration-300 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/10 dark:hover:shadow-purple-500/25 transition-all duration-300 text-xs sm:text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60 min-h-[44px] sm:min-h-[48px]"
                   disabled={is2FALoading}
                 >
                   {t('account.loginSecurity.twoFactor.disableModal.cancel')}
                 </button>
                 <button
                   onClick={handleDisable2FA}
-                  className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-xs sm:text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60 min-h-[44px] sm:min-h-[48px]"
                   disabled={is2FALoading}
                 >
                   {is2FALoading

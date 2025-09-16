@@ -119,9 +119,12 @@
       "subtitle": "إدارة إعدادات أمان حسابك",
       "tabs": {
         "profile": "الملف الشخصي",
+        "profileShort": "الملف",
         "password": "كلمة المرور",
+        "passwordShort": "كلمة المرور",
         "email": "البريد الإلكتروني",
-        "twoFactor": "المصادقة الثنائية"
+        "twoFactor": "المصادقة الثنائية",
+        "twoFactorShort": "2FA"
       },
       "profile": {
         "title": "معلومات الملف الشخصي",
