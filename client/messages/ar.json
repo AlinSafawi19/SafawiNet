@@ -4,7 +4,7 @@
       "home": "الرئيسية",
       "products": "جميع المنتجات",
       "deals": "العروض والصفقات",
-      "about": "حول"
+      "about": "حولنا"
     },
     "actions": {
       "notifications": "الإشعارات",
@@ -379,7 +379,28 @@
       "products": "المنتجات",
       "orders": "الطلبات",
       "analytics": "التحليلات",
-      "support": "دعم العملاء"
+      "support": "دعم العملاء",
+      "categories": {
+        "management": "الإدارة",
+        "insights": "الرؤى",
+        "support": "الدعم"
+      }
     }
+  },
+  "resetPassword": {
+    "subtitle": "أدخل كلمة المرور الجديدة أدناه",
+    "imageTitle": "إعادة تعيين كلمة المرور",
+    "imageSubtitle": "اختر كلمة مرور قوية وآمنة لحسابك",
+    "resettingPassword": "جاري إعادة تعيين كلمة المرور...",
+    "resetPasswordButton": "إعادة تعيين كلمة المرور",
+    "rememberPassword": "تذكرت كلمة المرور؟",
+    "backToLogin": "العودة لتسجيل الدخول"
+  },
+  "accessibility": {
+    "breadcrumb": "مسار التنقل",
+    "toggleMobileMenu": "تبديل القائمة المحمولة",
+    "closeMobileMenu": "إغلاق القائمة المحمولة",
+    "userMenu": "قائمة المستخدم",
+    "toggleTheme": "تبديل المظهر"
   }
 }

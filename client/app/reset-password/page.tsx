@@ -213,7 +213,7 @@ export default function ResetPasswordPage() {
               {t('auth.form.resetPassword')}
             </h1>
             <p className="text-white/70 text-xs sm:text-sm md:text-base">
-              Enter your new password below
+              {t('resetPassword.subtitle')}
             </p>
           </div>
 
@@ -341,14 +341,14 @@ export default function ResetPasswordPage() {
             <button
               type="submit"
               disabled={isLoading || !isFormValid()}
-              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[44px] sm:min-h-[48px] flex items-center justify-center"
+              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] flex items-center justify-center"
             >
               {isLoading ? (
                 <>
-                  Resetting Password...
+                  {t('resetPassword.resettingPassword')}
                 </>
               ) : (
-                'Reset Password'
+                t('resetPassword.resetPasswordButton')
               )}
             </button>
           </form>
@@ -356,12 +356,12 @@ export default function ResetPasswordPage() {
           {/* Back to Login */}
           <div className="text-center mt-3 sm:mt-4 md:mb-6">
             <p className="text-white/70 text-xs sm:text-sm">
-              Remember your password?
+              {t('resetPassword.rememberPassword')}
               <Link
                 href="/auth"
                 className="ml-1 sm:ml-2 text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200 hover:underline"
               >
-                Back to login
+                {t('resetPassword.backToLogin')}
               </Link>
             </p>
           </div>
@@ -372,8 +372,8 @@ export default function ResetPasswordPage() {
       <ParallaxImage
         src="https://static.wixstatic.com/media/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg/v1/fill/w_918,h_585,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg"
         alt={t('auth.hero.imageAlt')}
-        title="Reset Your Password"
-        subtitle="Choose a strong, secure password for your account"
+        title={t('resetPassword.imageTitle')}
+        subtitle={t('resetPassword.imageSubtitle')}
       />
     </div>
   );

@@ -255,7 +255,7 @@ const Header = () => {
             <button
               onClick={toggleMobileMenu}
               className="lg-tablet:hidden p-2 hover:text-purple-500 transition-colors"
-              aria-label="Toggle mobile menu"
+              aria-label={t('accessibility.toggleMobileMenu')}
             >
               <div className="relative w-8 h-8">
                 {/* Hamburger Icon */}
@@ -298,7 +298,7 @@ const Header = () => {
                 ? 'opacity-100 translate-x-0'
                 : 'opacity-0 translate-x-4'
             }`}
-            aria-label="Close mobile menu"
+            aria-label={t('accessibility.closeMobileMenu')}
           >
             {HiXMark({ className: 'w-8 h-8' })}
           </button>

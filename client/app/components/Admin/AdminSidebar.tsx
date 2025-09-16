@@ -90,9 +90,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
     }, {} as Record<string, typeof navigationItems>);
 
   const categoryLabels = {
-    management: 'Management',
-    insights: 'Insights',
-    support: 'Support',
+    management: t('admin.sidebar.categories.management'),
+    insights: t('admin.sidebar.categories.insights'),
+    support: t('admin.sidebar.categories.support'),
   };
 
   return (

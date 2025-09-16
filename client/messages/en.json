@@ -379,7 +379,28 @@
       "products": "Products",
       "orders": "Orders",
       "analytics": "Analytics",
-      "support": "Customer Support"
+      "support": "Customer Support",
+      "categories": {
+        "management": "Management",
+        "insights": "Insights",
+        "support": "Support"
+      }
     }
+  },
+  "resetPassword": {
+    "subtitle": "Enter your new password below",
+    "imageTitle": "Reset Your Password",
+    "imageSubtitle": "Choose a strong, secure password for your account",
+    "resettingPassword": "Resetting Password...",
+    "resetPasswordButton": "Reset Password",
+    "rememberPassword": "Remember your password?",
+    "backToLogin": "Back to login"
+  },
+  "accessibility": {
+    "breadcrumb": "Breadcrumb",
+    "toggleMobileMenu": "Toggle mobile menu",
+    "closeMobileMenu": "Close mobile menu",
+    "userMenu": "User menu",
+    "toggleTheme": "Toggle theme"
   }
 }

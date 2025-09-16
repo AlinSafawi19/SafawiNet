@@ -34,7 +34,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
       className={`flex items-center space-x-2 text-sm ${
         isRTL ? 'space-x-reverse' : ''
       } ${className}`}
-      aria-label="Breadcrumb"
+      aria-label={t('accessibility.breadcrumb')}
     >
       <ol
         className={`flex items-center space-x-2 ${

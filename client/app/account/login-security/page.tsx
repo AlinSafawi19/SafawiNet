@@ -801,7 +801,7 @@ export default function LoginSecurityPage() {
                     <button
                       type="submit"
                       disabled={isProfileFormLoading}
-                      className="w-full bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center"
+                      className="w-full bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed disabled:opacity-60 min-h-[48px] flex items-center justify-center"
                     >
                       {isProfileFormLoading ? (
                         <>
@@ -1117,7 +1117,7 @@ export default function LoginSecurityPage() {
                     <button
                       type="submit"
                       disabled={isPasswordFormLoading}
-                      className="w-full bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[48px] flex items-center justify-center"
+                      className="w-full bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed disabled:opacity-60 min-h-[48px] flex items-center justify-center"
                     >
                       {isPasswordFormLoading ? (
                         <>{t('account.loginSecurity.password.changing')}</>
@@ -1263,7 +1263,7 @@ export default function LoginSecurityPage() {
                             handleEnable2FA();
                           }
                         }}
-                        className={`px-6 py-3 rounded-lg text-sm font-bold transition-all duration-300 min-h-[48px] flex items-center justify-center ${
+                        className={`px-6 py-3 rounded-lg text-sm font-bold transition-all duration-300 min-h-[48px] flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-60 ${
                           user?.twoFactorEnabled
                             ? 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-500/30 hover:bg-red-200 dark:hover:bg-red-500/30 hover:border-red-400 dark:hover:border-red-500/50'
                             : 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-500/30 hover:bg-green-200 dark:hover:bg-green-500/30 hover:border-green-400 dark:hover:border-green-500/50'
@@ -1411,14 +1411,14 @@ export default function LoginSecurityPage() {
                     setDisablePassword('');
                     setDisablePasswordError('');
                   }}
-                  className="flex-1 px-4 py-3 bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/10 dark:hover:shadow-purple-500/25 transition-all duration-300 text-sm font-medium"
+                  className="flex-1 px-4 py-3 bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-700 dark:text-white rounded-lg hover:shadow-lg hover:shadow-purple-500/10 dark:hover:shadow-purple-500/25 transition-all duration-300 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={is2FALoading}
                 >
                   {t('account.loginSecurity.twoFactor.disableModal.cancel')}
                 </button>
                 <button
                   onClick={handleDisable2FA}
-                  className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm font-bold"
+                  className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={is2FALoading}
                 >
                   {is2FALoading

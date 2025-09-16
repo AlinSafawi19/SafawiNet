@@ -650,7 +650,7 @@ export function AuthForm() {
               <button
                 type="submit"
                 disabled={is2FALoading}
-                className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-md transition-colors"
+                className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 text-white font-medium py-2 px-4 rounded-md transition-colors"
               >
                 {is2FALoading
                   ? t('auth.twoFactor.verifying')
@@ -806,7 +806,7 @@ export function AuthForm() {
               <button
                 type="submit"
                 disabled={isFormLoading}
-                className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[44px] sm:min-h-[48px] flex items-center justify-center"
+                className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] flex items-center justify-center"
               >
                 {isFormLoading ? (
                   <>

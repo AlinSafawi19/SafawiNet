@@ -92,7 +92,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
       <button
         onClick={() => (isOpen ? closeDropdown() : openDropdown())}
         className="flex items-center hover:text-purple-500 transition-colors text-base font-medium space-x-2 max-w-32 sm:max-w-40 md:max-w-48"
-        aria-label="User menu"
+        aria-label={t('accessibility.userMenu')}
         aria-haspopup="true"
         disabled={isAnimating}
       >
