@@ -12,9 +12,11 @@ import { useAuth } from '../contexts/AuthContext';
 import Link from 'next/link';
 import { useSocket } from '../hooks/useSocket';
 import { useBackendMessageTranslation } from '../hooks/useBackendMessageTranslation';
+import { buildApiUrl, API_CONFIG } from '../config/api';
 
 interface VerificationState {
   status: 'verifying' | 'success' | 'error' | 'invalid';
+  message?: string;
 }
 
 export default function VerifyEmailPage() {
@@ -89,7 +91,7 @@ export default function VerifyEmailPage() {
     // Check if user is already logged in - if so, show success and redirect
     const checkExistingAuth = async () => {
       try {
-        const response = await fetch('http://localhost:3000/users/me', {
+        const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME), {
           method: 'GET',
           credentials: 'include',
         });
@@ -266,7 +268,7 @@ export default function VerifyEmailPage() {
 
         // Try regular verification
         const response = await fetch(
-          'http://localhost:3000/v1/auth/verify-email',
+          buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.VERIFY_EMAIL),
           {
             method: 'POST',
             headers: {

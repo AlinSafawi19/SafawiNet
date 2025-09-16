@@ -8,6 +8,7 @@ import { useSocket } from '../hooks/useSocket';
 import { ParallaxImage } from '../components/ParallaxImage';
 import { LoadingPage } from '../components/LoadingPage';
 import { useBackendMessageTranslation } from '../hooks/useBackendMessageTranslation';
+import { buildApiUrl, API_CONFIG } from '../config/api';
 
 interface ValidationErrors {
   password?: string;
@@ -149,7 +150,7 @@ export default function ResetPasswordPage() {
 
     try {
       const response = await fetch(
-        'http://localhost:3000/v1/auth/reset-password',
+        buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.RESET_PASSWORD),
         {
           method: 'POST',
           headers: {

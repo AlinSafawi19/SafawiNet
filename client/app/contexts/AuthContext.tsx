@@ -220,6 +220,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       // Clear user state (cookies are handled by the server)
       setUser(null);
+      
+      // Clear user-specific localStorage data
+      localStorage.removeItem('theme');
+      localStorage.removeItem('locale');
     }
   }, []);
 

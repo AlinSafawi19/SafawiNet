@@ -10,7 +10,7 @@ import {
   Breadcrumb,
   generateBreadcrumbItems,
 } from '../../components/Breadcrumb';
-import { buildApiUrl } from '../../config/api';
+import { buildApiUrl, API_CONFIG } from '../../config/api';
 import { HiLockClosed, HiShieldCheck, HiUser } from 'react-icons/hi2';
 import { useBackendMessageTranslation } from '../../hooks/useBackendMessageTranslation';
 
@@ -417,7 +417,7 @@ export default function LoginSecurityPage() {
     }
 
     try {
-      const response = await fetch('/api/users', {
+      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.UPDATE_PROFILE), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -488,7 +488,7 @@ export default function LoginSecurityPage() {
     }
 
     try {
-      const response = await fetch('/api/users/me/change-password', {
+      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.CHANGE_PASSWORD), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -511,7 +511,12 @@ export default function LoginSecurityPage() {
           return;
         }
 
-        setPasswordSuccessKey('account.loginSecurity.password.success');
+        // Handle success message from backend or use default
+        if (data.message) {
+          setPasswordBackendSuccess(data.message);
+        } else {
+          setPasswordSuccessKey('account.loginSecurity.password.success');
+        }
 
         // Reset form
         setPasswordFormData({
@@ -558,7 +563,7 @@ export default function LoginSecurityPage() {
   const handleEnable2FA = async () => {
     setIs2FALoading(true);
     try {
-      const url = buildApiUrl('/v1/auth/2fa/enable');
+      const url = buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.ENABLE_2FA);
       console.log('2FA enable URL:', url);
       const response = await fetch(url, {
         method: 'POST',
@@ -572,7 +577,7 @@ export default function LoginSecurityPage() {
         const data = await response.json();
         console.log('2FA enable success:', data);
         // Refresh user data to get updated 2FA status without reloading page
-        const userResponse = await fetch(buildApiUrl('/users/me'), {
+        const userResponse = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME), {
           method: 'GET',
           credentials: 'include',
         });
@@ -607,7 +612,7 @@ export default function LoginSecurityPage() {
     setDisablePasswordError('');
 
     try {
-      const response = await fetch(buildApiUrl('/v1/auth/2fa/disable'), {
+      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.DISABLE_2FA), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -633,7 +638,7 @@ export default function LoginSecurityPage() {
         }
 
         // Refresh user data to get updated 2FA status without reloading page
-        const userResponse = await fetch(buildApiUrl('/users/me'), {
+        const userResponse = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME), {
           method: 'GET',
           credentials: 'include',
         });
@@ -644,7 +649,6 @@ export default function LoginSecurityPage() {
           updateUser(finalUserData);
         }
       } else {
-        const errorMessage = data.message || 'Failed to disable 2FA';
         setDisablePasswordError(t('account.loginSecurity.twoFactor.disableModal.disableFailed'));
       }
     } catch (error) {

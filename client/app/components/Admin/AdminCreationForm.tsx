@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { buildApiUrl, API_CONFIG } from '../../config/api';
 
 interface AdminUser {
   name: string;
@@ -267,7 +268,7 @@ export default function AdminCreationForm() {
     }
 
     try {
-      const response = await fetch('/api/users', {
+      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.CREATE_USER), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

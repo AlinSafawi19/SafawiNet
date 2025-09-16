@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSocket } from '../hooks/useSocket';
 import { ParallaxImage } from '../components/ParallaxImage';
 import { useBackendMessageTranslation } from '../hooks/useBackendMessageTranslation';
+import { buildApiUrl, API_CONFIG } from '../config/api';
 
 export default function ForgotPasswordPage() {
   const { t, locale } = useLanguage();
@@ -110,7 +111,7 @@ export default function ForgotPasswordPage() {
     clearForgotMessages();
 
     try {
-      const response = await fetch('/api/auth/forgot-password', {
+      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.FORGOT_PASSWORD), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
