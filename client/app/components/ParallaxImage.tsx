@@ -11,12 +11,12 @@ interface ParallaxImageProps {
   className?: string;
 }
 
-export function ParallaxImage({ 
-  src, 
-  alt, 
-  title, 
-  subtitle, 
-  className = '' 
+export function ParallaxImage({
+  src,
+  alt,
+  title,
+  subtitle,
+  className = '',
 }: ParallaxImageProps) {
   // Parallax effect state
   const [parallaxOffset, setParallaxOffset] = useState(0);
@@ -30,8 +30,8 @@ export function ParallaxImage({
         const rect = parallaxRef.current.getBoundingClientRect();
         const scrolled = window.pageYOffset;
         const rate = scrolled * -0.3; // Vertical movement (slower)
-        const scale = 1 + (scrolled * 0.0005); // Scale effect (zooming/widening)
-        
+        const scale = 1 + scrolled * 0.0005; // Scale effect (zooming/widening)
+
         setParallaxOffset(rate);
         setParallaxScale(Math.max(scale, 1)); // Ensure scale doesn't go below 1
       }
@@ -42,11 +42,11 @@ export function ParallaxImage({
   }, []);
 
   return (
-    <div 
+    <div
       ref={parallaxRef}
       className={`flex-1 lg:basis-1/2 relative hidden sm:block bg-zinc-900 overflow-hidden ${className}`}
     >
-      <div 
+      <div
         className="absolute inset-0 w-full h-full"
         style={{
           transform: `translateY(${parallaxOffset}px) scale(${parallaxScale})`,
@@ -55,7 +55,7 @@ export function ParallaxImage({
           width: '120%',
           height: '120%',
           left: '-10%',
-          top: '-10%'
+          top: '-10%',
         }}
       >
         <Image

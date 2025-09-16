@@ -111,13 +111,16 @@ export default function ForgotPasswordPage() {
     clearForgotMessages();
 
     try {
-      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.FORGOT_PASSWORD), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
+      const response = await fetch(
+        buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.FORGOT_PASSWORD),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
 
       const data = await response.json();
 
@@ -165,17 +168,22 @@ export default function ForgotPasswordPage() {
           </div>
 
           {/* Message Display */}
-          {(forgotSuccess || forgotSuccessKey || forgotError || forgotErrorKey) && (
+          {(forgotSuccess ||
+            forgotSuccessKey ||
+            forgotError ||
+            forgotErrorKey) && (
             <div
               className={`border rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 ${
-                (forgotSuccess || forgotSuccessKey)
+                forgotSuccess || forgotSuccessKey
                   ? 'bg-green-500/10 border-green-500/20'
                   : 'bg-red-500/10 border-red-500/20'
               }`}
             >
               <p
                 className={`text-xs sm:text-sm ${
-                  (forgotSuccess || forgotSuccessKey) ? 'text-green-400' : 'text-red-400'
+                  forgotSuccess || forgotSuccessKey
+                    ? 'text-green-400'
+                    : 'text-red-400'
                 }`}
               >
                 {forgotSuccess || (forgotSuccessKey ? t(forgotSuccessKey) : '')}
@@ -217,9 +225,7 @@ export default function ForgotPasswordPage() {
               className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] flex items-center justify-center"
             >
               {isLoading ? (
-                <>
-                  {t('auth.forgotPassword.sending')}
-                </>
+                <>{t('auth.forgotPassword.sending')}</>
               ) : (
                 t('auth.forgotPassword.sendResetLink')
               )}

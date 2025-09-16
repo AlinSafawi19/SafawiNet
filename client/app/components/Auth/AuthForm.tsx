@@ -22,7 +22,7 @@ export function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  
+
   // Use the new backend message translation hook
   const {
     error,
@@ -65,8 +65,6 @@ export function AuthForm() {
   const passwordRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
-
-
 
   // Redirect logged-in users
   useEffect(() => {
@@ -400,20 +398,20 @@ export function AuthForm() {
         } else {
           router.push('/');
         }
+      } else {
+        if (result.messageKey) {
+          setErrorKey(result.messageKey);
+        } else if (result.message) {
+          setBackendError(result.message);
         } else {
-          if (result.messageKey) {
-            setErrorKey(result.messageKey);
-          } else if (result.message) {
-            setBackendError(result.message);
-          } else {
-            setErrorKey('auth.messages.invalidTwoFactorCode');
-          }
+          setErrorKey('auth.messages.invalidTwoFactorCode');
         }
-      } catch (error) {
-        setErrorKey('auth.messages.generalError');
-      } finally {
-        setIs2FALoading(false);
       }
+    } catch (error) {
+      setErrorKey('auth.messages.generalError');
+    } finally {
+      setIs2FALoading(false);
+    }
   };
 
   // Handle form data changes

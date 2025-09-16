@@ -43,7 +43,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   useEffect(() => {
     // Set loading to false immediately for better performance
     setIsLoading(false);
-    
+
     const savedTheme = localStorage.getItem('theme') as Theme;
     if (
       user?.preferences?.theme &&

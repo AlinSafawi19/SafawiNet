@@ -22,12 +22,15 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
 }) => {
   const { locale, t } = useLanguage();
   const pathname = usePathname();
-  
+
   // Memoize expensive calculations
-  const { isRTL, isAccountPage } = useMemo(() => ({
-    isRTL: locale === 'ar',
-    isAccountPage: pathname.startsWith('/account')
-  }), [locale, pathname]);
+  const { isRTL, isAccountPage } = useMemo(
+    () => ({
+      isRTL: locale === 'ar',
+      isAccountPage: pathname.startsWith('/account'),
+    }),
+    [locale, pathname]
+  );
 
   return (
     <nav
@@ -45,8 +48,12 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
           <li key={index} className="flex items-center flex-shrink-0">
             {index > 0 && (
               <svg
-                className={`w-3 h-3 sm:w-4 sm:h-4 mx-1 sm:mx-2 ${isRTL ? 'rotate-180' : ''} ${
-                  isAccountPage ? 'text-gray-400 dark:text-gray-400' : 'text-gray-400 dark:text-gray-400'
+                className={`w-3 h-3 sm:w-4 sm:h-4 mx-1 sm:mx-2 ${
+                  isRTL ? 'rotate-180' : ''
+                } ${
+                  isAccountPage
+                    ? 'text-gray-400 dark:text-gray-400'
+                    : 'text-gray-400 dark:text-gray-400'
                 }`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
@@ -149,8 +156,8 @@ export const useBreadcrumbItems = (
   t: (key: string) => string,
   locale?: string
 ) => {
-  return useMemo(() => 
-    generateBreadcrumbItems(pathname, t, locale), 
+  return useMemo(
+    () => generateBreadcrumbItems(pathname, t, locale),
     [pathname, t, locale]
   );
 };

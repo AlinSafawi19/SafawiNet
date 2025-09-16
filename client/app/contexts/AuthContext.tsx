@@ -223,7 +223,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       // Clear user state (cookies are handled by the server)
       setUser(null);
-      
+
       // Clear user-specific localStorage data
       localStorage.removeItem('theme');
       localStorage.removeItem('locale');
@@ -953,7 +953,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Only initialize socket service after a delay to not block initial page load
       setTimeout(async () => {
         try {
-          const { initializeSocketService } = await import('../services/socket.service');
+          const { initializeSocketService } = await import(
+            '../services/socket.service'
+          );
           console.log(
             '🌐 Setting up global socket listener for pending verification rooms...'
           );
@@ -961,7 +963,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.log(
             '🌐 Socket service initialized for global listener, connecting...'
           );
-          
+
           // Connect anonymously to listen for verification events
           await socketService.connect();
           console.log(
@@ -992,7 +994,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 console.log('🔑 Tokens received, attempting login...');
                 console.log('🔑 Token data:', {
                   accessToken: data.tokens.accessToken ? 'PRESENT' : 'MISSING',
-                  refreshToken: data.tokens.refreshToken ? 'PRESENT' : 'MISSING',
+                  refreshToken: data.tokens.refreshToken
+                    ? 'PRESENT'
+                    : 'MISSING',
                   expiresIn: data.tokens.expiresIn,
                 });
                 try {
@@ -1161,7 +1165,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               // Try to emit a test event to see if the connection is working
               const socket = socketService.getSocket();
               if (socket) {
-                socket.emit('test', { message: 'Testing WebSocket connection' });
+                socket.emit('test', {
+                  message: 'Testing WebSocket connection',
+                });
               }
             }
           }, 2000);
@@ -1221,9 +1227,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return user?.roles?.includes('SUPERADMIN') || false;
   }, [user]);
 
-  const hasRole = useCallback((role: string) => {
-    return user?.roles?.includes(role) || false;
-  }, [user]);
+  const hasRole = useCallback(
+    (role: string) => {
+      return user?.roles?.includes(role) || false;
+    },
+    [user]
+  );
 
   const value: AuthContextType = {
     user,

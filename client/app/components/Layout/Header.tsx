@@ -36,14 +36,16 @@ const Header = () => {
       label: 'admin.sidebar.dashboard',
     },
     // Admins section - only for superadmin users
-    ...(isSuperAdmin() ? [
-      {
-        name: 'Admins',
-        href: '/admin/admins',
-        icon: HiUsers,
-        label: 'admin.sidebar.admins',
-      },
-    ] : []),
+    ...(isSuperAdmin()
+      ? [
+          {
+            name: 'Admins',
+            href: '/admin/admins',
+            icon: HiUsers,
+            label: 'admin.sidebar.admins',
+          },
+        ]
+      : []),
     {
       name: 'Customers',
       href: '/admin/customers',
@@ -363,7 +365,10 @@ const Header = () => {
                             className:
                               'w-5 h-5 text-white group-hover:text-purple-400 transition-colors mb-1',
                           })}
-                          <span className="text-xs font-medium text-center leading-tight truncate max-w-full" title={t(item.label) || item.name}>
+                          <span
+                            className="text-xs font-medium text-center leading-tight truncate max-w-full"
+                            title={t(item.label) || item.name}
+                          >
                             {t(item.label) || item.name}
                           </span>
                         </Link>
@@ -385,7 +390,9 @@ const Header = () => {
                       onClick={closeMobileMenu}
                       title={t('header.navigation.home')}
                     >
-                      <span className="truncate">{t('header.navigation.home')}</span>
+                      <span className="truncate">
+                        {t('header.navigation.home')}
+                      </span>
                     </Link>
                     <Link
                       href="/products"
@@ -393,7 +400,9 @@ const Header = () => {
                       onClick={closeMobileMenu}
                       title={t('header.navigation.products')}
                     >
-                      <span className="truncate">{t('header.navigation.products')}</span>
+                      <span className="truncate">
+                        {t('header.navigation.products')}
+                      </span>
                     </Link>
                     <Link
                       href="/deals"
@@ -401,7 +410,9 @@ const Header = () => {
                       onClick={closeMobileMenu}
                       title={t('header.navigation.deals')}
                     >
-                      <span className="truncate">{t('header.navigation.deals')}</span>
+                      <span className="truncate">
+                        {t('header.navigation.deals')}
+                      </span>
                     </Link>
                     <Link
                       href="/about"
@@ -409,7 +420,9 @@ const Header = () => {
                       onClick={closeMobileMenu}
                       title={t('header.navigation.about')}
                     >
-                      <span className="truncate">{t('header.navigation.about')}</span>
+                      <span className="truncate">
+                        {t('header.navigation.about')}
+                      </span>
                     </Link>
                   </div>
                 )}
@@ -437,7 +450,10 @@ const Header = () => {
                       <div className="text-white group-hover:text-purple-400 transition-colors">
                         {HiHeart({ className: 'w-7 h-7' })}
                       </div>
-                      <span className="text-sm text-white/80 group-hover:text-white truncate" title={t('header.actions.wishlist')}>
+                      <span
+                        className="text-sm text-white/80 group-hover:text-white truncate"
+                        title={t('header.actions.wishlist')}
+                      >
                         {t('header.actions.wishlist')}
                       </span>
                     </Link>
@@ -452,7 +468,10 @@ const Header = () => {
                       <div className="text-white group-hover:text-purple-400 transition-colors">
                         {HiOutlineShoppingCart({ className: 'w-7 h-7' })}
                       </div>
-                      <span className="text-sm text-white/80 group-hover:text-white truncate" title={t('header.actions.cart')}>
+                      <span
+                        className="text-sm text-white/80 group-hover:text-white truncate"
+                        title={t('header.actions.cart')}
+                      >
                         {t('header.actions.cart')}
                       </span>
                     </Link>
@@ -461,7 +480,10 @@ const Header = () => {
                     <div className="text-white group-hover:text-purple-400 transition-colors">
                       {HiBell({ className: 'w-7 h-7' })}
                     </div>
-                    <span className="text-sm text-white/80 group-hover:text-white truncate" title={t('header.actions.alerts')}>
+                    <span
+                      className="text-sm text-white/80 group-hover:text-white truncate"
+                      title={t('header.actions.alerts')}
+                    >
                       {t('header.actions.alerts')}
                     </span>
                   </button>
@@ -482,7 +504,10 @@ const Header = () => {
                   ) : user ? (
                     <div className="flex flex-col items-center space-y-3">
                       <div className="flex items-center text-white max-w-xs">
-                        <span className="text-white font-medium truncate" title={user.name}>
+                        <span
+                          className="text-white font-medium truncate"
+                          title={user.name}
+                        >
                           {user.name}
                         </span>
                       </div>

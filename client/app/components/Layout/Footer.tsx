@@ -142,14 +142,16 @@ const Footer = () => {
       {/* Theme and Language Toggles */}
       <div className="bg-turquoise-100 dark:bg-dark-surface text-center py-4 px-4">
         <div
-          className={`flex justify-center items-center ${locale === 'ar'
+          className={`flex justify-center items-center ${
+            locale === 'ar'
               ? 'flex-row-reverse space-x-6 space-x-reverse'
               : 'space-x-6'
-            }`}
+          }`}
         >
           <div
-            className={`flex items-center space-x-2 ${locale === 'ar' ? 'space-x-reverse flex-row-reverse' : ''
-              }`}
+            className={`flex items-center space-x-2 ${
+              locale === 'ar' ? 'space-x-reverse flex-row-reverse' : ''
+            }`}
           >
             <span className="text-sm text-black dark:text-white font-medium">
               {locale === 'ar'
@@ -159,8 +161,9 @@ const Footer = () => {
             <ThemeToggle />
           </div>
           <div
-            className={`flex items-center space-x-2 ${locale === 'ar' ? 'space-x-reverse flex-row-reverse' : ''
-              }`}
+            className={`flex items-center space-x-2 ${
+              locale === 'ar' ? 'space-x-reverse flex-row-reverse' : ''
+            }`}
           >
             <span className="text-sm text-black dark:text-white font-medium">
               {locale === 'ar'
@@ -175,14 +178,16 @@ const Footer = () => {
       {/* Enhanced Footer Content */}
       <div className="mx-auto px-4 sm:px-6 md:px-8 lg:px-14 py-6 sm:py-8">
         <div
-          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto ${locale === 'ar' ? 'text-right' : ''
-            }`}
+          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto ${
+            locale === 'ar' ? 'text-right' : ''
+          }`}
         >
           {orderedSections.map((section) => (
             <div
               key={section.key}
-              className={`text-center sm:text-left ${locale === 'ar' ? 'sm:text-right' : ''
-                }`}
+              className={`text-center sm:text-left ${
+                locale === 'ar' ? 'sm:text-right' : ''
+              }`}
             >
               <h3 className="font-bold text-base sm:text-lg mb-3 sm:mb-4 text-black dark:text-white">
                 {section.title}

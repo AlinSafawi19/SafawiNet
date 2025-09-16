@@ -64,7 +64,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   useEffect(() => {
     // Set loading to false immediately for better performance
     setIsLoading(false);
-    
+
     if (user?.preferences?.language) {
       setLocaleState(user.preferences.language as Locale);
     } else {

@@ -67,8 +67,7 @@ const mapBackendMessageToKey = (message: string): string => {
     'No refresh token provided': 'auth.messages.noRefreshTokenProvided',
     'User is already verified': 'auth.messages.userAlreadyVerified',
     'Session not found': 'auth.messages.sessionNotFound',
-    'Cannot delete current session':
-      'auth.messages.cannotDeleteCurrentSession',
+    'Cannot delete current session': 'auth.messages.cannotDeleteCurrentSession',
     'Notification not found': 'auth.messages.notificationNotFound',
     // Registration messages
     'Registration successful! Please check your email to verify your account before signing in.':
@@ -79,34 +78,50 @@ const mapBackendMessageToKey = (message: string): string => {
     // Password change messages
     'Password changed successfully. You will be logged out in a moment':
       'account.loginSecurity.password.success',
-    'Current password is incorrect': 'account.loginSecurity.password.currentPasswordIncorrect',
-    'New passwords do not match': 'account.loginSecurity.password.passwordsDoNotMatch',
-    'New password must be at least 8 characters long': 'account.loginSecurity.password.passwordTooShort',
-    'Current password is required': 'account.loginSecurity.password.currentPasswordRequired',
-    'New password is required': 'account.loginSecurity.password.newPasswordRequired',
-    'Please confirm your new password': 'account.loginSecurity.password.confirmPasswordRequired',
-    'An internal server error occurred. Please try again': 'account.loginSecurity.password.internalServerError',
-    'Failed to change password. Please try again': 'account.loginSecurity.password.passwordChangeFailed',
+    'Current password is incorrect':
+      'account.loginSecurity.password.currentPasswordIncorrect',
+    'New passwords do not match':
+      'account.loginSecurity.password.passwordsDoNotMatch',
+    'New password must be at least 8 characters long':
+      'account.loginSecurity.password.passwordTooShort',
+    'Current password is required':
+      'account.loginSecurity.password.currentPasswordRequired',
+    'New password is required':
+      'account.loginSecurity.password.newPasswordRequired',
+    'Please confirm your new password':
+      'account.loginSecurity.password.confirmPasswordRequired',
+    'An internal server error occurred. Please try again':
+      'account.loginSecurity.password.internalServerError',
+    'Failed to change password. Please try again':
+      'account.loginSecurity.password.passwordChangeFailed',
     // Profile update messages
     'Profile updated successfully': 'account.messages.updateSuccess',
-    'Failed to update profile. Please try again': 'account.messages.updateFailed',
+    'Failed to update profile. Please try again':
+      'account.messages.updateFailed',
     'No changes were made to your profile': 'account.messages.noChanges',
     // 2FA messages
-    'Failed to enable 2FA': 'account.loginSecurity.twoFactor.disableModal.disableFailed',
-    'Failed to disable 2FA': 'account.loginSecurity.twoFactor.disableModal.disableFailed',
-    'An error occurred while enabling 2FA': 'account.loginSecurity.twoFactor.disableModal.disableError',
-    'An error occurred while disabling 2FA': 'account.loginSecurity.twoFactor.disableModal.disableError',
+    'Failed to enable 2FA':
+      'account.loginSecurity.twoFactor.disableModal.disableFailed',
+    'Failed to disable 2FA':
+      'account.loginSecurity.twoFactor.disableModal.disableFailed',
+    'An error occurred while enabling 2FA':
+      'account.loginSecurity.twoFactor.disableModal.disableError',
+    'An error occurred while disabling 2FA':
+      'account.loginSecurity.twoFactor.disableModal.disableError',
     // Admin creation messages
     'Admin user created successfully': 'auth.admin.adminUserCreated',
     'Admin user created successfully!': 'auth.admin.adminUserCreated',
     'User created successfully': 'auth.admin.adminUserCreated',
     'User already exists': 'auth.admin.validation.userAlreadyExists',
-    'Insufficient permissions. Required roles: SUPERADMIN': 'auth.admin.validation.insufficientPermissions',
-    'Forbidden - Superadmin role required': 'auth.admin.validation.superadminRequired',
-    'Insufficient permissions to create admin user': 'auth.admin.validation.insufficientPermissions',
+    'Insufficient permissions. Required roles: SUPERADMIN':
+      'auth.admin.validation.insufficientPermissions',
+    'Forbidden - Superadmin role required':
+      'auth.admin.validation.superadminRequired',
+    'Insufficient permissions to create admin user':
+      'auth.admin.validation.insufficientPermissions',
     'Invalid admin creation data': 'auth.admin.validation.invalidData',
     'Admin user creation failed': 'auth.admin.validation.creationFailed',
-    'Unauthorized': 'auth.messages.unauthorized',
+    Unauthorized: 'auth.messages.unauthorized',
     'Network error. Please try again.': 'auth.admin.networkError',
     'Network error': 'auth.admin.networkError',
   };
@@ -114,7 +129,8 @@ const mapBackendMessageToKey = (message: string): string => {
   return messageMap[message] || 'auth.messages.generalError';
 };
 
-export const useBackendMessageTranslation = (): BackendMessageState & BackendMessageActions => {
+export const useBackendMessageTranslation = (): BackendMessageState &
+  BackendMessageActions => {
   const { t } = useLanguage();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');

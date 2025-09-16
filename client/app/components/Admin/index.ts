@@ -1,2 +1,2 @@
-export { default as AdminPasswordEntry } from './AdminPasswordEntry';
 export { default as AdminCreationForm } from './AdminCreationForm';
+export { default as AdminSidebar } from './AdminSidebar';

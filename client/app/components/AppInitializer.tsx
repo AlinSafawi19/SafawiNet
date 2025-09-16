@@ -27,14 +27,19 @@ export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
   }, [isInitialRender]);
 
   // For auth page and account pages, don't block rendering - let them handle their own loading state
-  const isAuthPage = typeof window !== 'undefined' && window.location.pathname === '/auth';
-  const isAccountPage = typeof window !== 'undefined' && window.location.pathname.startsWith('/account');
-  
+  const isAuthPage =
+    typeof window !== 'undefined' && window.location.pathname === '/auth';
+  const isAccountPage =
+    typeof window !== 'undefined' &&
+    window.location.pathname.startsWith('/account');
+
   // Only wait for critical contexts on initial load, not on every context update
-  const isCriticalLoading = isInitialRender && (isAuthLoading || isThemeLoading || isLanguageLoading);
-  
+  const isCriticalLoading =
+    isInitialRender && (isAuthLoading || isThemeLoading || isLanguageLoading);
+
   // For auth and account pages, only show loading if auth is still loading
-  const shouldShowLoading = (isAuthPage || isAccountPage) ? isAuthLoading : isCriticalLoading;
+  const shouldShowLoading =
+    isAuthPage || isAccountPage ? isAuthLoading : isCriticalLoading;
 
   if (shouldShowLoading) {
     return <LoadingPage />;

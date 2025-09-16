@@ -26,7 +26,7 @@ export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [token, setToken] = useState('');
   const [userEmail, setUserEmail] = useState('');
-  
+
   // Use the backend message translation hook
   const {
     error: resetError,
@@ -271,14 +271,16 @@ export default function ResetPasswordPage() {
           {(resetSuccess || resetSuccessKey || resetError || resetErrorKey) && (
             <div
               className={`border rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 ${
-                (resetSuccess || resetSuccessKey)
+                resetSuccess || resetSuccessKey
                   ? 'bg-green-500/10 border-green-500/20'
                   : 'bg-red-500/10 border-red-500/20'
               }`}
             >
               <p
                 className={`text-xs sm:text-sm ${
-                  (resetSuccess || resetSuccessKey) ? 'text-green-400' : 'text-red-400'
+                  resetSuccess || resetSuccessKey
+                    ? 'text-green-400'
+                    : 'text-red-400'
                 }`}
               >
                 {resetSuccess || (resetSuccessKey ? t(resetSuccessKey) : '')}
@@ -370,9 +372,7 @@ export default function ResetPasswordPage() {
               className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] flex items-center justify-center"
             >
               {isLoading ? (
-                <>
-                  {t('resetPassword.resettingPassword')}
-                </>
+                <>{t('resetPassword.resettingPassword')}</>
               ) : (
                 t('resetPassword.resetPasswordButton')
               )}

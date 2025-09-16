@@ -90,7 +90,10 @@ export class UsersController {
   @ApiResponse({ status: 201, description: 'Admin user created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Superadmin role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Superadmin role required',
+  })
   @ApiResponse({ status: 409, description: 'User already exists' })
   @UsePipes(new ZodValidationPipe(CreateUserSchema))
   async createUser(
@@ -113,7 +116,10 @@ export class UsersController {
     description: 'List of admin users retrieved successfully',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Superadmin role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Superadmin role required',
+  })
   async findAllAdmins(): Promise<{ admins: Omit<User, 'password'>[] }> {
     const admins = await this.usersService.findAllAdmins();
     return { admins };

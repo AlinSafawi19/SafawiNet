@@ -115,10 +115,16 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
         {/* Dropdown Content - seamless extension of header */}
         <div className="bg-white dark:bg-dark-surface py-1">
           <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 text-center">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={user.name}>
+            <p
+              className="text-sm font-medium text-gray-900 dark:text-white truncate"
+              title={user.name}
+            >
               {user.name}
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 truncate" title={user.email}>
+            <p
+              className="text-sm text-gray-500 dark:text-gray-400 truncate"
+              title={user.email}
+            >
               {user.email}
             </p>
           </div>
@@ -133,15 +139,25 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
               >
                 {isRTL ? (
                   <>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white truncate" title={t('header.loyalty.title')}>
+                    <span
+                      className="text-sm font-medium text-gray-900 dark:text-white truncate"
+                      title={t('header.loyalty.title')}
+                    >
                       {t('header.loyalty.title')}
                     </span>
-                    {HiGift({ className: 'w-4 h-4 text-purple-500 ml-2 flex-shrink-0' })}
+                    {HiGift({
+                      className: 'w-4 h-4 text-purple-500 ml-2 flex-shrink-0',
+                    })}
                   </>
                 ) : (
                   <>
-                    {HiGift({ className: 'w-4 h-4 text-purple-500 mr-2 flex-shrink-0' })}
-                    <span className="text-sm font-medium text-gray-900 dark:text-white truncate" title={t('header.loyalty.title')}>
+                    {HiGift({
+                      className: 'w-4 h-4 text-purple-500 mr-2 flex-shrink-0',
+                    })}
+                    <span
+                      className="text-sm font-medium text-gray-900 dark:text-white truncate"
+                      title={t('header.loyalty.title')}
+                    >
                       {t('header.loyalty.title')}
                     </span>
                   </>
@@ -157,7 +173,12 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                   <div className="flex justify-between items-center text-xs gap-1">
                     {isRTL ? (
                       <>
-                        <span className="font-medium text-gray-900 dark:text-white text-right truncate" title={translateTierName(loyaltyAccount.currentTier.name)}>
+                        <span
+                          className="font-medium text-gray-900 dark:text-white text-right truncate"
+                          title={translateTierName(
+                            loyaltyAccount.currentTier.name
+                          )}
+                        >
                           {translateTierName(loyaltyAccount.currentTier.name)}
                         </span>
                         <span className="text-gray-600 dark:text-gray-400 text-right flex-shrink-0">
@@ -169,7 +190,12 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                         <span className="text-gray-600 dark:text-gray-400 text-left flex-shrink-0">
                           {t('header.loyalty.currentTier')}:
                         </span>
-                        <span className="font-medium text-gray-900 dark:text-white text-right truncate" title={translateTierName(loyaltyAccount.currentTier.name)}>
+                        <span
+                          className="font-medium text-gray-900 dark:text-white text-right truncate"
+                          title={translateTierName(
+                            loyaltyAccount.currentTier.name
+                          )}
+                        >
                           {translateTierName(loyaltyAccount.currentTier.name)}
                         </span>
                       </>
@@ -178,7 +204,10 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                   <div className="flex justify-between items-center text-xs gap-1">
                     {isRTL ? (
                       <>
-                        <span className="font-medium text-purple-600 dark:text-purple-400 text-right truncate" title={loyaltyAccount.currentPoints.toLocaleString()}>
+                        <span
+                          className="font-medium text-purple-600 dark:text-purple-400 text-right truncate"
+                          title={loyaltyAccount.currentPoints.toLocaleString()}
+                        >
                           {loyaltyAccount.currentPoints.toLocaleString()}
                         </span>
                         <span className="text-gray-600 dark:text-gray-400 text-right flex-shrink-0">
@@ -190,7 +219,10 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                         <span className="text-gray-600 dark:text-gray-400 text-left flex-shrink-0">
                           {t('header.loyalty.points')}:
                         </span>
-                        <span className="font-medium text-purple-600 dark:text-purple-400 text-right truncate" title={loyaltyAccount.currentPoints.toLocaleString()}>
+                        <span
+                          className="font-medium text-purple-600 dark:text-purple-400 text-right truncate"
+                          title={loyaltyAccount.currentPoints.toLocaleString()}
+                        >
                           {loyaltyAccount.currentPoints.toLocaleString()}
                         </span>
                       </>
@@ -200,7 +232,12 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                     <div className="flex justify-between items-center text-xs gap-1">
                       {isRTL ? (
                         <>
-                          <span className="text-gray-900 dark:text-white font-medium text-left truncate" title={`${loyaltyAccount.nextTier.pointsNeeded} ${t('header.loyalty.pointsNeeded')}`}>
+                          <span
+                            className="text-gray-900 dark:text-white font-medium text-left truncate"
+                            title={`${loyaltyAccount.nextTier.pointsNeeded} ${t(
+                              'header.loyalty.pointsNeeded'
+                            )}`}
+                          >
                             {loyaltyAccount.nextTier.pointsNeeded}{' '}
                             {t('header.loyalty.pointsNeeded')}
                           </span>
@@ -213,7 +250,12 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                           <span className="text-gray-600 dark:text-gray-400 text-left flex-shrink-0">
                             {t('header.loyalty.nextTier')}:
                           </span>
-                          <span className="text-gray-900 dark:text-white font-medium text-right truncate" title={`${loyaltyAccount.nextTier.pointsNeeded} ${t('header.loyalty.pointsNeeded')}`}>
+                          <span
+                            className="text-gray-900 dark:text-white font-medium text-right truncate"
+                            title={`${loyaltyAccount.nextTier.pointsNeeded} ${t(
+                              'header.loyalty.pointsNeeded'
+                            )}`}
+                          >
                             {loyaltyAccount.nextTier.pointsNeeded}{' '}
                             {t('header.loyalty.pointsNeeded')}
                           </span>
@@ -238,13 +280,17 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
           >
             {isRTL ? (
               <>
-                <span className="truncate" title={t('header.auth.myAccount')}>{t('header.auth.myAccount')}</span>
+                <span className="truncate" title={t('header.auth.myAccount')}>
+                  {t('header.auth.myAccount')}
+                </span>
                 {HiUser({ className: 'w-4 h-4 ml-3 flex-shrink-0' })}
               </>
             ) : (
               <>
                 {HiUser({ className: 'w-4 h-4 mr-3 flex-shrink-0' })}
-                <span className="truncate" title={t('header.auth.myAccount')}>{t('header.auth.myAccount')}</span>
+                <span className="truncate" title={t('header.auth.myAccount')}>
+                  {t('header.auth.myAccount')}
+                </span>
               </>
             )}
           </button>
@@ -257,13 +303,21 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
           >
             {isRTL ? (
               <>
-                <span className="truncate" title={t('header.auth.logout')}>{t('header.auth.logout')}</span>
-                {HiArrowRightOnRectangle({ className: 'w-4 h-4 ml-3 flex-shrink-0' })}
+                <span className="truncate" title={t('header.auth.logout')}>
+                  {t('header.auth.logout')}
+                </span>
+                {HiArrowRightOnRectangle({
+                  className: 'w-4 h-4 ml-3 flex-shrink-0',
+                })}
               </>
             ) : (
               <>
-                {HiArrowRightOnRectangle({ className: 'w-4 h-4 mr-3 flex-shrink-0' })}
-                <span className="truncate" title={t('header.auth.logout')}>{t('header.auth.logout')}</span>
+                {HiArrowRightOnRectangle({
+                  className: 'w-4 h-4 mr-3 flex-shrink-0',
+                })}
+                <span className="truncate" title={t('header.auth.logout')}>
+                  {t('header.auth.logout')}
+                </span>
               </>
             )}
           </button>

@@ -46,8 +46,9 @@ export default function MyAccountPage() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col lg:flex-row bg-zinc-900 ${locale === 'ar' ? 'rtl' : 'ltr'
-        }`}
+      className={`min-h-screen flex flex-col lg:flex-row bg-zinc-900 ${
+        locale === 'ar' ? 'rtl' : 'ltr'
+      }`}
     >
       {/* Left side - Dashboard Tiles */}
       <div className="flex-1 lg:basis-1/2 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-3 sm:py-4 md:py-6 lg:py-8 xl:py-10">
@@ -100,9 +101,7 @@ export default function MyAccountPage() {
               </div>
               <div className="tile-text">
                 <h3 className="tile-title">{t('account.sessions')}</h3>
-                <p className="tile-description">
-                  {t('account.sessionsDesc')}
-                </p>
+                <p className="tile-description">{t('account.sessionsDesc')}</p>
               </div>
             </div>
             <div className="tile-overlay"></div>
@@ -138,9 +137,7 @@ export default function MyAccountPage() {
               </div>
               <div className="tile-text">
                 <h3 className="tile-title">{t('account.addresses')}</h3>
-                <p className="tile-description">
-                  {t('account.addressesDesc')}
-                </p>
+                <p className="tile-description">{t('account.addressesDesc')}</p>
               </div>
             </div>
             <div className="tile-overlay"></div>

@@ -22,14 +22,16 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
   const { t, locale } = useLanguage();
   const { isSuperAdmin } = useAuth();
   const pathname = usePathname();
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({
     admins: false,
   });
 
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   };
 
@@ -116,16 +118,16 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
   };
 
   // Filter items based on user permissions
-  const filteredItems = navigationItems.filter(item => {
+  const filteredItems = navigationItems.filter((item) => {
     if (item.requiresSuperAdmin) {
       return isSuperAdmin();
     }
     return true;
   });
 
-  const standaloneItems = filteredItems.filter(item => item.isStandalone);
+  const standaloneItems = filteredItems.filter((item) => item.isStandalone);
   const groupedItems = filteredItems
-    .filter(item => !item.isStandalone && item.category)
+    .filter((item) => !item.isStandalone && item.category)
     .reduce((acc, item) => {
       if (!acc[item.category!]) {
         acc[item.category!] = [];
@@ -171,19 +173,26 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                             ? 'bg-black dark:bg-white text-white dark:text-black'
                             : 'text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100'
                         }
-                        ${locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''}
+                        ${
+                          locale === 'ar'
+                            ? 'flex-row-reverse space-x-reverse'
+                            : ''
+                        }
                       `}
                       onClick={() => {
                         // Navigation link clicked
                       }}
                     >
-                      <div className={`
+                      <div
+                        className={`
                         flex items-center justify-center w-6 h-6 transition-colors duration-200
-                        ${active
-                          ? 'text-white dark:text-black'
-                          : 'text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200'
+                        ${
+                          active
+                            ? 'text-white dark:text-black'
+                            : 'text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200'
                         }
-                      `}>
+                      `}
+                      >
                         <Icon className="w-5 h-5" />
                       </div>
                       <span className="font-medium text-sm">
@@ -193,7 +202,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                   );
                 })}
               </div>
-              
+
               {/* Separator after standalone items */}
               <div className="mx-6 mt-4 mb-2">
                 <div className="h-px bg-gray-200 dark:bg-zinc-700"></div>
@@ -202,135 +211,167 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
           )}
 
           {/* Grouped Items */}
-          {Object.entries(groupedItems).map(([category, items], categoryIndex) => (
-            <div key={category} className="mb-6">
-              {/* Category Label */}
-              <div className="px-6 mb-3">
-                <h3 className={`text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
-                  {categoryLabels[category as keyof typeof categoryLabels]}
-                </h3>
-              </div>
-              
-              {/* Navigation Items */}
-              <div className="space-y-1">
-                {items.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(item.href);
+          {Object.entries(groupedItems).map(
+            ([category, items], categoryIndex) => (
+              <div key={category} className="mb-6">
+                {/* Category Label */}
+                <div className="px-6 mb-3">
+                  <h3
+                    className={`text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider ${
+                      locale === 'ar' ? 'text-right' : 'text-left'
+                    }`}
+                  >
+                    {categoryLabels[category as keyof typeof categoryLabels]}
+                  </h3>
+                </div>
 
-                  // Handle expandable items
-                  if (item.isExpandable) {
-                    const isExpanded = expandedSections[item.expandableKey!];
+                {/* Navigation Items */}
+                <div className="space-y-1">
+                  {items.map((item) => {
+                    const Icon = item.icon;
+                    const active = isActive(item.href);
 
-                    return (
-                      <div key={item.name} className="mx-2">
-                        {/* Expandable Header */}
-                        <button
-                          onClick={() => toggleSection(item.expandableKey!)}
-                          className={`
+                    // Handle expandable items
+                    if (item.isExpandable) {
+                      const isExpanded = expandedSections[item.expandableKey!];
+
+                      return (
+                        <div key={item.name} className="mx-2">
+                          {/* Expandable Header */}
+                          <button
+                            onClick={() => toggleSection(item.expandableKey!)}
+                            className={`
                             w-full flex items-center justify-between px-6 py-3 rounded-lg transition-all duration-200 font-medium group
                             text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100
                             ${locale === 'ar' ? 'flex-row-reverse' : ''}
                           `}
-                        >
-                          <div className={`flex items-center space-x-3 ${locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                            <div className="flex items-center justify-center w-6 h-6 transition-colors duration-200 text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200">
-                              <Icon className="w-5 h-5" />
+                          >
+                            <div
+                              className={`flex items-center space-x-3 ${
+                                locale === 'ar'
+                                  ? 'flex-row-reverse space-x-reverse'
+                                  : ''
+                              }`}
+                            >
+                              <div className="flex items-center justify-center w-6 h-6 transition-colors duration-200 text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200">
+                                <Icon className="w-5 h-5" />
+                              </div>
+                              <span className="font-medium text-sm">
+                                {t(item.label) || item.name}
+                              </span>
                             </div>
-                            <span className="font-medium text-sm">
-                              {t(item.label) || item.name}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-center w-4 h-4 transition-colors duration-200 text-gray-400 dark:text-zinc-500 group-hover:text-gray-600 dark:group-hover:text-zinc-300">
-                            {isExpanded && React.createElement(HiChevronDown as any, { className: "w-4 h-4" })}
-                            {!isExpanded && React.createElement(HiChevronRight as any, { className: "w-4 h-4" })}
-                          </div>
-                        </button>
+                            <div className="flex items-center justify-center w-4 h-4 transition-colors duration-200 text-gray-400 dark:text-zinc-500 group-hover:text-gray-600 dark:group-hover:text-zinc-300">
+                              {isExpanded &&
+                                React.createElement(HiChevronDown as any, {
+                                  className: 'w-4 h-4',
+                                })}
+                              {!isExpanded &&
+                                React.createElement(HiChevronRight as any, {
+                                  className: 'w-4 h-4',
+                                })}
+                            </div>
+                          </button>
 
-                        {/* Sub Items */}
-                        {isExpanded && item.subItems && (
-                          <div className="ml-4 space-y-1">
-                            {item.subItems.map((subItem) => {
-                              const SubIcon = subItem.icon;
-                              const subActive = isActive(subItem.href);
+                          {/* Sub Items */}
+                          {isExpanded && item.subItems && (
+                            <div className="ml-4 space-y-1">
+                              {item.subItems.map((subItem) => {
+                                const SubIcon = subItem.icon;
+                                const subActive = isActive(subItem.href);
 
-                              return (
-                                <Link
-                                  key={subItem.name}
-                                  href={subItem.href}
-                                  className={`
+                                return (
+                                  <Link
+                                    key={subItem.name}
+                                    href={subItem.href}
+                                    className={`
                                     flex items-center space-x-3 px-6 py-2 rounded-lg transition-all duration-200 font-medium group
                                     ${
                                       subActive
                                         ? 'bg-black dark:bg-white text-white dark:text-black'
                                         : 'text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100'
                                     }
-                                    ${locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''}
-                                  `}
-                                >
-                                  <div className={`
-                                    flex items-center justify-center w-5 h-5 transition-colors duration-200
-                                    ${subActive
-                                      ? 'text-white dark:text-black'
-                                      : 'text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200'
+                                    ${
+                                      locale === 'ar'
+                                        ? 'flex-row-reverse space-x-reverse'
+                                        : ''
                                     }
-                                  `}>
-                                    <SubIcon className="w-4 h-4" />
-                                  </div>
-                                  <span className="font-medium text-sm">
-                                    {t(subItem.label) || subItem.name}
-                                  </span>
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
+                                  `}
+                                  >
+                                    <div
+                                      className={`
+                                    flex items-center justify-center w-5 h-5 transition-colors duration-200
+                                    ${
+                                      subActive
+                                        ? 'text-white dark:text-black'
+                                        : 'text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200'
+                                    }
+                                  `}
+                                    >
+                                      <SubIcon className="w-4 h-4" />
+                                    </div>
+                                    <span className="font-medium text-sm">
+                                      {t(subItem.label) || subItem.name}
+                                    </span>
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
 
-                  // Handle regular items
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href || '#'}
-                      className={`
+                    // Handle regular items
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href || '#'}
+                        className={`
                         flex items-center space-x-3 px-6 py-3 mx-2 rounded-lg transition-all duration-200 font-medium group
                         ${
                           active
                             ? 'bg-black dark:bg-white text-white dark:text-black'
                             : 'text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100'
                         }
-                        ${locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''}
-                      `}
-                      onClick={() => {
-                        // Navigation link clicked
-                      }}
-                    >
-                      <div className={`
-                        flex items-center justify-center w-6 h-6 transition-colors duration-200
-                        ${active
-                          ? 'text-white dark:text-black'
-                          : 'text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200'
+                        ${
+                          locale === 'ar'
+                            ? 'flex-row-reverse space-x-reverse'
+                            : ''
                         }
-                      `}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <span className="font-medium text-sm">
-                        {t(item.label) || item.name}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-              
-              {/* Separator */}
-              {categoryIndex < Object.keys(groupedItems).length - 1 && (
-                <div className="mx-6 mt-4 mb-2">
-                  <div className="h-px bg-gray-200 dark:bg-zinc-700"></div>
+                      `}
+                        onClick={() => {
+                          // Navigation link clicked
+                        }}
+                      >
+                        <div
+                          className={`
+                        flex items-center justify-center w-6 h-6 transition-colors duration-200
+                        ${
+                          active
+                            ? 'text-white dark:text-black'
+                            : 'text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200'
+                        }
+                      `}
+                        >
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <span className="font-medium text-sm">
+                          {t(item.label) || item.name}
+                        </span>
+                      </Link>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
-          ))}
+
+                {/* Separator */}
+                {categoryIndex < Object.keys(groupedItems).length - 1 && (
+                  <div className="mx-6 mt-4 mb-2">
+                    <div className="h-px bg-gray-200 dark:bg-zinc-700"></div>
+                  </div>
+                )}
+              </div>
+            )
+          )}
         </nav>
       </div>
     </>

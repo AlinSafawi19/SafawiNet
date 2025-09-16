@@ -1,7 +1,13 @@
 /* eslint-disable react/forbid-dom-props */
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { LoadingPage } from '../../components/LoadingPage';
@@ -30,9 +36,9 @@ export default function LoginSecurityPage() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'twoFactor'>(
-    'profile'
-  );
+  const [activeTab, setActiveTab] = useState<
+    'profile' | 'password' | 'twoFactor'
+  >('profile');
 
   // Profile form state
   const [profileFormData, setProfileFormData] = useState({
@@ -70,7 +76,7 @@ export default function LoginSecurityPage() {
   });
 
   const [isPasswordFormLoading, setIsPasswordFormLoading] = useState(false);
-  
+
   // Use the backend message translation hook for password messages
   const {
     error: passwordError,
@@ -90,12 +96,16 @@ export default function LoginSecurityPage() {
   const [showDisableModal, setShowDisableModal] = useState(false);
   const [disablePassword, setDisablePassword] = useState('');
   const [disablePasswordError, setDisablePasswordError] = useState('');
-  const [currentPasswordType, setCurrentPasswordType] = useState<'text' | 'password'>('text');
-  const [disablePasswordType, setDisablePasswordType] = useState<'text' | 'password'>('text');
+  const [currentPasswordType, setCurrentPasswordType] = useState<
+    'text' | 'password'
+  >('text');
+  const [disablePasswordType, setDisablePasswordType] = useState<
+    'text' | 'password'
+  >('text');
   const [currentPasswordValue, setCurrentPasswordValue] = useState('');
   const [disablePasswordValue, setDisablePasswordValue] = useState('');
   const [isPageLoading, setIsPageLoading] = useState(true);
-  
+
   const currentPasswordRef = useRef<HTMLInputElement>(null);
   const disablePasswordRef = useRef<HTMLInputElement>(null);
 
@@ -118,15 +128,19 @@ export default function LoginSecurityPage() {
   // Set text security styles via refs to avoid inline style warnings
   useEffect(() => {
     if (currentPasswordRef.current) {
-      (currentPasswordRef.current.style as any).webkitTextSecurity = currentPasswordType === 'password' ? 'disc' : 'none';
-      (currentPasswordRef.current.style as any).textSecurity = currentPasswordType === 'password' ? 'disc' : 'none';
+      (currentPasswordRef.current.style as any).webkitTextSecurity =
+        currentPasswordType === 'password' ? 'disc' : 'none';
+      (currentPasswordRef.current.style as any).textSecurity =
+        currentPasswordType === 'password' ? 'disc' : 'none';
     }
   }, [currentPasswordType]);
 
   useEffect(() => {
     if (disablePasswordRef.current) {
-      (disablePasswordRef.current.style as any).webkitTextSecurity = disablePasswordType === 'password' ? 'disc' : 'none';
-      (disablePasswordRef.current.style as any).textSecurity = disablePasswordType === 'password' ? 'disc' : 'none';
+      (disablePasswordRef.current.style as any).webkitTextSecurity =
+        disablePasswordType === 'password' ? 'disc' : 'none';
+      (disablePasswordRef.current.style as any).textSecurity =
+        disablePasswordType === 'password' ? 'disc' : 'none';
     }
   }, [disablePasswordType]);
 
@@ -134,14 +148,24 @@ export default function LoginSecurityPage() {
   useEffect(() => {
     const handleFocus = (e: FocusEvent) => {
       const target = e.target as HTMLInputElement;
-      if (target && (target.id === 'currentPassword' || target.name === 'disablePassword')) {
+      if (
+        target &&
+        (target.id === 'currentPassword' || target.name === 'disablePassword')
+      ) {
         // Clear field if it contains common auto-filled values
-        const commonPasswords = ['password', '123456', 'admin', 'test', 'user', 'login'];
+        const commonPasswords = [
+          'password',
+          '123456',
+          'admin',
+          'test',
+          'user',
+          'login',
+        ];
         if (commonPasswords.includes(target.value.toLowerCase())) {
           target.value = '';
           if (target.id === 'currentPassword') {
             setCurrentPasswordValue('');
-            setPasswordFormData(prev => ({ ...prev, currentPassword: '' }));
+            setPasswordFormData((prev) => ({ ...prev, currentPassword: '' }));
           } else {
             setDisablePasswordValue('');
             setDisablePassword('');
@@ -182,95 +206,111 @@ export default function LoginSecurityPage() {
   }, [profileFormData.name, validateName]);
 
   // Validate single profile field - memoized
-  const validateProfileField = useCallback((name: string, value: string) => {
-    let error: string | undefined;
+  const validateProfileField = useCallback(
+    (name: string, value: string) => {
+      let error: string | undefined;
 
-    switch (name) {
-      case 'name':
-        error = validateName(value);
-        break;
-    }
+      switch (name) {
+        case 'name':
+          error = validateName(value);
+          break;
+      }
 
-    setProfileValidationErrors((prev) => ({
-      ...prev,
-      [name]: error,
-    }));
-  }, [validateName]);
-
-  // Handle profile form data changes - memoized
-  const handleProfileInputChange = useCallback((
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { name, value } = e.target;
-    setProfileFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // Clear error when user starts typing
-    if (name in profileValidationErrors) {
       setProfileValidationErrors((prev) => ({
         ...prev,
-        [name]: undefined,
+        [name]: error,
       }));
-    }
-  }, [profileValidationErrors]);
+    },
+    [validateName]
+  );
+
+  // Handle profile form data changes - memoized
+  const handleProfileInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setProfileFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+
+      // Clear error when user starts typing
+      if (name in profileValidationErrors) {
+        setProfileValidationErrors((prev) => ({
+          ...prev,
+          [name]: undefined,
+        }));
+      }
+    },
+    [profileValidationErrors]
+  );
 
   // Handle profile field blur for validation - memoized
-  const handleProfileBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setProfileTouched((prev) => ({
-      ...prev,
-      [name]: true,
-    }));
-    validateProfileField(name, value);
-  }, [validateProfileField]);
+  const handleProfileBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setProfileTouched((prev) => ({
+        ...prev,
+        [name]: true,
+      }));
+      validateProfileField(name, value);
+    },
+    [validateProfileField]
+  );
 
   // Get profile input class based on validation state - memoized
-  const getProfileInputClass = useCallback((fieldName: keyof ProfileValidationErrors) => {
-    const hasError =
-      profileTouched[fieldName as keyof typeof profileTouched] && 
-      profileValidationErrors[fieldName];
-    const baseClasses =
-      'w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-black dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px]';
-    const alignmentClasses = locale === 'ar' ? 'text-right' : 'text-left';
-    const errorClasses = hasError
-      ? 'bg-gray-50 dark:bg-white/10 border border-red-500 dark:border-red-500/50 placeholder-gray-400 dark:placeholder-white/50 focus:border-red-500'
-      : 'bg-gray-50 dark:bg-white/10 border border-gray-300 dark:border-white/20 placeholder-gray-400 dark:placeholder-white/50 focus:border-purple-600 dark:focus:border-purple-500';
+  const getProfileInputClass = useCallback(
+    (fieldName: keyof ProfileValidationErrors) => {
+      const hasError =
+        profileTouched[fieldName as keyof typeof profileTouched] &&
+        profileValidationErrors[fieldName];
+      const baseClasses =
+        'w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-black dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px]';
+      const alignmentClasses = locale === 'ar' ? 'text-right' : 'text-left';
+      const errorClasses = hasError
+        ? 'bg-gray-50 dark:bg-white/10 border border-red-500 dark:border-red-500/50 placeholder-gray-400 dark:placeholder-white/50 focus:border-red-500'
+        : 'bg-gray-50 dark:bg-white/10 border border-gray-300 dark:border-white/20 placeholder-gray-400 dark:placeholder-white/50 focus:border-purple-600 dark:focus:border-purple-500';
 
-    return `${baseClasses} ${alignmentClasses} ${errorClasses}`;
-  }, [profileTouched, profileValidationErrors, locale]);
+      return `${baseClasses} ${alignmentClasses} ${errorClasses}`;
+    },
+    [profileTouched, profileValidationErrors, locale]
+  );
 
   // Password validation functions - memoized for performance
-  const validateCurrentPassword = useCallback((password: string): string | undefined => {
-    if (!password.trim()) {
-      return 'account.loginSecurity.password.currentPasswordRequired';
-    }
-    return undefined;
-  }, []);
+  const validateCurrentPassword = useCallback(
+    (password: string): string | undefined => {
+      if (!password.trim()) {
+        return 'account.loginSecurity.password.currentPasswordRequired';
+      }
+      return undefined;
+    },
+    []
+  );
 
-  const validateNewPassword = useCallback((password: string): string | undefined => {
-    if (!password.trim()) {
-      return 'account.loginSecurity.password.newPasswordRequired';
-    }
-    if (password.length < 8) {
-      return 'account.loginSecurity.password.passwordTooShort';
-    }
-    return undefined;
-  }, []);
+  const validateNewPassword = useCallback(
+    (password: string): string | undefined => {
+      if (!password.trim()) {
+        return 'account.loginSecurity.password.newPasswordRequired';
+      }
+      if (password.length < 8) {
+        return 'account.loginSecurity.password.passwordTooShort';
+      }
+      return undefined;
+    },
+    []
+  );
 
-  const validateConfirmNewPassword = useCallback((
-    password: string,
-    confirmPassword: string
-  ): string | undefined => {
-    if (!confirmPassword.trim()) {
-      return 'account.loginSecurity.password.confirmPasswordRequired';
-    }
-    if (password !== confirmPassword) {
-      return 'account.loginSecurity.password.passwordsDoNotMatch';
-    }
-    return undefined;
-  }, []);
+  const validateConfirmNewPassword = useCallback(
+    (password: string, confirmPassword: string): string | undefined => {
+      if (!confirmPassword.trim()) {
+        return 'account.loginSecurity.password.confirmPasswordRequired';
+      }
+      if (password !== confirmPassword) {
+        return 'account.loginSecurity.password.passwordsDoNotMatch';
+      }
+      return undefined;
+    },
+    []
+  );
 
   // Validate all password fields - memoized
   const validatePasswordForm = useCallback((): boolean => {
@@ -292,92 +332,118 @@ export default function LoginSecurityPage() {
 
     setPasswordValidationErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [passwordFormData, validateCurrentPassword, validateNewPassword, validateConfirmNewPassword]);
+  }, [
+    passwordFormData,
+    validateCurrentPassword,
+    validateNewPassword,
+    validateConfirmNewPassword,
+  ]);
 
   // Validate single password field - memoized
-  const validatePasswordField = useCallback((name: string, value: string) => {
-    let error: string | undefined;
+  const validatePasswordField = useCallback(
+    (name: string, value: string) => {
+      let error: string | undefined;
 
-    switch (name) {
-      case 'currentPassword':
-        error = validateCurrentPassword(value);
-        break;
-      case 'newPassword':
-        error = validateNewPassword(value);
-        break;
-      case 'confirmNewPassword':
-        error = validateConfirmNewPassword(passwordFormData.newPassword, value);
-        break;
-    }
+      switch (name) {
+        case 'currentPassword':
+          error = validateCurrentPassword(value);
+          break;
+        case 'newPassword':
+          error = validateNewPassword(value);
+          break;
+        case 'confirmNewPassword':
+          error = validateConfirmNewPassword(
+            passwordFormData.newPassword,
+            value
+          );
+          break;
+      }
 
-    setPasswordValidationErrors((prev) => ({
-      ...prev,
-      [name]: error,
-    }));
-  }, [passwordFormData.newPassword, validateCurrentPassword, validateNewPassword, validateConfirmNewPassword]);
-
-  // Handle password form data changes - memoized
-  const handlePasswordInputChange = useCallback((
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { name, value } = e.target;
-    setPasswordFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // Clear error when user starts typing
-    if (name in passwordValidationErrors) {
       setPasswordValidationErrors((prev) => ({
         ...prev,
-        [name]: undefined,
+        [name]: error,
       }));
-    }
-  }, [passwordValidationErrors]);
+    },
+    [
+      passwordFormData.newPassword,
+      validateCurrentPassword,
+      validateNewPassword,
+      validateConfirmNewPassword,
+    ]
+  );
+
+  // Handle password form data changes - memoized
+  const handlePasswordInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setPasswordFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+
+      // Clear error when user starts typing
+      if (name in passwordValidationErrors) {
+        setPasswordValidationErrors((prev) => ({
+          ...prev,
+          [name]: undefined,
+        }));
+      }
+    },
+    [passwordValidationErrors]
+  );
 
   // Handle password field blur for validation - memoized
-  const handlePasswordBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPasswordTouched((prev) => ({
-      ...prev,
-      [name]: true,
-    }));
-    validatePasswordField(name, value);
-  }, [validatePasswordField]);
+  const handlePasswordBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setPasswordTouched((prev) => ({
+        ...prev,
+        [name]: true,
+      }));
+      validatePasswordField(name, value);
+    },
+    [validatePasswordField]
+  );
 
   // Get password input class based on validation state - memoized
-  const getPasswordInputClass = useCallback((fieldName: keyof PasswordValidationErrors) => {
-    const hasError =
-      passwordTouched[fieldName as keyof typeof passwordTouched] && 
-      passwordValidationErrors[fieldName];
-    const baseClasses =
-      'w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-black dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px]';
-    const alignmentClasses = locale === 'ar' ? 'text-right' : 'text-left';
-    const errorClasses = hasError
-      ? 'bg-gray-50 dark:bg-white/10 border border-red-500 dark:border-red-500/50 placeholder-gray-400 dark:placeholder-white/50 focus:border-red-500'
-      : 'bg-gray-50 dark:bg-white/10 border border-gray-300 dark:border-white/20 placeholder-gray-400 dark:placeholder-white/50 focus:border-purple-600 dark:focus:border-purple-500';
+  const getPasswordInputClass = useCallback(
+    (fieldName: keyof PasswordValidationErrors) => {
+      const hasError =
+        passwordTouched[fieldName as keyof typeof passwordTouched] &&
+        passwordValidationErrors[fieldName];
+      const baseClasses =
+        'w-full px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-black dark:text-white focus:bg-gray-50 dark:focus:bg-white/15 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px]';
+      const alignmentClasses = locale === 'ar' ? 'text-right' : 'text-left';
+      const errorClasses = hasError
+        ? 'bg-gray-50 dark:bg-white/10 border border-red-500 dark:border-red-500/50 placeholder-gray-400 dark:placeholder-white/50 focus:border-red-500'
+        : 'bg-gray-50 dark:bg-white/10 border border-gray-300 dark:border-white/20 placeholder-gray-400 dark:placeholder-white/50 focus:border-purple-600 dark:focus:border-purple-500';
 
-    return `${baseClasses} ${alignmentClasses} ${errorClasses}`;
-  }, [passwordTouched, passwordValidationErrors, locale]);
+      return `${baseClasses} ${alignmentClasses} ${errorClasses}`;
+    },
+    [passwordTouched, passwordValidationErrors, locale]
+  );
 
   // Memoize tabs to prevent unnecessary re-renders
-  const tabs = useMemo(() => [
-    {
-      id: 'profile' as const,
-      label: t('account.loginSecurity.tabs.profile'),
-      icon: HiUser,
-    },
-    {
-      id: 'password' as const,
-      label: t('account.loginSecurity.tabs.password'),
-      icon: HiLockClosed,
-    },
-    {
-      id: 'twoFactor' as const,
-      label: t('account.loginSecurity.tabs.twoFactor'),
-      icon: HiShieldCheck,
-    },
-  ], [t]);
+  const tabs = useMemo(
+    () => [
+      {
+        id: 'profile' as const,
+        label: t('account.loginSecurity.tabs.profile'),
+        icon: HiUser,
+      },
+      {
+        id: 'password' as const,
+        label: t('account.loginSecurity.tabs.password'),
+        icon: HiLockClosed,
+      },
+      {
+        id: 'twoFactor' as const,
+        label: t('account.loginSecurity.tabs.twoFactor'),
+        icon: HiShieldCheck,
+      },
+    ],
+    [t]
+  );
 
   // Show loading page while checking authentication or page is loading
   if (isLoading || isPageLoading) {
@@ -417,16 +483,19 @@ export default function LoginSecurityPage() {
     }
 
     try {
-      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.UPDATE_PROFILE), {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: profileFormData.name.trim(),
-        }),
-      });
+      const response = await fetch(
+        buildApiUrl(API_CONFIG.ENDPOINTS.USERS.UPDATE_PROFILE),
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            name: profileFormData.name.trim(),
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -488,17 +557,20 @@ export default function LoginSecurityPage() {
     }
 
     try {
-      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.CHANGE_PASSWORD), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentPassword: passwordFormData.currentPassword,
-          newPassword: passwordFormData.newPassword,
-          confirmNewPassword: passwordFormData.confirmNewPassword,
-        }),
-      });
+      const response = await fetch(
+        buildApiUrl(API_CONFIG.ENDPOINTS.USERS.CHANGE_PASSWORD),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            currentPassword: passwordFormData.currentPassword,
+            newPassword: passwordFormData.newPassword,
+            confirmNewPassword: passwordFormData.confirmNewPassword,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -558,7 +630,6 @@ export default function LoginSecurityPage() {
     }
   };
 
-
   // 2FA handlers
   const handleEnable2FA = async () => {
     setIs2FALoading(true);
@@ -577,10 +648,13 @@ export default function LoginSecurityPage() {
         const data = await response.json();
         console.log('2FA enable success:', data);
         // Refresh user data to get updated 2FA status without reloading page
-        const userResponse = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME), {
-          method: 'GET',
-          credentials: 'include',
-        });
+        const userResponse = await fetch(
+          buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
+          {
+            method: 'GET',
+            credentials: 'include',
+          }
+        );
 
         if (userResponse.ok) {
           const userData = await userResponse.json();
@@ -612,16 +686,19 @@ export default function LoginSecurityPage() {
     setDisablePasswordError('');
 
     try {
-      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.DISABLE_2FA), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          currentPassword: disablePassword,
-        }),
-      });
+      const response = await fetch(
+        buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.DISABLE_2FA),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            currentPassword: disablePassword,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -638,10 +715,13 @@ export default function LoginSecurityPage() {
         }
 
         // Refresh user data to get updated 2FA status without reloading page
-        const userResponse = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME), {
-          method: 'GET',
-          credentials: 'include',
-        });
+        const userResponse = await fetch(
+          buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
+          {
+            method: 'GET',
+            credentials: 'include',
+          }
+        );
 
         if (userResponse.ok) {
           const userData = await userResponse.json();
@@ -649,7 +729,9 @@ export default function LoginSecurityPage() {
           updateUser(finalUserData);
         }
       } else {
-        setDisablePasswordError(t('account.loginSecurity.twoFactor.disableModal.disableFailed'));
+        setDisablePasswordError(
+          t('account.loginSecurity.twoFactor.disableModal.disableFailed')
+        );
       }
     } catch (error) {
       setDisablePasswordError(
@@ -693,7 +775,9 @@ export default function LoginSecurityPage() {
           <div className="mb-6 sm:mb-8">
             <div className="border-b border-gray-300 dark:border-white/20 overflow-x-auto">
               <nav
-                className={`flex ${locale === 'ar' ? 'flex-row-reverse' : ''} min-w-max`}
+                className={`flex ${
+                  locale === 'ar' ? 'flex-row-reverse' : ''
+                } min-w-max`}
               >
                 {tabs.map((tab) => {
                   const IconComponent = tab.icon;
@@ -716,9 +800,14 @@ export default function LoginSecurityPage() {
                       })}
                       <span className="hidden xs:inline">{tab.label}</span>
                       <span className="xs:hidden">
-                        {tab.id === 'profile' ? t('account.loginSecurity.tabs.profileShort') || 'Profile' :
-                         tab.id === 'password' ? t('account.loginSecurity.tabs.passwordShort') || 'Password' :
-                         t('account.loginSecurity.tabs.twoFactorShort') || '2FA'}
+                        {tab.id === 'profile'
+                          ? t('account.loginSecurity.tabs.profileShort') ||
+                            'Profile'
+                          : tab.id === 'password'
+                          ? t('account.loginSecurity.tabs.passwordShort') ||
+                            'Password'
+                          : t('account.loginSecurity.tabs.twoFactorShort') ||
+                            '2FA'}
                       </span>
                     </button>
                   );
@@ -754,7 +843,8 @@ export default function LoginSecurityPage() {
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
-                      {profileError || (profileErrorKey ? t(profileErrorKey) : '')}
+                      {profileError ||
+                        (profileErrorKey ? t(profileErrorKey) : '')}
                     </p>
                   </div>
                 )}
@@ -767,12 +857,16 @@ export default function LoginSecurityPage() {
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
-                      {profileSuccessMessage || (profileSuccessKey ? t(profileSuccessKey) : '')}
+                      {profileSuccessMessage ||
+                        (profileSuccessKey ? t(profileSuccessKey) : '')}
                     </p>
                   </div>
                 )}
 
-                <form onSubmit={handleProfileSubmit} className="space-y-4 sm:space-y-6">
+                <form
+                  onSubmit={handleProfileSubmit}
+                  className="space-y-4 sm:space-y-6"
+                >
                   {/* Name Field */}
                   <div>
                     <label
@@ -787,7 +881,9 @@ export default function LoginSecurityPage() {
                         }`}
                       >
                         {HiUser({
-                          className: `w-4 h-4 ${locale === 'ar' ? 'ml-2' : 'mr-2'}`,
+                          className: `w-4 h-4 ${
+                            locale === 'ar' ? 'ml-2' : 'mr-2'
+                          }`,
                         })}
                         {t('account.form.fullName')}
                       </div>
@@ -826,9 +922,7 @@ export default function LoginSecurityPage() {
                       }`}
                     >
                       {isProfileFormLoading ? (
-                        <>
-                          {t('account.form.updating')}
-                        </>
+                        <>{t('account.form.updating')}</>
                       ) : !hasNameChanged() ? (
                         t('account.form.noChanges')
                       ) : (
@@ -906,7 +1000,8 @@ export default function LoginSecurityPage() {
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
-                      {passwordError || (passwordErrorKey ? t(passwordErrorKey) : '')}
+                      {passwordError ||
+                        (passwordErrorKey ? t(passwordErrorKey) : '')}
                     </p>
                   </div>
                 )}
@@ -919,38 +1014,42 @@ export default function LoginSecurityPage() {
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
-                      {passwordSuccessMessage || (passwordSuccessKey ? t(passwordSuccessKey) : '')}
+                      {passwordSuccessMessage ||
+                        (passwordSuccessKey ? t(passwordSuccessKey) : '')}
                     </p>
                   </div>
                 )}
 
-                <form onSubmit={handlePasswordSubmit} className="space-y-4 sm:space-y-6">
+                <form
+                  onSubmit={handlePasswordSubmit}
+                  className="space-y-4 sm:space-y-6"
+                >
                   {/* Hidden dummy fields to prevent auto-fill */}
                   <div className="hidden">
                     <label htmlFor="hidden-username" className="sr-only">
                       Hidden username field
                     </label>
-                    <input 
+                    <input
                       id="hidden-username"
-                      type="text" 
-                      name="username" 
-                      autoComplete="username" 
+                      type="text"
+                      name="username"
+                      autoComplete="username"
                       aria-hidden="true"
                       tabIndex={-1}
                     />
                     <label htmlFor="hidden-password" className="sr-only">
                       Hidden password field
                     </label>
-                    <input 
+                    <input
                       id="hidden-password"
-                      type="password" 
-                      name="password" 
-                      autoComplete="current-password" 
+                      type="password"
+                      name="password"
+                      autoComplete="current-password"
                       aria-hidden="true"
                       tabIndex={-1}
                     />
                   </div>
-                  
+
                   {/* Current Password Field */}
                   <div>
                     <label
@@ -982,9 +1081,15 @@ export default function LoginSecurityPage() {
                         onChange={(e) => {
                           const value = e.target.value;
                           setCurrentPasswordValue(value);
-                          setPasswordFormData(prev => ({ ...prev, currentPassword: value }));
+                          setPasswordFormData((prev) => ({
+                            ...prev,
+                            currentPassword: value,
+                          }));
                           // Switch to password type after user starts typing
-                          if (currentPasswordType === 'text' && value.length > 0) {
+                          if (
+                            currentPasswordType === 'text' &&
+                            value.length > 0
+                          ) {
                             setCurrentPasswordType('password');
                           }
                         }}
@@ -1346,27 +1451,27 @@ export default function LoginSecurityPage() {
                 <label htmlFor="hidden-username-modal" className="sr-only">
                   Hidden username field
                 </label>
-                <input 
+                <input
                   id="hidden-username-modal"
-                  type="text" 
-                  name="username" 
-                  autoComplete="username" 
+                  type="text"
+                  name="username"
+                  autoComplete="username"
                   aria-hidden="true"
                   tabIndex={-1}
                 />
                 <label htmlFor="hidden-password-modal" className="sr-only">
                   Hidden password field
                 </label>
-                <input 
+                <input
                   id="hidden-password-modal"
-                  type="password" 
-                  name="password" 
-                  autoComplete="current-password" 
+                  type="password"
+                  name="password"
+                  autoComplete="current-password"
                   aria-hidden="true"
                   tabIndex={-1}
                 />
               </div>
-              
+
               <div>
                 <div className="relative">
                   <input
@@ -1426,7 +1531,11 @@ export default function LoginSecurityPage() {
                   </p>
                 )}
               </div>
-              <div className={`flex flex-col sm:flex-row ${locale === 'ar' ? 'sm:gap-4' : 'sm:gap-3'} gap-3`}>
+              <div
+                className={`flex flex-col sm:flex-row ${
+                  locale === 'ar' ? 'sm:gap-4' : 'sm:gap-3'
+                } gap-3`}
+              >
                 <button
                   onClick={() => {
                     setShowDisableModal(false);

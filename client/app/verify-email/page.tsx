@@ -33,7 +33,7 @@ export default function VerifyEmailPage() {
     onAuthBroadcast,
     offAuthBroadcast,
   } = useSocket();
-  
+
   // Use the backend message translation hook
   const {
     error: verificationError,
@@ -46,10 +46,12 @@ export default function VerifyEmailPage() {
     setSuccessKey: setVerificationSuccessKey,
     clearMessages: clearVerificationMessages,
   } = useBackendMessageTranslation();
-  
-  const [verificationState, setVerificationState] = useState<VerificationState>({
-    status: 'verifying',
-  });
+
+  const [verificationState, setVerificationState] = useState<VerificationState>(
+    {
+      status: 'verifying',
+    }
+  );
   const [userId, setUserId] = useState<string | null>(null);
 
   // Use useRef to prevent multiple API calls
@@ -91,10 +93,13 @@ export default function VerifyEmailPage() {
     // Check if user is already logged in - if so, show success and redirect
     const checkExistingAuth = async () => {
       try {
-        const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME), {
-          method: 'GET',
-          credentials: 'include',
-        });
+        const response = await fetch(
+          buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
+          {
+            method: 'GET',
+            credentials: 'include',
+          }
+        );
 
         if (response.ok) {
           const userData = await response.json();
@@ -585,8 +590,10 @@ export default function VerifyEmailPage() {
         </h1>
 
         <p className="text-gray-600 dark:text-gray-300 mb-8">
-          {verificationSuccess || (verificationSuccessKey ? t(verificationSuccessKey) : '')}
-          {verificationError || (verificationErrorKey ? t(verificationErrorKey) : '')}
+          {verificationSuccess ||
+            (verificationSuccessKey ? t(verificationSuccessKey) : '')}
+          {verificationError ||
+            (verificationErrorKey ? t(verificationErrorKey) : '')}
         </p>
 
         {verificationState.status === 'success' && (

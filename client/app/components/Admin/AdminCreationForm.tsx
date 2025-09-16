@@ -17,7 +17,9 @@ interface AdminCreationFormProps {
   onSuccess?: () => void;
 }
 
-export default function AdminCreationForm({ onSuccess }: AdminCreationFormProps) {
+export default function AdminCreationForm({
+  onSuccess,
+}: AdminCreationFormProps) {
   const { t, locale } = useLanguage();
   const { isDark } = useTheme();
   const {
@@ -31,7 +33,7 @@ export default function AdminCreationForm({ onSuccess }: AdminCreationFormProps)
     clearError,
     clearSuccess,
   } = useBackendMessageTranslation();
-  
+
   const [formData, setFormData] = useState<AdminUser>({
     name: '',
     email: '',
@@ -239,7 +241,7 @@ export default function AdminCreationForm({ onSuccess }: AdminCreationFormProps)
   // Get input class based on validation state and theme
   const getInputClass = (fieldName: keyof typeof validationErrors) => {
     const hasError = touched[fieldName] && validationErrors[fieldName];
-    
+
     if (isDark) {
       return hasError
         ? 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-red-400 rounded-lg text-white placeholder-white/50 focus:border-red-400 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base'
@@ -289,20 +291,23 @@ export default function AdminCreationForm({ onSuccess }: AdminCreationFormProps)
     }
 
     try {
-      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.CREATE_USER), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies for authentication
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        buildApiUrl(API_CONFIG.ENDPOINTS.USERS.CREATE_USER),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include', // Include cookies for authentication
+          body: JSON.stringify(formData),
+        }
+      );
 
       if (response.ok) {
         const result = await response.json();
         // Use setBackendSuccess which automatically maps to translation keys
         setBackendSuccess(result.message || 'Admin user created successfully!');
-        
+
         // Reset form
         setFormData({ name: '', email: '', password: '', confirmPassword: '' });
         setValidationErrors({});
@@ -312,7 +317,7 @@ export default function AdminCreationForm({ onSuccess }: AdminCreationFormProps)
           password: false,
           confirmPassword: false,
         });
-        
+
         // Clear success message after a delay to show it briefly
         setTimeout(() => {
           clearSuccess();
@@ -339,14 +344,18 @@ export default function AdminCreationForm({ onSuccess }: AdminCreationFormProps)
       <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
         {/* Header */}
         <div className="text-center mb-4 sm:mb-6 md:mb-8">
-          <h1 className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 ${
-            isDark ? 'text-white' : 'text-gray-900'
-          }`}>
+          <h1
+            className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 ${
+              isDark ? 'text-white' : 'text-gray-900'
+            }`}
+          >
             {t('auth.admin.createAdminUser')}
           </h1>
-          <p className={`text-xs sm:text-sm md:text-base ${
-            isDark ? 'text-white/70' : 'text-gray-600'
-          }`}>
+          <p
+            className={`text-xs sm:text-sm md:text-base ${
+              isDark ? 'text-white/70' : 'text-gray-600'
+            }`}
+          >
             {t('auth.admin.fullSystemAccess')}
           </p>
         </div>
@@ -356,19 +365,23 @@ export default function AdminCreationForm({ onSuccess }: AdminCreationFormProps)
           <div
             className={`${
               success
-                ? isDark 
+                ? isDark
                   ? 'bg-green-500/10 border border-green-400/30'
                   : 'bg-green-50 border border-green-300'
                 : isDark
-                  ? 'bg-red-500/10 border border-red-400/30'
-                  : 'bg-red-50 border border-red-300'
+                ? 'bg-red-500/10 border border-red-400/30'
+                : 'bg-red-50 border border-red-300'
             } rounded-lg p-2 sm:p-3 mb-3 sm:mb-4`}
           >
             <p
               className={`${
                 success
-                  ? isDark ? 'text-green-400' : 'text-green-600'
-                  : isDark ? 'text-red-400' : 'text-red-600'
+                  ? isDark
+                    ? 'text-green-400'
+                    : 'text-green-600'
+                  : isDark
+                  ? 'text-red-400'
+                  : 'text-red-600'
               } text-xs sm:text-sm ${locale === 'ar' ? 'text-right' : ''}`}
             >
               {success || error}
