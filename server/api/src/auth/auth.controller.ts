@@ -323,32 +323,32 @@ export class AuthController {
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({
     status: 200,
-    description: 'Token refreshed successfully',
+    description: 'Token refresh result',
     schema: {
       type: 'object',
       properties: {
-        message: { type: 'string', example: 'Token refreshed successfully' },
+        message: { type: 'string' },
+        success: { type: 'boolean' },
       },
     },
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid refresh token',
   })
   async refreshToken(
     @Request() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<RefreshTokenResponse> {
+  ): Promise<{ message: string; success: boolean }> {
     const refreshToken = req.cookies?.refreshToken as string | undefined;
 
     if (!refreshToken) {
-      throw new BadRequestException('No refresh token provided');
+      return { message: 'No refresh token provided', success: false };
     }
 
-    const tokens = await this.authService.refreshToken({ refreshToken });
-    this.authService.setAuthCookies(res, tokens);
-
-    return { message: 'Token refreshed successfully' };
+    try {
+      const tokens = await this.authService.refreshToken({ refreshToken });
+      this.authService.setAuthCookies(res, tokens);
+      return { message: 'Token refreshed successfully', success: true };
+    } catch (error) {
+      return { message: 'Invalid refresh token', success: false };
+    }
   }
 
   @Post('forgot-password')

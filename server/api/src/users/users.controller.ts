@@ -13,6 +13,8 @@ import {
   Request,
   Logger,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import {
   ApiBody,
   ApiTags,
@@ -65,9 +67,13 @@ export class UsersController {
   // For regular customer registration, use POST /auth/register instead
   // GET /users/admins - Get all admin users (admin-only)
   // GET /users/customers - Get all customer users (admin-only)
-  private readonly logger = new Logger(UsersController.name);
+  private readonly logger = new Logger(UsersController.name)
 
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -142,22 +148,65 @@ export class UsersController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
     status: 200,
-    description: 'Current user profile retrieved successfully',
+    description: 'User profile retrieved successfully or user not authenticated',
+    schema: {
+      type: 'object',
+      properties: {
+        user: {
+          type: 'object',
+          description: 'User profile if authenticated, null if not authenticated',
+        },
+        authenticated: {
+          type: 'boolean',
+          description: 'Whether the user is authenticated',
+        },
+      },
+    },
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getCurrentUser(
-    @Request() req: AuthenticatedRequest,
-  ): Promise<{ user: Omit<User, 'password'> }> {
+    @Request() req: ExpressRequest,
+  ): Promise<{ user: Omit<User, 'password'> | null; authenticated: boolean }> {
     this.logger.log('🚀 /users/me endpoint reached!');
-    this.logger.log('🚀 Request user object:', req.user);
+    
+    try {
+      // Extract token from cookies first, then from Authorization header
+      let token: string | undefined;
+      
+      // Check cookies first
+      if (req.cookies?.accessToken) {
+        token = req.cookies.accessToken;
+        this.logger.log('🚀 Token found in cookies');
+      } else {
+        // Fallback to Authorization header
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          token = authHeader.substring(7);
+          this.logger.log('🚀 Token found in Authorization header');
+        }
+      }
 
-    const user = await this.usersService.getCurrentUser(req.user.sub);
-    return { user };
+      if (!token) {
+        this.logger.log('🚀 No token found - user not authenticated');
+        return { user: null, authenticated: false };
+      }
+
+      // Verify the token
+      const jwtSecret = this.configService.get<string>('JWT_SECRET') || 'fallback-secret';
+      const payload = this.jwtService.verify(token, { secret: jwtSecret });
+      
+      this.logger.log('🚀 Token verified, payload:', payload);
+
+      // Get user data
+      const user = await this.usersService.getCurrentUser(payload.sub);
+      return { user, authenticated: true };
+      
+    } catch (error) {
+      this.logger.log('🚀 Authentication failed:', error instanceof Error ? error.message : String(error));
+      return { user: null, authenticated: false };
+    }
   }
 
   @Get(':id')

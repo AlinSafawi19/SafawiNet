@@ -126,26 +126,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('🔄 AuthContext - Refresh response status:', response.status);
 
       if (response.ok) {
-        console.log('🔄 AuthContext - Token refreshed successfully');
-        // Token refreshed successfully, but don't call /users/me again
-        // The user will remain in their current state, and the next API call
-        // will use the refreshed token automatically
-        return true;
-      } else if (response.status === 400) {
-        console.log(
-          '🔄 AuthContext - 400 response (no refresh token available)'
-        );
-        // This is normal for new visitors with no refresh token
-        // 400 responses won't show as errors in console for better UX
-        // Don't set user to null immediately - let the next auth check handle it
-        return false;
+        const refreshData = await response.json();
+        
+        if (refreshData.success) {
+          console.log('🔄 AuthContext - Token refreshed successfully');
+          // Token refreshed successfully, but don't call /users/me again
+          // The user will remain in their current state, and the next API call
+          // will use the refreshed token automatically
+          return true;
+        } else {
+          // Refresh failed but server returned 200 OK
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔄 AuthContext - Refresh failed:', refreshData.message);
+          }
+          return false;
+        }
       } else {
         console.log(
           '🔄 AuthContext - Refresh failed with status:',
           response.status
         );
-        // Only log actual errors (not 400s)
-        // Don't set user to null immediately - let the next auth check handle it
+        // Only log actual errors (shouldn't happen with new server format)
         return false;
       }
     } catch (error) {
@@ -182,7 +183,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (response.ok) {
           const userData = await response.json();
-          const finalUserData = userData.user || userData;
+          
+          // Check if user is authenticated based on new response format
+          if (!userData.authenticated || !userData.user) {
+            return { success: false, message: 'Authentication failed' };
+          }
+
+          const finalUserData = userData.user;
 
           // Check if user is verified before setting login state
           if (!finalUserData.isVerified) {
@@ -347,12 +354,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.ok) {
         const userData = await response.json();
 
-        // Check if the response has a nested user property or is the user data directly
-        const finalUserData = userData.user || userData;
-
         if (process.env.NODE_ENV === 'development') {
-          console.log('🔍 User data received:', finalUserData);
+          console.log('🔍 User data received:', userData);
         }
+
+        // Check if user is authenticated based on new response format
+        if (!userData.authenticated || !userData.user) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔍 User not authenticated');
+          }
+          setUser(null);
+          return;
+        }
+
+        const finalUserData = userData.user;
 
         // Check if user is verified before setting login state
         if (!finalUserData.isVerified) {
@@ -370,27 +385,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setTimeout(() => {
           checkOfflineMessages();
         }, 2000); // Increased delay to not block initial render
-      } else if (response.status === 401) {
-        // Token might be expired, try to refresh it silently
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔍 401 response, attempting token refresh...');
-        }
-        const refreshSuccess = await refreshToken();
-        if (!refreshSuccess) {
-          // This is normal for new visitors - no need to log as error
-          if (process.env.NODE_ENV === 'development') {
-            console.log('🔍 Token refresh failed, user not authenticated');
-          }
-          setUser(null);
-        }
-      } else if (response.status === 403) {
-        // Forbidden - user might be logged out due to session issues
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔍 403 response, user session may be invalid');
-        }
-        setUser(null);
       } else {
-        // Only log actual errors (not 401s or 403s)
+        // Handle any non-200 responses (shouldn't happen with new server format)
         if (process.env.NODE_ENV === 'development') {
           console.log('🔍 Unexpected response status:', response.status);
         }
@@ -539,7 +535,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (userResponse.ok) {
           const userDataResponse = await userResponse.json();
-          const finalUserData = userDataResponse.user || userDataResponse;
+          
+          // Check if user is authenticated based on new response format
+          if (!userDataResponse.authenticated || !userDataResponse.user) {
+            return { success: false, message: 'Authentication failed' };
+          }
+
+          const finalUserData = userDataResponse.user;
 
           // Check if user is verified before setting login state
           if (!finalUserData.isVerified) {
