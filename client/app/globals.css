@@ -116,7 +116,7 @@
   .tile-addresses,
   .tile-orders,
   .tile-payment,
-  .tile-wishlist {
+  .tile-sessions {
     @apply bg-white/5;
     @apply hover:bg-white/10;
     @apply border border-white/20;
@@ -127,7 +127,7 @@
   .tile-addresses::before,
   .tile-orders::before,
   .tile-payment::before,
-  .tile-wishlist::before {
+  .tile-sessions::before {
     @apply bg-gradient-to-br from-white/5 to-transparent;
   }
 
@@ -152,7 +152,7 @@
   .tile-addresses .tile-icon,
   .tile-orders .tile-icon,
   .tile-payment .tile-icon,
-  .tile-wishlist .tile-icon {
+  .tile-sessions .tile-icon {
     @apply bg-white/15;
     @apply text-white;
     @apply group-hover:bg-white/25;

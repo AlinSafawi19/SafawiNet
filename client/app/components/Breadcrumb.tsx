@@ -20,7 +20,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
   items,
   className = '',
 }) => {
-  const { locale } = useLanguage();
+  const { locale, t } = useLanguage();
   const pathname = usePathname();
   
   // Memoize expensive calculations

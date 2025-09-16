@@ -164,7 +164,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
             <div key={category} className="mb-6">
               {/* Category Label */}
               <div className="px-6 mb-3">
-                <h3 className="text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">
+                <h3 className={`text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider ${locale === 'ar' ? 'text-right' : 'text-left'}`}>
                   {categoryLabels[category as keyof typeof categoryLabels]}
                 </h3>
               </div>

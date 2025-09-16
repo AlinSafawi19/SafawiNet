@@ -94,14 +94,15 @@
     "ordersDesc": "View order history and track shipments",
     "paymentMethods": "Payment Methods",
     "paymentMethodsDesc": "Manage credit cards, bank accounts, and payment preferences",
-    "wishlist": "Wishlist",
-    "wishlistDesc": "View and manage your saved items",
+    "sessions": "Sessions",
+    "sessionsDesc": "Manage your active device sessions",
     "backToAccount": "Back to Account",
     "form": {
       "fullName": "Full Name",
       "fullNamePlaceholder": "Enter your full name",
       "updateProfile": "Update Profile",
-      "updating": "Updating..."
+      "updating": "Updating...",
+      "noChanges": "No Changes Made"
     },
     "validation": {
       "nameRequired": "Name is required",
@@ -110,7 +111,8 @@
     "messages": {
       "updateSuccess": "Profile updated successfully",
       "updateFailed": "Failed to update profile. Please try again.",
-      "generalError": "An error occurred. Please try again."
+      "generalError": "An error occurred. Please try again.",
+      "noChanges": "No changes were made to your profile"
     },
     "loginSecurity": {
       "title": "Login & Security",

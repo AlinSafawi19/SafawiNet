@@ -94,14 +94,15 @@
     "ordersDesc": "عرض تاريخ الطلبات وتتبع الشحنات",
     "paymentMethods": "طرق الدفع",
     "paymentMethodsDesc": "إدارة بطاقات الائتمان والحسابات المصرفية وتفضيلات الدفع",
-    "wishlist": "المفضلة",
-    "wishlistDesc": "عرض وإدارة العناصر المحفوظة",
+    "sessions": "الجلسات",
+    "sessionsDesc": "إدارة جلسات الأجهزة النشطة",
     "backToAccount": "العودة إلى الحساب",
     "form": {
       "fullName": "الاسم الكامل",
       "fullNamePlaceholder": "أدخل اسمك الكامل",
       "updateProfile": "تحديث الملف الشخصي",
-      "updating": "...جاري التحديث"
+      "updating": "...جاري التحديث",
+      "noChanges": "لم يتم إجراء أي تغييرات"
     },
     "validation": {
       "nameRequired": "الاسم مطلوب",
@@ -110,7 +111,8 @@
     "messages": {
       "updateSuccess": "تم تحديث الملف الشخصي بنجاح",
       "updateFailed": "فشل في تحديث الملف الشخصي. يرجى المحاولة مرة أخرى.",
-      "generalError": ".حدث خطأ. يرجى المحاولة مرة أخرى"
+      "generalError": ".حدث خطأ. يرجى المحاولة مرة أخرى",
+      "noChanges": "لم يتم إجراء أي تغييرات على ملفك الشخصي"
     },
     "loginSecurity": {
       "title": "تسجيل الدخول والأمان",

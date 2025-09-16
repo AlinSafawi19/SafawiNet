@@ -38,6 +38,9 @@ export default function LoginSecurityPage() {
     name: '',
   });
 
+  // Track original name to detect changes
+  const [originalName, setOriginalName] = useState('');
+
   const [profileValidationErrors, setProfileValidationErrors] =
     useState<ProfileValidationErrors>({});
   const [profileTouched, setProfileTouched] = useState({
@@ -91,9 +94,11 @@ export default function LoginSecurityPage() {
       router.push('/auth');
     } else if (!isLoading && user) {
       // Initialize profile form data when user becomes available
+      const userName = user.name || '';
       setProfileFormData({
-        name: user.name || '',
+        name: userName,
       });
+      setOriginalName(userName);
       // Page is ready to render
       setIsPageLoading(false);
     }
@@ -148,6 +153,11 @@ export default function LoginSecurityPage() {
     }
     return undefined;
   }, []);
+
+  // Check if name has changed - memoized
+  const hasNameChanged = useCallback((): boolean => {
+    return profileFormData.name.trim() !== originalName.trim();
+  }, [profileFormData.name, originalName]);
 
   // Validate all profile fields - memoized
   const validateProfileForm = useCallback((): boolean => {
@@ -381,6 +391,14 @@ export default function LoginSecurityPage() {
       name: true,
     });
 
+    // Check if name has actually changed
+    if (!hasNameChanged()) {
+      setProfileErrorKey('account.messages.noChanges');
+      setProfileError('');
+      setIsProfileFormLoading(false);
+      return;
+    }
+
     // Validate form before submission
     if (!validateProfileForm()) {
       setIsProfileFormLoading(false);
@@ -407,9 +425,12 @@ export default function LoginSecurityPage() {
         if (userData) {
           updateUser(userData);
           // Directly update form data with the new values
+          const newName = userData.name || '';
           setProfileFormData({
-            name: userData.name || '',
+            name: newName,
           });
+          // Update original name to reflect the new value
+          setOriginalName(newName);
         }
 
         setProfileSuccessKey('account.messages.updateSuccess');
@@ -800,13 +821,19 @@ export default function LoginSecurityPage() {
                   <div className="pt-4">
                     <button
                       type="submit"
-                      disabled={isProfileFormLoading}
-                      className="w-full bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed disabled:opacity-60 min-h-[48px] flex items-center justify-center"
+                      disabled={isProfileFormLoading || !hasNameChanged()}
+                      className={`w-full font-semibold py-3 px-6 rounded-lg transition-all duration-300 text-sm sm:text-base min-h-[48px] flex items-center justify-center ${
+                        !hasNameChanged()
+                          ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                          : 'bg-black dark:bg-white text-white dark:text-black hover:shadow-lg hover:shadow-purple-500/25 disabled:cursor-not-allowed disabled:opacity-60'
+                      }`}
                     >
                       {isProfileFormLoading ? (
                         <>
                           {t('account.form.updating')}
                         </>
+                      ) : !hasNameChanged() ? (
+                        t('account.form.noChanges')
                       ) : (
                         t('account.form.updateProfile')
                       )}

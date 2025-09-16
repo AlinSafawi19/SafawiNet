@@ -14,7 +14,7 @@ import {
   HiMapPin,
   HiShoppingBag,
   HiCreditCard,
-  HiHeart,
+  HiDevicePhoneMobile,
 } from 'react-icons/hi2';
 
 export default function MyAccountPage() {
@@ -89,6 +89,26 @@ export default function MyAccountPage() {
           </Link>
 
           <div
+            className="dashboard-tile tile-sessions group"
+            onClick={() => {
+              router.push('/account/sessions');
+            }}
+          >
+            <div className="tile-content">
+              <div className="tile-icon">
+                {HiDevicePhoneMobile({ className: 'w-6 h-6' })}
+              </div>
+              <div className="tile-text">
+                <h3 className="tile-title">{t('account.sessions')}</h3>
+                <p className="tile-description">
+                  {t('account.sessionsDesc')}
+                </p>
+              </div>
+            </div>
+            <div className="tile-overlay"></div>
+          </div>
+
+          <div
             className="dashboard-tile tile-loyalty group"
             onClick={() => {
               router.push('/account/loyalty');
@@ -158,26 +178,6 @@ export default function MyAccountPage() {
                 <h3 className="tile-title">{t('account.paymentMethods')}</h3>
                 <p className="tile-description">
                   {t('account.paymentMethodsDesc')}
-                </p>
-              </div>
-            </div>
-            <div className="tile-overlay"></div>
-          </div>
-
-          <div
-            className="dashboard-tile tile-wishlist group"
-            onClick={() => {
-              router.push('/wishlist');
-            }}
-          >
-            <div className="tile-content">
-              <div className="tile-icon">
-                {HiHeart({ className: 'w-6 h-6' })}
-              </div>
-              <div className="tile-text">
-                <h3 className="tile-title">{t('account.wishlist')}</h3>
-                <p className="tile-description">
-                  {t('account.wishlistDesc')}
                 </p>
               </div>
             </div>
