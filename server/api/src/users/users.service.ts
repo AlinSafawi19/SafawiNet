@@ -406,9 +406,12 @@ export class UsersService {
             name: user.name || 'User',
             appName: 'Safawinet',
             supportEmail: 'support@safawinet.com',
-            event: 'Password Changed',
-            message:
+            eventEn: 'Password Changed',
+            eventAr: 'تغيير كلمة المرور',
+            messageEn:
               'Your password has been successfully changed. If you did not make this change, please contact support immediately.',
+            messageAr:
+              'تم تغيير كلمة المرور بنجاح. إذا لم تقم بهذا التغيير، يرجى الاتصال بالدعم فوراً.',
             timestamp: new Date().toLocaleString(),
           },
         );

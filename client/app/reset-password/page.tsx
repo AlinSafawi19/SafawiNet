@@ -219,7 +219,7 @@ export default function ResetPasswordPage() {
 
           {/* Security Notice */}
           <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
-            <div className="flex items-start space-x-2 sm:space-x-3">
+            <div className="flex items-start gap-2 sm:gap-3">
               <svg
                 className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400 mt-0.5 flex-shrink-0"
                 fill="currentColor"

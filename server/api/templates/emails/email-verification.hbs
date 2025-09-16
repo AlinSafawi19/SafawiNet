@@ -16,7 +16,7 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #fafafa;
+            background: linear-gradient(135deg, #fafafa 0%, #f8f4ff 100%);
             color: #1a1a1a;
             font-weight: 300;
             line-height: 1.6;
@@ -35,29 +35,35 @@
         .email-container {
             max-width: 600px;
             width: 100%;
-            background: #ffffff;
+            background: linear-gradient(180deg, #ffffff 0%, #fefcff 100%);
             box-shadow: none;
             overflow: hidden;
             position: relative;
         }
 
         .header {
-            padding: 60px 50px 40px;
+            padding: 40px 30px 20px;
             text-align: center;
             background: #ffffff;
         }
 
-        .brand {
+        .logo {
             font-size: 28px;
             font-weight: 600;
             color: #1a1a1a;
             letter-spacing: -0.02em;
             margin-bottom: 12px;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .logo:hover {
+            color: #a855f7;
         }
 
         .tagline {
             font-size: 14px;
-            color: #666;
+            color: #1a1a1a;
             font-weight: 300;
             text-transform: uppercase;
             letter-spacing: 0.1em;
@@ -98,7 +104,7 @@
 
         .cta-button {
             display: inline-block;
-            background: #000000;
+            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
             color: #ffffff;
             text-decoration: none;
             padding: 20px 40px;
@@ -114,12 +120,12 @@
         }
 
         .cta-button:hover {
-            background: #1a1a1a;
+            background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
             transform: translateY(-2px);
         }
 
         .fallback-link {
-            background: #f8f8f8;
+            background: #f8f4ff;
             padding: 20px;
             margin: 30px 0;
             font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
@@ -130,7 +136,7 @@
         }
 
         .security-notice {
-            background: #f8f8f8;
+            background: #f8f4ff;
             padding: 25px;
             margin: 40px 0;
             font-size: 14px;
@@ -139,7 +145,7 @@
         }
 
         .security-notice strong {
-            color: #1a1a1a;
+            color: #8b5cf6;
             font-weight: 500;
         }
 
@@ -194,7 +200,7 @@
     <div class="email-wrapper">
         <div class="email-container">
             <div class="header">
-                <div class="brand">{{appName}}</div>
+                <a href="/" class="logo">SAFAWI NET</a>
                 <div class="tagline">Premium Networking Solutions</div>
             </div>
 
@@ -218,12 +224,35 @@
                     <strong>Security Note:</strong> This verification link expires in 1 hour. If you didn't create an
                     account, please ignore this email.
                 </div>
+
+                <!-- Arabic Version -->
+                <hr style="margin: 50px 0; border: none; border-top: 1px solid #e0e0e0;">
+                
+                <div class="greeting" dir="rtl" style="text-align: right;">مرحباً {{name}}،</div>
+
+                <h1 class="title" dir="rtl" style="text-align: right;">تحقق من عنوان بريدك الإلكتروني</h1>
+
+                <p class="description" dir="rtl" style="text-align: right;">
+                    مرحباً بك في {{appName}}. لإكمال تسجيلك والوصول إلى خدمات الشبكات المتميزة لدينا،
+                    يرجى التحقق من عنوان بريدك الإلكتروني.
+                </p>
+
+                <div class="cta-section">
+                    <a href="{{verificationUrl}}" class="cta-button" dir="rtl">تحقق من البريد الإلكتروني</a>
+                </div>
+
+                <div class="fallback-link" dir="rtl" style="text-align: right;">{{verificationUrl}}</div>
+
+                <div class="security-notice" dir="rtl" style="text-align: right;">
+                    <strong>ملاحظة أمنية:</strong> رابط التحقق هذا ينتهي خلال ساعة واحدة. إذا لم تقم بإنشاء حساب،
+                    يرجى تجاهل هذا البريد الإلكتروني.
+                </div>
             </div>
 
             <div class="footer">
                 <div class="footer-text">Need assistance? <a href="mailto:{{supportEmail}}" class="footer-link">Contact
                         Support</a></div>
-                <div class="footer-text">&copy; {{appName}}. All rights reserved.</div>
+                <div class="footer-text">&copy; 2025 {{appName}}. All rights reserved.</div>
             </div>
         </div>
     </div>

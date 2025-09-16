@@ -4,7 +4,7 @@
       "home": "Home",
       "products": "All Products",
       "deals": "Deals & Offers",
-      "about": "About"
+      "about": "About Us"
     },
     "actions": {
       "notifications": "Notifications",
@@ -64,15 +64,15 @@
   "errors": {
     "404": {
       "title": "404",
-      "message": "This page could not be found.",
-      "description": "The page you are looking for doesn't exist or has been moved.",
+      "message": "This page could not be found",
+      "description": "The page you are looking for doesn't exist or has been moved",
       "goHome": "Go Home",
       "goBack": "Go Back"
     },
     "403": {
       "title": "403",
-      "message": "Access Forbidden.",
-      "description": "You don't have permission to access this resource.",
+      "message": "Access Forbidden",
+      "description": "You don't have permission to access this resource",
       "goHome": "Go Home",
       "goBack": "Go Back"
     }
@@ -110,8 +110,8 @@
     },
     "messages": {
       "updateSuccess": "Profile updated successfully",
-      "updateFailed": "Failed to update profile. Please try again.",
-      "generalError": "An error occurred. Please try again.",
+      "updateFailed": "Failed to update profile. Please try again",
+      "generalError": "An error occurred. Please try again",
       "noChanges": "No changes were made to your profile"
     },
     "loginSecurity": {
@@ -142,26 +142,26 @@
         "passwordRequirement": "Password must be at least 8 characters long",
         "changePassword": "Change Password",
         "changing": "Changing...",
-        "success": "Password changed successfully. You will be logged out in a moment.",
+        "success": "Password changed successfully. You will be logged out in a moment",
         "currentPasswordIncorrect": "Current password is incorrect",
         "passwordsDoNotMatch": "New passwords do not match",
         "passwordTooShort": "New password must be at least 8 characters long",
         "currentPasswordRequired": "Current password is required",
         "newPasswordRequired": "New password is required",
         "confirmPasswordRequired": "Please confirm your new password",
-        "internalServerError": "An internal server error occurred. Please try again.",
+        "internalServerError": "An internal server error occurred. Please try again",
         "userNotFound": "User not found",
-        "passwordChangeFailed": "Failed to change password. Please try again.",
+        "passwordChangeFailed": "Failed to change password. Please try again",
         "securityNotice": "Security Notice",
-        "securityNoticeMessage": "For your security, you will be automatically logged out from all devices and browsers after changing your password."
+        "securityNoticeMessage": "For your security, you will be automatically logged out from all devices and browsers after changing your password"
       },
       "twoFactor": {
         "subtitle": "Enable two-factor authentication for enhanced account security",
         "securityNotice": "Security Notice",
-        "securityNoticeMessage": "Two-factor authentication adds an extra layer of security to your account. You will receive a verification code via email when logging in. For your security, you will be automatically logged out from all devices and browsers after disabling 2FA.",
+        "securityNoticeMessage": "Two-factor authentication adds an extra layer of security to your account. You will receive a verification code via email when logging in. For your security, you will be automatically logged out from all devices and browsers after disabling 2FA",
         "title": "Email Two-Factor Authentication",
-        "enabledMessage": "2FA is currently enabled. You will receive a code via email when logging in.",
-        "disabledMessage": "Enable 2FA to receive a security code via email when logging in.",
+        "enabledMessage": "2FA is currently enabled. You will receive a code via email when logging in",
+        "disabledMessage": "Enable 2FA to receive a security code via email when logging in",
         "status": {
           "enabled": "Enabled",
           "disabled": "Disabled"
@@ -173,7 +173,7 @@
         },
         "disableModal": {
           "title": "Disable Two-Factor Authentication",
-          "message": "To disable 2FA, please enter your current password:",
+          "message": "To disable 2FA, please enter your current password",
           "passwordPlaceholder": "Current password",
           "cancel": "Cancel",
           "disable": "Disable 2FA",
@@ -191,10 +191,10 @@
     "failed": "Verification Failed",
     "invalidLink": "Invalid Link",
     "verifyingMessage": "Verifying your email...",
-    "invalidLinkMessage": "Invalid verification link. Please check your email and try again.",
-    "successMessage": "Email verified successfully! You can now log in to your account.",
-    "failedMessage": "Email verification failed. Please try again.",
-    "errorMessage": "An error occurred during verification. Please try again.",
+    "invalidLinkMessage": "Invalid verification link. Please check your email and try again",
+    "successMessage": "Email verified successfully! You can now log in to your account",
+    "failedMessage": "Email verification failed. Please try again",
+    "errorMessage": "An error occurred during verification. Please try again",
     "redirecting": "Redirecting to login page in 3 seconds...",
     "tryAgain": "Try Again",
     "goToLogin": "Go to Login"
@@ -225,7 +225,7 @@
       "forgotPassword": "Forgot your password?",
       "resetPassword": "Reset password",
       "securityNotice": "Security Notice",
-      "securityNoticeMessage": "For your security, you will be automatically logged out from all devices and browsers after resetting your password."
+      "securityNoticeMessage": "For your security, you will be automatically logged out from all devices and browsers after resetting your password"
     },
     "admin": {
       "access": "ADMIN ACCESS",
@@ -249,7 +249,7 @@
       "passwordRequirement": "Password must be at least 8 characters long",
       "adminUserCreated": "Admin user created successfully!",
       "failedToCreate": "Failed to create admin user",
-      "networkError": "Network error. Please try again.",
+      "networkError": "Network error. Please try again",
       "restrictedArea": "This area is restricted to authorized personnel only",
       "fullSystemAccess": "This will create a new admin user with full system access",
       "validation": {
@@ -285,9 +285,9 @@
     },
     "messages": {
       "invalidCredentials": "Invalid email or password",
-      "registrationSuccess": "Registration successful! Please check your email to verify your account before signing in.",
-      "registrationFailed": "Registration failed. Please try again.",
-      "generalError": "An error occurred. Please try again.",
+      "registrationSuccess": "Registration successful! Please check your email to verify your account before signing in",
+      "registrationFailed": "Registration failed. Please try again",
+      "generalError": "An error occurred. Please try again",
       "userAlreadyExists": "User with this email already exists",
       "invalidEmailFormat": "Invalid email format",
       "passwordTooWeak": "Password is too weak",
@@ -295,8 +295,8 @@
       "accountLocked": "Account temporarily locked due to too many failed attempts",
       "invalidTwoFactorCode": "Invalid 2FA code",
       "invalidPasswordResetToken": "Invalid or expired password reset token",
-      "passwordResetEmailSent": "If an account with this email exists, a password reset link has been sent.",
-      "passwordResetSuccess": "Password reset successfully. Please log in with your new password.",
+      "passwordResetEmailSent": "If an account with this email exists, a password reset link has been sent",
+      "passwordResetSuccess": "Password reset successfully. Please log in with your new password",
       "emailVerified": "Email verified successfully",
       "verificationEmailSent": "Verification email sent successfully",
       "emailVerificationRequired": "Please verify your email before signing in",
@@ -304,7 +304,7 @@
       "invalidRefreshToken": "Invalid refresh token",
       "userNotFound": "User not found",
       "twoFactorAlreadyEnabled": "2FA is already enabled",
-      "twoFactorSetupNotFound": "2FA setup not found. Please run setup first.",
+      "twoFactorSetupNotFound": "2FA setup not found. Please run setup first",
       "invalidTOTPCode": "Invalid TOTP code",
       "twoFactorEnabled": "Two-factor authentication enabled successfully",
       "twoFactorNotEnabled": "2FA is not enabled",
@@ -370,7 +370,7 @@
     },
     "copyright": {
       "by": "BY",
-      "allRightsReserved": "ALL RIGHTS RESERVED."
+      "allRightsReserved": "ALL RIGHTS RESERVED"
     },
     "preferences": {
       "theme": "Theme",
@@ -407,5 +407,17 @@
     "closeMobileMenu": "Close mobile menu",
     "userMenu": "User menu",
     "toggleTheme": "Toggle theme"
+  },
+  "securityAlerts": {
+    "events": {
+      "passwordReset": "Password Reset",
+      "passwordChanged": "Password Changed",
+      "twoFactorDisabled": "Two-Factor Authentication Disabled"
+    },
+    "messages": {
+      "passwordReset": "Your password has been successfully reset. If you did not request this reset, please contact support immediately",
+      "passwordChanged": "Your password has been successfully changed. If you did not make this change, please contact support immediately",
+      "twoFactorDisabled": "Two-factor authentication has been disabled for your account. If you did not make this change, please contact support immediately"
+    }
   }
 }

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,22 +15,42 @@
             padding: 20px;
             background-color: #f4f4f4;
         }
+
         .container {
             background-color: #ffffff;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
         .header {
+            padding: 40px 30px 20px;
             text-align: center;
-            margin-bottom: 30px;
+            background: #ffffff;
         }
+
         .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a1a1a;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            text-decoration: none;
+            transition: color 0.2s ease;
         }
+
+        .logo:hover {
+            color: #a855f7;
+        }
+
+        .tagline {
+            font-size: 14px;
+            color: #1a1a1a;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
         .code-container {
             background-color: #f8f9fa;
             border: 2px dashed #dee2e6;
@@ -38,6 +59,7 @@
             text-align: center;
             margin: 20px 0;
         }
+
         .code {
             font-size: 32px;
             font-weight: bold;
@@ -45,6 +67,7 @@
             letter-spacing: 5px;
             font-family: 'Courier New', monospace;
         }
+
         .warning {
             background-color: #fff3cd;
             border: 1px solid #ffeaa7;
@@ -53,6 +76,7 @@
             margin: 20px 0;
             color: #856404;
         }
+
         .footer {
             text-align: center;
             margin-top: 30px;
@@ -61,34 +85,27 @@
             color: #6c757d;
             font-size: 14px;
         }
-        .button {
-            display: inline-block;
-            background-color: #007bff;
-            color: white;
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">🔐 {{appName}}</div>
-            <h1>Two-Factor Authentication Code</h1>
+            <a href="/" class="logo">SAFAWI NET</a>
+            <div class="tagline">Premium Networking Solutions</div>
         </div>
 
         <p>Hello {{name}},</p>
 
-        <p>You requested a two-factor authentication code to complete your login. Use the code below to verify your identity:</p>
+        <p>You requested a two-factor authentication code to complete your login. Use the code below to verify your
+            identity:</p>
 
         <div class="code-container">
             <div class="code">{{code}}</div>
         </div>
 
         <div class="warning">
-            <strong>⚠️ Important:</strong>
+            <strong>Important:</strong>
             <ul>
                 <li>This code will expire in {{expirationMinutes}} minutes</li>
                 <li>Never share this code with anyone</li>
@@ -98,11 +115,34 @@
 
         <p>If you're having trouble logging in, please contact our support team.</p>
 
+        <!-- Arabic Version -->
+        <hr style="margin: 50px 0; border: none; border-top: 1px solid #e0e0e0;">
+        
+        <p dir="rtl" style="text-align: right;">مرحباً {{name}}،</p>
+
+        <p dir="rtl" style="text-align: right;">لقد طلبت رمز المصادقة الثنائية لإكمال تسجيل الدخول. استخدم الرمز أدناه للتحقق من هويتك:</p>
+
+        <div class="code-container">
+            <div class="code" dir="rtl">{{code}}</div>
+        </div>
+
+        <div class="warning" dir="rtl" style="text-align: right;">
+            <strong>مهم:</strong>
+            <ul style="text-align: right;">
+                <li>سينتهي هذا الرمز خلال {{expirationMinutes}} دقيقة</li>
+                <li>لا تشارك هذا الرمز مع أي شخص</li>
+                <li>إذا لم تطلب هذا الرمز، يرجى تأمين حسابك فوراً</li>
+            </ul>
+        </div>
+
+        <p dir="rtl" style="text-align: right;">إذا كنت تواجه مشكلة في تسجيل الدخول، يرجى الاتصال بفريق الدعم.</p>
+
         <div class="footer">
             <p>This is an automated message from {{appName}}. Please do not reply to this email.</p>
-            <p>&copy; {{appName}}. All rights reserved.</p>
+            <p>&copy; 2025 {{appName}}. All rights reserved.</p>
             <p>If you have any questions, please contact <a href="mailto:{{supportEmail}}">{{supportEmail}}</a></p>
         </div>
     </div>
 </body>
+
 </html>

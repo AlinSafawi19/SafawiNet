@@ -110,9 +110,12 @@ export class SimpleTwoFactorService {
         name: user.name || 'User',
         appName: 'Safawinet',
         supportEmail: 'support@safawinet.com',
-        event: 'Two-Factor Authentication Disabled',
-        message:
+        eventEn: 'Two-Factor Authentication Disabled',
+        eventAr: 'إلغاء تفعيل المصادقة الثنائية',
+        messageEn:
           'Two-factor authentication has been disabled for your account. If you did not make this change, please contact support immediately.',
+        messageAr:
+          'تم إلغاء تفعيل المصادقة الثنائية لحسابك. إذا لم تقم بهذا التغيير، يرجى الاتصال بالدعم فوراً.',
         timestamp: new Date().toLocaleString(),
       });
     } catch (error) {

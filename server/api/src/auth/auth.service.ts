@@ -652,9 +652,12 @@ export class AuthService {
           name: result.name || 'User',
           appName: 'Safawinet',
           supportEmail: 'support@safawinet.com',
-          event: 'Password Reset',
-          message:
+          eventEn: 'Password Reset',
+          eventAr: 'إعادة تعيين كلمة المرور',
+          messageEn:
             'Your password has been successfully reset. If you did not request this reset, please contact support immediately.',
+          messageAr:
+            'تم إعادة تعيين كلمة المرور بنجاح. إذا لم تطلب هذا الإعادة، يرجى الاتصال بالدعم فوراً.',
           timestamp: new Date().toLocaleString(),
         },
       );

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +14,7 @@
             margin: 0;
             padding: 0;
         }
+
         .container {
             max-width: 600px;
             margin: 20px auto;
@@ -21,115 +23,173 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
         .header {
+            padding: 40px 30px 20px;
             text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #eeeeee;
+            background: #ffffff;
         }
-        .header h1 {
-            color: #dc3545;
-            font-size: 24px;
-            margin: 0;
+
+        .logo {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a1a1a;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            text-decoration: none;
+            transition: color 0.2s ease;
         }
-        .alert-icon {
-            font-size: 48px;
-            color: #dc3545;
-            margin-bottom: 10px;
+
+        .logo:hover {
+            color: #a855f7;
         }
+
+        .tagline {
+            font-size: 14px;
+            color: #1a1a1a;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
         .content {
-            padding: 20px 0;
+            padding: 50px;
+            background: #ffffff;
         }
-        .content p {
-            margin-bottom: 15px;
-        }
+
         .alert-box {
             background-color: #f8d7da;
             color: #721c24;
             padding: 15px;
             border-radius: 5px;
-            border-left: 4px solid #dc3545;
             margin: 20px 0;
         }
+
         .event-details {
             background-color: #e9ecef;
             padding: 15px;
             border-radius: 5px;
             margin: 20px 0;
         }
+
         .event-details h3 {
             margin-top: 0;
             color: #495057;
         }
+
         .event-details p {
             margin: 5px 0;
         }
-        .footer {
+
+            .footer {
+            padding: 40px 50px;
+            background: #1a1a1a;
             text-align: center;
-            padding-top: 20px;
-            border-top: 1px solid #eeeeee;
-            color: #777777;
-            font-size: 12px;
         }
-        .footer p {
-            margin: 5px 0;
+
+        .footer-text {
+            font-size: 13px;
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-weight: 300;
         }
+
+        .footer-link {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 400;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
         .warning {
             color: #dc3545;
             font-weight: bold;
         }
-        .button {
-            display: inline-block;
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
-            <div class="alert-icon">⚠️</div>
-            <h1>Security Alert</h1>
+            <a href="/" class="logo">SAFAWI NET</a>
+            <div class="tagline">Premium Networking Solutions</div>
         </div>
+
         <div class="content">
             <p>Hello {{name}},</p>
-            
+
             <div class="alert-box">
-                <strong>Security Event Detected:</strong> {{event}}
+                <strong>Security Event Detected:</strong> {{eventEn}}
             </div>
-            
+
             <p>We detected a security-related change to your {{appName}} account:</p>
-            
+
             <div class="event-details">
                 <h3>Event Details</h3>
-                <p><strong>Event:</strong> {{event}}</p>
+                <p><strong>Event:</strong> {{eventEn}}</p>
                 <p><strong>Time:</strong> {{timestamp}}</p>
                 {{#if location}}
                 <p><strong>Location:</strong> {{location}}</p>
                 {{/if}}
-                {{#if message}}
-                <p><strong>Details:</strong> {{message}}</p>
+                {{#if messageEn}}
+                <p><strong>Details:</strong> {{messageEn}}</p>
                 {{/if}}
             </div>
-            
+
             <p>If you made this change, no further action is required.</p>
-            
-            <p class="warning">If you did not make this change, please contact our support team immediately to secure your account.</p>
-            
+
+            <p class="warning">If you did not make this change, please contact our support team immediately to secure
+                your account.</p>
+
             <p>For your security, we recommend:</p>
             <ul>
                 <li>Changing your password if you suspect unauthorized access</li>
                 <li>Enabling two-factor authentication if not already enabled</li>
-                <li>Reviewing your recent account activity</li>
+            </ul>
+
+            <!-- Arabic Version -->
+            <hr style="margin: 50px 0; border: none; border-top: 1px solid #e0e0e0;">
+
+            <p dir="rtl" style="text-align: right;">مرحباً {{name}}،</p>
+
+            <div class="alert-box" dir="rtl" style="text-align: right;">
+                <strong>تم اكتشاف حدث أمني:</strong> {{eventAr}}
+            </div>
+
+            <p dir="rtl" style="text-align: right;">اكتشفنا تغييراً متعلقاً بالأمان في حسابك في {{appName}}:</p>
+
+            <div class="event-details" dir="rtl" style="text-align: right;">
+                <h3>تفاصيل الحدث</h3>
+                <p><strong>الحدث:</strong> {{eventAr}}</p>
+                <p><strong>الوقت:</strong> {{timestamp}}</p>
+                {{#if location}}
+                <p><strong>الموقع:</strong> {{location}}</p>
+                {{/if}}
+                {{#if messageAr}}
+                <p><strong>التفاصيل:</strong> {{messageAr}}</p>
+                {{/if}}
+            </div>
+
+            <p dir="rtl" style="text-align: right;">إذا قمت بهذا التغيير، فلا حاجة لاتخاذ أي إجراء إضافي.</p>
+
+            <p class="warning" dir="rtl" style="text-align: right;">إذا لم تقم بهذا التغيير، يرجى الاتصال بفريق الدعم
+                فوراً لتأمين حسابك.</p>
+
+            <p dir="rtl" style="text-align: right;">لأمانك، نوصي بـ:</p>
+            <ul dir="rtl" style="text-align: right;">
+                <li>تغيير كلمة المرور إذا كنت تشك في وصول غير مصرح به</li>
+                <li>تفعيل المصادقة الثنائية إذا لم تكن مفعلة بالفعل</li>
             </ul>
         </div>
         <div class="footer">
-            <p>&copy; {{appName}}. All rights reserved.</p>
-            <p>If you have any questions, please contact <a href="mailto:{{supportEmail}}">{{supportEmail}}</a></p>
+            <div class="footer-text">Need assistance? <a href="mailto:{{supportEmail}}" class="footer-link">Contact
+                    Support</a></div>
+            <div class="footer-text">&copy; 2025 {{appName}}. All rights reserved.</div>
         </div>
     </div>
 </body>
+
 </html>
