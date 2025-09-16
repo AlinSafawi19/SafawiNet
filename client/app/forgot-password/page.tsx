@@ -2,21 +2,31 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSocket } from '../hooks/useSocket';
 import { ParallaxImage } from '../components/ParallaxImage';
+import { useBackendMessageTranslation } from '../hooks/useBackendMessageTranslation';
 
 export default function ForgotPasswordPage() {
   const { t, locale } = useLanguage();
-  const router = useRouter();
   const { joinPasswordResetRoom, leavePasswordResetRoom } = useSocket();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
   const [emailError, setEmailError] = useState('');
   const [touched, setTouched] = useState({ email: false });
+
+  // Use the backend message translation hook
+  const {
+    error: forgotError,
+    success: forgotSuccess,
+    errorKey: forgotErrorKey,
+    successKey: forgotSuccessKey,
+    setBackendError: setForgotBackendError,
+    setBackendSuccess: setForgotBackendSuccess,
+    setErrorKey: setForgotErrorKey,
+    setSuccessKey: setForgotSuccessKey,
+    clearMessages: clearForgotMessages,
+  } = useBackendMessageTranslation();
 
   // Join password reset room when email is entered
   useEffect(() => {
@@ -97,8 +107,7 @@ export default function ForgotPasswordPage() {
     }
 
     setIsLoading(true);
-    setMessage('');
-    setMessageType('');
+    clearForgotMessages();
 
     try {
       const response = await fetch('/api/auth/forgot-password', {
@@ -112,19 +121,24 @@ export default function ForgotPasswordPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessageType('success');
-        setMessage(t('auth.messages.passwordResetEmailSent'));
+        if (data.message) {
+          setForgotBackendSuccess(data.message);
+        } else {
+          setForgotSuccessKey('auth.messages.passwordResetEmailSent');
+        }
 
         setEmail('');
         setEmailError('');
         setTouched({ email: false });
       } else {
-        setMessageType('error');
-        setMessage(data.message || t('auth.messages.generalError'));
+        if (data.message) {
+          setForgotBackendError(data.message);
+        } else {
+          setForgotErrorKey('auth.messages.generalError');
+        }
       }
     } catch (error) {
-      setMessageType('error');
-      setMessage(t('auth.messages.generalError'));
+      setForgotErrorKey('auth.messages.generalError');
     } finally {
       setIsLoading(false);
     }
@@ -150,20 +164,21 @@ export default function ForgotPasswordPage() {
           </div>
 
           {/* Message Display */}
-          {message && (
+          {(forgotSuccess || forgotSuccessKey || forgotError || forgotErrorKey) && (
             <div
               className={`border rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 ${
-                messageType === 'success'
+                (forgotSuccess || forgotSuccessKey)
                   ? 'bg-green-500/10 border-green-500/20'
                   : 'bg-red-500/10 border-red-500/20'
               }`}
             >
               <p
                 className={`text-xs sm:text-sm ${
-                  messageType === 'success' ? 'text-green-400' : 'text-red-400'
+                  (forgotSuccess || forgotSuccessKey) ? 'text-green-400' : 'text-red-400'
                 }`}
               >
-                {message}
+                {forgotSuccess || (forgotSuccessKey ? t(forgotSuccessKey) : '')}
+                {forgotError || (forgotErrorKey ? t(forgotErrorKey) : '')}
               </p>
             </div>
           )}

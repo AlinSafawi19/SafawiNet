@@ -11,11 +11,10 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import Link from 'next/link';
 import { useSocket } from '../hooks/useSocket';
+import { useBackendMessageTranslation } from '../hooks/useBackendMessageTranslation';
 
 interface VerificationState {
   status: 'verifying' | 'success' | 'error' | 'invalid';
-  message: string;
-  messageKey?: string;
 }
 
 export default function VerifyEmailPage() {
@@ -32,12 +31,23 @@ export default function VerifyEmailPage() {
     onAuthBroadcast,
     offAuthBroadcast,
   } = useSocket();
-  const [verificationState, setVerificationState] = useState<VerificationState>(
-    {
-      status: 'verifying',
-      message: '',
-    }
-  );
+  
+  // Use the backend message translation hook
+  const {
+    error: verificationError,
+    success: verificationSuccess,
+    errorKey: verificationErrorKey,
+    successKey: verificationSuccessKey,
+    setBackendError: setVerificationBackendError,
+    setBackendSuccess: setVerificationBackendSuccess,
+    setErrorKey: setVerificationErrorKey,
+    setSuccessKey: setVerificationSuccessKey,
+    clearMessages: clearVerificationMessages,
+  } = useBackendMessageTranslation();
+  
+  const [verificationState, setVerificationState] = useState<VerificationState>({
+    status: 'verifying',
+  });
   const [userId, setUserId] = useState<string | null>(null);
 
   // Use useRef to prevent multiple API calls
@@ -45,25 +55,8 @@ export default function VerifyEmailPage() {
 
   // Update initial message when language context is ready
   useEffect(() => {
-    setVerificationState((prev) => ({
-      ...prev,
-      message: t('verifyEmail.verifyingMessage'),
-    }));
-  }, [t]);
-
-  // Helper function to map server messages to translation keys
-  const mapServerMessageToTranslationKey = useCallback(
-    (serverMessage: string): string | null => {
-      const messageMapping: { [key: string]: string } = {
-        'Email verified successfully': 'verifyEmail.successMessage',
-        'Invalid or expired verification token':
-          'auth.messages.invalidVerificationToken',
-      };
-
-      return messageMapping[serverMessage] || null;
-    },
-    []
-  );
+    setVerificationSuccessKey('verifyEmail.verifyingMessage');
+  }, [setVerificationSuccessKey]);
 
   useEffect(() => {
     // Prevent multiple verifications
@@ -78,8 +71,8 @@ export default function VerifyEmailPage() {
 
       setVerificationState({
         status: 'success',
-        message: t('verifyEmail.successMessage'),
       });
+      setVerificationSuccessKey('verifyEmail.successMessage');
 
       // Redirect based on user role
       setTimeout(() => {
@@ -110,8 +103,8 @@ export default function VerifyEmailPage() {
 
           setVerificationState({
             status: 'success',
-            message: t('verifyEmail.successMessage'),
           });
+          setVerificationSuccessKey('verifyEmail.successMessage');
 
           // Redirect based on user role
           setTimeout(() => {
@@ -145,8 +138,8 @@ export default function VerifyEmailPage() {
         if (currentPath === '/auth' || currentPath.startsWith('/auth/')) {
           setVerificationState({
             status: 'success',
-            message: t('verifyEmail.successMessage'),
           });
+          setVerificationSuccessKey('verifyEmail.successMessage');
           // Redirect based on user role after 2 seconds
           setTimeout(() => {
             if (
@@ -163,8 +156,8 @@ export default function VerifyEmailPage() {
           // Update state to show success but don't redirect
           setVerificationState({
             status: 'success',
-            message: t('verifyEmail.successMessage'),
           });
+          setVerificationSuccessKey('verifyEmail.successMessage');
 
           // Show a temporary success message and then hide it
           setTimeout(() => {
@@ -194,8 +187,8 @@ export default function VerifyEmailPage() {
       if (!token) {
         setVerificationState({
           status: 'invalid',
-          message: t('verifyEmail.invalidLinkMessage'),
         });
+        setVerificationErrorKey('verifyEmail.invalidLinkMessage');
         return;
       }
 
@@ -293,13 +286,13 @@ export default function VerifyEmailPage() {
             setUserId(currentUserId);
 
             // Map server success message to translation key
-            const messageKey = mapServerMessageToTranslationKey(
-              successData.message
-            );
+            if (successData.message) {
+              setVerificationBackendSuccess(successData.message);
+            } else {
+              setVerificationSuccessKey('verifyEmail.successMessage');
+            }
             setVerificationState({
               status: 'success',
-              message: messageKey ? t(messageKey) : successData.message,
-              messageKey: messageKey || undefined,
             });
 
             // Try to log in the user immediately with the verification tokens
@@ -448,13 +441,13 @@ export default function VerifyEmailPage() {
             }
           } else {
             // Fallback to old behavior if no tokens
-            const messageKey = mapServerMessageToTranslationKey(
-              successData.message
-            );
+            if (successData.message) {
+              setVerificationBackendSuccess(successData.message);
+            } else {
+              setVerificationSuccessKey('verifyEmail.successMessage');
+            }
             setVerificationState({
               status: 'success',
-              message: messageKey ? t(messageKey) : successData.message,
-              messageKey: messageKey || undefined,
             });
 
             // Redirect to login page after 3 seconds
@@ -473,13 +466,13 @@ export default function VerifyEmailPage() {
           }
 
           // Map server error message to translation key
-          const messageKey = mapServerMessageToTranslationKey(
-            errorData.message
-          );
+          if (errorData.message) {
+            setVerificationBackendError(errorData.message);
+          } else {
+            setVerificationErrorKey('verifyEmail.errorMessage');
+          }
           setVerificationState({
             status: 'error',
-            message: messageKey ? t(messageKey) : errorData.message,
-            messageKey: messageKey || undefined,
           });
         }
       } catch (error) {
@@ -493,8 +486,8 @@ export default function VerifyEmailPage() {
 
         setVerificationState({
           status: 'error',
-          message: t('verifyEmail.errorMessage'),
         });
+        setVerificationErrorKey('verifyEmail.errorMessage');
       }
     };
 
@@ -526,9 +519,12 @@ export default function VerifyEmailPage() {
     searchParams,
     t,
     userId,
-    mapServerMessageToTranslationKey,
     user,
     isLoading,
+    setVerificationBackendError,
+    setVerificationBackendSuccess,
+    setVerificationErrorKey,
+    setVerificationSuccessKey,
   ]);
 
   const getStatusIcon = () => {
@@ -587,7 +583,8 @@ export default function VerifyEmailPage() {
         </h1>
 
         <p className="text-gray-600 dark:text-gray-300 mb-8">
-          {verificationState.message}
+          {verificationSuccess || (verificationSuccessKey ? t(verificationSuccessKey) : '')}
+          {verificationError || (verificationErrorKey ? t(verificationErrorKey) : '')}
         </p>
 
         {verificationState.status === 'success' && (

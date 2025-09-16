@@ -12,6 +12,7 @@ import {
 } from '../../components/Breadcrumb';
 import { buildApiUrl } from '../../config/api';
 import { HiLockClosed, HiShieldCheck, HiUser } from 'react-icons/hi2';
+import { useBackendMessageTranslation } from '../../hooks/useBackendMessageTranslation';
 
 interface ProfileValidationErrors {
   name?: string;
@@ -69,10 +70,20 @@ export default function LoginSecurityPage() {
   });
 
   const [isPasswordFormLoading, setIsPasswordFormLoading] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
-  const [passwordSuccessMessage, setPasswordSuccessMessage] = useState('');
-  const [passwordErrorKey, setPasswordErrorKey] = useState('');
-  const [passwordSuccessKey, setPasswordSuccessKey] = useState('');
+  
+  // Use the backend message translation hook for password messages
+  const {
+    error: passwordError,
+    success: passwordSuccessMessage,
+    errorKey: passwordErrorKey,
+    successKey: passwordSuccessKey,
+    setErrorKey: setPasswordErrorKey,
+    setSuccessKey: setPasswordSuccessKey,
+    setBackendError: setPasswordBackendError,
+    setBackendSuccess: setPasswordBackendSuccess,
+    clearError: clearPasswordError,
+    clearSuccess: clearPasswordSuccess,
+  } = useBackendMessageTranslation();
 
   // 2FA state
   const [is2FALoading, setIs2FALoading] = useState(false);
@@ -459,10 +470,8 @@ export default function LoginSecurityPage() {
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPasswordError('');
-    setPasswordErrorKey('');
-    setPasswordSuccessMessage('');
-    setPasswordSuccessKey('');
+    clearPasswordError();
+    clearPasswordSuccess();
     setIsPasswordFormLoading(true);
 
     // Mark all fields as touched
@@ -503,9 +512,6 @@ export default function LoginSecurityPage() {
         }
 
         setPasswordSuccessKey('account.loginSecurity.password.success');
-        setPasswordSuccessMessage('');
-        setPasswordError('');
-        setPasswordErrorKey('');
 
         // Reset form
         setPasswordFormData({
@@ -527,43 +533,26 @@ export default function LoginSecurityPage() {
       } else {
         if (data.messageKey) {
           setPasswordErrorKey(data.messageKey);
-          setPasswordError('');
         } else if (data.message) {
-          setPasswordError(data.message);
-          setPasswordErrorKey('');
+          setPasswordBackendError(data.message);
         } else {
           // Handle specific error cases
           if (response.status === 401) {
             setPasswordErrorKey(
               'account.loginSecurity.password.currentPasswordIncorrect'
             );
-            setPasswordError('');
           } else {
             setPasswordErrorKey('account.messages.generalError');
-            setPasswordError('');
           }
         }
       }
     } catch (error) {
       setPasswordErrorKey('account.messages.generalError');
-      setPasswordError('');
     } finally {
       setIsPasswordFormLoading(false);
     }
   };
 
-  // Helper function to map backend messages to translation keys
-  const mapBackendMessageToKey = (message: string): string => {
-    const messageMap: { [key: string]: string } = {
-      'User not found': 'auth.messages.userNotFound',
-      '2FA is not enabled': 'auth.messages.twoFactorNotEnabled',
-      'Invalid current password': 'auth.messages.invalidCurrentPassword',
-    };
-    return (
-      messageMap[message] ||
-      'account.loginSecurity.twoFactor.disableModal.disableFailed'
-    );
-  };
 
   // 2FA handlers
   const handleEnable2FA = async () => {
@@ -656,8 +645,7 @@ export default function LoginSecurityPage() {
         }
       } else {
         const errorMessage = data.message || 'Failed to disable 2FA';
-        const errorKey = mapBackendMessageToKey(errorMessage);
-        setDisablePasswordError(t(errorKey));
+        setDisablePasswordError(t('account.loginSecurity.twoFactor.disableModal.disableFailed'));
       }
     } catch (error) {
       setDisablePasswordError(
@@ -914,7 +902,7 @@ export default function LoginSecurityPage() {
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
-                      {passwordErrorKey ? t(passwordErrorKey) : passwordError}
+                      {passwordError || (passwordErrorKey ? t(passwordErrorKey) : '')}
                     </p>
                   </div>
                 )}
@@ -927,9 +915,7 @@ export default function LoginSecurityPage() {
                         locale === 'ar' ? 'text-right' : 'text-left'
                       }`}
                     >
-                      {passwordSuccessKey
-                        ? t(passwordSuccessKey)
-                        : passwordSuccessMessage}
+                      {passwordSuccessMessage || (passwordSuccessKey ? t(passwordSuccessKey) : '')}
                     </p>
                   </div>
                 )}

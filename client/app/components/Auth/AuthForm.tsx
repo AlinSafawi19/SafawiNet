@@ -6,6 +6,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
 import { LoadingPage } from '../LoadingPage';
 import { ParallaxImage } from '../ParallaxImage';
+import { useBackendMessageTranslation } from '../../hooks/useBackendMessageTranslation';
 
 interface ValidationErrors {
   name?: string; // Translation key
@@ -19,12 +20,25 @@ export function AuthForm() {
   const { t, locale } = useLanguage();
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorKey, setErrorKey] = useState('');
-  const [successKey, setSuccessKey] = useState('');
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  
+  // Use the new backend message translation hook
+  const {
+    error,
+    success: successMessage,
+    errorKey,
+    successKey,
+    setError,
+    setSuccess,
+    setErrorKey,
+    setSuccessKey,
+    setBackendError,
+    setBackendSuccess,
+    clearMessages,
+    clearError,
+    clearSuccess,
+  } = useBackendMessageTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -52,64 +66,6 @@ export function AuthForm() {
   const nameRef = useRef<HTMLInputElement>(null);
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
-  // Helper function to map backend messages to translation keys
-  const mapBackendMessageToKey = (message: string): string => {
-    const messageMap: { [key: string]: string } = {
-      // Authentication messages
-      'Invalid email or password': 'auth.messages.invalidCredentials',
-      'User with this email already exists': 'auth.messages.userAlreadyExists',
-      'Invalid email format': 'auth.messages.invalidEmailFormat',
-      'Password is too weak': 'auth.messages.passwordTooWeak',
-      'Server error occurred': 'auth.messages.serverError',
-      'Account temporarily locked due to too many failed attempts':
-        'auth.messages.accountLocked',
-      'Invalid 2FA code': 'auth.messages.invalidTwoFactorCode',
-      'Invalid or expired password reset token':
-        'auth.messages.invalidPasswordResetToken',
-      'If an account with this email exists, a password reset link has been sent.':
-        'auth.messages.passwordResetEmailSent',
-      'Password reset successfully. Please log in with your new password.':
-        'auth.messages.passwordResetSuccess',
-      'Email verified successfully': 'auth.messages.emailVerified',
-      'Verification email sent successfully':
-        'auth.messages.verificationEmailSent',
-      'Please verify your email before signing in':
-        'auth.messages.emailVerificationRequired',
-      'Two-factor authentication required': 'auth.messages.twoFactorRequired',
-      'Invalid refresh token': 'auth.messages.invalidRefreshToken',
-      'User not found': 'auth.messages.userNotFound',
-      '2FA is already enabled': 'auth.messages.twoFactorAlreadyEnabled',
-      '2FA setup not found. Please run setup first.':
-        'auth.messages.twoFactorSetupNotFound',
-      'Invalid TOTP code': 'auth.messages.invalidTOTPCode',
-      'Two-factor authentication enabled successfully':
-        'auth.messages.twoFactorEnabled',
-      '2FA is not enabled': 'auth.messages.twoFactorNotEnabled',
-      'Invalid code': 'auth.messages.invalidCode',
-      'Two-factor authentication disabled successfully':
-        'auth.messages.twoFactorDisabled',
-      'Email address is already in use by another account':
-        'auth.messages.emailAlreadyInUse',
-      'Invalid or expired verification token':
-        'auth.messages.invalidVerificationToken',
-      'Token refreshed successfully': 'auth.messages.tokenRefreshed',
-      'Logged out successfully': 'auth.messages.loggedOut',
-      'No refresh token provided': 'auth.messages.noRefreshTokenProvided',
-      'User is already verified': 'auth.messages.userAlreadyVerified',
-      'Session not found': 'auth.messages.sessionNotFound',
-      'Cannot delete current session':
-        'auth.messages.cannotDeleteCurrentSession',
-      'Notification not found': 'auth.messages.notificationNotFound',
-      // Registration messages
-      'Registration successful! Please check your email to verify your account before signing in.':
-        'auth.messages.registrationSuccess',
-      'Registration failed. Please try again.':
-        'auth.messages.registrationFailed',
-      'An error occurred. Please try again.': 'auth.messages.generalError',
-    };
-
-    return messageMap[message] || 'auth.messages.generalError';
-  };
 
 
   // Redirect logged-in users
@@ -238,10 +194,7 @@ export function AuthForm() {
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setFormData({ name: '', email: '', password: '', confirmPassword: '' });
-    setError('');
-    setSuccessMessage('');
-    setErrorKey('');
-    setSuccessKey('');
+    clearMessages();
     setValidationErrors({});
     setTouched({
       name: false,
@@ -253,7 +206,7 @@ export function AuthForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    clearError();
     setIsFormLoading(true);
 
     // Mark all fields as touched
@@ -353,19 +306,15 @@ export function AuthForm() {
           // Show 2FA form
           setTwoFactorUserId(result.user?.id || '');
           setShow2FAForm(true);
-          setError('');
-          setErrorKey('');
+          clearError();
         } else {
           // Handle other login errors
           if (result.messageKey) {
             setErrorKey(result.messageKey);
-            setError('');
           } else if (result.message) {
-            setErrorKey(mapBackendMessageToKey(result.message));
-            setError('');
+            setBackendError(result.message);
           } else {
             setErrorKey('auth.messages.invalidCredentials');
-            setError('');
           }
         }
       } else {
@@ -376,17 +325,13 @@ export function AuthForm() {
         );
         if (result.success) {
           // Show server success message and switch to login mode
-          setError('');
-          setErrorKey('');
+          clearError();
           if (result.messageKey) {
             setSuccessKey(result.messageKey);
-            setSuccessMessage('');
           } else if (result.message) {
-            setSuccessKey(mapBackendMessageToKey(result.message));
-            setSuccessMessage('');
+            setBackendSuccess(result.message);
           } else {
             setSuccessKey('auth.messages.registrationSuccess');
-            setSuccessMessage('');
           }
           setIsLogin(true);
           setFormData({
@@ -405,19 +350,15 @@ export function AuthForm() {
         } else {
           if (result.messageKey) {
             setErrorKey(result.messageKey);
-            setError('');
           } else if (result.message) {
-            setErrorKey(mapBackendMessageToKey(result.message));
-            setError('');
+            setBackendError(result.message);
           } else {
             setErrorKey('auth.messages.registrationFailed');
-            setError('');
           }
         }
       }
     } catch (error) {
       setErrorKey('auth.messages.generalError');
-      setError('');
     } finally {
       setIsFormLoading(false);
     }
@@ -426,13 +367,11 @@ export function AuthForm() {
   // Handle 2FA form submission
   const handle2FASubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setErrorKey('');
+    clearError();
     setIs2FALoading(true);
 
     if (!twoFactorCode.trim()) {
       setErrorKey('auth.twoFactor.codeRequired');
-      setError('');
       setIs2FALoading(false);
       return;
     }
@@ -461,24 +400,20 @@ export function AuthForm() {
         } else {
           router.push('/');
         }
-      } else {
-        if (result.messageKey) {
-          setErrorKey(result.messageKey);
-          setError('');
-        } else if (result.message) {
-          setErrorKey(mapBackendMessageToKey(result.message));
-          setError('');
         } else {
-          setErrorKey('auth.messages.invalid2FACode');
-          setError('');
+          if (result.messageKey) {
+            setErrorKey(result.messageKey);
+          } else if (result.message) {
+            setBackendError(result.message);
+          } else {
+            setErrorKey('auth.messages.invalidTwoFactorCode');
+          }
         }
+      } catch (error) {
+        setErrorKey('auth.messages.generalError');
+      } finally {
+        setIs2FALoading(false);
       }
-    } catch (error) {
-      setErrorKey('auth.messages.generalError');
-      setError('');
-    } finally {
-      setIs2FALoading(false);
-    }
   };
 
   // Handle form data changes
@@ -607,7 +542,7 @@ export function AuthForm() {
           {(error || errorKey) && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
               <p className="text-red-400 text-xs sm:text-sm">
-                {errorKey ? t(errorKey) : error}
+                {error || (errorKey ? t(errorKey) : '')}
               </p>
             </div>
           )}
@@ -616,7 +551,7 @@ export function AuthForm() {
           {(successMessage || successKey) && (
             <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
               <p className="text-green-400 text-xs sm:text-sm">
-                {successKey ? t(successKey) : successMessage}
+                {successMessage || (successKey ? t(successKey) : '')}
               </p>
             </div>
           )}

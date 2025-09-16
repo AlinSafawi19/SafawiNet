@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useSocket } from '../hooks/useSocket';
 import { ParallaxImage } from '../components/ParallaxImage';
 import { LoadingPage } from '../components/LoadingPage';
+import { useBackendMessageTranslation } from '../hooks/useBackendMessageTranslation';
 
 interface ValidationErrors {
   password?: string;
@@ -22,9 +23,21 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
   const [token, setToken] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  
+  // Use the backend message translation hook
+  const {
+    error: resetError,
+    success: resetSuccess,
+    errorKey: resetErrorKey,
+    successKey: resetSuccessKey,
+    setBackendError: setResetBackendError,
+    setBackendSuccess: setResetBackendSuccess,
+    setErrorKey: setResetErrorKey,
+    setSuccessKey: setResetSuccessKey,
+    clearMessages: clearResetMessages,
+  } = useBackendMessageTranslation();
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
   );
@@ -57,7 +70,14 @@ export default function ResetPasswordPage() {
     };
 
     joinRoom();
-  }, [connect]);
+
+    // Cleanup function to leave room when component unmounts
+    return () => {
+      if (userEmail) {
+        leavePasswordResetRoom(userEmail);
+      }
+    };
+  }, [connect, leavePasswordResetRoom, userEmail]);
 
   // Real-time validation
   useEffect(() => {
@@ -107,8 +127,7 @@ export default function ResetPasswordPage() {
 
     // Token validation
     if (!token) {
-      setMessageType('error');
-      setMessage(t('auth.messages.invalidPasswordResetToken'));
+      setResetErrorKey('auth.messages.invalidPasswordResetToken');
       return false;
     }
 
@@ -126,8 +145,7 @@ export default function ResetPasswordPage() {
     }
 
     setIsLoading(true);
-    setMessage('');
-    setMessageType('');
+    clearResetMessages();
 
     try {
       const response = await fetch(
@@ -148,11 +166,15 @@ export default function ResetPasswordPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessageType('success');
-        setMessage(t('auth.messages.passwordResetSuccess'));
+        if (data.message) {
+          setResetBackendSuccess(data.message);
+        } else {
+          setResetSuccessKey('auth.messages.passwordResetSuccess');
+        }
 
         // Join password reset room using email from response BEFORE logout emission
         if (data.email) {
+          setUserEmail(data.email);
           try {
             await joinPasswordResetRoom(data.email);
             console.log('✅ Joined password reset room for:', data.email);
@@ -174,12 +196,14 @@ export default function ResetPasswordPage() {
           router.push('/auth');
         }, 3000);
       } else {
-        setMessageType('error');
-        setMessage(data.message || t('auth.messages.generalError'));
+        if (data.message) {
+          setResetBackendError(data.message);
+        } else {
+          setResetErrorKey('auth.messages.generalError');
+        }
       }
     } catch (error) {
-      setMessageType('error');
-      setMessage(t('auth.messages.generalError'));
+      setResetErrorKey('auth.messages.generalError');
     } finally {
       setIsLoading(false);
     }
@@ -243,20 +267,21 @@ export default function ResetPasswordPage() {
           </div>
 
           {/* Message Display */}
-          {message && (
+          {(resetSuccess || resetSuccessKey || resetError || resetErrorKey) && (
             <div
               className={`border rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 ${
-                messageType === 'success'
+                (resetSuccess || resetSuccessKey)
                   ? 'bg-green-500/10 border-green-500/20'
                   : 'bg-red-500/10 border-red-500/20'
               }`}
             >
               <p
                 className={`text-xs sm:text-sm ${
-                  messageType === 'success' ? 'text-green-400' : 'text-red-400'
+                  (resetSuccess || resetSuccessKey) ? 'text-green-400' : 'text-red-400'
                 }`}
               >
-                {message}
+                {resetSuccess || (resetSuccessKey ? t(resetSuccessKey) : '')}
+                {resetError || (resetErrorKey ? t(resetErrorKey) : '')}
               </p>
             </div>
           )}
