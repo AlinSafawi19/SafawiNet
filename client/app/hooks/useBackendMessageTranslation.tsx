@@ -96,6 +96,19 @@ const mapBackendMessageToKey = (message: string): string => {
     'Failed to disable 2FA': 'account.loginSecurity.twoFactor.disableModal.disableFailed',
     'An error occurred while enabling 2FA': 'account.loginSecurity.twoFactor.disableModal.disableError',
     'An error occurred while disabling 2FA': 'account.loginSecurity.twoFactor.disableModal.disableError',
+    // Admin creation messages
+    'Admin user created successfully': 'auth.admin.adminUserCreated',
+    'Admin user created successfully!': 'auth.admin.adminUserCreated',
+    'User created successfully': 'auth.admin.adminUserCreated',
+    'User already exists': 'auth.admin.validation.userAlreadyExists',
+    'Insufficient permissions. Required roles: SUPERADMIN': 'auth.admin.validation.insufficientPermissions',
+    'Forbidden - Superadmin role required': 'auth.admin.validation.superadminRequired',
+    'Insufficient permissions to create admin user': 'auth.admin.validation.insufficientPermissions',
+    'Invalid admin creation data': 'auth.admin.validation.invalidData',
+    'Admin user creation failed': 'auth.admin.validation.creationFailed',
+    'Unauthorized': 'auth.messages.unauthorized',
+    'Network error. Please try again.': 'auth.admin.networkError',
+    'Network error': 'auth.admin.networkError',
   };
 
   return messageMap[message] || 'auth.messages.generalError';

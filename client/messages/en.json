@@ -228,14 +228,6 @@
       "securityNoticeMessage": "For your security, you will be automatically logged out from all devices and browsers after resetting your password"
     },
     "admin": {
-      "access": "ADMIN ACCESS",
-      "createAdmin": "CREATE ADMIN",
-      "enterPassword": "Enter admin password to continue",
-      "createAdminSubtitle": "Create a new admin user account",
-      "adminPassword": "Admin Password",
-      "adminPasswordPlaceholder": "Enter admin password",
-      "accessAdminPanel": "Access Admin Panel",
-      "verifying": "Verifying...",
       "createAdminUser": "Create Admin User",
       "creatingAdmin": "Creating Admin...",
       "fullName": "Full Name",
@@ -250,7 +242,6 @@
       "adminUserCreated": "Admin user created successfully!",
       "failedToCreate": "Failed to create admin user",
       "networkError": "Network error. Please try again",
-      "restrictedArea": "This area is restricted to authorized personnel only",
       "fullSystemAccess": "This will create a new admin user with full system access",
       "validation": {
         "nameRequired": "Name is required",
@@ -261,7 +252,9 @@
         "passwordTooShort": "Password must be at least 8 characters long",
         "confirmPasswordRequired": "Please confirm your password",
         "passwordsDoNotMatch": "Passwords do not match",
-        "invalidAdminPassword": "Invalid admin password"
+        "userAlreadyExists": "User with this email already exists",
+        "insufficientPermissions": "Insufficient permissions. Superadmin role required",
+        "superadminRequired": "Superadmin role required to perform this action"
       }
     },
     "forgotPassword": {
@@ -380,16 +373,20 @@
   "admin": {
     "sidebar": {
       "dashboard": "Dashboard",
+      "admins": "Admins",
+      "addAdmin": "Add Admin",
       "customers": "Customers",
       "products": "Products",
       "orders": "Orders",
       "analytics": "Analytics",
-      "support": "Customer Support",
       "categories": {
         "management": "Management",
-        "insights": "Insights",
-        "support": "Support"
+        "insights": "Insights"
       }
+    },
+    "addAdmin": {
+      "title": "Add New Admin",
+      "description": "Create a new admin user account"
     }
   },
   "resetPassword": {

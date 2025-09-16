@@ -1,31 +1,55 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   HiHome,
   HiUsers,
   HiCube,
   HiShoppingCart,
   HiChartBar,
-  HiChatBubbleLeftRight,
+  HiUserPlus,
+  HiChevronDown,
+  HiChevronRight,
 } from 'react-icons/hi2';
 
 interface AdminSidebarProps {}
 
 const AdminSidebar: React.FC<AdminSidebarProps> = () => {
   const { t, locale } = useLanguage();
+  const { isSuperAdmin } = useAuth();
   const pathname = usePathname();
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    admins: false,
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const navigationItems: Array<{
     name: string;
-    href: string;
+    href?: string;
     icon: any;
     label: string;
     isStandalone?: boolean;
     category?: string;
+    requiresSuperAdmin?: boolean;
+    isExpandable?: boolean;
+    expandableKey?: string;
+    subItems?: Array<{
+      name: string;
+      href: string;
+      icon: any;
+      label: string;
+      requiresSuperAdmin?: boolean;
+    }>;
   }> = [
     {
       name: 'Dashboard',
@@ -33,6 +57,25 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
       icon: HiHome,
       label: 'admin.sidebar.dashboard',
       isStandalone: true,
+    },
+    {
+      name: 'Admins',
+      href: '#',
+      icon: HiUsers,
+      label: 'admin.sidebar.admins',
+      category: 'management',
+      requiresSuperAdmin: true,
+      isExpandable: true,
+      expandableKey: 'admins',
+      subItems: [
+        {
+          name: 'Add Admin',
+          href: '/admin/add-admin',
+          icon: HiUserPlus,
+          label: 'admin.sidebar.addAdmin',
+          requiresSuperAdmin: true,
+        },
+      ],
     },
     {
       name: 'Customers',
@@ -62,24 +105,26 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
       label: 'admin.sidebar.analytics',
       category: 'insights',
     },
-    {
-      name: 'Customer Support',
-      href: '/admin/support',
-      icon: HiChatBubbleLeftRight,
-      label: 'admin.sidebar.support',
-      category: 'support',
-    },
   ];
 
-  const isActive = (href: string) => {
+  const isActive = (href: string | undefined) => {
+    if (!href) return false;
     if (href === '/admin') {
       return pathname === '/admin';
     }
     return pathname.startsWith(href);
   };
 
-  const standaloneItems = navigationItems.filter(item => item.isStandalone);
-  const groupedItems = navigationItems
+  // Filter items based on user permissions
+  const filteredItems = navigationItems.filter(item => {
+    if (item.requiresSuperAdmin) {
+      return isSuperAdmin();
+    }
+    return true;
+  });
+
+  const standaloneItems = filteredItems.filter(item => item.isStandalone);
+  const groupedItems = filteredItems
     .filter(item => !item.isStandalone && item.category)
     .reduce((acc, item) => {
       if (!acc[item.category!]) {
@@ -92,7 +137,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
   const categoryLabels = {
     management: t('admin.sidebar.categories.management'),
     insights: t('admin.sidebar.categories.insights'),
-    support: t('admin.sidebar.categories.support'),
   };
 
   return (
@@ -107,7 +151,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
       `}
       >
         {/* Navigation */}
-        <nav className="py-4">
+        <nav className="py-4 h-full overflow-y-auto">
           {/* Standalone Items (Dashboard) */}
           {standaloneItems.length > 0 && (
             <div className="mb-6">
@@ -119,7 +163,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                   return (
                     <Link
                       key={item.name}
-                      href={item.href}
+                      href={item.href || '#'}
                       className={`
                         flex items-center space-x-3 px-6 py-3 mx-2 rounded-lg transition-all duration-200 font-medium group
                         ${
@@ -140,9 +184,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                           : 'text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200'
                         }
                       `}>
-                        {Icon({
-                          className: 'w-5 h-5',
-                        })}
+                        <Icon className="w-5 h-5" />
                       </div>
                       <span className="font-medium text-sm">
                         {t(item.label) || item.name}
@@ -171,14 +213,86 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
               
               {/* Navigation Items */}
               <div className="space-y-1">
-                {items.map((item, itemIndex) => {
+                {items.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item.href);
 
+                  // Handle expandable items
+                  if (item.isExpandable) {
+                    const isExpanded = expandedSections[item.expandableKey!];
+
+                    return (
+                      <div key={item.name} className="mx-2">
+                        {/* Expandable Header */}
+                        <button
+                          onClick={() => toggleSection(item.expandableKey!)}
+                          className={`
+                            w-full flex items-center justify-between px-6 py-3 rounded-lg transition-all duration-200 font-medium group
+                            text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100
+                            ${locale === 'ar' ? 'flex-row-reverse' : ''}
+                          `}
+                        >
+                          <div className={`flex items-center space-x-3 ${locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                            <div className="flex items-center justify-center w-6 h-6 transition-colors duration-200 text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200">
+                              <Icon className="w-5 h-5" />
+                            </div>
+                            <span className="font-medium text-sm">
+                              {t(item.label) || item.name}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-center w-4 h-4 transition-colors duration-200 text-gray-400 dark:text-zinc-500 group-hover:text-gray-600 dark:group-hover:text-zinc-300">
+                            {isExpanded && React.createElement(HiChevronDown as any, { className: "w-4 h-4" })}
+                            {!isExpanded && React.createElement(HiChevronRight as any, { className: "w-4 h-4" })}
+                          </div>
+                        </button>
+
+                        {/* Sub Items */}
+                        {isExpanded && item.subItems && (
+                          <div className="ml-4 space-y-1">
+                            {item.subItems.map((subItem) => {
+                              const SubIcon = subItem.icon;
+                              const subActive = isActive(subItem.href);
+
+                              return (
+                                <Link
+                                  key={subItem.name}
+                                  href={subItem.href}
+                                  className={`
+                                    flex items-center space-x-3 px-6 py-2 rounded-lg transition-all duration-200 font-medium group
+                                    ${
+                                      subActive
+                                        ? 'bg-black dark:bg-white text-white dark:text-black'
+                                        : 'text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100'
+                                    }
+                                    ${locale === 'ar' ? 'flex-row-reverse space-x-reverse' : ''}
+                                  `}
+                                >
+                                  <div className={`
+                                    flex items-center justify-center w-5 h-5 transition-colors duration-200
+                                    ${subActive
+                                      ? 'text-white dark:text-black'
+                                      : 'text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200'
+                                    }
+                                  `}>
+                                    <SubIcon className="w-4 h-4" />
+                                  </div>
+                                  <span className="font-medium text-sm">
+                                    {t(subItem.label) || subItem.name}
+                                  </span>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  // Handle regular items
                   return (
                     <Link
                       key={item.name}
-                      href={item.href}
+                      href={item.href || '#'}
                       className={`
                         flex items-center space-x-3 px-6 py-3 mx-2 rounded-lg transition-all duration-200 font-medium group
                         ${
@@ -199,9 +313,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                           : 'text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200'
                         }
                       `}>
-                        {Icon({
-                          className: 'w-5 h-5',
-                        })}
+                        <Icon className="w-5 h-5" />
                       </div>
                       <span className="font-medium text-sm">
                         {t(item.label) || item.name}

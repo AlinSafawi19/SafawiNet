@@ -76,6 +76,9 @@ interface AuthContextType {
   authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>;
   joinPendingVerificationRoom: (email: string) => Promise<void>;
   updateUser: (updatedUser: User) => void;
+  isAdmin: () => boolean;
+  isSuperAdmin: () => boolean;
+  hasRole: (role: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -1209,6 +1212,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(updatedUser);
   }, []);
 
+  // Role checking functions
+  const isAdmin = useCallback(() => {
+    return user?.roles?.includes('ADMIN') || false;
+  }, [user]);
+
+  const isSuperAdmin = useCallback(() => {
+    return user?.roles?.includes('SUPERADMIN') || false;
+  }, [user]);
+
+  const hasRole = useCallback((role: string) => {
+    return user?.roles?.includes(role) || false;
+  }, [user]);
+
   const value: AuthContextType = {
     user,
     isLoading,
@@ -1222,6 +1238,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     authenticatedFetch,
     joinPendingVerificationRoom,
     updateUser,
+    isAdmin,
+    isSuperAdmin,
+    hasRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

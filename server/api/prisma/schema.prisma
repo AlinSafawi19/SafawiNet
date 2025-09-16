@@ -227,6 +227,7 @@ model OfflineMessage {
 enum Role {
   CUSTOMER
   ADMIN
+  SUPERADMIN
   MODERATOR
   SUPPORT
 }

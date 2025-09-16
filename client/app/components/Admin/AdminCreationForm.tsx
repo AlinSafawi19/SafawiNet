@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useBackendMessageTranslation } from '../../hooks/useBackendMessageTranslation';
 import { buildApiUrl, API_CONFIG } from '../../config/api';
 
 interface AdminUser {
@@ -11,8 +13,25 @@ interface AdminUser {
   confirmPassword: string;
 }
 
-export default function AdminCreationForm() {
+interface AdminCreationFormProps {
+  onSuccess?: () => void;
+}
+
+export default function AdminCreationForm({ onSuccess }: AdminCreationFormProps) {
   const { t, locale } = useLanguage();
+  const { isDark } = useTheme();
+  const {
+    error,
+    success,
+    errorKey,
+    successKey,
+    setBackendError,
+    setBackendSuccess,
+    clearMessages,
+    clearError,
+    clearSuccess,
+  } = useBackendMessageTranslation();
+  
   const [formData, setFormData] = useState<AdminUser>({
     name: '',
     email: '',
@@ -20,12 +39,6 @@ export default function AdminCreationForm() {
     confirmPassword: '',
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState<{
-    type: 'success' | 'error';
-    text: string;
-  } | null>(null);
-  const [errorKey, setErrorKey] = useState<string>('');
-  const [successKey, setSuccessKey] = useState<string>('');
   const [validationErrors, setValidationErrors] = useState<{
     name?: string;
     email?: string;
@@ -134,12 +147,17 @@ export default function AdminCreationForm() {
       [name]: value,
     }));
 
-    // Clear error when user starts typing
+    // Clear validation error when user starts typing
     if (validationErrors[name as keyof typeof validationErrors]) {
       setValidationErrors((prev) => ({
         ...prev,
         [name]: undefined,
       }));
+    }
+
+    // Clear backend error when user starts typing
+    if (error) {
+      clearError();
     }
   };
 
@@ -170,26 +188,6 @@ export default function AdminCreationForm() {
     validateConfirmPassword,
   ]);
 
-  // Helper function to map server error messages to translation keys
-  const mapServerErrorToTranslationKey = (
-    serverMessage: string
-  ): string | null => {
-    const errorMapping: { [key: string]: string } = {
-      'User already exists': 'auth.messages.userAlreadyExists',
-      'User with this email already exists': 'auth.messages.userAlreadyExists',
-      'Email already exists': 'auth.messages.userAlreadyExists',
-      'Invalid email format': 'auth.messages.invalidEmailFormat',
-      'Password too weak': 'auth.messages.passwordTooWeak',
-      'Name is required': 'auth.messages.nameRequired',
-      'Email is required': 'auth.messages.emailRequired',
-      'Password is required': 'auth.messages.passwordRequired',
-      'Network error': 'auth.messages.networkError',
-      'Server error': 'auth.messages.serverError',
-    };
-
-    return errorMapping[serverMessage] || null;
-  };
-
   // Re-validate errors when language changes
   useEffect(() => {
     // Re-validate all fields with new language instead of clearing errors
@@ -204,11 +202,29 @@ export default function AdminCreationForm() {
     // Keep touched state and message, only re-validate errors
   }, [locale, t, revalidateAllFields, validationErrors]);
 
-  // Handle language changes for backend error messages and success messages
+  // Handle specific error types based on errorKey
   useEffect(() => {
-    // If there's an errorKey or successKey, it will automatically be re-translated when the component re-renders
-    // because we're using t(errorKey) and t(successKey) in the JSX. No additional action needed here.
-  }, [locale, t, errorKey, successKey]);
+    if (errorKey) {
+      // Handle specific error types that might require special UI treatment
+      switch (errorKey) {
+        case 'auth.messages.userAlreadyExists':
+          // Could highlight the email field or show additional context
+          console.log('User with this email already exists');
+          break;
+        case 'auth.admin.validation.insufficientPermissions':
+          // Could show a different message or redirect
+          console.log('Insufficient permissions error detected');
+          break;
+        case 'auth.admin.networkError':
+          // Could show retry button or different styling
+          console.log('Network error detected');
+          break;
+        default:
+          // Handle other error types
+          break;
+      }
+    }
+  }, [errorKey]);
 
   // Handle field blur for validation
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -220,20 +236,25 @@ export default function AdminCreationForm() {
     validateField(name, value);
   };
 
-  // Get input class based on validation state
+  // Get input class based on validation state and theme
   const getInputClass = (fieldName: keyof typeof validationErrors) => {
     const hasError = touched[fieldName] && validationErrors[fieldName];
-    return hasError
-      ? 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-red-500/50 rounded-lg text-white placeholder-white/50 focus:border-red-500 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base'
-      : 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-purple-500 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
+    
+    if (isDark) {
+      return hasError
+        ? 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-red-400 rounded-lg text-white placeholder-white/50 focus:border-red-400 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base'
+        : 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-purple-400 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
+    } else {
+      return hasError
+        ? 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-red-500 rounded-lg text-gray-900 placeholder-gray-500 focus:border-red-500 focus:bg-white transition-all duration-300 text-sm sm:text-base'
+        : 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-600 focus:bg-white transition-all duration-300 text-sm sm:text-base';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setMessage(null);
-    setErrorKey('');
-    setSuccessKey('');
+    clearMessages();
 
     // Mark all fields as touched
     setTouched({
@@ -273,14 +294,15 @@ export default function AdminCreationForm() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify(formData),
       });
 
       if (response.ok) {
         const result = await response.json();
-        setSuccessKey('auth.admin.adminUserCreated');
-        setMessage(null);
-        setErrorKey('');
+        // Use setBackendSuccess which automatically maps to translation keys
+        setBackendSuccess(result.message || 'Admin user created successfully!');
+        
         // Reset form
         setFormData({ name: '', email: '', password: '', confirmPassword: '' });
         setValidationErrors({});
@@ -290,29 +312,23 @@ export default function AdminCreationForm() {
           password: false,
           confirmPassword: false,
         });
+        
         // Clear success message after a delay to show it briefly
         setTimeout(() => {
-          setSuccessKey('');
+          clearSuccess();
+          // Call onSuccess callback if provided
+          if (onSuccess) {
+            onSuccess();
+          }
         }, 3000);
       } else {
         const errorData = await response.json();
-        const serverMessage = errorData.message || 'Server error';
-        const translationKey = mapServerErrorToTranslationKey(serverMessage);
-
-        if (translationKey) {
-          setErrorKey(translationKey);
-          setMessage(null);
-        } else {
-          setMessage({
-            type: 'error',
-            text: serverMessage,
-          });
-          setErrorKey('');
-        }
+        // Use setBackendError which automatically maps to translation keys
+        setBackendError(errorData.message || 'Server error');
       }
     } catch (error) {
-      setErrorKey('auth.messages.networkError');
-      setMessage(null);
+      // Use setBackendError for network errors - it will map to appropriate translation key
+      setBackendError('Network error. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -323,33 +339,39 @@ export default function AdminCreationForm() {
       <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
         {/* Header */}
         <div className="text-center mb-4 sm:mb-6 md:mb-8">
-          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-2">
-            {t('auth.admin.createAdmin')}
+          <h1 className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 ${
+            isDark ? 'text-white' : 'text-gray-900'
+          }`}>
+            {t('auth.admin.createAdminUser')}
           </h1>
-          <p className="text-white/70 text-xs sm:text-sm md:text-base">
-            {t('auth.admin.createAdminSubtitle')}
+          <p className={`text-xs sm:text-sm md:text-base ${
+            isDark ? 'text-white/70' : 'text-gray-600'
+          }`}>
+            {t('auth.admin.fullSystemAccess')}
           </p>
         </div>
 
         {/* Message */}
-        {(message || errorKey || successKey) && (
+        {(error || success) && (
           <div
             className={`${
-              message?.type === 'success' || successKey
-                ? 'bg-green-500/10 border border-green-500/20'
-                : 'bg-red-500/10 border border-red-500/20'
+              success
+                ? isDark 
+                  ? 'bg-green-500/10 border border-green-400/30'
+                  : 'bg-green-50 border border-green-300'
+                : isDark
+                  ? 'bg-red-500/10 border border-red-400/30'
+                  : 'bg-red-50 border border-red-300'
             } rounded-lg p-2 sm:p-3 mb-3 sm:mb-4`}
           >
             <p
               className={`${
-                message?.type === 'success' || successKey
-                  ? 'text-green-400'
-                  : 'text-red-400'
+                success
+                  ? isDark ? 'text-green-400' : 'text-green-600'
+                  : isDark ? 'text-red-400' : 'text-red-600'
               } text-xs sm:text-sm ${locale === 'ar' ? 'text-right' : ''}`}
             >
-              {message?.text ||
-                (errorKey ? t(errorKey) : '') ||
-                (successKey ? t(successKey) : '')}
+              {success || error}
             </p>
           </div>
         )}
@@ -362,9 +384,9 @@ export default function AdminCreationForm() {
           <div>
             <label
               htmlFor="name"
-              className={`block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2 ${
-                locale === 'ar' ? 'text-right' : ''
-              }`}
+              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${
+                isDark ? 'text-white/80' : 'text-gray-700'
+              } ${locale === 'ar' ? 'text-right' : ''}`}
             >
               {t('auth.admin.fullName')}
             </label>
@@ -383,9 +405,9 @@ export default function AdminCreationForm() {
             />
             {touched.name && validationErrors.name && (
               <p
-                className={`text-red-400 text-xs mt-1 ${
-                  locale === 'ar' ? 'text-right' : ''
-                }`}
+                className={`text-xs mt-1 ${
+                  isDark ? 'text-red-400' : 'text-red-600'
+                } ${locale === 'ar' ? 'text-right' : ''}`}
               >
                 {validationErrors.name}
               </p>
@@ -395,9 +417,9 @@ export default function AdminCreationForm() {
           <div>
             <label
               htmlFor="email"
-              className={`block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2 ${
-                locale === 'ar' ? 'text-right' : ''
-              }`}
+              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${
+                isDark ? 'text-white/80' : 'text-gray-700'
+              } ${locale === 'ar' ? 'text-right' : ''}`}
             >
               {t('auth.admin.emailAddress')}
             </label>
@@ -416,9 +438,9 @@ export default function AdminCreationForm() {
             />
             {touched.email && validationErrors.email && (
               <p
-                className={`text-red-400 text-xs mt-1 ${
-                  locale === 'ar' ? 'text-right' : ''
-                }`}
+                className={`text-xs mt-1 ${
+                  isDark ? 'text-red-400' : 'text-red-600'
+                } ${locale === 'ar' ? 'text-right' : ''}`}
               >
                 {validationErrors.email}
               </p>
@@ -428,9 +450,9 @@ export default function AdminCreationForm() {
           <div>
             <label
               htmlFor="password"
-              className={`block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2 ${
-                locale === 'ar' ? 'text-right' : ''
-              }`}
+              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${
+                isDark ? 'text-white/80' : 'text-gray-700'
+              } ${locale === 'ar' ? 'text-right' : ''}`}
             >
               {t('auth.admin.password')}
             </label>
@@ -449,17 +471,17 @@ export default function AdminCreationForm() {
             />
             {touched.password && validationErrors.password && (
               <p
-                className={`text-red-400 text-xs mt-1 ${
-                  locale === 'ar' ? 'text-right' : ''
-                }`}
+                className={`text-xs mt-1 ${
+                  isDark ? 'text-red-400' : 'text-red-600'
+                } ${locale === 'ar' ? 'text-right' : ''}`}
               >
                 {validationErrors.password}
               </p>
             )}
             <p
-              className={`text-white/50 text-xs mt-1 ${
-                locale === 'ar' ? 'text-right' : ''
-              }`}
+              className={`text-xs mt-1 ${
+                isDark ? 'text-white/50' : 'text-gray-500'
+              } ${locale === 'ar' ? 'text-right' : ''}`}
             >
               {t('auth.admin.passwordRequirement')}
             </p>
@@ -468,9 +490,9 @@ export default function AdminCreationForm() {
           <div>
             <label
               htmlFor="confirmPassword"
-              className={`block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2 ${
-                locale === 'ar' ? 'text-right' : ''
-              }`}
+              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${
+                isDark ? 'text-white/80' : 'text-gray-700'
+              } ${locale === 'ar' ? 'text-right' : ''}`}
             >
               {t('auth.admin.confirmPassword')}
             </label>
@@ -489,9 +511,9 @@ export default function AdminCreationForm() {
             />
             {touched.confirmPassword && validationErrors.confirmPassword && (
               <p
-                className={`text-red-400 text-xs mt-1 ${
-                  locale === 'ar' ? 'text-right' : ''
-                }`}
+                className={`text-xs mt-1 ${
+                  isDark ? 'text-red-400' : 'text-red-600'
+                } ${locale === 'ar' ? 'text-right' : ''}`}
               >
                 {validationErrors.confirmPassword}
               </p>
@@ -501,7 +523,11 @@ export default function AdminCreationForm() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[44px] sm:min-h-[48px] flex items-center justify-center"
+            className={`w-full font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[44px] sm:min-h-[48px] flex items-center justify-center ${
+              isDark
+                ? 'bg-purple-600 hover:bg-purple-700 disabled:bg-purple-500 text-white hover:shadow-lg hover:shadow-purple-500/25'
+                : 'bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white hover:shadow-lg hover:shadow-purple-500/25'
+            }`}
           >
             {isLoading ? (
               <>{t('auth.admin.creatingAdmin')}</>
@@ -510,13 +536,6 @@ export default function AdminCreationForm() {
             )}
           </button>
         </form>
-
-        {/* Info */}
-        <div className="text-center mt-3 sm:mt-4 md:mt-6">
-          <p className="text-white/50 text-xs sm:text-sm">
-            {t('auth.admin.fullSystemAccess')}
-          </p>
-        </div>
       </div>
     </div>
   );

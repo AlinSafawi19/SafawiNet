@@ -70,7 +70,10 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new admin user' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new admin user (Superadmin only)' })
   @ApiBody({
     description: 'Admin user creation data - creates users with ADMIN role',
     examples: {
@@ -86,6 +89,8 @@ export class UsersController {
   })
   @ApiResponse({ status: 201, description: 'Admin user created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Superadmin role required' })
   @ApiResponse({ status: 409, description: 'User already exists' })
   @UsePipes(new ZodValidationPipe(CreateUserSchema))
   async createUser(
@@ -100,15 +105,15 @@ export class UsersController {
 
   @Get('admins')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.SUPERADMIN)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get all admin users' })
+  @ApiOperation({ summary: 'Get all admin users (Superadmin only)' })
   @ApiResponse({
     status: 200,
     description: 'List of admin users retrieved successfully',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Superadmin role required' })
   async findAllAdmins(): Promise<{ admins: Omit<User, 'password'>[] }> {
     const admins = await this.usersService.findAllAdmins();
     return { admins };

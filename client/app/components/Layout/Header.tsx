@@ -13,7 +13,6 @@ import {
   HiCube,
   HiShoppingCart as HiOrders,
   HiChartBar,
-  HiChatBubbleLeftRight,
 } from 'react-icons/hi2';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -22,8 +21,8 @@ import ThemeToggle from '../ThemeToggle';
 import LanguageToggle from './LanguageToggle';
 
 const Header = () => {
-  const { user, logout, isLoading: isAuthLoading } = useAuth();
-  const { locale, t, isLoading: isLanguageLoading } = useLanguage();
+  const { user, logout, isLoading: isAuthLoading, isSuperAdmin } = useAuth();
+  const { locale, t } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -36,6 +35,15 @@ const Header = () => {
       icon: HiHome,
       label: 'admin.sidebar.dashboard',
     },
+    // Admins section - only for superadmin users
+    ...(isSuperAdmin() ? [
+      {
+        name: 'Admins',
+        href: '/admin/admins',
+        icon: HiUsers,
+        label: 'admin.sidebar.admins',
+      },
+    ] : []),
     {
       name: 'Customers',
       href: '/admin/customers',
@@ -59,12 +67,6 @@ const Header = () => {
       href: '/admin/analytics',
       icon: HiChartBar,
       label: 'admin.sidebar.analytics',
-    },
-    {
-      name: 'Customer Support',
-      href: '/admin/support',
-      icon: HiChatBubbleLeftRight,
-      label: 'admin.sidebar.support',
     },
   ] as const;
 

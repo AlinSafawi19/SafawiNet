@@ -228,14 +228,6 @@
       "securityNoticeMessage": "لأمانك، سيتم تسجيل خروجك تلقائياً من جميع الأجهزة والمتصفحات بعد إعادة تعيين كلمة المرور"
     },
     "admin": {
-      "access": "الوصول للمشرف",
-      "createAdmin": "إنشاء مشرف",
-      "enterPassword": "أدخل كلمة مرور المشرف للمتابعة",
-      "createAdminSubtitle": "إنشاء حساب مستخدم مشرف جديد",
-      "adminPassword": "كلمة مرور المشرف",
-      "adminPasswordPlaceholder": "أدخل كلمة مرور المشرف",
-      "accessAdminPanel": "الوصول إلى لوحة المشرف",
-      "verifying": "جاري التحقق...",
       "createAdminUser": "إنشاء مستخدم مشرف",
       "creatingAdmin": "جاري إنشاء المشرف...",
       "fullName": "الاسم الكامل",
@@ -250,7 +242,6 @@
       "adminUserCreated": "تم إنشاء المستخدم المشرف بنجاح!",
       "failedToCreate": "فشل في إنشاء المستخدم المشرف",
       "networkError": "خطأ في الشبكة. يرجى المحاولة مرة أخرى",
-      "restrictedArea": "هذه المنطقة مخصصة للموظفين المصرح لهم فقط",
       "fullSystemAccess": "سيؤدي هذا إلى إنشاء مستخدم مشرف جديد مع وصول كامل للنظام",
       "validation": {
         "nameRequired": "الاسم مطلوب",
@@ -261,7 +252,9 @@
         "passwordTooShort": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
         "confirmPasswordRequired": "يرجى تأكيد كلمة المرور",
         "passwordsDoNotMatch": "كلمات المرور غير متطابقة",
-        "invalidAdminPassword": "كلمة مرور المشرف غير صحيحة"
+        "userAlreadyExists": "يوجد مستخدم بهذا البريد الإلكتروني بالفعل",
+        "insufficientPermissions": "صلاحيات غير كافية. مطلوب دور المشرف الأعلى",
+        "superadminRequired": "مطلوب دور المشرف الأعلى لتنفيذ هذا الإجراء"
       }
     },
     "forgotPassword": {
@@ -380,16 +373,20 @@
   "admin": {
     "sidebar": {
       "dashboard": "لوحة التحكم",
+      "admins": "المديرون",
+      "addAdmin": "إضافة مدير",
       "customers": "العملاء",
       "products": "المنتجات",
       "orders": "الطلبات",
       "analytics": "التحليلات",
-      "support": "دعم العملاء",
       "categories": {
         "management": "الإدارة",
-        "insights": "الرؤى",
-        "support": "الدعم"
+        "insights": "الرؤى"
       }
+    },
+    "addAdmin": {
+      "title": "إضافة مدير جديد",
+      "description": "إنشاء حساب مستخدم مدير جديد"
     }
   },
   "resetPassword": {
