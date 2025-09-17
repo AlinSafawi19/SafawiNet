@@ -61,12 +61,10 @@ class RealSocketService {
     this.socket.on('connect', () => {
       this.isConnected = true;
       this.reconnectAttempts = 0;
-      console.log('🔌 Socket connected');
     });
 
     this.socket.on('disconnect', () => {
       this.isConnected = false;
-      console.log('🔌 Socket disconnected');
       this.attemptReconnect();
     });
 
@@ -78,7 +76,6 @@ class RealSocketService {
 
     // Set up force logout listener immediately when socket is created
     this.socket.on('forceLogout', (data: any) => {
-      console.log('🚪 Force logout event received in socket service:', data);
       // Emit a custom event that the AuthContext can listen to
       window.dispatchEvent(new CustomEvent('forceLogout', { detail: data }));
     });
@@ -116,7 +113,6 @@ class RealSocketService {
 
         // Set up one-time listeners for connection events
         const onConnect = () => {
-          console.log('🔌 Socket connected successfully');
           this.socket?.off('connect', onConnect);
           this.socket?.off('connect_error', onError);
           resolve();
@@ -160,18 +156,12 @@ class RealSocketService {
 
   public async joinPendingVerificationRoom(email: string): Promise<void> {
     if (this.socket && this.isConnected) {
-      console.log('📡 Emitting joinPendingVerificationRoom for email:', email);
       this.socket.emit('joinPendingVerificationRoom', { email });
     } else if (this.socket && !this.isConnected) {
-      console.log('⏳ Socket not connected yet, waiting for connection...');
       // Wait for connection to be established
       await new Promise<void>((resolve) => {
         const checkConnection = () => {
           if (this.isConnected) {
-            console.log(
-              '📡 Socket now connected, emitting joinPendingVerificationRoom for email:',
-              email
-            );
             this.socket?.emit('joinPendingVerificationRoom', { email });
             resolve();
           } else {
@@ -195,18 +185,12 @@ class RealSocketService {
 
   public async joinPasswordResetRoom(email: string): Promise<void> {
     if (this.socket && this.isConnected) {
-      console.log('📡 Emitting joinPasswordResetRoom for email:', email);
       this.socket.emit('joinPasswordResetRoom', { email });
     } else if (this.socket && !this.isConnected) {
-      console.log('⏳ Socket not connected yet, waiting for connection...');
       // Wait for connection to be established
       await new Promise<void>((resolve) => {
         const checkConnection = () => {
           if (this.isConnected) {
-            console.log(
-              '📡 Socket now connected, emitting joinPasswordResetRoom for email:',
-              email
-            );
             this.socket?.emit('joinPasswordResetRoom', { email });
             resolve();
           } else {
@@ -233,7 +217,6 @@ class RealSocketService {
     callback: SocketEvents[T]
   ): void {
     if (this.socket) {
-      console.log('👂 Setting up socket listener for event:', event);
       this.socket.on(event, callback as any);
     } else {
       console.warn('⚠️ Cannot set up socket listener - socket not initialized');

@@ -105,12 +105,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const refreshToken = useCallback(async (): Promise<boolean> => {
     // Prevent multiple simultaneous refresh attempts
     if (isRefreshing) {
-      console.log('🔄 AuthContext - Refresh already in progress, skipping');
       return false;
     }
 
     try {
-      console.log('🔄 AuthContext - Starting token refresh');
       setIsRefreshing(true);
       const response = await fetch(
         buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.REFRESH),
@@ -123,29 +121,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       );
 
-      console.log('🔄 AuthContext - Refresh response status:', response.status);
-
       if (response.ok) {
         const refreshData = await response.json();
-        
+
         if (refreshData.success) {
-          console.log('🔄 AuthContext - Token refreshed successfully');
           // Token refreshed successfully, but don't call /users/me again
           // The user will remain in their current state, and the next API call
           // will use the refreshed token automatically
           return true;
         } else {
           // Refresh failed but server returned 200 OK
-          if (process.env.NODE_ENV === 'development') {
-            console.log('🔄 AuthContext - Refresh failed:', refreshData.message);
-          }
           return false;
         }
       } else {
-        console.log(
-          '🔄 AuthContext - Refresh failed with status:',
-          response.status
-        );
         // Only log actual errors (shouldn't happen with new server format)
         return false;
       }
@@ -168,9 +156,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         // Set cookies for the tokens - use names that match the backend JWT guard
         document.cookie = `accessToken=${tokens.accessToken}; path=/; max-age=${tokens.expiresIn}; secure; samesite=strict`;
-        document.cookie = `refreshToken=${
-          tokens.refreshToken
-        }; path=/; max-age=${tokens.expiresIn * 2}; secure; samesite=strict`;
+        document.cookie = `refreshToken=${tokens.refreshToken
+          }; path=/; max-age=${tokens.expiresIn * 2}; secure; samesite=strict`;
 
         // Fetch user data to set the user state
         const response = await fetch(
@@ -183,7 +170,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (response.ok) {
           const userData = await response.json();
-          
+
           // Check if user is authenticated based on new response format
           if (!userData.authenticated || !userData.user) {
             return { success: false, message: 'Authentication failed' };
@@ -239,13 +226,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Define force logout handler before useEffect to avoid scope issues
   const handleForceLogout = useCallback(
-    async (event: Event) => {
-      const customEvent = event as CustomEvent;
-      console.log(
-        '🚪 Force logout event received via custom event:',
-        customEvent.detail
-      );
-
+    async () => {
       // Use existing logout function
       await logout();
 
@@ -268,26 +249,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('📬 Offline messages retrieved:', data);
-
         if (data.messages && data.messages.length > 0) {
-          console.log(`📬 Processing ${data.messages.length} offline messages`);
-
           // Process each message
           for (const message of data.messages) {
-            console.log('📬 Processing offline message:', message);
-
             // Handle different message types
             switch (message.event) {
               case 'forceLogout':
-                console.log('🚪 Processing offline force logout');
-                handleForceLogout(
-                  new CustomEvent('forceLogout', { detail: message.payload })
-                );
+                handleForceLogout();
                 break;
 
               default:
-                console.log('📬 Unknown offline message type:', message.event);
+                break;
             }
           }
 
@@ -305,18 +277,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 body: JSON.stringify({ messageIds }),
               }
             );
-            console.log('✅ Offline messages marked as processed');
           } catch (error) {
             console.error(
               '❌ Failed to mark offline messages as processed:',
               error
             );
           }
-        } else {
-          console.log('📬 No offline messages found');
         }
-      } else {
-        console.log('📬 No offline messages or error fetching messages');
       }
     } catch (error) {
       console.error('❌ Error checking offline messages:', error);
@@ -333,10 +300,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isInitializingRef.current = true;
 
     try {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 Checking authentication status...');
-      }
-
       // Always check the backend for authentication status
       // HTTP-only cookies can't be read by JavaScript, so we rely on the backend
       const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME), {
@@ -344,25 +307,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         credentials: 'include', // Include cookies for session management
       });
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 /users/me response:', {
-          status: response.status,
-          ok: response.ok,
-        });
-      }
-
       if (response.ok) {
         const userData = await response.json();
 
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔍 User data received:', userData);
-        }
-
         // Check if user is authenticated based on new response format
         if (!userData.authenticated || !userData.user) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('🔍 User not authenticated');
-          }
           setUser(null);
           return;
         }
@@ -371,14 +320,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Check if user is verified before setting login state
         if (!finalUserData.isVerified) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('🔍 User not verified, logging out');
-          }
           setUser(null);
           return;
         }
 
-        console.log('🔍 Setting user state in checkAuthStatus:', finalUserData);
         setUser(finalUserData);
 
         // Check for offline messages after successful authentication - defer to avoid blocking
@@ -387,16 +332,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }, 2000); // Increased delay to not block initial render
       } else {
         // Handle any non-200 responses (shouldn't happen with new server format)
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔍 Unexpected response status:', response.status);
-        }
         setUser(null);
       }
     } catch (error) {
       // Only log actual network/technical errors
-      if (process.env.NODE_ENV === 'development') {
-        console.error('🔍 Error checking auth status:', error);
-      }
       setUser(null);
     } finally {
       // Set loading to false after auth check is complete
@@ -417,8 +356,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user?: User;
   }> => {
     try {
-      console.log('🔐 AuthContext - Starting login process for:', email);
-
       const response = await fetch(
         buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN),
         {
@@ -431,12 +368,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       );
 
-      console.log('🔐 AuthContext - Login response status:', response.status);
-      console.log('🔐 AuthContext - Login response ok:', response.ok);
-
       if (response.ok) {
         const data = await response.json();
-        console.log('🔐 AuthContext - Login response data:', data);
 
         const {
           user: userData,
@@ -446,7 +379,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Check if user is verified before setting login state
         if (requiresVerification) {
-          console.log('🔐 AuthContext - User requires verification');
           // User is not verified, don't set login state
           return {
             success: false,
@@ -457,7 +389,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Check if 2FA is required
         if (requiresTwoFactor) {
-          console.log('🔐 AuthContext - User requires 2FA');
           // User needs to enter 2FA code
           return {
             success: false,
@@ -467,7 +398,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           } as any;
         }
 
-        console.log('🔐 AuthContext - Setting user state:', userData);
         // User is verified and no 2FA required, set login state
         setUser(userData);
 
@@ -476,11 +406,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           checkOfflineMessages();
         }, 1000); // Small delay to ensure user state is set
 
-        console.log('🔐 AuthContext - Login successful, returning success');
         return { success: true, user: userData };
       } else {
         const errorData = await response.json();
-        console.log('🔐 AuthContext - Login failed with error:', errorData);
         // Map server error messages to translation keys
         const messageKey = mapServerErrorToTranslationKey(errorData.message);
         return {
@@ -490,7 +418,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
       }
     } catch (error) {
-      console.error('🔐 AuthContext - Login error:', error);
       return {
         success: false,
         messageKey: 'auth.messages.generalError',
@@ -535,7 +462,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (userResponse.ok) {
           const userDataResponse = await userResponse.json();
-          
+
           // Check if user is authenticated based on new response format
           if (!userDataResponse.authenticated || !userDataResponse.user) {
             return { success: false, message: 'Authentication failed' };
@@ -612,77 +539,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Import socket service dynamically to avoid SSR issues
         import('../services/socket.service')
           .then(async ({ initializeSocketService }) => {
-            console.log(
-              '🔌 Initializing socket service for pending verification room...'
-            );
             const socketService = await initializeSocketService();
-            console.log('🔌 Socket service initialized, connecting...');
             try {
               await socketService.connect(); // Connect anonymously and wait for connection
-              console.log(
-                '🔌 Socket connected, joining pending verification room for:',
-                email.toLowerCase()
-              );
-              console.log(
-                '🔌 Socket connection state:',
-                socketService.isSocketConnected()
-              );
-
               await socketService.joinPendingVerificationRoom(
                 email.toLowerCase()
               );
-              console.log(
-                '✅ Successfully joined pending verification room for:',
-                email.toLowerCase()
-              );
-
-              // Set up listener for pending verification room joined confirmation
-              socketService.on('pendingVerificationRoomJoined', (data: any) => {
-                console.log(
-                  '🎉 Confirmed: Joined pending verification room:',
-                  data
-                );
-              });
 
               // Set up emailVerified listener immediately for this registration
               socketService.on('emailVerified', async (data: any) => {
-                console.log(
-                  '🔔 Registration socket received emailVerified event:',
-                  data
-                );
-                console.log('🔔 Current user state before processing:', user);
-                console.log(
-                  '🔔 Socket connection state:',
-                  socketService.isSocketConnected()
-                );
-
                 if (data.success && data.user) {
                   // Check if we have tokens in the data
                   if (data.tokens) {
-                    console.log(
-                      '🔑 Registration: Tokens received, attempting login...'
-                    );
-                    console.log('🔑 Registration: Token data:', {
-                      accessToken: data.tokens.accessToken
-                        ? 'PRESENT'
-                        : 'MISSING',
-                      refreshToken: data.tokens.refreshToken
-                        ? 'PRESENT'
-                        : 'MISSING',
-                      expiresIn: data.tokens.expiresIn,
-                    });
                     try {
-                      const loginResult = await loginWithTokens(data.tokens);
-                      if (loginResult.success) {
-                        console.log(
-                          '✅ Registration: User successfully logged in via pending verification room'
-                        );
-                      } else {
-                        console.log(
-                          '❌ Registration: Failed to login with tokens:',
-                          loginResult.message
-                        );
-                      }
+                      await loginWithTokens(data.tokens);
                     } catch (error) {
                       console.error(
                         '❌ Registration: Error during token-based login:',
@@ -690,34 +560,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                       );
                     }
                   } else {
-                    console.log(
-                      '⚠️ Registration: No tokens received, setting user state only'
-                    );
                     // Only set user if they are verified
                     if (data.user.isVerified) {
                       setUser(data.user);
-                      console.log(
-                        '✅ Registration: User state updated with verified user'
-                      );
                     } else {
-                      console.log(
-                        '❌ Registration: User not verified, not setting login state'
-                      );
                       return;
                     }
                   }
 
                   // Check if user was on auth page or verify-email page and redirect based on role
                   const currentPath = window.location.pathname;
-                  console.log('📍 Registration: Current path:', currentPath);
                   if (
                     currentPath === '/auth' ||
                     currentPath.startsWith('/auth/') ||
                     currentPath === '/verify-email'
                   ) {
-                    console.log(
-                      '🔄 Registration: Scheduling redirect in 2 seconds...'
-                    );
                     setTimeout(() => {
                       if (
                         data.user &&
@@ -725,19 +582,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                         data.user.roles &&
                         data.user.roles.includes('ADMIN')
                       ) {
-                        console.log(
-                          '👑 Registration: Redirecting admin to /admin'
-                        );
                         window.location.href = '/admin';
                       } else if (data.user && data.user.isVerified) {
-                        console.log('🏠 Registration: Redirecting user to /');
                         window.location.href = '/';
                       }
                     }, 2000);
-                  } else {
-                    console.log(
-                      'ℹ️ Registration: Not on auth/verify-email page, no redirect needed'
-                    );
                   }
                 }
               });
@@ -873,20 +722,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Utility function to join pending verification room for cross-browser sync
   const joinPendingVerificationRoom = async (email: string) => {
     try {
-      console.log(
-        '🔗 AuthContext: Joining pending verification room for:',
-        email
-      );
       const { initializeSocketService } = await import(
         '../services/socket.service'
       );
       const socketService = await initializeSocketService();
       await socketService.connect();
       await socketService.joinPendingVerificationRoom(email.toLowerCase());
-      console.log(
-        '✅ AuthContext: Successfully joined pending verification room for:',
-        email
-      );
     } catch (error) {
       console.error(
         '❌ AuthContext: Failed to join pending verification room:',
@@ -958,72 +799,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const { initializeSocketService } = await import(
             '../services/socket.service'
           );
-          console.log(
-            '🌐 Setting up global socket listener for pending verification rooms...'
-          );
           const socketService = await initializeSocketService();
-          console.log(
-            '🌐 Socket service initialized for global listener, connecting...'
-          );
 
           // Connect anonymously to listen for verification events
           await socketService.connect();
-          console.log(
-            '🌐 Global socket connected, setting up emailVerified listener...'
-          );
-
-          // Set up connection monitoring
-          socketService.on('connect', () => {
-            console.log('🌐 Global socket reconnected');
-          });
-
-          socketService.on('disconnect', () => {
-            console.log('🌐 Global socket disconnected');
-          });
 
           // Listen for email verification events in pending rooms
           socketService.on('emailVerified', async (data: any) => {
-            console.log('🔔 Socket received emailVerified event:', data);
-            console.log('🔔 Current user state before processing:', user);
-            console.log(
-              '🔔 Socket connection state:',
-              socketService.isSocketConnected()
-            );
-
             if (data.success && data.user) {
               // Check if we have tokens in the data
               if (data.tokens) {
-                console.log('🔑 Tokens received, attempting login...');
-                console.log('🔑 Token data:', {
-                  accessToken: data.tokens.accessToken ? 'PRESENT' : 'MISSING',
-                  refreshToken: data.tokens.refreshToken
-                    ? 'PRESENT'
-                    : 'MISSING',
-                  expiresIn: data.tokens.expiresIn,
-                });
                 try {
-                  const loginResult = await loginWithTokens(data.tokens);
-                  if (loginResult.success) {
-                    console.log(
-                      '✅ User successfully logged in via pending verification room'
-                    );
-                  } else {
-                    console.log(
-                      '❌ Failed to login with tokens:',
-                      loginResult.message
-                    );
-                  }
+                  await loginWithTokens(data.tokens);
                 } catch (error) {
                   console.error('❌ Error during token-based login:', error);
                 }
               } else {
-                console.log('⚠️ No tokens received, setting user state only');
                 // Only set user if they are verified
                 if (data.user.isVerified) {
                   setUser(data.user);
-                  console.log('✅ User state updated with verified user');
                 } else {
-                  console.log('❌ User not verified, not setting login state');
                   // User not verified, don't set login state
                   return;
                 }
@@ -1031,13 +826,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
               // Check if user was on auth page or verify-email page and redirect based on role
               const currentPath = window.location.pathname;
-              console.log('📍 Current path:', currentPath);
               if (
                 currentPath === '/auth' ||
                 currentPath.startsWith('/auth/') ||
                 currentPath === '/verify-email'
               ) {
-                console.log('🔄 Scheduling redirect in 2 seconds...');
                 setTimeout(() => {
                   if (
                     data.user &&
@@ -1045,31 +838,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     data.user.roles &&
                     data.user.roles.includes('ADMIN')
                   ) {
-                    console.log('👑 Redirecting admin to /admin');
                     window.location.href = '/admin';
                   } else if (data.user && data.user.isVerified) {
-                    console.log('🏠 Redirecting user to /');
                     window.location.href = '/';
                   }
                   // If user is not verified, stay on current page
                 }, 2000);
-              } else {
-                console.log(
-                  'ℹ️ Not on auth/verify-email page, no redirect needed'
-                );
               }
-            } else {
-              // Email verification event received but data is invalid
             }
           });
 
           // Auto-join pending verification rooms for users on auth page
           const currentPath = window.location.pathname;
           if (currentPath === '/auth' || currentPath.startsWith('/auth/')) {
-            console.log(
-              '🔍 On auth page, setting up auto-join for pending verification rooms...'
-            );
-
             // Listen for email input changes to auto-join pending verification rooms
             const setupEmailListener = () => {
               const emailInputs = document.querySelectorAll(
@@ -1083,16 +864,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   const handleEmailChange = async () => {
                     const email = emailInput.value?.trim().toLowerCase();
                     if (email && email.includes('@') && email.includes('.')) {
-                      console.log(
-                        '📧 Email entered on auth page, joining pending verification room for:',
-                        email
-                      );
                       try {
                         await socketService.joinPendingVerificationRoom(email);
-                        console.log(
-                          '✅ Successfully joined pending verification room for:',
-                          email
-                        );
                       } catch (error) {
                         console.error(
                           '❌ Failed to join pending verification room:',
@@ -1131,26 +904,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             });
           }
 
-          // Test if the connection is working
-
-          // Test if we can receive any events
-          socketService.on('connect', () => {
-            console.log('🔌 WebSocket connected in AuthContext');
-          });
-
-          socketService.on('disconnect', () => {
-            console.log('🔌 WebSocket disconnected in AuthContext');
-          });
-
-          // Test if we can receive the pending verification room joined event
-          socketService.on('pendingVerificationRoomJoined', (data: any) => {
-            // Pending verification room joined event received
-          });
-
           // Listen for force logout events (password change/reset)
-          socketService.on('forceLogout', async (data: any) => {
-            console.log('🚪 Force logout event received via socket:', data);
-
+          socketService.on('forceLogout', async () => {
             // Use existing logout function
             await logout();
 
@@ -1194,24 +949,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     if (!user) return;
 
-    console.log(
-      '⏰ AuthContext - Setting up automatic refresh timer for user:',
-      user.email
-    );
-
     // Refresh token every 14 minutes (assuming 15-minute token lifetime)
     const refreshInterval = setInterval(async () => {
       if (user) {
-        console.log(
-          '⏰ AuthContext - Automatic refresh triggered for user:',
-          user.email
-        );
         await autoRefreshToken();
       }
     }, 14 * 60 * 1000); // 14 minutes
 
     return () => {
-      console.log('⏰ AuthContext - Clearing refresh timer');
       clearInterval(refreshInterval);
     };
   }, [user, autoRefreshToken]);

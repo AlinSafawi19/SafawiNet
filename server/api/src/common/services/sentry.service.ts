@@ -35,8 +35,6 @@ export class SentryService implements OnModuleInit {
           return event;
         },
       });
-
-      console.log('Sentry initialized successfully');
     } catch (error) {
       console.error('Failed to initialize Sentry:', error);
     }

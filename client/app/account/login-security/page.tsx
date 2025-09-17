@@ -635,7 +635,6 @@ export default function LoginSecurityPage() {
     setIs2FALoading(true);
     try {
       const url = buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.ENABLE_2FA);
-      console.log('2FA enable URL:', url);
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -645,8 +644,7 @@ export default function LoginSecurityPage() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        console.log('2FA enable success:', data);
+        await response.json();
         // Refresh user data to get updated 2FA status without reloading page
         const userResponse = await fetch(
           buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),

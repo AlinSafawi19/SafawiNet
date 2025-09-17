@@ -29,14 +29,6 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
     translateTierName,
   } = useLoyalty();
 
-  // Debug logging
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔍 UserDropdown loyalty state:', {
-      loyaltyAccount,
-      loyaltyLoading,
-      isCustomer,
-    });
-  }
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);

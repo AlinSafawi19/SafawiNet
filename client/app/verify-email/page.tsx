@@ -70,7 +70,6 @@ export default function VerifyEmailPage() {
 
     // If user is already logged in via AuthContext, show success and redirect
     if (!isLoading && user) {
-      console.log('🔐 User already logged in via AuthContext:', user);
       hasVerifiedRef.current = true;
 
       setVerificationState({
@@ -103,7 +102,6 @@ export default function VerifyEmailPage() {
 
         if (response.ok) {
           const userData = await response.json();
-          console.log('🔐 User already authenticated:', userData);
 
           // Mark as verified to prevent API calls
           hasVerifiedRef.current = true;
@@ -125,7 +123,7 @@ export default function VerifyEmailPage() {
           return true; // User is already authenticated
         }
       } catch (error) {
-        console.log('🔐 No existing authentication found');
+        console.error('🔐 No existing authentication found: ', error);
       }
       return false; // User is not authenticated
     };
@@ -221,17 +219,6 @@ export default function VerifyEmailPage() {
                 message: t('verifyEmail.successMessage'),
               });
 
-              // Debug user data for role-based redirect
-              console.log('🔐 Email verification - user data:', data.user);
-              console.log(
-                '🔐 Email verification - user roles:',
-                data.user?.roles
-              );
-              console.log(
-                '🔐 Email verification - is admin:',
-                data.user?.roles?.includes('ADMIN')
-              );
-
               // Redirect based on user role after 2 seconds
               setTimeout(() => {
                 if (
@@ -239,14 +226,8 @@ export default function VerifyEmailPage() {
                   data.user.roles &&
                   data.user.roles.includes('ADMIN')
                 ) {
-                  console.log(
-                    '🔐 Email verification - redirecting admin to /admin'
-                  );
                   router.push('/admin');
                 } else {
-                  console.log(
-                    '🔐 Email verification - redirecting customer to /'
-                  );
                   router.push('/');
                 }
               }, 2000);
@@ -316,20 +297,6 @@ export default function VerifyEmailPage() {
                   on('emailVerified', handleEmailVerified);
                 }
 
-                // Debug user data for role-based redirect
-                console.log(
-                  '🔐 Email verification (tokens) - user data:',
-                  successData.user
-                );
-                console.log(
-                  '🔐 Email verification (tokens) - user roles:',
-                  successData.user?.roles
-                );
-                console.log(
-                  '🔐 Email verification (tokens) - is admin:',
-                  successData.user?.roles?.includes('ADMIN')
-                );
-
                 // Redirect based on user role after successful login
                 setTimeout(() => {
                   if (
@@ -337,14 +304,8 @@ export default function VerifyEmailPage() {
                     successData.user.roles &&
                     successData.user.roles.includes('ADMIN')
                   ) {
-                    console.log(
-                      '🔐 Email verification (tokens) - redirecting admin to /admin'
-                    );
                     router.push('/admin');
                   } else {
-                    console.log(
-                      '🔐 Email verification (tokens) - redirecting customer to /'
-                    );
                     router.push('/');
                   }
                 }, 2000);
@@ -364,20 +325,6 @@ export default function VerifyEmailPage() {
                   on('emailVerified', handleEmailVerified);
                 }
 
-                // Debug user data for fallback redirect
-                console.log(
-                  '🔐 Email verification (fallback) - user data:',
-                  successData.user
-                );
-                console.log(
-                  '🔐 Email verification (fallback) - user roles:',
-                  successData.user?.roles
-                );
-                console.log(
-                  '🔐 Email verification (fallback) - is admin:',
-                  successData.user?.roles?.includes('ADMIN')
-                );
-
                 // Fallback: wait for WebSocket event or redirect based on role after 5 seconds
                 setTimeout(() => {
                   if (
@@ -385,14 +332,8 @@ export default function VerifyEmailPage() {
                     successData.user.roles &&
                     successData.user.roles.includes('ADMIN')
                   ) {
-                    console.log(
-                      '🔐 Email verification (fallback) - redirecting admin to /admin'
-                    );
                     router.push('/admin');
                   } else {
-                    console.log(
-                      '🔐 Email verification (fallback) - redirecting customer to /'
-                    );
                     router.push('/');
                   }
                 }, 5000);
@@ -413,20 +354,6 @@ export default function VerifyEmailPage() {
                 on('emailVerified', handleEmailVerified);
               }
 
-              // Debug user data for fallback redirect
-              console.log(
-                '🔐 Email verification (fallback) - user data:',
-                successData.user
-              );
-              console.log(
-                '🔐 Email verification (fallback) - user roles:',
-                successData.user?.roles
-              );
-              console.log(
-                '🔐 Email verification (fallback) - is admin:',
-                successData.user?.roles?.includes('ADMIN')
-              );
-
               // Fallback: wait for WebSocket event or redirect based on role after 5 seconds
               setTimeout(() => {
                 if (
@@ -434,14 +361,8 @@ export default function VerifyEmailPage() {
                   successData.user.roles &&
                   successData.user.roles.includes('ADMIN')
                 ) {
-                  console.log(
-                    '🔐 Email verification (fallback) - redirecting admin to /admin'
-                  );
                   router.push('/admin');
                 } else {
-                  console.log(
-                    '🔐 Email verification (fallback) - redirecting customer to /'
-                  );
                   router.push('/');
                 }
               }, 5000);
@@ -464,7 +385,6 @@ export default function VerifyEmailPage() {
           }
         } else {
           const errorData = await response.json();
-          console.log('🔐 Verification failed:', errorData);
 
           // If both endpoints failed, check if user is actually logged in
           const isActuallyLoggedIn = await checkExistingAuth();

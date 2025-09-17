@@ -211,15 +211,12 @@ export default function AdminCreationForm({
       switch (errorKey) {
         case 'auth.messages.userAlreadyExists':
           // Could highlight the email field or show additional context
-          console.log('User with this email already exists');
           break;
         case 'auth.admin.validation.insufficientPermissions':
           // Could show a different message or redirect
-          console.log('Insufficient permissions error detected');
           break;
         case 'auth.admin.networkError':
           // Could show retry button or different styling
-          console.log('Network error detected');
           break;
         default:
           // Handle other error types

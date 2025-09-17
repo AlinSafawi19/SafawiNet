@@ -189,20 +189,13 @@ export class UsersService {
   }
 
   async getCurrentUser(userId: string): Promise<Omit<User, 'password'>> {
-    console.log('👤 UsersService - getCurrentUser called with userId:', userId);
-
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
-    console.log('👤 UsersService - user found:', user);
-
     if (!user) {
-      console.log('❌ UsersService - User not found for ID:', userId);
       throw new NotFoundException('User not found');
     }
-
-    console.log('✅ UsersService - User retrieved successfully:', user.email);
 
     // Provide default values for preferences and notificationPreferences if they are null
     const defaultPreferences: UserPreferences = {

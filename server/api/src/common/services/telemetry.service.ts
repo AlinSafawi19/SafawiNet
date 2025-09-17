@@ -41,7 +41,6 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
       });
 
       this.sdk.start();
-      console.log('OpenTelemetry SDK started successfully');
     } catch (error) {
       console.error('Failed to start OpenTelemetry SDK:', error);
       // Continue without telemetry - don't crash the app
@@ -52,7 +51,6 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
     if (this.sdk) {
       try {
         await this.sdk.shutdown();
-        console.log('OpenTelemetry SDK shutdown successfully');
       } catch (error) {
         console.error('Failed to shutdown OpenTelemetry SDK:', error);
       }

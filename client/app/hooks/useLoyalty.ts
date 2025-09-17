@@ -83,9 +83,6 @@ export const useLoyalty = () => {
     // If this is the first instance, make it the primary
     if (!globalStateManager.primaryInstance) {
       globalStateManager.primaryInstance = id;
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 useLoyalty: This instance is now primary:', id);
-      }
     }
 
     // Register state update callback
@@ -94,15 +91,6 @@ export const useLoyalty = () => {
       setError(state.error);
       setIsLoading(state.isLoading);
     });
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log(
-        '🔄 useLoyalty: Instance registered:',
-        id,
-        'Primary:',
-        globalStateManager.primaryInstance
-      );
-    }
 
     // Cleanup on unmount
     return () => {
@@ -116,26 +104,9 @@ export const useLoyalty = () => {
         );
         globalStateManager.primaryInstance =
           remainingInstances.length > 0 ? remainingInstances[0] : null;
-        if (process.env.NODE_ENV === 'development') {
-          console.log(
-            '🔄 useLoyalty: Primary instance changed to:',
-            globalStateManager.primaryInstance
-          );
-        }
       }
     };
   }, []);
-
-  // Debug state changes
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(
-        '🔄 useLoyalty: loyaltyAccount state changed to:',
-        loyaltyAccount
-      );
-      console.log('🔄 useLoyalty: globalLoyaltyState:', globalLoyaltyState);
-    }
-  }, [loyaltyAccount]);
 
   // Sync local state with global state when global state changes
   useEffect(() => {
@@ -145,9 +116,6 @@ export const useLoyalty = () => {
       globalLoyaltyState.lastFetchUserId === user.id
     ) {
       if (loyaltyAccount !== globalLoyaltyState.data) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔄 useLoyalty: Syncing local state with global state');
-        }
         setLoyaltyAccount(globalLoyaltyState.data);
         setError(globalLoyaltyState.error);
         setIsLoading(globalLoyaltyState.isLoading);
@@ -160,16 +128,7 @@ export const useLoyalty = () => {
   const effectRunningRef = useRef(false);
 
   const fetchLoyaltyAccount = useCallback(async () => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 fetchLoyaltyAccount called with user:', user);
-      console.log('🔄 user roles:', user?.roles);
-      console.log('🔄 is customer:', user?.roles?.includes('CUSTOMER'));
-    }
-
     if (!user || !user.roles?.includes('CUSTOMER')) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('❌ fetchLoyaltyAccount: User not found or not a customer');
-      }
       return;
     }
 
@@ -178,9 +137,6 @@ export const useLoyalty = () => {
       globalLoyaltyState.lastFetchUserId === user.id &&
       globalLoyaltyState.data
     ) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 useLoyalty: Using cached data for user:', user.id);
-      }
       setLoyaltyAccount(globalLoyaltyState.data);
       setError(globalLoyaltyState.error);
       setIsLoading(false);
@@ -189,16 +145,7 @@ export const useLoyalty = () => {
 
     // Prevent multiple simultaneous API calls globally
     if (globalLoyaltyState.isFetching) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(
-          '🔄 useLoyalty: Skipping duplicate call - already fetching globally'
-        );
-      }
       return;
-    }
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 useLoyalty: Starting fetch for user:', user.id);
     }
 
     // Update global state
@@ -237,19 +184,6 @@ export const useLoyalty = () => {
         globalStateManager.stateUpdateCallbacks.forEach((callback) => {
           callback(globalLoyaltyState);
         });
-
-        if (process.env.NODE_ENV === 'development') {
-          console.log(
-            '✅ useLoyalty: Successfully fetched loyalty data:',
-            data
-          );
-          console.log('🔄 useLoyalty: Setting loyaltyAccount state to:', data);
-          console.log(
-            '🔄 useLoyalty: Notifying',
-            globalStateManager.stateUpdateCallbacks.size,
-            'instances'
-          );
-        }
       } else if (response.status === 404) {
         // User doesn't have a loyalty account yet - this is normal, not an error
 
@@ -261,10 +195,6 @@ export const useLoyalty = () => {
         // Update local state
         setLoyaltyAccount(null);
         setError(null);
-
-        if (process.env.NODE_ENV === 'development') {
-          console.log('ℹ️ useLoyalty: No loyalty account found (404)');
-        }
       } else {
         // Only set error for actual server errors, not 404s
 
@@ -276,13 +206,6 @@ export const useLoyalty = () => {
         // Update local state
         setError('Failed to fetch loyalty account');
         setLoyaltyAccount(null);
-
-        if (process.env.NODE_ENV === 'development') {
-          console.log(
-            '❌ useLoyalty: Error fetching loyalty account:',
-            response.status
-          );
-        }
       }
     } catch (err) {
       // Only set error for network/parsing errors
@@ -297,10 +220,6 @@ export const useLoyalty = () => {
       // Update local state
       setError(errorMessage);
       setLoyaltyAccount(null);
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('❌ useLoyalty: Exception during fetch:', err);
-      }
     } finally {
       // Update global state
       globalLoyaltyState.isLoading = false;
@@ -355,35 +274,13 @@ export const useLoyalty = () => {
     const id = instanceId.current;
     const isPrimary = globalStateManager.primaryInstance === id;
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 useLoyalty useEffect triggered:', {
-        instanceId: id,
-        isPrimary,
-        userId: user?.id,
-        userRoles: user?.roles,
-        isCustomer: user?.roles?.includes('CUSTOMER'),
-        authLoading,
-        effectRunning: effectRunningRef.current,
-        hasGlobalData: !!globalLoyaltyState.data,
-        globalUserId: globalLoyaltyState.lastFetchUserId,
-      });
-    }
-
     // Only the primary instance should manage the global state
     if (!isPrimary) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(
-          '🔄 useLoyalty: Not primary instance, skipping state management'
-        );
-      }
       return;
     }
 
     // Prevent multiple simultaneous effect runs
     if (effectRunningRef.current) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 useLoyalty: Skipping effect - already running');
-      }
       return;
     }
 
@@ -398,9 +295,6 @@ export const useLoyalty = () => {
       globalLoyaltyState.data &&
       globalLoyaltyState.lastFetchUserId === user.id
     ) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 useLoyalty: Already have data for this user, skipping');
-      }
       return;
     }
 
