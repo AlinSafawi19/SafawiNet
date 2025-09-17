@@ -10,7 +10,6 @@ import {
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import Link from 'next/link';
-import { useSocket } from '../hooks/useSocket';
 import { useBackendMessageTranslation } from '../hooks/useBackendMessageTranslation';
 import { buildApiUrl, API_CONFIG } from '../config/api';
 
@@ -23,16 +22,7 @@ export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { t } = useLanguage();
-  const { loginWithTokens, user, isLoading } = useAuth();
-  const {
-    connect,
-    joinVerificationRoom,
-    leaveVerificationRoom,
-    on,
-    off,
-    onAuthBroadcast,
-    offAuthBroadcast,
-  } = useSocket();
+  const { loginWithTokens, user, isLoading, updateUser } = useAuth();
 
   // Use the backend message translation hook
   const {
@@ -44,7 +34,6 @@ export default function VerifyEmailPage() {
     setBackendSuccess: setVerificationBackendSuccess,
     setErrorKey: setVerificationErrorKey,
     setSuccessKey: setVerificationSuccessKey,
-    clearMessages: clearVerificationMessages,
   } = useBackendMessageTranslation();
 
   const [verificationState, setVerificationState] = useState<VerificationState>(
@@ -52,7 +41,6 @@ export default function VerifyEmailPage() {
       status: 'verifying',
     }
   );
-  const [userId, setUserId] = useState<string | null>(null);
 
   // Use useRef to prevent multiple API calls
   const hasVerifiedRef = useRef(false);
@@ -63,15 +51,21 @@ export default function VerifyEmailPage() {
   }, [setVerificationSuccessKey]);
 
   useEffect(() => {
+    console.log('🔍 Verify-email page loaded');
+    console.log('🔍 Search params:', searchParams.toString());
+    console.log('🔍 Token from URL:', searchParams.get('token'));
+    
     // Prevent multiple verifications
     if (hasVerifiedRef.current) {
+      console.log('🔍 Verification already attempted, skipping');
       return;
     }
 
     // If user is already logged in via AuthContext, show success and redirect
     if (!isLoading && user) {
       hasVerifiedRef.current = true;
-
+      console.log('✅ User already logged in, redirecting...');
+      
       setVerificationState({
         status: 'success',
       });
@@ -89,107 +83,13 @@ export default function VerifyEmailPage() {
       return;
     }
 
-    // Check if user is already logged in - if so, show success and redirect
-    const checkExistingAuth = async () => {
-      try {
-        const response = await fetch(
-          buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
-          {
-            method: 'GET',
-            credentials: 'include',
-          }
-        );
-
-        if (response.ok) {
-          const userData = await response.json();
-
-          // Mark as verified to prevent API calls
-          hasVerifiedRef.current = true;
-
-          setVerificationState({
-            status: 'success',
-          });
-          setVerificationSuccessKey('verifyEmail.successMessage');
-
-          // Redirect based on user role
-          setTimeout(() => {
-            if (userData.roles && userData.roles.includes('ADMIN')) {
-              router.push('/admin');
-            } else {
-              router.push('/');
-            }
-          }, 2000);
-
-          return true; // User is already authenticated
-        }
-      } catch (error) {
-        console.error('🔐 No existing authentication found: ', error);
-      }
-      return false; // User is not authenticated
-    };
-
-    // Define the emailVerified callback function outside the async function
-    let handleEmailVerified:
-      | ((data: { success: boolean; user: any; message: string }) => void)
-      | null = null;
-    let successData: any = null;
-
-    // Define the auth broadcast handler
-    const handleAuthBroadcast = (data: { type: string; user?: any }) => {
-      if (data.type === 'login' && data.user) {
-        // Check if user was on auth page - redirect to home, otherwise stay
-        const currentPath = window.location.pathname;
-
-        if (currentPath === '/auth' || currentPath.startsWith('/auth/')) {
-          setVerificationState({
-            status: 'success',
-          });
-          setVerificationSuccessKey('verifyEmail.successMessage');
-          // Redirect based on user role after 2 seconds
-          setTimeout(() => {
-            if (
-              data.user &&
-              data.user.roles &&
-              data.user.roles.includes('ADMIN')
-            ) {
-              router.push('/admin');
-            } else {
-              router.push('/');
-            }
-          }, 2000);
-        } else {
-          // Update state to show success but don't redirect
-          setVerificationState({
-            status: 'success',
-          });
-          setVerificationSuccessKey('verifyEmail.successMessage');
-
-          // Show a temporary success message and then hide it
-          setTimeout(() => {
-            setVerificationState({
-              status: 'success',
-              message: t('verifyEmail.successMessage'),
-            });
-          }, 3000);
-
-          // Hide the success message after 5 seconds
-          setTimeout(() => {
-            setVerificationState({
-              status: 'success',
-              message: '',
-            });
-          }, 5000);
-        }
-      }
-    };
-
-    // Set up auth broadcast listener for cross-device sync
-    onAuthBroadcast(handleAuthBroadcast);
-
     const verifyEmail = async () => {
+      console.log('🔍 verifyEmail function called');
       const token = searchParams.get('token');
+      console.log('🔍 Token extracted from URL:', token ? 'PRESENT' : 'MISSING');
 
       if (!token) {
+        console.log('❌ No token found in URL');
         setVerificationState({
           status: 'invalid',
         });
@@ -197,62 +97,11 @@ export default function VerifyEmailPage() {
         return;
       }
 
-      // First check if user is already authenticated
-      const isAlreadyAuthenticated = await checkExistingAuth();
-      if (isAlreadyAuthenticated) {
-        return; // Exit early if user is already logged in
-      }
-
-      // Define the emailVerified callback function
-      handleEmailVerified = async (data: {
-        success: boolean;
-        user: any;
-        message: string;
-      }) => {
-        try {
-          if (data.success && data.user && successData?.tokens) {
-            // Automatically log in the user
-            const loginResult = await loginWithTokens(successData.tokens);
-            if (loginResult.success) {
-              setVerificationState({
-                status: 'success',
-                message: t('verifyEmail.successMessage'),
-              });
-
-              // Redirect based on user role after 2 seconds
-              setTimeout(() => {
-                if (
-                  data.user &&
-                  data.user.roles &&
-                  data.user.roles.includes('ADMIN')
-                ) {
-                  router.push('/admin');
-                } else {
-                  router.push('/');
-                }
-              }, 2000);
-            } else {
-              console.warn(
-                '🔐 Email verification WebSocket callback - login failed:',
-                loginResult
-              );
-              // Don't change the UI state here since verification already succeeded
-            }
-          }
-        } catch (error) {
-          console.error(
-            '🔐 Email verification WebSocket callback error:',
-            error
-          );
-          // Don't change the UI state here since verification already succeeded
-        }
-      };
-
       try {
         // Mark as attempting verification to prevent multiple calls
         hasVerifiedRef.current = true;
 
-        // Try regular verification
+        console.log('📧 Calling verify-email API...');
         const response = await fetch(
           buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.VERIFY_EMAIL),
           {
@@ -266,131 +115,68 @@ export default function VerifyEmailPage() {
         );
 
         if (response.ok) {
-          successData = await response.json();
+          const successData = await response.json();
+          console.log('📧 Verify-email API response:', successData);
 
-          // If we have tokens, automatically log in the user
-          if (successData.tokens && successData.user) {
-            const currentUserId = successData.user.id;
-            setUserId(currentUserId);
+          // Set success state
+          if (successData.message) {
+            setVerificationBackendSuccess(successData.message);
+          } else {
+            setVerificationSuccessKey('verifyEmail.successMessage');
+          }
+          setVerificationState({
+            status: 'success',
+          });
 
-            // Map server success message to translation key
-            if (successData.message) {
-              setVerificationBackendSuccess(successData.message);
-            } else {
-              setVerificationSuccessKey('verifyEmail.successMessage');
-            }
-            setVerificationState({
-              status: 'success',
-            });
-
-            // Try to log in the user immediately with the verification tokens
-            try {
-              const loginResult = await loginWithTokens(successData.tokens);
-
-              if (loginResult.success) {
-                // Connect to socket and join verification room AFTER successful login
-                connect();
-                joinVerificationRoom(currentUserId);
-
-                // Listen for verification success event
-                if (handleEmailVerified) {
-                  on('emailVerified', handleEmailVerified);
-                }
-
-                // Redirect based on user role after successful login
-                setTimeout(() => {
-                  if (
-                    successData.user &&
-                    successData.user.roles &&
-                    successData.user.roles.includes('ADMIN')
-                  ) {
-                    router.push('/admin');
-                  } else {
-                    router.push('/');
-                  }
-                }, 2000);
-              } else {
-                // Login failed but verification succeeded - still show success and redirect
-                console.warn(
-                  '🔐 Email verification succeeded but login failed:',
-                  loginResult
-                );
-
-                // Connect to socket and join verification room even if login failed
-                connect();
-                joinVerificationRoom(currentUserId);
-
-                // Listen for verification success event
-                if (handleEmailVerified) {
-                  on('emailVerified', handleEmailVerified);
-                }
-
-                // Fallback: wait for WebSocket event or redirect based on role after 5 seconds
-                setTimeout(() => {
-                  if (
-                    successData.user &&
-                    successData.user.roles &&
-                    successData.user.roles.includes('ADMIN')
-                  ) {
-                    router.push('/admin');
-                  } else {
-                    router.push('/');
-                  }
-                }, 5000);
+          // Since server sets HTTP-only cookies, we need to check if user is logged in
+          // by making a request to /users/me endpoint
+          console.log('🔍 Checking if user is logged in via HTTP-only cookies...');
+          
+          try {
+            const userResponse = await fetch(
+              buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
+              {
+                method: 'GET',
+                credentials: 'include',
               }
-            } catch (loginError) {
-              // Login error but verification succeeded - still show success and redirect
-              console.warn(
-                '🔐 Email verification succeeded but login error:',
-                loginError
-              );
+            );
 
-              // Connect to socket and join verification room even if login failed
-              connect();
-              joinVerificationRoom(currentUserId);
-
-              // Listen for verification success event
-              if (handleEmailVerified) {
-                on('emailVerified', handleEmailVerified);
-              }
-
-              // Fallback: wait for WebSocket event or redirect based on role after 5 seconds
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              console.log('✅ User is logged in via HTTP-only cookies:', userData);
+              
+              // Update the user state in AuthContext to reflect the login
+              console.log('🔄 Updating user state in AuthContext...');
+              updateUser(userData.user);
+              
+              // User is logged in, redirect based on role
               setTimeout(() => {
                 if (
-                  successData.user &&
-                  successData.user.roles &&
-                  successData.user.roles.includes('ADMIN')
+                  userData.user.roles &&
+                  userData.user.roles.includes('ADMIN')
                 ) {
                   router.push('/admin');
                 } else {
                   router.push('/');
                 }
-              }, 5000);
-            }
-          } else {
-            // Fallback to old behavior if no tokens
-            if (successData.message) {
-              setVerificationBackendSuccess(successData.message);
+              }, 2000);
             } else {
-              setVerificationSuccessKey('verifyEmail.successMessage');
+              console.log('❌ User not logged in, redirecting to login');
+              // User not logged in - redirect to login page after 3 seconds
+              setTimeout(() => {
+                router.push('/auth');
+              }, 3000);
             }
-            setVerificationState({
-              status: 'success',
-            });
-
-            // Redirect to login page after 3 seconds
+          } catch (error) {
+            console.error('❌ Error checking user login status:', error);
+            // Error checking login status - redirect to login page after 3 seconds
             setTimeout(() => {
               router.push('/auth');
             }, 3000);
           }
         } else {
           const errorData = await response.json();
-
-          // If both endpoints failed, check if user is actually logged in
-          const isActuallyLoggedIn = await checkExistingAuth();
-          if (isActuallyLoggedIn) {
-            return; // User is logged in, exit early
-          }
+          console.error('❌ Verify-email API error:', errorData);
 
           // Map server error message to translation key
           if (errorData.message) {
@@ -403,14 +189,7 @@ export default function VerifyEmailPage() {
           });
         }
       } catch (error) {
-        console.error('🔐 Email verification error:', error);
-
-        // Check if user is actually logged in despite the error
-        const isActuallyLoggedIn = await checkExistingAuth();
-        if (isActuallyLoggedIn) {
-          return; // User is logged in, exit early
-        }
-
+        console.error('❌ Email verification error:', error);
         setVerificationState({
           status: 'error',
         });
@@ -419,33 +198,11 @@ export default function VerifyEmailPage() {
     };
 
     verifyEmail();
-
-    // Cleanup function
-    return () => {
-      if (userId) {
-        leaveVerificationRoom(userId);
-        // Note: disconnect is handled by the useSocket hook
-      }
-      // Clean up the emailVerified event listener
-      if (handleEmailVerified) {
-        off('emailVerified', handleEmailVerified);
-      }
-      // Clean up the auth broadcast listener
-      offAuthBroadcast(handleAuthBroadcast);
-    };
   }, [
-    connect,
-    joinVerificationRoom,
-    leaveVerificationRoom,
     loginWithTokens,
-    off,
-    offAuthBroadcast,
-    on,
-    onAuthBroadcast,
     router,
     searchParams,
     t,
-    userId,
     user,
     isLoading,
     setVerificationBackendError,
@@ -542,6 +299,42 @@ export default function VerifyEmailPage() {
 
         {verificationState.status === 'verifying' && (
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 border-t-transparent mx-auto"></div>
+        )}
+
+        {/* Debug: Test verification button for development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              Debug: Test verification with a sample token
+            </p>
+            <button
+              onClick={() => {
+                const testToken = 'test-token-123';
+                console.log('🧪 Testing verification with token:', testToken);
+                // Manually trigger verification
+                window.location.href = `/verify-email?token=${testToken}`;
+              }}
+              className="bg-blue-500 text-white px-4 py-2 rounded text-sm mr-2"
+            >
+              Test with Sample Token
+            </button>
+            <button
+              onClick={() => {
+                console.log('🧪 Testing verification with real token from URL');
+                const currentToken = searchParams.get('token');
+                if (currentToken) {
+                  console.log('🧪 Current token:', currentToken);
+                  // Reload the page to trigger verification
+                  window.location.reload();
+                } else {
+                  console.log('❌ No token in current URL');
+                }
+              }}
+              className="bg-green-500 text-white px-4 py-2 rounded text-sm"
+            >
+              Test with Current Token
+            </button>
+          </div>
         )}
       </div>
     </div>

@@ -33,10 +33,19 @@ export const API_CONFIG = {
       ME: '/v1/loyalty/me',
       TRANSACTIONS: '/v1/loyalty/transactions',
     },
+    WEBSOCKET: {
+      AUTH: '/auth',
+    },
   },
 };
 
 // Helper function to build full API URLs
 export const buildApiUrl = (endpoint: string): string => {
   return `${API_CONFIG.BASE_URL}${endpoint}`;
+};
+
+// Helper function to build WebSocket URLs
+export const buildWebSocketUrl = (endpoint: string): string => {
+  const baseUrl = API_CONFIG.BASE_URL.replace('http://', 'ws://').replace('https://', 'wss://');
+  return `${baseUrl}${endpoint}`;
 };

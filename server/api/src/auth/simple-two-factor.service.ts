@@ -7,7 +7,7 @@ import {
 import { PrismaService } from '../common/services/prisma.service';
 import { EmailService } from '../common/services/email.service';
 import { SecurityUtils } from '../common/security/security.utils';
-import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
+import { OfflineMessageService } from '../common/services/offline-message.service';
 import * as crypto from 'crypto';
 
 export interface TwoFactorCodeResult {
@@ -23,7 +23,7 @@ export class SimpleTwoFactorService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
-    private readonly webSocketGateway: AuthWebSocketGateway,
+    private readonly offlineMessageService: OfflineMessageService,
   ) {}
 
   /**
@@ -126,23 +126,23 @@ export class SimpleTwoFactorService {
       // Don't fail 2FA disable if email fails
     }
 
-    // Emit logout event to all user's devices (same as password change)
+    // Create offline message for logout (no real-time WebSocket needed)
     try {
-      // Emit to user's personal room (for all logged-in devices)
-      await this.webSocketGateway.emitLogoutToUserDevices(
+      await this.offlineMessageService.createForceLogoutMessage(
         userId,
         '2fa_disabled',
+        'Two-factor authentication has been disabled. Please log in again.',
       );
 
       this.logger.log(
-        `Logout events emitted for 2FA disable - user: ${user.email}`,
+        `Offline logout message created for 2FA disable - user: ${user.email}`,
       );
     } catch (error) {
       this.logger.error(
-        `Failed to emit logout events for 2FA disable - user: ${user.email}:`,
+        `Failed to create offline logout message for 2FA disable - user: ${user.email}:`,
         error,
       );
-      // Don't fail the 2FA disable if WebSocket emission fails
+      // Don't fail the 2FA disable if offline message creation fails
     }
 
     this.logger.log(

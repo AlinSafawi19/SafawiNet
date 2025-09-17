@@ -1,98 +1,71 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { initializeSocketService } from '../services/socket.service';
-
-// Get the initialized socket service
-const getSocketService = async () => {
-  try {
-    return await initializeSocketService();
-  } catch (error) {
-    console.warn('Failed to load socket service:', error);
-    return null;
-  }
-};
+import { socketSingleton } from '../services/socket.singleton';
 
 export const useSocket = () => {
   const { user } = useAuth();
 
   const connect = useCallback(async (token?: string) => {
-    const service = await getSocketService();
-    if (service) {
-      await service.connect(token);
-    }
+    await socketSingleton.ensureConnection(token);
   }, []);
 
   const disconnect = useCallback(async () => {
-    const service = await getSocketService();
-    if (service) {
-      service.disconnect();
-    }
+    socketSingleton.disconnect();
+  }, []);
+
+  // Ensure socket is ready for immediate use
+  const ensureReady = useCallback(async () => {
+    await socketSingleton.ensureReady();
   }, []);
 
   const joinVerificationRoom = useCallback(async (userId: string) => {
-    const service = await getSocketService();
-    if (service) {
-      await service.joinVerificationRoom(userId);
-    }
+    await socketSingleton.ensureReady();
+    await socketSingleton.joinVerificationRoom(userId);
   }, []);
 
   const leaveVerificationRoom = useCallback(async (userId: string) => {
-    const service = await getSocketService();
-    if (service) {
-      await service.leaveVerificationRoom(userId);
-    }
+    await socketSingleton.ensureReady();
+    await socketSingleton.leaveVerificationRoom(userId);
   }, []);
 
   const joinPendingVerificationRoom = useCallback(async (email: string) => {
-    const service = await getSocketService();
-    if (service) {
-      await service.joinPendingVerificationRoom(email);
-    }
+    await socketSingleton.ensureReady();
+    await socketSingleton.joinPendingVerificationRoom(email);
   }, []);
 
   const leavePendingVerificationRoom = useCallback(async (email: string) => {
-    const service = await getSocketService();
-    if (service) {
-      await service.leavePendingVerificationRoom(email);
-    }
+    await socketSingleton.ensureReady();
+    await socketSingleton.leavePendingVerificationRoom(email);
   }, []);
 
   const joinPasswordResetRoom = useCallback(async (email: string) => {
-    const service = await getSocketService();
-    if (service) {
-      await service.joinPasswordResetRoom(email);
-    }
+    await socketSingleton.ensureReady();
+    await socketSingleton.joinPasswordResetRoom(email);
   }, []);
 
   const leavePasswordResetRoom = useCallback(async (email: string) => {
-    const service = await getSocketService();
-    if (service) {
-      await service.leavePasswordResetRoom(email);
-    }
+    await socketSingleton.ensureReady();
+    await socketSingleton.leavePasswordResetRoom(email);
   }, []);
 
   const on = useCallback(
-    async <T extends keyof import('../services/socket.service').SocketEvents>(
+    async <T extends keyof import('../services/socket.singleton').SocketEvents>(
       event: T,
-      callback: import('../services/socket.service').SocketEvents[T]
+      callback: import('../services/socket.singleton').SocketEvents[T]
     ) => {
-      const service = await getSocketService();
-      if (service) {
-        await service.on(event, callback);
-      }
+      await socketSingleton.ensureReady();
+      socketSingleton.on(event, callback);
     },
     []
   );
 
   const off = useCallback(
-    async <T extends keyof import('../services/socket.service').SocketEvents>(
+    async <T extends keyof import('../services/socket.singleton').SocketEvents>(
       event: T,
-      callback: import('../services/socket.service').SocketEvents[T]
+      callback: import('../services/socket.singleton').SocketEvents[T]
     ) => {
-      const service = await getSocketService();
-      if (service) {
-        await service.off(event, callback);
-      }
+      await socketSingleton.ensureReady();
+      await socketSingleton.off(event, callback);
     },
     []
   );
@@ -100,10 +73,8 @@ export const useSocket = () => {
   // Listen for authentication broadcasts from other devices
   const onAuthBroadcast = useCallback(
     async (callback: (data: { type: string; user?: any }) => void) => {
-      const service = await getSocketService();
-      if (service) {
-        await service.onAuthBroadcast(callback);
-      }
+      await socketSingleton.ensureReady();
+      await socketSingleton.onAuthBroadcast(callback);
     },
     []
   );
@@ -111,10 +82,8 @@ export const useSocket = () => {
   // Remove auth broadcast listener
   const offAuthBroadcast = useCallback(
     async (callback: (data: { type: string; user?: any }) => void) => {
-      const service = await getSocketService();
-      if (service) {
-        await service.offAuthBroadcast(callback);
-      }
+      await socketSingleton.ensureReady();
+      await socketSingleton.offAuthBroadcast(callback);
     },
     []
   );
@@ -143,18 +112,15 @@ export const useSocket = () => {
     handleUserChange();
 
     return () => {
-      // Cleanup on unmount
-      getSocketService().then((service) => {
-        if (service) {
-          service.disconnect();
-        }
-      });
+      // Cleanup on unmount - don't disconnect as other components might be using it
+      // The singleton will handle cleanup when the page unloads
     };
   }, [user, connect, disconnect]);
 
   return {
     connect,
     disconnect,
+    ensureReady,
     joinVerificationRoom,
     leaveVerificationRoom,
     joinPendingVerificationRoom,

@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/services/prisma.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { EmailService } from '../common/services/email.service';
-import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
+import { OfflineMessageService } from '../common/services/offline-message.service';
 import {
   CreateUserDto,
   UpdateProfileDto,
@@ -62,7 +62,7 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
-    private readonly webSocketGateway: AuthWebSocketGateway,
+    private readonly offlineMessageService: OfflineMessageService,
   ) {}
 
   async createUser(
@@ -416,23 +416,23 @@ export class UsersService {
         // Don't fail password change if email fails
       }
 
-      // Emit logout event to all user's devices
+      // Create offline message for logout (no real-time WebSocket needed)
       try {
-        // Emit to user's personal room (for all logged-in devices)
-        await this.webSocketGateway.emitLogoutToUserDevices(
+        await this.offlineMessageService.createForceLogoutMessage(
           userId,
           'password_changed',
+          'Your password has been changed. Please log in again.',
         );
 
         this.logger.log(
-          `Logout events emitted for password change - user: ${user.email}`,
+          `Offline logout message created for password change - user: ${user.email}`,
         );
       } catch (error) {
         this.logger.error(
-          `Failed to emit logout events for password change - user: ${user.email}:`,
+          `Failed to create offline logout message for password change - user: ${user.email}:`,
           error,
         );
-        // Don't fail the password change if WebSocket emission fails
+        // Don't fail the password change if offline message creation fails
       }
 
       return {

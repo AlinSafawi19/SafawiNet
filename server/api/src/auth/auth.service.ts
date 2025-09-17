@@ -33,6 +33,7 @@ import {
 import { randomUUID } from 'crypto';
 import { Request, Response } from 'express';
 import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
+import { OfflineMessageService } from '../common/services/offline-message.service';
 
 export interface AuthTokens {
   accessToken: string;
@@ -73,6 +74,7 @@ export class AuthService {
     private readonly sessionsService: SessionsService,
     private readonly notificationsService: NotificationsService,
     private readonly webSocketGateway: AuthWebSocketGateway,
+    private readonly offlineMessageService: OfflineMessageService,
   ) {}
 
   async register(
@@ -234,8 +236,15 @@ export class AuthService {
     user: Omit<User, 'password'>;
     tokens?: AuthTokens;
   }> {
+    console.log('🔍 AuthService.verifyEmail called with:', {
+      hasToken: !!verifyEmailDto.token,
+      tokenLength: verifyEmailDto.token?.length || 0
+    });
+    
     const { token } = verifyEmailDto;
     const tokenHash: string = SecurityUtils.hashToken(token as string);
+    
+    console.log('🔍 Token hash generated:', tokenHash.substring(0, 10) + '...');
 
     // Find and validate token atomically
     const result: User = await this.prisma.$transaction(async (tx) => {
@@ -270,7 +279,13 @@ export class AuthService {
     });
 
     // Generate tokens for automatic login
+    console.log('🔑 Generating tokens for verified user:', result.email);
     const tokens: AuthTokens = await this.generateTokens(result, undefined);
+    console.log('🔑 Tokens generated successfully:', {
+      hasAccessToken: !!tokens.accessToken,
+      hasRefreshToken: !!tokens.refreshToken,
+      expiresIn: tokens.expiresIn
+    });
 
     // Emit WebSocket event for real-time notification
     try {
@@ -297,10 +312,21 @@ export class AuthService {
       this.logger.log(`🔑 Tokens data:`, {
         accessToken: tokens.accessToken ? 'PRESENT' : 'MISSING',
         refreshToken: tokens.refreshToken ? 'PRESENT' : 'MISSING',
+        expiresIn: tokens.expiresIn
       });
+      
+      // Log the user data being sent
+      const userData = this.excludePassword(result);
+      this.logger.log(`👤 User data being sent:`, {
+        id: userData.id,
+        email: userData.email,
+        isVerified: userData.isVerified,
+        roles: userData.roles
+      });
+      
       this.webSocketGateway.emitVerificationSuccessToPendingRoom(
         result.email,
-        this.excludePassword(result),
+        userData,
         tokens,
       );
 
@@ -669,33 +695,24 @@ export class AuthService {
       // Don't fail password reset if email fails
     }
 
-    // Emit logout event to password reset room and user's devices
-    // Use setTimeout to allow client to join room first
-    setTimeout(async () => {
-      try {
-        // Emit to password reset room (for devices that requested reset)
-        this.webSocketGateway.emitLogoutToPasswordResetRoom(
-          result.email,
-          'password_reset',
-        );
+    // Create offline message for logout (no real-time WebSocket needed)
+    try {
+      await this.offlineMessageService.createForceLogoutMessage(
+        result.id,
+        'password_reset',
+        'Your password has been reset. Please log in with your new password.',
+      );
 
-        // Emit to user's personal room (for all logged-in devices)
-        await this.webSocketGateway.emitLogoutToUserDevices(
-          result.id,
-          'password_reset',
-        );
-
-        this.logger.log(
-          `Logout events emitted for password reset - user: ${result.email}`,
-        );
-      } catch (error) {
-        this.logger.error(
-          `Failed to emit logout events for password reset - user: ${result.email}:`,
-          error,
-        );
-        // Don't fail the password reset if WebSocket emission fails
-      }
-    }, 500); // 500ms delay to allow client to join room
+      this.logger.log(
+        `Offline logout message created for password reset - user: ${result.email}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to create offline logout message for password reset - user: ${result.email}:`,
+        error,
+      );
+      // Don't fail the password reset if offline message creation fails
+    }
 
     return {
       message:

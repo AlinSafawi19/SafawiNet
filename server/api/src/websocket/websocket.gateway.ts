@@ -79,7 +79,14 @@ interface RoomStates {
 
 @WebSocketGateway({
   cors: {
-    origin: ['http://localhost:3001', 'http://localhost:3000'],
+    origin: (origin, callback) => {
+      // Allow all localhost origins for development
+      if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   },
   namespace: '/auth',
@@ -688,137 +695,6 @@ export class AuthWebSocketGateway
       this.logger.log(`Login broadcasted to all devices`);
     } catch (error) {
       this.logger.error(`Failed to broadcast login`, error);
-    }
-  }
-
-  // Method to emit logout event to all user's devices (for password change)
-  async emitLogoutToUserDevices(
-    userId: string,
-    reason: string = 'password_changed',
-  ) {
-    if (!this.server) {
-      this.logger.error(
-        'WebSocket server not initialized, cannot emit logout to user devices',
-      );
-      return;
-    }
-
-    try {
-      // Emit to user's personal room (all their devices)
-      let message = 'Your password has been changed. Please log in again.';
-      if (reason === '2fa_disabled') {
-        message =
-          'Two-factor authentication has been disabled. Please log in again.';
-      } else if (reason === 'password_reset') {
-        message =
-          'Your password has been reset. Please log in with your new password.';
-      }
-
-      const payload: ForceLogoutPayload = {
-        reason,
-        message,
-        timestamp: new Date().toISOString(),
-      };
-
-      // For security events, always create offline message AND emit to online users
-      // This ensures the message is delivered even if WebSocket fails
-      await this.offlineMessageService.createForceLogoutMessage(
-        userId,
-        reason,
-        message,
-      );
-
-      // Also emit to online users if they're connected
-      this.server.to(`user:${userId}`).emit('forceLogout', payload);
-      this.logger.log(`Emitted forceLogout to online user ${userId}`);
-
-      this.logger.log(
-        `Offline message created and logout emitted for user ${userId} - reason: ${reason}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Failed to emit logout to user devices for user ${userId}:`,
-        error,
-      );
-    }
-  }
-
-  // Method to emit logout event to password reset room (for password reset)
-  emitLogoutToPasswordResetRoom(
-    email: string,
-    reason: string = 'password_reset',
-  ) {
-    if (!this.server) {
-      this.logger.error(
-        'WebSocket server not initialized, cannot emit logout to password reset room',
-      );
-      return;
-    }
-
-    this.logger.log(`🔍 Looking for password reset room for email: ${email}`);
-    const room = this.passwordResetRooms.get(email.toLowerCase());
-    this.logger.log(
-      `📊 Password reset room state for ${email}: ${room ? `Found with ${room.size} users` : 'Not found'}`,
-    );
-
-    if (room && room.size > 0) {
-      try {
-        this.logger.log(
-          `📡 Emitting forceLogout to password reset room: password_reset:${email.toLowerCase()}`,
-        );
-        this.logger.log(`📡 Room contains sockets:`, Array.from(room));
-
-        // Emit to the room
-        const payload: ForceLogoutPayload = {
-          reason,
-          message:
-            'Your password has been reset. Please log in with your new password.',
-          timestamp: new Date().toISOString(),
-        };
-
-        this.server
-          .to(`password_reset:${email.toLowerCase()}`)
-          .emit('forceLogout', payload);
-
-        this.logger.log(
-          `✅ Logout emitted to password reset room for email: ${email}`,
-        );
-
-        // Clean up the password reset room after successful emission
-        this.logger.log(
-          `🧹 Cleaning up password reset room for email: ${email}`,
-        );
-        this.passwordResetRooms.delete(email.toLowerCase());
-
-        // Also remove all sockets from the room
-        for (const socketId of room) {
-          try {
-            this.server
-              .in(socketId)
-              .socketsLeave(`password_reset:${email.toLowerCase()}`);
-          } catch (error) {
-            this.logger.warn(
-              `Failed to remove socket ${socketId} from password reset room:`,
-              error,
-            );
-          }
-        }
-
-        this.logger.log(
-          `✅ Password reset room cleaned up for email: ${email}`,
-        );
-      } catch (error) {
-        this.logger.error(
-          `❌ Failed to emit logout to password reset room for email ${email}:`,
-          error,
-        );
-      }
-    } else {
-      this.logger.warn(`⚠️ No password reset room found for email: ${email}`);
-      this.logger.log(
-        `🔍 Available password reset rooms:`,
-        Array.from(this.passwordResetRooms.keys()),
-      );
     }
   }
 

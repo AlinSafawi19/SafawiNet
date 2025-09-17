@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { buildApiUrl } from '../../../../config/api';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,7 +33,11 @@ export async function POST(request: NextRequest) {
 
     // Forward cookies from the request to the backend
     const cookieHeader = request.headers.get('cookie');
+    console.log('🍪 Frontend API - Cookie header:', cookieHeader);
+    console.log('🍪 Frontend API - All headers:', Object.fromEntries(request.headers.entries()));
+    
     if (!cookieHeader) {
+      console.log('❌ Frontend API - No cookies found in request');
       return NextResponse.json(
         { message: 'Authentication required' },
         { status: 401 }
@@ -41,9 +46,7 @@ export async function POST(request: NextRequest) {
 
     // Make request to your backend API
     const backendResponse = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-      }/users/me/change-password`,
+      buildApiUrl('/users/me/change-password'),
       {
         method: 'POST',
         headers: {

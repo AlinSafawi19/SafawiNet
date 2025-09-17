@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { buildApiUrl } from '../../config/api';
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -39,7 +40,7 @@ export async function PATCH(request: NextRequest) {
 
     // Make request to your backend API
     const backendResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/users/me`,
+      buildApiUrl('/users/me'),
       {
         method: 'PATCH',
         headers: {
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
 
     // Make request to your backend API
     const backendResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/users`,
+      buildApiUrl('/users'),
       {
         method: 'POST',
         headers: {

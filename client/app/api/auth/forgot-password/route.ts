@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { buildApiUrl } from '../../../config/api';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,9 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Forward the request to your backend server
-    const backendUrl =
-      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    const response = await fetch(`${backendUrl}/v1/auth/forgot-password`, {
+    const response = await fetch(buildApiUrl('/v1/auth/forgot-password'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
