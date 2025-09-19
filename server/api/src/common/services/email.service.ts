@@ -37,7 +37,6 @@ export interface PasswordResetData {
 export interface TwoFactorCodeData {
   name: string;
   code: string;
-  expirationMinutes: number;
   appName?: string;
   supportEmail?: string;
 }
@@ -387,7 +386,6 @@ export class EmailService {
       'two-factor-code': {
         name: 'John Doe',
         code: '123456',
-        expirationMinutes: 10,
         appName: 'Safawinet',
         supportEmail: 'support@safawinet.com',
       },

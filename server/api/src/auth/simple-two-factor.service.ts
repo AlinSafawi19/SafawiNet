@@ -180,7 +180,6 @@ export class SimpleTwoFactorService {
     await this.emailService.sendTemplateEmail('two-factor-code', user.email, {
       name: user.name || 'User',
       code,
-      expirationMinutes: this.codeExpirationMinutes,
     });
 
     return { message: 'Two-factor authentication code sent to your email' };
