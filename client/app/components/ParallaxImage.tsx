@@ -21,30 +21,58 @@ export function ParallaxImage({
   // Parallax effect state
   const [parallaxOffset, setParallaxOffset] = useState(0);
   const [parallaxScale, setParallaxScale] = useState(1);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
   const parallaxRef = useRef<HTMLDivElement>(null);
 
-  // Parallax scroll effect with widening/zooming
+  // Handle screen size changes
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth < 640);
+    };
+
+    // Set initial screen size
+    handleResize();
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Parallax scroll effect with improved bounds and responsive behavior
   useEffect(() => {
     const handleScroll = () => {
       if (parallaxRef.current) {
         const rect = parallaxRef.current.getBoundingClientRect();
         const scrolled = window.pageYOffset;
-        const rate = scrolled * -0.3; // Vertical movement (slower)
-        const scale = 1 + scrolled * 0.0005; // Scale effect (zooming/widening)
+        const windowHeight = window.innerHeight;
+        
+        // Much more conservative parallax movement to prevent cutoff
+        const maxOffset = isSmallScreen ? 20 : 40; // Very small movement
+        const parallaxRate = isSmallScreen ? -0.05 : -0.1; // Very slow movement
+        const rate = Math.max(Math.min(scrolled * parallaxRate, maxOffset), -maxOffset);
+        
+        // Minimal scaling to prevent image from moving out of bounds
+        const maxScale = isSmallScreen ? 1.02 : 1.05; // Very minimal scaling
+        const scaleRate = isSmallScreen ? 0.0001 : 0.0002; // Very slow scaling
+        const scale = Math.max(Math.min(1 + scrolled * scaleRate, maxScale), 1);
 
         setParallaxOffset(rate);
-        setParallaxScale(Math.max(scale, 1)); // Ensure scale doesn't go below 1
+        setParallaxScale(scale);
       }
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isSmallScreen]);
+
+  // Get responsive image sizing based on screen size
+  const imageSizing = isSmallScreen 
+    ? { width: '180%', height: '180%', left: '-40%', top: '-40%' }
+    : { width: '120%', height: '120%', left: '-10%', top: '-10%' };
 
   return (
     <div
       ref={parallaxRef}
-      className={`flex-1 lg:basis-1/2 relative hidden sm:block bg-zinc-900 overflow-hidden ${className}`}
+      className={`flex-1 lg:basis-1/2 relative bg-zinc-900 overflow-hidden min-h-[300px] sm:min-h-[400px] md:min-h-[500px] lg:min-h-[600px] ${className}`}
     >
       <div
         className="absolute inset-0 w-full h-full"
@@ -52,10 +80,10 @@ export function ParallaxImage({
           transform: `translateY(${parallaxOffset}px) scale(${parallaxScale})`,
           transition: 'transform 0.1s ease-out',
           transformOrigin: 'center center',
-          width: '120%',
-          height: '120%',
-          left: '-10%',
-          top: '-10%',
+          width: imageSizing.width,
+          height: imageSizing.height,
+          left: imageSizing.left,
+          top: imageSizing.top,
         }}
       >
         <Image
@@ -64,6 +92,7 @@ export function ParallaxImage({
           className="w-full h-full object-cover"
           width={1000}
           height={800}
+          priority
         />
       </div>
       <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 to-pink-900/80 z-10"></div>
