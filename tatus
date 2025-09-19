@@ -1,0 +1,17 @@
+  cleanup/code-files-comments-cleanup[m f7419aa Code cleanup: remove comments, clean up files, and refactor 2FA service
+  feature/2fa-ui-fixes               [m 4e9ebdc Update configuration files and remove staging environment files
+  feature/account-profile            [m d7d6b96 feat: implement account recovery, recover, and verify-email pages with improved UI and functionality
+  feature/admin-auth                 [m b0a16c5 Add admin authentication system and user management features
+* [32mfeature/api-rate-limiting          [m f2c9773 UI fixes and improvements for testing branch
+  feature/code-cleanup-performance   [m cbdcdaa Update email templates and services for better formatting and functionality
+  feature/forgot-password            [m 6ab5cd1 feat: implement forgot password and reset password functionality with email verification
+  feature/general-ui-fixes           [m 2f9b080 General UI fixes and improvements
+  feature/language-and-theme         [m 7cff6b1 Add language and theme support with internationalization and dark mode toggle
+  feature/loading-behaviors          [m f8250d3 Update authentication components and language messages
+  feature/offline-socket-handling    [m c0233d7 feat: implement offline message handling and various improvements
+  feature/password-email-change      [m 359a408 feat: implement password change and email verification features with 2FA support
+  feature/performance-enhancements   [m ec1306c feat: performance enhancements and UI improvements
+  feature/real-time-sockets          [m bc78fce feat: implement real-time socket functionality with authentication and language support
+  feature/testing-ui-fixes           [m f2c9773 UI fixes and improvements for testing branch
+  fix/build-errors                   [m 2ecb740 Fix build errors and improve authentication flow
+  main                               [m f2c9773 UI fixes and improvements for testing branch
