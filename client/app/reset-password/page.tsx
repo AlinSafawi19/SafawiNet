@@ -64,9 +64,8 @@ export default function ResetPasswordPage() {
       // Connect to socket anonymously first
       try {
         await connect();
-        console.log('✅ Connected to socket for password reset room');
       } catch (error) {
-        console.error('❌ Failed to connect to socket:', error);
+        // Failed to connect to socket
       }
     };
 
@@ -178,12 +177,11 @@ export default function ResetPasswordPage() {
           setUserEmail(data.email);
           try {
             await joinPasswordResetRoom(data.email);
-            console.log('✅ Joined password reset room for:', data.email);
 
             // Small delay to ensure room joining is complete before logout emission
             await new Promise((resolve) => setTimeout(resolve, 100));
           } catch (error) {
-            console.error('❌ Failed to join password reset room:', error);
+            // Failed to join password reset room
           }
         }
 

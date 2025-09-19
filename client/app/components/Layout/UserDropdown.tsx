@@ -10,6 +10,7 @@ import {
   HiArrowRightOnRectangle,
   HiChevronDown,
   HiGift,
+  HiBugAnt,
 } from 'react-icons/hi2';
 
 interface UserDropdownProps {
@@ -29,14 +30,6 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
     translateTierName,
   } = useLoyalty();
 
-  // Debug logging
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔍 UserDropdown loyalty state:', {
-      loyaltyAccount,
-      loyaltyLoading,
-      isCustomer,
-    });
-  }
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -84,6 +77,11 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
 
   const handleMyAccount = () => {
     router.push('/account');
+    closeDropdown();
+  };
+
+  const handleTestLogging = () => {
+    router.push('/test-logging');
     closeDropdown();
   };
 
@@ -294,6 +292,32 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
               </>
             )}
           </button>
+
+          {/* Temporary Test Logging Link - Only show in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <button
+              onClick={handleTestLogging}
+              className={`flex items-center hover:text-purple-500 transition-colors text-sm font-medium space-x-2 w-full px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                isRTL ? 'text-right justify-end' : 'text-left'
+              }`}
+            >
+              {isRTL ? (
+                <>
+                  <span className="truncate" title="Test Logging System">
+                    Test Logging
+                  </span>
+                  {HiBugAnt({ className: 'w-4 h-4 ml-3 flex-shrink-0' })}
+                </>
+              ) : (
+                <>
+                  {HiBugAnt({ className: 'w-4 h-4 mr-3 flex-shrink-0' })}
+                  <span className="truncate" title="Test Logging System">
+                    Test Logging
+                  </span>
+                </>
+              )}
+            </button>
+          )}
 
           <button
             onClick={handleLogout}

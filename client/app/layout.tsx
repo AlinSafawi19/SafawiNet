@@ -6,6 +6,8 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import DynamicLangAttribute from './components/DynamicLangAttribute';
 import { AppInitializer } from './components/AppInitializer';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { GlobalErrorHandler } from './components/GlobalErrorHandler';
 
 /**
  * Using force dynamic so changes in business assets (e.g. services) are immediately reflected.
@@ -61,19 +63,23 @@ export default function RootLayout({
         />
       </head>
       <body className="text-black bg-site dark:text-white dark:bg-dark-bg transition-colors duration-200">
-        <AuthProvider>
-          <ThemeProvider>
-            <LanguageProvider>
-              <AppInitializer>
-                <DynamicLangAttribute />
-                <Header />
-                <main className="bg-site dark:bg-dark-bg">{children}</main>
+        <ErrorBoundary>
+          <GlobalErrorHandler>
+            <AuthProvider>
+              <ThemeProvider>
+                <LanguageProvider>
+                  <AppInitializer>
+                    <DynamicLangAttribute />
+                    <Header />
+                    <main className="bg-site dark:bg-dark-bg">{children}</main>
 
-                <FooterWrapper />
-              </AppInitializer>
-            </LanguageProvider>
-          </ThemeProvider>
-        </AuthProvider>
+                    <FooterWrapper />
+                  </AppInitializer>
+                </LanguageProvider>
+              </ThemeProvider>
+            </AuthProvider>
+          </GlobalErrorHandler>
+        </ErrorBoundary>
       </body>
     </html>
   );

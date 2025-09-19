@@ -50,20 +50,15 @@ export class JwtAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    console.log('🛡️ JWT Guard - canActivate called');
-
     const request = context.switchToHttp().getRequest<RequestWithCookies>();
     const token = this.extractTokenFromRequest(request);
 
     if (!token) {
-      console.log('🛡️ JWT Guard - No token provided');
       throw new UnauthorizedException('No token provided');
     }
 
     try {
-      console.log('🛡️ JWT Guard - Validating token');
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
-      console.log('🛡️ JWT Guard - Token payload:', payload);
 
       // Check if user exists and is verified
       const user = await this.prisma.user.findUnique({
@@ -78,12 +73,10 @@ export class JwtAuthGuard implements CanActivate {
       });
 
       if (!user) {
-        console.log('🛡️ JWT Guard - User not found for ID:', payload.sub);
         throw new UnauthorizedException('User not found');
       }
 
       if (!user.isVerified) {
-        console.log('🛡️ JWT Guard - User not verified:', user.email);
         throw new UnauthorizedException('Email not verified');
       }
 
@@ -103,24 +96,11 @@ export class JwtAuthGuard implements CanActivate {
           });
 
           if (!userSession) {
-            console.log(
-              '❌ JWT Guard - Session not found for refreshTokenId:',
-              payload.refreshTokenId,
-            );
-            // Instead of throwing an error, log and continue without session validation
+            // Don't throw an error
             // This allows login to work even if session tracking fails
-            console.log(
-              '⚠️ JWT Guard - Continuing without session validation due to missing session',
-            );
           } else if (!userSession.isCurrent) {
-            console.log(
-              '❌ JWT Guard - Session is not current for refreshTokenId:',
-              payload.refreshTokenId,
-            );
-            // Instead of throwing an error, log and continue without session validation
-            console.log(
-              '⚠️ JWT Guard - Continuing without session validation due to inactive session',
-            );
+           // Don't throw an error
+            // This allows login to work even if session tracking fails
           } else {
             // Update session activity only if session is valid
             try {
@@ -128,36 +108,15 @@ export class JwtAuthGuard implements CanActivate {
                 where: { id: userSession.id },
                 data: { lastActiveAt: new Date() },
               });
-              console.log(
-                '🔄 JWT Guard - Updated session activity for session:',
-                userSession.id,
-              );
             } catch (error) {
-              console.log(
-                '⚠️ JWT Guard - Failed to update session activity:',
-                error,
-              );
               // Don't fail validation if session update fails
             }
           }
         } catch (error) {
-          console.log(
-            '⚠️ JWT Guard - Database error during session validation:',
-            error,
-          );
           // Don't fail validation if database query fails
           // This ensures login works even if session tracking is temporarily unavailable
         }
-      } else {
-        console.log(
-          'ℹ️ JWT Guard - No refreshTokenId in payload, skipping session validation',
-        );
       }
-
-      console.log(
-        '🛡️ JWT Guard - Authentication and session validation successful, user:',
-        user.email,
-      );
 
       // Attach user to request
       (request as AuthenticatedRequest).user = {
@@ -172,9 +131,6 @@ export class JwtAuthGuard implements CanActivate {
 
       return true;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      console.log('🛡️ JWT Guard - Token validation failed:', errorMessage);
       throw new UnauthorizedException('Invalid token');
     }
   }
@@ -182,32 +138,17 @@ export class JwtAuthGuard implements CanActivate {
   private extractTokenFromRequest(
     request: RequestWithCookies,
   ): string | undefined {
-    // Debug logging
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 JWT Guard - Request cookies:', request?.cookies);
-      console.log('🔍 JWT Guard - Request headers:', request?.headers);
-    }
-
     // First try to extract from cookies
     if (request?.cookies?.accessToken) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 JWT Guard - Token found in cookies');
-      }
       return request.cookies.accessToken;
     }
 
     // Fallback to Authorization header
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     if (type === 'Bearer' && token) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 JWT Guard - Token found in Authorization header');
-      }
       return token;
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 JWT Guard - No token found in cookies or headers');
-    }
     return undefined;
   }
 }

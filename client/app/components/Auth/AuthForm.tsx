@@ -227,17 +227,6 @@ export function AuthForm() {
         if (result.success) {
           // User is verified, check role and redirect accordingly
           const currentUser = result.user;
-          console.log('🔐 Login successful, user data:', currentUser);
-          console.log('🔐 User roles:', currentUser?.roles);
-          console.log('🔐 User roles type:', typeof currentUser?.roles);
-          console.log(
-            '🔐 User roles is array:',
-            Array.isArray(currentUser?.roles)
-          );
-          console.log(
-            '🔐 User roles stringified:',
-            JSON.stringify(currentUser?.roles)
-          );
 
           // More robust role checking - handle different possible role field structures
           const roles =
@@ -245,13 +234,6 @@ export function AuthForm() {
             (currentUser as any)?.role ||
             (currentUser as any)?.userRoles ||
             (currentUser as any)?.userRole;
-          console.log('🔐 Extracted roles from various possible fields:', {
-            roles: currentUser?.roles,
-            role: (currentUser as any)?.role,
-            userRoles: (currentUser as any)?.userRoles,
-            userRole: (currentUser as any)?.userRole,
-            finalRoles: roles,
-          });
 
           const hasAdminRole =
             currentUser &&
@@ -262,40 +244,23 @@ export function AuthForm() {
               ? roles === 'ADMIN'
               : false);
 
-          console.log('🔐 Has admin role:', hasAdminRole);
-          console.log('🔐 Role check breakdown:', {
-            hasUser: !!currentUser,
-            hasRoles: !!currentUser?.roles,
-            rolesType: typeof currentUser?.roles,
-            isArray: Array.isArray(currentUser?.roles),
-            rolesValue: currentUser?.roles,
-            includesAdmin: Array.isArray(currentUser?.roles)
-              ? currentUser?.roles.includes('ADMIN')
-              : false,
-          });
-
           if (hasAdminRole) {
-            console.log('🔐 Redirecting admin user to /admin');
             try {
               router.push('/admin');
             } catch (error) {
-              console.log('🔐 Router push failed, using window.location');
               window.location.href = '/admin';
             }
           } else {
-            console.log('🔐 Redirecting customer user to /');
             // Try router.push first, fallback to window.location if needed
             try {
               router.push('/');
             } catch (error) {
-              console.log('🔐 Router push failed, using window.location');
               window.location.href = '/';
             }
 
             // Fallback redirect after a short delay
             setTimeout(() => {
               if (window.location.pathname === '/auth') {
-                console.log('🔐 Fallback redirect to /');
                 window.location.href = '/';
               }
             }, 1000);

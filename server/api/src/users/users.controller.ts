@@ -11,8 +11,10 @@ import {
   Patch,
   Put,
   Request,
-  Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import {
   ApiBody,
   ApiTags,
@@ -26,6 +28,7 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles } from '../auth/guards/roles.guard';
 import { Role, User } from '@prisma/client';
+import { LoggerService } from '../common/services/logger.service';
 import {
   CreateUserSchema,
   CreateUserDto,
@@ -65,9 +68,13 @@ export class UsersController {
   // For regular customer registration, use POST /auth/register instead
   // GET /users/admins - Get all admin users (admin-only)
   // GET /users/customers - Get all customer users (admin-only)
-  private readonly logger = new Logger(UsersController.name);
 
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    private readonly loggerService: LoggerService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -99,11 +106,29 @@ export class UsersController {
   async createUser(
     @Body() createUserDto: CreateUserDto,
   ): Promise<{ message: string; user: Omit<User, 'password'> }> {
-    const user = await this.usersService.createUser(createUserDto);
-    return {
-      message: 'Admin user created successfully',
-      user,
-    };
+    this.loggerService.info('Admin user creation attempt', {
+      source: 'api',
+      metadata: { endpoint: 'createUser', service: 'users', email: createUserDto.email }
+    });
+
+    try {
+      const user = await this.usersService.createUser(createUserDto);
+      this.loggerService.info('Admin user created successfully', {
+        userId: user.id,
+        source: 'api',
+        metadata: { endpoint: 'createUser', service: 'users', email: user.email }
+      });
+      return {
+        message: 'Admin user created successfully',
+        user,
+      };
+    } catch (error) {
+      this.loggerService.error('Admin user creation failed', error as Error, {
+        source: 'api',
+        metadata: { endpoint: 'createUser', service: 'users', email: createUserDto.email }
+      });
+      throw error;
+    }
   }
 
   @Get('admins')
@@ -142,22 +167,59 @@ export class UsersController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
     status: 200,
-    description: 'Current user profile retrieved successfully',
+    description: 'User profile retrieved successfully or user not authenticated',
+    schema: {
+      type: 'object',
+      properties: {
+        user: {
+          type: 'object',
+          description: 'User profile if authenticated, null if not authenticated',
+        },
+        authenticated: {
+          type: 'boolean',
+          description: 'Whether the user is authenticated',
+        },
+      },
+    },
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getCurrentUser(
-    @Request() req: AuthenticatedRequest,
-  ): Promise<{ user: Omit<User, 'password'> }> {
-    this.logger.log('🚀 /users/me endpoint reached!');
-    this.logger.log('🚀 Request user object:', req.user);
+    @Request() req: ExpressRequest,
+  ): Promise<{ user: Omit<User, 'password'> | null; authenticated: boolean }> {
+    
+    try {
+      // Extract token from cookies first, then from Authorization header
+      let token: string | undefined;
+      
+      // Check cookies first
+      if (req.cookies?.accessToken) {
+        token = req.cookies.accessToken;
+      } else {
+        // Fallback to Authorization header
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          token = authHeader.substring(7);
+        } else {
+        }
+      }
 
-    const user = await this.usersService.getCurrentUser(req.user.sub);
-    return { user };
+      if (!token) {
+        return { user: null, authenticated: false };
+      }
+
+      // Verify the token
+      const jwtSecret = this.configService.get<string>('JWT_SECRET') || 'fallback-secret';
+      const payload = this.jwtService.verify(token!, { secret: jwtSecret });
+      
+      // Get user data
+      const user = await this.usersService.getCurrentUser(payload.sub);
+      return { user, authenticated: true };
+      
+    } catch (error) {
+      return { user: null, authenticated: false };
+    }
   }
 
   @Get(':id')
@@ -392,7 +454,6 @@ export class UsersController {
   }
 
   @Post('me/change-password')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Change user password' })
   @ApiBody({
@@ -416,13 +477,57 @@ export class UsersController {
   })
   @UsePipes(new ZodValidationPipe(ChangePasswordSchema))
   async changePassword(
-    @Request() req: AuthenticatedRequest,
+    @Request() req: ExpressRequest,
     @Body() changePasswordDto: ChangePasswordDto,
   ): Promise<{ message: string; messageKey: string }> {
+    
+    try {
+      // Extract token from cookies first, then from Authorization header
+      let token: string | undefined;
+      
+      // Check cookies first
+      if (req.cookies?.accessToken) {
+        token = req.cookies.accessToken;
+      } else {
+        // Fallback to Authorization header
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          token = authHeader.substring(7);
+        } else {
+        }
+      }
+
+      if (!token) {
+        throw new UnauthorizedException('Authentication required');
+      }
+
+      // Verify the token
+      const jwtSecret = this.configService.get<string>('JWT_SECRET') || 'fallback-secret';
+      const payload = this.jwtService.verify(token!, { secret: jwtSecret });
+      
+
+      // Get user data to verify they exist and are verified
+      const user = await this.usersService.getCurrentUser(payload.sub);
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      if (!user.isVerified) {
+        throw new UnauthorizedException('Email not verified');
+      }
+
+      // Proceed with password change
     const result = await this.usersService.changePassword(
-      req.user.sub,
+        payload.sub,
       changePasswordDto,
     );
     return result;
+      
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Authentication failed');
+    }
   }
 }

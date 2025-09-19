@@ -59,20 +59,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload): Promise<ValidatedUser> {
-    console.log('🔐 JWT Strategy - validate called with payload:', payload);
-    console.log(
-      '🔐 JWT Strategy - iat field:',
-      payload.iat,
-      'type:',
-      typeof payload.iat,
-    );
-    console.log(
-      '🔐 JWT Strategy - exp field:',
-      payload.exp,
-      'type:',
-      typeof payload.exp,
-    );
-
     // Check if user still exists and is verified
     const user: UserWithRoles | null = await this.prisma.user.findUnique({
       where: { id: payload.sub },
@@ -85,15 +71,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       },
     });
 
-    console.log('🔐 JWT Strategy - user found:', user);
-
     if (!user) {
-      console.log('❌ JWT Strategy - User not found for ID:', payload.sub);
       throw new UnauthorizedException('User not found');
     }
 
     if (!user.isVerified) {
-      console.log('❌ JWT Strategy - User not verified:', user.email);
       throw new UnauthorizedException('Email not verified');
     }
 
@@ -114,24 +96,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           });
 
         if (!userSession) {
-          console.log(
-            '❌ JWT Strategy - Session not found for refreshTokenId:',
-            payload.refreshTokenId,
-          );
-          // Instead of throwing an error, log and continue without session validation
+          // Don't throw an error
           // This allows login to work even if session tracking fails
-          console.log(
-            '⚠️ JWT Strategy - Continuing without session validation due to missing session',
-          );
         } else if (!userSession.isCurrent) {
-          console.log(
-            '❌ JWT Strategy - Session is not current for refreshTokenId:',
-            payload.refreshTokenId,
-          );
-          // Instead of throwing an error, log and continue without session validation
-          console.log(
-            '⚠️ JWT Strategy - Continuing without session validation due to inactive session',
-          );
+          // Don't throw an error
+          // This allows login to work even if session tracking fails
         } else {
           // Update session activity only if session is valid
           try {
@@ -139,36 +108,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
               where: { id: userSession.id },
               data: { lastActiveAt: new Date() },
             });
-            console.log(
-              '🔄 JWT Strategy - Updated session activity for session:',
-              userSession.id,
-            );
           } catch (error: unknown) {
-            console.log(
-              '⚠️ JWT Strategy - Failed to update session activity:',
-              error,
-            );
             // Don't fail validation if session update fails
           }
         }
       } catch (error: unknown) {
-        console.log(
-          '⚠️ JWT Strategy - Database error during session validation:',
-          error,
-        );
         // Don't fail validation if database query fails
         // This ensures login works even if session tracking is temporarily unavailable
       }
-    } else {
-      console.log(
-        'ℹ️ JWT Strategy - No refreshTokenId in payload, skipping session validation',
-      );
     }
-
-    console.log(
-      '✅ JWT Strategy - User and session validated successfully:',
-      user.email,
-    );
 
     return {
       sub: user.id,

@@ -17,7 +17,6 @@ import { RolesGuard } from './guards/roles.guard';
 import { PrismaService } from '../common/services/prisma.service';
 import { RedisService } from '../common/services/redis.service';
 import { EmailService } from '../common/services/email.service';
-import { PinoLoggerService } from '../common/services/logger.service';
 import { SentryService } from '../common/services/sentry.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
@@ -57,7 +56,6 @@ import { UsersModule } from '../users/users.module';
     PrismaService,
     RedisService,
     EmailService,
-    PinoLoggerService,
     SentryService,
     SecurityUtils,
     AuthWebSocketGateway,

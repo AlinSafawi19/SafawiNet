@@ -20,7 +20,6 @@ import {
   EmailMonitoringService,
   EmailMetrics,
 } from '../common/services/email-monitoring.service';
-import { PinoLoggerService } from '../common/services/logger.service';
 import { AuthenticatedRequest } from './types/auth.types';
 
 // Type definitions for admin controller
@@ -163,7 +162,6 @@ export class AdminController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailMonitoring: EmailMonitoringService,
-    private readonly logger: PinoLoggerService,
   ) {}
 
   // User Management
@@ -312,10 +310,6 @@ export class AdminController {
       },
     });
 
-    this.logger.log(
-      `Admin ${req.user.email} updated roles for user ${updatedUser.email} to: ${roles.join(', ')}`,
-    );
-
     return updatedUser;
   }
 
@@ -331,8 +325,6 @@ export class AdminController {
     }
 
     await this.prisma.user.delete({ where: { id } });
-
-    this.logger.log(`Admin ${req.user.email} deleted user ${id}`);
   }
 
   // System Monitoring
@@ -455,8 +447,6 @@ export class AdminController {
     @Request() req: AuthenticatedRequest,
   ): Promise<void> {
     await this.prisma.userSession.delete({ where: { id: sessionId } });
-
-    this.logger.log(`Admin ${req.user.email} revoked session ${sessionId}`);
   }
 
   // Notification Management
@@ -488,10 +478,6 @@ export class AdminController {
     await this.prisma.notification.createMany({
       data: notifications,
     });
-
-    this.logger.log(
-      `Admin ${req.user.email} broadcasted notification to ${users.length} users`,
-    );
 
     return {
       message: `Notification broadcasted to ${users.length} users`,

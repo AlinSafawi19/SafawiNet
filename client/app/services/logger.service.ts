@@ -1,128 +1,171 @@
-/**
- * Client-side Logger Service
- * Simple logging service for Next.js API routes and client-side code
- */
-
-export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
-
-export interface LogContext {
-  component?: string;
+interface LogContext {
   userId?: string;
-  requestId?: string;
-  [key: string]: any;
+  url?: string;
+  userAgent?: string;
+  metadata?: Record<string, any>;
+  component?: string;
+  action?: string;
 }
 
-class ClientLoggerService {
-  private isDevelopment = process.env.NODE_ENV === 'development';
-  private logLevel: LogLevel = (process.env.LOG_LEVEL as LogLevel) || 'info';
+interface ClientErrorLog {
+  level: 'error' | 'warning' | 'info' | 'debug';
+  message: string;
+  stack?: string;
+  url?: string;
+  userAgent?: string;
+  metadata?: Record<string, any>;
+  timestamp?: string;
+}
 
-  private shouldLog(level: LogLevel): boolean {
-    const levels: Record<LogLevel, number> = {
-      error: 0,
-      warn: 1,
-      info: 2,
-      debug: 3,
-    };
-    return levels[level] <= levels[this.logLevel];
+class ClientLogger {
+  private isEnabled: boolean = true;
+  private apiEndpoint: string = '/api/logs';
+  private logQueue: ClientErrorLog[] = [];
+  private maxQueueSize: number = 50;
+  private flushInterval: number = 5000; // 5 seconds
+  private flushTimer: NodeJS.Timeout | null = null;
+
+  constructor() {
+    // Only enable logging in production or when explicitly enabled
+    this.isEnabled = process.env.NODE_ENV === 'production' || 
+                    localStorage.getItem('debug-logging') === 'true';
+    
+    // Start periodic flush
+    this.startFlushTimer();
+    
+    // Flush logs before page unload
+    window.addEventListener('beforeunload', () => {
+      this.flush();
+    });
   }
 
-  private formatMessage(
-    level: LogLevel,
+  private startFlushTimer(): void {
+    if (this.flushTimer) {
+      clearInterval(this.flushTimer);
+    }
+    
+    this.flushTimer = setInterval(() => {
+      this.flush();
+    }, this.flushInterval);
+  }
+
+  private async sendToServer(log: ClientErrorLog): Promise<void> {
+    try {
+      const response = await fetch(this.apiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(log),
+      });
+
+      if (!response.ok) {
+        console.warn('Failed to send log to server:', response.status);
+      }
+    } catch (error) {
+      console.warn('Error sending log to server:', error);
+    }
+  }
+
+  private addToQueue(log: ClientErrorLog): void {
+    if (!this.isEnabled) return;
+
+    this.logQueue.push(log);
+
+    // If queue is full, remove oldest logs
+    if (this.logQueue.length > this.maxQueueSize) {
+      this.logQueue.shift();
+    }
+
+    // For errors, flush immediately
+    if (log.level === 'error') {
+      this.flush();
+    }
+  }
+
+  private async flush(): Promise<void> {
+    if (this.logQueue.length === 0) return;
+
+    const logsToSend = [...this.logQueue];
+    this.logQueue = [];
+
+    // Send logs in parallel
+    await Promise.all(
+      logsToSend.map(log => this.sendToServer(log))
+    );
+  }
+
+  private createLogEntry(
+    level: 'error' | 'warning' | 'info' | 'debug',
     message: string,
-    context?: LogContext
-  ): string {
-    const timestamp = new Date().toISOString();
-    const contextStr = context ? ` [${JSON.stringify(context)}]` : '';
-    return `[${timestamp}] [${level.toUpperCase()}]${contextStr} ${message}`;
+    context?: LogContext,
+    error?: Error
+  ): ClientErrorLog {
+    return {
+      level,
+      message,
+      stack: error?.stack,
+      url: context?.url || window.location.href,
+      userAgent: context?.userAgent || navigator.userAgent,
+      metadata: {
+        ...context?.metadata,
+        component: context?.component,
+        action: context?.action,
+        userId: context?.userId,
+        timestamp: new Date().toISOString(),
+      },
+      timestamp: new Date().toISOString(),
+    };
   }
 
-  private log(level: LogLevel, message: string, context?: LogContext): void {
-    if (!this.shouldLog(level)) return;
-
-    const formattedMessage = this.formatMessage(level, message, context);
-    // Use appropriate console method based on level
-    switch (level) {
-      case 'error':
-        console.error(formattedMessage);
-        break;
-      case 'warn':
-        console.warn(formattedMessage);
-        break;
-      case 'info':
-        console.info(formattedMessage);
-        break;
-      case 'debug':
-        console.debug(formattedMessage);
-        break;
-    }
-
-    // In development, also log to console with color coding
-    if (this.isDevelopment) {
-      const colorCode = {
-        error: '\x1b[31m', // Red
-        warn: '\x1b[33m', // Yellow
-        info: '\x1b[36m', // Cyan
-        debug: '\x1b[90m', // Gray
-      }[level];
-      console.log(`${colorCode}${formattedMessage}\x1b[0m`);
-    }
-  }
-
-  error(message: string, context?: LogContext): void {
-    this.log('error', message, context);
+  // Public logging methods
+  error(message: string, error?: Error, context?: LogContext): void {
+    console.error(message, error, context);
+    
+    const logEntry = this.createLogEntry('error', message, context, error);
+    this.addToQueue(logEntry);
   }
 
   warn(message: string, context?: LogContext): void {
-    this.log('warn', message, context);
+    console.warn(message, context);
+    
+    const logEntry = this.createLogEntry('warning', message, context);
+    this.addToQueue(logEntry);
   }
 
   info(message: string, context?: LogContext): void {
-    this.log('info', message, context);
+    console.info(message, context);
+    
+    const logEntry = this.createLogEntry('info', message, context);
+    this.addToQueue(logEntry);
   }
 
   debug(message: string, context?: LogContext): void {
-    this.log('debug', message, context);
+    console.debug(message, context);
+    
+    const logEntry = this.createLogEntry('debug', message, context);
+    this.addToQueue(logEntry);
   }
 
-  // Convenience method for API routes
-  logApiRequest(
-    method: string,
-    path: string,
-    statusCode: number,
-    duration?: number,
-    context?: LogContext
-  ): void {
-    const message = `${method} ${path} - ${statusCode}${
-      duration ? ` (${duration}ms)` : ''
-    }`;
-    const level =
-      statusCode >= 400 ? 'error' : statusCode >= 300 ? 'warn' : 'info';
-    this.log(level, message, { ...context, apiRequest: true });
+  // Enable/disable logging
+  setEnabled(enabled: boolean): void {
+    this.isEnabled = enabled;
+    localStorage.setItem('debug-logging', enabled.toString());
   }
 
-  // Log client-side errors
-  logClientError(error: Error, context?: LogContext): void {
-    this.error(`Client Error: ${error.message}`, {
-      ...context,
-      stack: error.stack,
-      name: error.name,
-    });
+  // Force flush logs
+  async forceFlush(): Promise<void> {
+    await this.flush();
   }
 
-  // Log security events
-  logSecurityEvent(
-    event: string,
-    details: Record<string, any>,
-    context?: LogContext
-  ): void {
-    this.warn(`Security Event: ${event}`, {
-      ...context,
-      securityEvent: true,
-      ...details,
-    });
+  // Get current queue size
+  getQueueSize(): number {
+    return this.logQueue.length;
   }
 }
 
-// Export singleton instance
-export const logger = new ClientLoggerService();
-export default logger;
+// Create singleton instance
+export const clientLogger = new ClientLogger();
+
+// Export the class for testing
+export { ClientLogger };

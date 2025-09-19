@@ -2,14 +2,12 @@ import {
   Injectable,
   OnModuleInit,
   OnModuleDestroy,
-  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis, { RedisOptions } from 'ioredis';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(RedisService.name);
   private redis!: Redis;
   private isConnected = false;
 
@@ -30,22 +28,18 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     this.redis = new Redis(redisUrl, redisOptions);
 
     this.redis.on('connect', () => {
-      this.logger.log('Connected to Redis');
       this.isConnected = true;
     });
 
     this.redis.on('error', (error: Error) => {
-      this.logger.error('Redis connection error:', error);
       this.isConnected = false;
     });
 
     this.redis.on('close', () => {
-      this.logger.warn('Redis connection closed');
       this.isConnected = false;
     });
 
     this.redis.on('ready', () => {
-      this.logger.log('Redis is ready');
       this.isConnected = true;
     });
 
@@ -53,10 +47,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.redis.connect();
     } catch (error: unknown) {
-      this.logger.warn(
-        'Failed to connect to Redis, will retry on first operation:',
-        error,
-      );
     }
   }
 
@@ -64,9 +54,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     if (this.redis && this.isConnected) {
       try {
         await this.redis.quit();
-        this.logger.log('Redis connection closed gracefully');
       } catch (error: unknown) {
-        this.logger.error('Error closing Redis connection:', error);
       }
     }
   }
@@ -78,7 +66,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         this.isConnected = true;
         return true;
       } catch (error: unknown) {
-        this.logger.warn('Failed to reconnect to Redis:', error);
         return false;
       }
     }
@@ -92,7 +79,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       }
       return await this.redis.get(key);
     } catch (error: unknown) {
-      this.logger.error(`Error getting key ${key}:`, error);
       this.isConnected = false;
       return null;
     }
@@ -109,7 +95,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         await this.redis.set(key, value);
       }
     } catch (error: unknown) {
-      this.logger.error(`Error setting key ${key}:`, error);
       this.isConnected = false;
     }
   }
@@ -121,7 +106,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       }
       await this.redis.del(key);
     } catch (error: unknown) {
-      this.logger.error(`Error deleting key ${key}:`, error);
       this.isConnected = false;
     }
   }
@@ -134,7 +118,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       const result = await this.redis.exists(key);
       return result === 1;
     } catch (error: unknown) {
-      this.logger.error(`Error checking existence of key ${key}:`, error);
       this.isConnected = false;
       return false;
     }
@@ -147,7 +130,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       }
       return await this.redis.incr(key);
     } catch (error: unknown) {
-      this.logger.error(`Error incrementing key ${key}:`, error);
       this.isConnected = false;
       return 0;
     }
@@ -160,7 +142,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       }
       await this.redis.expire(key, seconds);
     } catch (error: unknown) {
-      this.logger.error(`Error setting expiry for key ${key}:`, error);
       this.isConnected = false;
     }
   }

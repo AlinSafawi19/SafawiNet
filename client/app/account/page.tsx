@@ -63,7 +63,6 @@ export default function MyAccountPage() {
             }}
             onClick={(e) => {
               const startTime = performance.now();
-              console.log('🚀 Account: Login security clicked at', startTime);
 
               // Add immediate visual feedback
               const element = e.currentTarget as HTMLElement;

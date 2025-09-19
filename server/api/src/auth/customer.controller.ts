@@ -21,7 +21,6 @@ import {
   Prisma,
 } from '@prisma/client';
 import { PrismaService } from '../common/services/prisma.service';
-import { PinoLoggerService } from '../common/services/logger.service';
 import { NotificationsService } from './notifications.service';
 import { AuthenticatedRequest } from './types/auth.types';
 
@@ -174,7 +173,6 @@ interface SecurityUser {
 export class CustomerController {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly logger: PinoLoggerService,
     private readonly notificationsService: NotificationsService,
   ) {}
 
@@ -245,8 +243,6 @@ export class CustomerController {
         updatedAt: true,
       },
     });
-
-    this.logger.log(`Customer ${req.user.email} updated their profile`);
 
     return {
       id: updatedUser.id,
@@ -342,10 +338,6 @@ export class CustomerController {
         ticketId: `TICKET-${Date.now()}`,
       },
     });
-
-    this.logger.log(
-      `Customer ${req.user.email} created support ticket: ${body.subject}`,
-    );
 
     return {
       message: 'Support ticket created successfully',

@@ -4,7 +4,6 @@ import { SecurityUtils } from '../src/common/security/security.utils';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting database seed...');
 
   // Check if loyalty tiers already exist
   const existingTiers = await prisma.loyaltyTier.count();
@@ -13,7 +12,6 @@ async function main() {
   if (existingTiers === 0) {
 
   // Create loyalty tiers
-  console.log('🏆 Creating loyalty tiers...');
   const tiers = [
     {
       name: 'Bronze',
@@ -91,15 +89,12 @@ async function main() {
         data: tierData,
       });
       createdTiers.push(tier);
-      console.log(`✅ Created tier: ${tier.name} (${tier.minPoints} points)`);
     }
   } else {
-    console.log('✅ Loyalty tiers already exist, fetching them...');
     createdTiers = await prisma.loyaltyTier.findMany();
   }
 
   // Create superadmin user
-  console.log('👑 Creating superadmin user...');
   
   // Check if superadmin already exists
   const existingSuperadmin = await prisma.user.findFirst({
@@ -171,19 +166,13 @@ async function main() {
       });
     }
 
-    console.log('✅ Created superadmin user: superadmin@safawinet.com');
-    console.log('🔑 Superadmin password: superadmin123');
   } else {
-    console.log('✅ Superadmin user already exists');
   }
 
-  console.log('🎉 Database seeding completed successfully!');
-  console.log(`🏆 Created ${createdTiers.length} loyalty tiers`);
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error during seeding:', e);
     process.exit(1);
   })
   .finally(async () => {

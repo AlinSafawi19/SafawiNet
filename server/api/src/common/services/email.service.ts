@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as fs from 'fs/promises';
@@ -37,7 +37,6 @@ export interface PasswordResetData {
 export interface TwoFactorCodeData {
   name: string;
   code: string;
-  expirationMinutes: number;
   appName?: string;
   supportEmail?: string;
 }
@@ -92,7 +91,6 @@ export interface NodemailerAuthConfig {
 
 @Injectable()
 export class EmailService {
-  private readonly logger = new Logger(EmailService.name);
   private transporter!: nodemailer.Transporter;
   private templates: Map<string, handlebars.TemplateDelegate> = new Map();
 
@@ -141,9 +139,7 @@ export class EmailService {
     // Verify connection
     try {
       await this.transporter.verify();
-      this.logger.log('Email transporter initialized successfully');
     } catch (error) {
-      this.logger.error('Failed to initialize email transporter:', error);
     }
   }
 
@@ -178,11 +174,9 @@ export class EmailService {
                 templateName,
                 handlebars.compile(templateContent),
               );
-              this.logger.log(`Loaded email template: ${templateName}`);
             }
           }
           templatesLoaded = true;
-          this.logger.log(`Email templates loaded from: ${templatesDir}`);
           break;
         }
       } catch {
@@ -192,9 +186,6 @@ export class EmailService {
     }
 
     if (!templatesLoaded) {
-      this.logger.warn(
-        'No email templates found in any of the expected directories. Using fallback templates.',
-      );
       // Create fallback templates
       this.createFallbackTemplates();
     }
@@ -228,7 +219,6 @@ export class EmailService {
       'password-reset',
       handlebars.compile(passwordResetTemplate),
     );
-    this.logger.log('Fallback email templates created');
   }
 
   async sendEmail(emailData: EmailData): Promise<void> {
@@ -246,11 +236,7 @@ export class EmailService {
       const result = (await this.transporter.sendMail(mailOptions)) as {
         messageId?: string;
       };
-      this.logger.log(
-        `Email sent successfully to ${emailData.to}: ${result.messageId}`,
-      );
     } catch (error) {
-      this.logger.error(`Failed to send email to ${emailData.to}:`, error);
       throw error;
     }
   }
@@ -400,7 +386,6 @@ export class EmailService {
       'two-factor-code': {
         name: 'John Doe',
         code: '123456',
-        expirationMinutes: 10,
         appName: 'Safawinet',
         supportEmail: 'support@safawinet.com',
       },
@@ -437,7 +422,6 @@ export class EmailService {
       await this.transporter.verify();
       return true;
     } catch (error) {
-      this.logger.error('Email service health check failed:', error);
       return false;
     }
   }

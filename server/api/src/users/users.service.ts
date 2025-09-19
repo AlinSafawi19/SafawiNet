@@ -1,6 +1,5 @@
 import {
   Injectable,
-  Logger,
   ConflictException,
   NotFoundException,
   UnauthorizedException,
@@ -9,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/services/prisma.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { EmailService } from '../common/services/email.service';
-import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
+import { OfflineMessageService } from '../common/services/offline-message.service';
 import {
   CreateUserDto,
   UpdateProfileDto,
@@ -56,13 +55,12 @@ interface UserNotificationPreferences {
 
 @Injectable()
 export class UsersService {
-  private readonly logger = new Logger(UsersService.name);
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
-    private readonly webSocketGateway: AuthWebSocketGateway,
+    private readonly offlineMessageService: OfflineMessageService,
   ) {}
 
   async createUser(
@@ -144,9 +142,6 @@ export class UsersService {
           tierUpgradedAt: new Date(),
         },
       });
-      this.logger.log(
-        `Created loyalty account for new admin user: ${user.email}`,
-      );
     }
 
     // Generate verification token
@@ -175,10 +170,6 @@ export class UsersService {
         verificationUrl,
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to send verification email to ${user.email}:`,
-        error,
-      );
       // Don't fail user creation if email fails
     }
 
@@ -189,20 +180,13 @@ export class UsersService {
   }
 
   async getCurrentUser(userId: string): Promise<Omit<User, 'password'>> {
-    console.log('👤 UsersService - getCurrentUser called with userId:', userId);
-
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
-    console.log('👤 UsersService - user found:', user);
-
     if (!user) {
-      console.log('❌ UsersService - User not found for ID:', userId);
       throw new NotFoundException('User not found');
     }
-
-    console.log('✅ UsersService - User retrieved successfully:', user.email);
 
     // Provide default values for preferences and notificationPreferences if they are null
     const defaultPreferences: UserPreferences = {
@@ -346,7 +330,6 @@ export class UsersService {
     changePasswordDto: ChangePasswordDto,
   ): Promise<{ message: string; messageKey: string; forceLogout: boolean }> {
     try {
-      this.logger.log(`Changing password for user ${userId}`);
       const { currentPassword, newPassword } = changePasswordDto;
 
       // Get user with password
@@ -359,9 +342,6 @@ export class UsersService {
       }
 
       // Verify current password
-      this.logger.log(
-        `Verifying password for user ${userId}, hash format: ${user.password.substring(0, 20)}...`,
-      );
       let isCurrentPasswordValid = false;
       try {
         isCurrentPasswordValid = await SecurityUtils.verifyPassword(
@@ -369,10 +349,6 @@ export class UsersService {
           String(currentPassword),
         );
       } catch (error) {
-        this.logger.warn(
-          `Password verification failed for user ${userId}:`,
-          error instanceof Error ? error.message : String(error),
-        );
         // If verification fails due to hash format issues, treat as incorrect password
         isCurrentPasswordValid = false;
       }
@@ -416,30 +392,19 @@ export class UsersService {
           },
         );
       } catch (error) {
-        this.logger.error(
-          `Failed to send password change security alert to ${user.email}:`,
-          error,
-        );
         // Don't fail password change if email fails
       }
 
-      // Emit logout event to all user's devices
+      // Create offline message for logout (no real-time WebSocket needed)
       try {
-        // Emit to user's personal room (for all logged-in devices)
-        await this.webSocketGateway.emitLogoutToUserDevices(
+        await this.offlineMessageService.createForceLogoutMessage(
           userId,
           'password_changed',
+          'Your password has been changed. Please log in again.',
         );
 
-        this.logger.log(
-          `Logout events emitted for password change - user: ${user.email}`,
-        );
       } catch (error) {
-        this.logger.error(
-          `Failed to emit logout events for password change - user: ${user.email}:`,
-          error,
-        );
-        // Don't fail the password change if WebSocket emission fails
+        // Don't fail the password change if offline message creation fails
       }
 
       return {
@@ -448,7 +413,6 @@ export class UsersService {
         forceLogout: true,
       };
     } catch (error) {
-      this.logger.error(`Error changing password for user ${userId}:`, error);
       throw error;
     }
   }

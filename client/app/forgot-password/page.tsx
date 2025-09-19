@@ -35,9 +35,8 @@ export default function ForgotPasswordPage() {
       if (email && email.includes('@') && email.includes('.')) {
         try {
           await joinPasswordResetRoom(email);
-          console.log('✅ Joined password reset room for:', email);
         } catch (error) {
-          console.error('❌ Failed to join password reset room:', error);
+          // Failed to join password reset room
         }
       }
     };

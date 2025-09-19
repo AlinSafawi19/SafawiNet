@@ -50,12 +50,10 @@ const { put } = require('@vercel/blob');
 
 async function uploadLogo() {
   try {
-    const blob = await put('logo.png', file, {
+    await put('logo.png', file, {
       access: 'public',
     });
-    console.log('Logo uploaded:', blob.url);
   } catch (error) {
-    console.error('Upload failed:', error);
   }
 }
 

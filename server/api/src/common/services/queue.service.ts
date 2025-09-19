@@ -2,7 +2,6 @@ import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Queue, Worker, Job, JobsOptions } from 'bullmq';
 import { RedisService } from './redis.service';
-import { PinoLoggerService } from './logger.service';
 
 export interface EmailJobData {
   to: string;
@@ -48,7 +47,6 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private configService: ConfigService,
     private redisService: RedisService,
-    private logger: PinoLoggerService,
   ) {}
 
   onModuleInit() {
@@ -135,7 +133,6 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     this.setupQueueEvents();
     this.setupWorkerEvents();
 
-    this.logger.log('Queue service initialized successfully');
   }
 
   async onModuleDestroy() {
@@ -156,15 +153,10 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     [this.emailWorker, this.securityWorker, this.maintenanceWorker].forEach(
       (worker) => {
         worker.on('completed', (job: Job) => {
-          this.logger.log(`Worker completed job ${job.id}`, 'QueueService');
         });
 
         worker.on('failed', (job: Job | undefined, err: Error) => {
-          this.logger.error(
-            `Worker failed job ${job?.id}: ${err.message}`,
-            err.stack,
-            'QueueService',
-          );
+        
         });
       },
     );
@@ -185,23 +177,15 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
 
   // Job processing methods
   private async processEmailJob(job: Job<EmailJobData>) {
-    this.logger.log(
-      `Processing email job ${job.id} to ${job.data.to}`,
-      'QueueService',
-    );
+   
 
     // TODO: Implement actual email sending logic
     // This would integrate with your existing EmailService
 
     await new Promise((resolve) => setTimeout(resolve, 100)); // Simulate processing
-    this.logger.log(`Email job ${job.id} completed`, 'QueueService');
   }
 
   private async processSecurityJob(job: Job<SecurityJobData>) {
-    this.logger.log(
-      `Processing security job ${job.id} of type ${job.data.type}`,
-      'QueueService',
-    );
 
     switch (job.data.type) {
       case 'token_cleanup':
@@ -216,14 +200,9 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     }
 
     await new Promise((resolve) => setTimeout(resolve, 200)); // Simulate processing
-    this.logger.log(`Security job ${job.id} completed`, 'QueueService');
   }
 
   private async processMaintenanceJob(job: Job<MaintenanceJobData>) {
-    this.logger.log(
-      `Processing maintenance job ${job.id} of type ${job.data.type}`,
-      'QueueService',
-    );
 
     switch (job.data.type) {
       case 'db_cleanup':
@@ -238,7 +217,6 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     }
 
     await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate processing
-    this.logger.log(`Maintenance job ${job.id} completed`, 'QueueService');
   }
 
   // Queue status methods

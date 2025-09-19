@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from './prisma.service';
 import { RedisService } from './redis.service';
@@ -43,7 +43,6 @@ export interface HealthReport {
 
 @Injectable()
 export class EmailMonitoringService {
-  private readonly logger = new Logger(EmailMonitoringService.name);
   private readonly metricsCacheKey = 'email:metrics';
   private readonly metricsCacheTTL = 300; // 5 minutes
 
@@ -177,9 +176,6 @@ export class EmailMonitoringService {
    * Process SES bounce notification
    */
   async processBounce(bounceInfo: BounceInfo): Promise<void> {
-    this.logger.warn(
-      `Processing bounce for ${bounceInfo.email}: ${bounceInfo.bounceType} - ${bounceInfo.bounceSubType}`,
-    );
 
     try {
       await this.prisma.$transaction(async (tx) => {
@@ -241,10 +237,6 @@ export class EmailMonitoringService {
       // Clear metrics cache to force refresh
       await this.redisService.del(this.metricsCacheKey);
     } catch (error) {
-      this.logger.error(
-        `Failed to process bounce for ${bounceInfo.email}:`,
-        error,
-      );
       throw error;
     }
   }
@@ -253,9 +245,6 @@ export class EmailMonitoringService {
    * Process SES complaint notification
    */
   async processComplaint(complaintInfo: ComplaintInfo): Promise<void> {
-    this.logger.warn(
-      `Processing complaint for ${complaintInfo.email}: ${complaintInfo.complaintFeedbackType}`,
-    );
 
     try {
       await this.prisma.$transaction(async (tx) => {
@@ -311,10 +300,6 @@ export class EmailMonitoringService {
       // Clear metrics cache to force refresh
       await this.redisService.del(this.metricsCacheKey);
     } catch (error) {
-      this.logger.error(
-        `Failed to process complaint for ${complaintInfo.email}:`,
-        error,
-      );
       throw error;
     }
   }
@@ -371,26 +356,20 @@ export class EmailMonitoringService {
    */
   @Cron(CronExpression.EVERY_HOUR)
   async scheduledHealthCheck(): Promise<void> {
-    this.logger.log('Running scheduled email health check');
 
     try {
       const health = await this.getHealthReport();
 
       if (!health.healthy) {
-        this.logger.warn(
-          'Email delivery health issues detected:',
-          health.issues,
-        );
+  
 
         // In production, you might want to send alerts here
         if (health.environment === 'production') {
           this.sendHealthAlert(health);
         }
       } else {
-        this.logger.log('Email delivery health check passed');
       }
     } catch (error) {
-      this.logger.error('Scheduled email health check failed:', error);
     }
   }
 
@@ -398,13 +377,7 @@ export class EmailMonitoringService {
    * Send health alert (placeholder for alerting system)
    */
   private sendHealthAlert(health: HealthReport): void {
-    // TODO: Implement alerting system (Slack, PagerDuty, etc.)
-    this.logger.error('EMAIL HEALTH ALERT:', {
-      environment: health.environment,
-      issues: health.issues,
-      metrics: health.metrics,
-      recommendations: health.recommendations,
-    });
+
   }
 
   /**

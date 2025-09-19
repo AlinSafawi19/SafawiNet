@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { buildApiUrl } from '../../../../config/api';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
 
     // Forward cookies from the request to the backend
     const cookieHeader = request.headers.get('cookie');
+    
     if (!cookieHeader) {
       return NextResponse.json(
         { message: 'Authentication required' },
@@ -41,9 +43,7 @@ export async function POST(request: NextRequest) {
 
     // Make request to your backend API
     const backendResponse = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-      }/users/me/change-password`,
+      buildApiUrl('/users/me/change-password'),
       {
         method: 'POST',
         headers: {
@@ -85,7 +85,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
-    console.error('Error changing password:', error);
     return NextResponse.json(
       {
         message: 'Internal server error',

@@ -1,131 +1,160 @@
-import { Injectable, LoggerService, Scope } from '@nestjs/common';
-import * as pino from 'pino';
-import { SentryService } from './sentry.service';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as winston from 'winston';
+import 'winston-daily-rotate-file';
+import * as path from 'path';
 
-@Injectable({ scope: Scope.TRANSIENT })
-export class PinoLoggerService implements LoggerService {
-  private readonly logger: pino.Logger;
-  private requestId?: string;
-  private userId?: string;
+export interface LogContext {
+  userId?: string;
+  requestId?: string;
+  url?: string;
+  userAgent?: string;
+  ipAddress?: string;
+  source?: 'server' | 'client' | 'api' | 'auth' | 'database';
+  metadata?: Record<string, any>;
+}
 
-  constructor(private sentryService: SentryService) {
-    this.logger = pino({
-      level: process.env.LOG_LEVEL || 'info',
-      transport: {
-        target: 'pino-pretty',
-        options: {
-          colorize: true,
-          translateTime: 'SYS:standard',
-          ignore: 'pid,hostname',
-        },
-      },
-      mixin() {
-        return {
-          service: 'safawinet-api',
-          environment: process.env.NODE_ENV || 'development',
+@Injectable()
+export class LoggerService implements OnModuleInit {
+  private logger!: winston.Logger;
+  private errorLogger!: winston.Logger;
+
+  constructor(private configService: ConfigService) {}
+
+  onModuleInit() {
+    const logDir = this.configService.get<string>('LOG_DIR', './logs');
+    const environment = this.configService.get<string>('NODE_ENV', 'development');
+
+    // Create logs directory if it doesn't exist
+    const fs = require('fs');
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
+    }
+
+    // Custom format for structured logging
+    const logFormat = winston.format.combine(
+      winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
+      winston.format.errors({ stack: true }),
+      winston.format.json(),
+      winston.format.printf(({ timestamp, level, message, stack, ...meta }) => {
+        const logEntry = {
+          timestamp,
+          level,
+          message,
+          ...(stack && typeof stack === 'string' ? { stack } : {}),
+          ...(typeof meta === 'object' && meta !== null ? meta : {}),
         };
-      },
+        return JSON.stringify(logEntry);
+      })
+    );
+
+    // General logger for all logs
+    this.logger = winston.createLogger({
+      level: environment === 'production' ? 'info' : 'debug',
+      format: logFormat,
+      defaultMeta: { service: 'safawinet-api' },
+      transports: [
+        // Console transport for development
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.colorize(),
+            winston.format.simple()
+          ),
+        }),
+        // Daily rotate file for all logs
+        new winston.transports.DailyRotateFile({
+          filename: path.join(logDir, 'application-%DATE%.log'),
+          datePattern: 'YYYY-MM-DD',
+          maxSize: '20m',
+          maxFiles: '14d',
+          format: logFormat,
+        }),
+      ],
+    });
+
+    // Dedicated error logger
+    this.errorLogger = winston.createLogger({
+      level: 'error',
+      format: logFormat,
+      defaultMeta: { service: 'safawinet-api', type: 'error' },
+      transports: [
+        // Console for errors
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.colorize(),
+            winston.format.simple()
+          ),
+        }),
+        // Daily rotate file for errors only
+        new winston.transports.DailyRotateFile({
+          filename: path.join(logDir, 'errors-%DATE%.log'),
+          datePattern: 'YYYY-MM-DD',
+          maxSize: '20m',
+          maxFiles: '30d', // Keep error logs longer
+          format: logFormat,
+        }),
+      ],
     });
   }
 
-  // Set context for the current request
-  setContext(requestId: string, userId?: string) {
-    this.requestId = requestId;
-    this.userId = userId;
+  // Log error with full context
+  error(message: string, error?: Error, context?: LogContext): void {
+    const logData = {
+      ...context,
+      ...(error && {
+        stack: error.stack,
+        name: error.name,
+        message: error.message,
+      }),
+    };
 
-    // Set Sentry context if available
-    if (userId) {
-      this.sentryService.setUser({ id: userId });
-    }
-    if (requestId) {
-      this.sentryService.setTag('requestId', requestId);
-    }
+    this.errorLogger.error(message, logData);
+    this.logger.error(message, logData);
   }
 
-  log(message: any, context?: string) {
-    this.logger.info({ context }, message);
+  // Log warning
+  warn(message: string, context?: LogContext): void {
+    this.logger.warn(message, context);
   }
 
-  error(message: any, trace?: string, context?: string) {
-    this.logger.error({ context, trace }, message);
-
-    // Send to Sentry if it's an error object
-    if (message instanceof Error) {
-      this.sentryService.captureException(message, { context });
-    } else if (typeof message === 'string') {
-      this.sentryService.captureMessage(message, 'error', { context });
-    }
+  // Log info
+  info(message: string, context?: LogContext): void {
+    this.logger.info(message, context);
   }
 
-  warn(message: any, context?: string) {
-    this.logger.warn({ context }, message);
+  // Log debug
+  debug(message: string, context?: LogContext): void {
+    this.logger.debug(message, context);
   }
 
-  debug(message: any, context?: string) {
-    this.logger.debug({ context }, message);
+  // Log HTTP requests
+  http(message: string, context?: LogContext): void {
+    this.logger.info(message, { ...context, type: 'http' });
   }
 
-  verbose(message: any, context?: string) {
-    this.logger.trace({ context }, message);
+  // Log authentication events
+  auth(message: string, context?: LogContext): void {
+    this.logger.info(message, { ...context, type: 'auth' });
   }
 
-  // Get the underlying Pino logger for advanced usage
-  getLogger(): pino.Logger {
+  // Log database operations
+  database(message: string, context?: LogContext): void {
+    this.logger.info(message, { ...context, type: 'database' });
+  }
+
+  // Log client-side errors received via API
+  clientError(message: string, context?: LogContext): void {
+    this.errorLogger.error(message, { ...context, source: 'client' });
+    this.logger.error(message, { ...context, source: 'client' });
+  }
+
+  // Get logger instance for custom usage
+  getLogger(): winston.Logger {
     return this.logger;
   }
 
-  // Log with additional metadata
-  logWithMetadata(
-    message: string,
-    metadata: Record<string, any>,
-    context?: string,
-  ) {
-    this.logger.info({ context, ...metadata }, message);
-  }
-
-  // Log performance metrics
-  logPerformance(
-    route: string,
-    method: string,
-    duration: number,
-    statusCode: number,
-  ) {
-    this.logger.info(
-      {
-        context: 'Performance',
-        route,
-        method,
-        duration,
-        statusCode,
-        performance: true,
-      },
-      `Request completed: ${method} ${route} in ${duration}ms`,
-    );
-  }
-
-  // Log security events
-  logSecurityEvent(event: string, details: Record<string, any>) {
-    this.logger.warn(
-      {
-        context: 'Security',
-        securityEvent: true,
-        ...details,
-      },
-      `Security event: ${event}`,
-    );
-  }
-
-  // Log database queries (for performance monitoring)
-  logDatabaseQuery(query: string, duration: number, table?: string) {
-    this.logger.debug(
-      {
-        context: 'Database',
-        query,
-        duration,
-        table,
-        dbQuery: true,
-      },
-      `Database query executed in ${duration}ms`,
-    );
+  // Get error logger instance
+  getErrorLogger(): winston.Logger {
+    return this.errorLogger;
   }
 }

@@ -5,6 +5,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useBackendMessageTranslation } from '../../hooks/useBackendMessageTranslation';
 import { buildApiUrl, API_CONFIG } from '../../config/api';
+import { logInfo, logError } from '../../utils/errorLogger';
+import { apiLogger } from '../../services/api-logger.service';
 
 interface AdminUser {
   name: string;
@@ -211,15 +213,12 @@ export default function AdminCreationForm({
       switch (errorKey) {
         case 'auth.messages.userAlreadyExists':
           // Could highlight the email field or show additional context
-          console.log('User with this email already exists');
           break;
         case 'auth.admin.validation.insufficientPermissions':
           // Could show a different message or redirect
-          console.log('Insufficient permissions error detected');
           break;
         case 'auth.admin.networkError':
           // Could show retry button or different styling
-          console.log('Network error detected');
           break;
         default:
           // Handle other error types
@@ -258,6 +257,13 @@ export default function AdminCreationForm({
     setIsLoading(true);
     clearMessages();
 
+    // Log form submission attempt
+    logInfo('Admin creation form submission', {
+      component: 'AdminCreationForm',
+      action: 'handleSubmit',
+      metadata: { email: formData.email }
+    });
+
     // Mark all fields as touched
     setTouched({
       name: true,
@@ -286,27 +292,39 @@ export default function AdminCreationForm({
 
     // Check if there are any validation errors
     if (Object.values(errors).some((error) => error)) {
+      logInfo('Admin creation form validation failed', {
+        component: 'AdminCreationForm',
+        action: 'handleSubmit',
+        metadata: { errors }
+      });
       setIsLoading(false);
       return;
     }
 
     try {
-      const response = await fetch(
-        buildApiUrl(API_CONFIG.ENDPOINTS.USERS.CREATE_USER),
+      const response = await apiLogger.post(
+        API_CONFIG.ENDPOINTS.USERS.CREATE_USER,
+        formData,
         {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include', // Include cookies for authentication
-          body: JSON.stringify(formData),
+          component: 'AdminCreationForm',
+          action: 'createAdmin',
+          metadata: { email: formData.email }
         }
       );
 
-      if (response.ok) {
-        const result = await response.json();
+      if (response.success && response.data) {
         // Use setBackendSuccess which automatically maps to translation keys
-        setBackendSuccess(result.message || 'Admin user created successfully!');
+        setBackendSuccess(response.data.message || 'Admin user created successfully!');
+
+        // Log successful admin creation
+        logInfo('Admin user created successfully', {
+          component: 'AdminCreationForm',
+          action: 'createAdmin',
+          metadata: { 
+            email: formData.email,
+            adminId: response.data.user?.id 
+          }
+        });
 
         // Reset form
         setFormData({ name: '', email: '', password: '', confirmPassword: '' });
@@ -327,12 +345,23 @@ export default function AdminCreationForm({
           }
         }, 3000);
       } else {
-        const errorData = await response.json();
         // Use setBackendError which automatically maps to translation keys
-        setBackendError(errorData.message || 'Server error');
+        setBackendError(response.error || 'Server error');
+        
+        // Log admin creation failure
+        logError('Admin user creation failed', new Error(response.error || 'Unknown error'), {
+          component: 'AdminCreationForm',
+          action: 'createAdmin',
+          metadata: { email: formData.email }
+        });
       }
     } catch (error) {
       // Use setBackendError for network errors - it will map to appropriate translation key
+      logError('Admin creation form submission failed', error instanceof Error ? error : new Error(String(error)), {
+        component: 'AdminCreationForm',
+        action: 'handleSubmit',
+        metadata: { email: formData.email }
+      });
       setBackendError('Network error. Please try again.');
     } finally {
       setIsLoading(false);

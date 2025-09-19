@@ -1,13 +1,12 @@
 import {
   Injectable,
-  Logger,
   BadRequestException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
 import { EmailService } from '../common/services/email.service';
 import { SecurityUtils } from '../common/security/security.utils';
-import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
+import { OfflineMessageService } from '../common/services/offline-message.service';
 import * as crypto from 'crypto';
 
 export interface TwoFactorCodeResult {
@@ -17,13 +16,12 @@ export interface TwoFactorCodeResult {
 
 @Injectable()
 export class SimpleTwoFactorService {
-  private readonly logger = new Logger(SimpleTwoFactorService.name);
   private readonly codeExpirationMinutes = 10; // 10 minutes expiration
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
-    private readonly webSocketGateway: AuthWebSocketGateway,
+    private readonly offlineMessageService: OfflineMessageService,
   ) {}
 
   /**
@@ -48,7 +46,6 @@ export class SimpleTwoFactorService {
       data: { twoFactorEnabled: true },
     });
 
-    this.logger.log(`2FA enabled for user ${user.email}`);
     return { message: 'Two-factor authentication enabled successfully' };
   }
 
@@ -72,16 +69,13 @@ export class SimpleTwoFactorService {
     }
 
     // Verify current password
-    this.logger.log(`Verifying password for user ${user.email}`);
     const isPasswordValid = await SecurityUtils.verifyPassword(
       user.password,
       currentPassword,
     );
     if (!isPasswordValid) {
-      this.logger.warn(`Password verification failed for user ${user.email}`);
       throw new UnauthorizedException('Invalid current password');
     }
-    this.logger.log(`Password verification successful for user ${user.email}`);
 
     // Disable 2FA and clean up any existing 2FA data
     await this.prisma.$transaction(async (tx) => {
@@ -119,35 +113,22 @@ export class SimpleTwoFactorService {
         timestamp: new Date().toLocaleString(),
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to send 2FA disabled notification to ${user.email}:`,
-        error,
-      );
+
       // Don't fail 2FA disable if email fails
     }
 
-    // Emit logout event to all user's devices (same as password change)
+    // Create offline message for logout (no real-time WebSocket needed)
     try {
-      // Emit to user's personal room (for all logged-in devices)
-      await this.webSocketGateway.emitLogoutToUserDevices(
+      await this.offlineMessageService.createForceLogoutMessage(
         userId,
         '2fa_disabled',
+        'Two-factor authentication has been disabled. Please log in again.',
       );
 
-      this.logger.log(
-        `Logout events emitted for 2FA disable - user: ${user.email}`,
-      );
     } catch (error) {
-      this.logger.error(
-        `Failed to emit logout events for 2FA disable - user: ${user.email}:`,
-        error,
-      );
-      // Don't fail the 2FA disable if WebSocket emission fails
+      // Don't fail the 2FA disable if offline message creation fails
     }
 
-    this.logger.log(
-      `2FA disabled for user ${user.email} - all sessions invalidated`,
-    );
     return {
       message: 'Two-factor authentication disabled successfully',
       forceLogout: true,
@@ -199,10 +180,8 @@ export class SimpleTwoFactorService {
     await this.emailService.sendTemplateEmail('two-factor-code', user.email, {
       name: user.name || 'User',
       code,
-      expirationMinutes: this.codeExpirationMinutes,
     });
 
-    this.logger.log(`2FA code sent to user ${user.email}`);
     return { message: 'Two-factor authentication code sent to your email' };
   }
 
@@ -258,9 +237,6 @@ export class SimpleTwoFactorService {
       where: { userId },
     });
 
-    this.logger.log(
-      `Revoked all refresh tokens and sessions for user ${userId}`,
-    );
   }
 
   /**

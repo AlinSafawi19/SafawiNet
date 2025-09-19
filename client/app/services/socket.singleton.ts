@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client';
+import { API_CONFIG, buildWebSocketUrl } from '../config/api';
 
 export interface SocketEvents {
   emailVerified: (data: {
@@ -28,30 +29,55 @@ export interface SocketEvents {
   }) => void;
   connect: () => void;
   disconnect: () => void;
+  auth_broadcast: (data: { type: string; user?: any }) => void;
 }
 
-class RealSocketService {
+class SocketSingleton {
+  private static instance: SocketSingleton | null = null;
+  private static instanceCounter = 0;
+  private instanceId: string;
   private socket: Socket | null = null;
   private isConnected = false;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
+  private isInitialized = false;
+  private connectionPromise: Promise<void> | null = null;
 
-  constructor() {
-    this.init();
+  private constructor() {
+    // Private constructor for singleton pattern
+    SocketSingleton.instanceCounter++;
+    this.instanceId = `instance_${SocketSingleton.instanceCounter}`;
   }
 
-  private init() {
+  public static getInstance(): SocketSingleton {
+    if (!SocketSingleton.instance) {
+      SocketSingleton.instance = new SocketSingleton();
+    }
+    return SocketSingleton.instance;
+  }
+
+  public async initialize(): Promise<void> {
+    if (this.isInitialized) {
+      return;
+    }
+
+    if (typeof window === 'undefined') {
+      return; // Skip on server-side
+    }
+
     try {
-      this.socket = io('http://localhost:3000/auth', {
+      const socketUrl = buildWebSocketUrl(API_CONFIG.ENDPOINTS.WEBSOCKET.AUTH);
+      this.socket = io(socketUrl, {
         transports: ['websocket', 'polling'],
         autoConnect: false,
         withCredentials: true,
       });
 
       this.setupEventListeners();
+      this.isInitialized = true;
     } catch (error) {
-      console.warn('Failed to initialize socket service:', error);
+      // Failed to initialize socket service
     }
   }
 
@@ -61,24 +87,34 @@ class RealSocketService {
     this.socket.on('connect', () => {
       this.isConnected = true;
       this.reconnectAttempts = 0;
-      console.log('🔌 Socket connected');
     });
 
     this.socket.on('disconnect', () => {
       this.isConnected = false;
-      console.log('🔌 Socket disconnected');
       this.attemptReconnect();
+    });
+
+    // Listen for pending verification room responses
+    this.socket.on('pendingVerificationRoomJoined', (data: any) => {
+      // Server confirmed pending verification room joined
+    });
+
+    this.socket.on('pendingVerificationRoomLeft', (data: any) => {
+      // Server confirmed pending verification room left
     });
 
     this.socket.on('connect_error', (error: any) => {
       this.isConnected = false;
-      console.error('❌ Socket connection error:', error);
       this.attemptReconnect();
+    });
+
+    // Add general event listener for all events
+    this.socket.onAny((eventName: string, ...args: any[]) => {
+      // Received socket event
     });
 
     // Set up force logout listener immediately when socket is created
     this.socket.on('forceLogout', (data: any) => {
-      console.log('🚪 Force logout event received in socket service:', data);
       // Emit a custom event that the AuthContext can listen to
       window.dispatchEvent(new CustomEvent('forceLogout', { detail: data }));
     });
@@ -103,12 +139,25 @@ class RealSocketService {
   }
 
   public async connect(token?: string): Promise<void> {
+    // If already connected, don't connect again
+    if (this.isConnected) {
+      return;
+    }
+
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    if (this.connectionPromise) {
+      return this.connectionPromise;
+    }
+
     if (this.socket && !this.isConnected) {
       if (token) {
         this.socket.auth = { token };
       }
 
-      return new Promise((resolve, reject) => {
+      this.connectionPromise = new Promise((resolve, reject) => {
         if (!this.socket) {
           reject(new Error('Socket not initialized'));
           return;
@@ -116,16 +165,16 @@ class RealSocketService {
 
         // Set up one-time listeners for connection events
         const onConnect = () => {
-          console.log('🔌 Socket connected successfully');
           this.socket?.off('connect', onConnect);
           this.socket?.off('connect_error', onError);
+          this.connectionPromise = null;
           resolve();
         };
 
         const onError = (error: any) => {
-          console.error('❌ Socket connection failed:', error);
           this.socket?.off('connect', onConnect);
           this.socket?.off('connect_error', onError);
+          this.connectionPromise = null;
           reject(error);
         };
 
@@ -136,6 +185,8 @@ class RealSocketService {
         // Start connection
         this.socket.connect();
       });
+
+      return this.connectionPromise;
     }
   }
 
@@ -160,18 +211,12 @@ class RealSocketService {
 
   public async joinPendingVerificationRoom(email: string): Promise<void> {
     if (this.socket && this.isConnected) {
-      console.log('📡 Emitting joinPendingVerificationRoom for email:', email);
       this.socket.emit('joinPendingVerificationRoom', { email });
     } else if (this.socket && !this.isConnected) {
-      console.log('⏳ Socket not connected yet, waiting for connection...');
       // Wait for connection to be established
       await new Promise<void>((resolve) => {
         const checkConnection = () => {
           if (this.isConnected) {
-            console.log(
-              '📡 Socket now connected, emitting joinPendingVerificationRoom for email:',
-              email
-            );
             this.socket?.emit('joinPendingVerificationRoom', { email });
             resolve();
           } else {
@@ -180,10 +225,6 @@ class RealSocketService {
         };
         checkConnection();
       });
-    } else {
-      console.warn(
-        '⚠️ Cannot join pending verification room - socket not initialized'
-      );
     }
   }
 
@@ -195,18 +236,12 @@ class RealSocketService {
 
   public async joinPasswordResetRoom(email: string): Promise<void> {
     if (this.socket && this.isConnected) {
-      console.log('📡 Emitting joinPasswordResetRoom for email:', email);
       this.socket.emit('joinPasswordResetRoom', { email });
     } else if (this.socket && !this.isConnected) {
-      console.log('⏳ Socket not connected yet, waiting for connection...');
       // Wait for connection to be established
       await new Promise<void>((resolve) => {
         const checkConnection = () => {
           if (this.isConnected) {
-            console.log(
-              '📡 Socket now connected, emitting joinPasswordResetRoom for email:',
-              email
-            );
             this.socket?.emit('joinPasswordResetRoom', { email });
             resolve();
           } else {
@@ -215,10 +250,6 @@ class RealSocketService {
         };
         checkConnection();
       });
-    } else {
-      console.warn(
-        '⚠️ Cannot join password reset room - socket not initialized'
-      );
     }
   }
 
@@ -233,10 +264,7 @@ class RealSocketService {
     callback: SocketEvents[T]
   ): void {
     if (this.socket) {
-      console.log('👂 Setting up socket listener for event:', event);
       this.socket.on(event, callback as any);
-    } else {
-      console.warn('⚠️ Cannot set up socket listener - socket not initialized');
     }
   }
 
@@ -274,6 +302,44 @@ class RealSocketService {
   public getSocket(): Socket | null {
     return this.socket;
   }
+
+  public async ensureConnection(token?: string): Promise<void> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+    
+    if (!this.isConnected) {
+      await this.connect(token);
+    }
+  }
+
+  // Ensure socket is ready for immediate use
+  public async ensureReady(): Promise<void> {
+    // If we have a socket but state is inconsistent, fix it
+    if (this.socket && !this.isInitialized) {
+      this.isInitialized = true;
+    }
+    
+    // If we have a socket and it's connected, we're ready
+    if (this.socket && this.isConnected) {
+      return;
+    }
+    
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+    
+    // If not connected, connect without token (anonymous connection)
+    if (!this.isConnected) {
+      await this.connect();
+    }
+  }
+
+  private getInstanceId(): string {
+    return this.instanceId;
+  }
 }
 
-export default RealSocketService;
+// Export singleton instance
+export const socketSingleton = SocketSingleton.getInstance();
+export default socketSingleton;
