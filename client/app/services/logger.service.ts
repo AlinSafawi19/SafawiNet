@@ -58,10 +58,10 @@ class ClientLogger {
       });
 
       if (!response.ok) {
-        console.warn('Failed to send log to server:', response.status);
+        // Silently fail - we don't want to create infinite logging loops
       }
     } catch (error) {
-      console.warn('Error sending log to server:', error);
+      // Silently fail - we don't want to create infinite logging loops
     }
   }
 
@@ -119,29 +119,21 @@ class ClientLogger {
 
   // Public logging methods
   error(message: string, error?: Error, context?: LogContext): void {
-    console.error(message, error, context);
-    
     const logEntry = this.createLogEntry('error', message, context, error);
     this.addToQueue(logEntry);
   }
 
   warn(message: string, context?: LogContext): void {
-    console.warn(message, context);
-    
     const logEntry = this.createLogEntry('warning', message, context);
     this.addToQueue(logEntry);
   }
 
   info(message: string, context?: LogContext): void {
-    console.info(message, context);
-    
     const logEntry = this.createLogEntry('info', message, context);
     this.addToQueue(logEntry);
   }
 
   debug(message: string, context?: LogContext): void {
-    console.debug(message, context);
-    
     const logEntry = this.createLogEntry('debug', message, context);
     this.addToQueue(logEntry);
   }

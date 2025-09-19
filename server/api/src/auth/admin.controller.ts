@@ -12,6 +12,7 @@ import {
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard, Roles } from './guards/roles.guard';
 import { Role, EmailLog, Prisma } from '@prisma/client';
@@ -158,6 +159,7 @@ interface BroadcastNotificationResponse {
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
+@Throttle({ users: { limit: 100, ttl: 60000 } }) // 100 requests per minute for admin endpoints
 export class AdminController {
   constructor(
     private readonly prisma: PrismaService,

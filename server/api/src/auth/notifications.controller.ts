@@ -10,6 +10,7 @@ import {
   HttpStatus,
   UsePipes,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -35,6 +36,7 @@ import { PaginatedNotifications } from './notifications.service';
 @Controller('v1/notifications')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
+@Throttle({ users: { limit: 50, ttl: 60000 } }) // 50 notification requests per minute
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 

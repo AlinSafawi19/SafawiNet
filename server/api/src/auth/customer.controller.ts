@@ -10,6 +10,7 @@ import {
   HttpStatus,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard, Roles } from './guards/roles.guard';
 import {
@@ -170,6 +171,7 @@ interface SecurityUser {
 @Controller('customer')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.CUSTOMER)
+@Throttle({ users: { limit: 50, ttl: 60000 } }) // 50 requests per minute for customer endpoints
 export class CustomerController {
   constructor(
     private readonly prisma: PrismaService,

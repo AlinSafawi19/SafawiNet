@@ -312,7 +312,14 @@
       "userAlreadyVerified": "User is already verified",
       "sessionNotFound": "Session not found",
       "cannotDeleteCurrentSession": "Cannot delete current session",
-      "notificationNotFound": "Notification not found"
+      "notificationNotFound": "Notification not found",
+      "rateLimitExceeded": "Too many requests. Please try again later",
+      "rateLimitExceededAuth": "Too many authentication attempts. Please try again later",
+      "rateLimitExceededPassword": "Too many password reset attempts. Please try again later",
+      "rateLimitExceededEmail": "Too many email verification attempts. Please try again later",
+      "rateLimitExceededWebSocket": "Connection rate limit exceeded. Please try again later",
+      "rateLimitExceededWebSocketMessage": "Message rate limit exceeded. Please slow down",
+      "rateLimitExceededWebSocketAuth": "Authentication rate limit exceeded. Please try again later"
     },
     "twoFactor": {
       "title": "Two-Factor Authentication",

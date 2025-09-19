@@ -10,6 +10,7 @@ import {
   BadRequestException,
   Res,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -98,6 +99,7 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
+  @Throttle({ auth: { limit: 5, ttl: 60000 } }) // 5 registrations per minute
   @ApiOperation({ summary: 'Register a new user' })
   @ApiBody({
     description: 'User registration data',
@@ -274,6 +276,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ auth: { limit: 10, ttl: 60000 } }) // 10 login attempts per minute
   @ApiOperation({ summary: 'Login user' })
   @ApiBody({
     description: 'User login credentials',
@@ -411,6 +414,7 @@ export class AuthController {
 
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ auth: { limit: 3, ttl: 300000 } }) // 3 password reset requests per 5 minutes
   @ApiOperation({ summary: 'Request password reset' })
   @ApiBody({
     description: 'Password reset request data',
@@ -442,6 +446,7 @@ export class AuthController {
 
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ auth: { limit: 5, ttl: 300000 } }) // 5 password reset attempts per 5 minutes
   @ApiOperation({ summary: 'Reset password with token' })
   @ApiBody({
     description: 'Password reset data',
@@ -574,6 +579,7 @@ export class AuthController {
 
   @Post('2fa/login')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ auth: { limit: 10, ttl: 60000 } }) // 10 2FA attempts per minute
   @ApiOperation({ summary: 'Complete login with 2FA code' })
   @ApiBody({
     description: '2FA login data',

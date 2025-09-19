@@ -11,6 +11,7 @@ import {
   HttpStatus,
   UsePipes,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -44,6 +45,7 @@ import {
 @Controller('v1/sessions')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
+@Throttle({ users: { limit: 30, ttl: 60000 } }) // 30 session requests per minute
 export class SessionsController {
   constructor(
     private readonly sessionsService: SessionsService,

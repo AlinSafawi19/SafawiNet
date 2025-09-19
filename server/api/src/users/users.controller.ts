@@ -13,6 +13,7 @@ import {
   Request,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -79,6 +80,7 @@ export class UsersController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.SUPERADMIN)
+  @Throttle({ users: { limit: 10, ttl: 60000 } }) // 10 user creations per minute
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new admin user (Superadmin only)' })
   @ApiBody({
@@ -237,6 +239,7 @@ export class UsersController {
   }
 
   @Post('verify-email')
+  @Throttle({ users: { limit: 5, ttl: 300000 } }) // 5 email verifications per 5 minutes
   @ApiOperation({ summary: 'Verify user email with token' })
   @ApiBody({
     description: 'Email verification data',
@@ -267,6 +270,7 @@ export class UsersController {
   }
 
   @Post('request-password-reset')
+  @Throttle({ users: { limit: 3, ttl: 300000 } }) // 3 password reset requests per 5 minutes
   @ApiOperation({ summary: 'Request password reset email' })
   @ApiBody({
     description: 'Password reset request data',
@@ -295,6 +299,7 @@ export class UsersController {
   }
 
   @Post('reset-password')
+  @Throttle({ users: { limit: 5, ttl: 300000 } }) // 5 password reset attempts per 5 minutes
   @ApiOperation({ summary: 'Reset password with token' })
   @ApiBody({
     description: 'Password reset data',
@@ -455,6 +460,7 @@ export class UsersController {
 
   @Post('me/change-password')
   @ApiBearerAuth()
+  @Throttle({ users: { limit: 5, ttl: 300000 } }) // 5 password changes per 5 minutes
   @ApiOperation({ summary: 'Change user password' })
   @ApiBody({
     description: 'Password change data',

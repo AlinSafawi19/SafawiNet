@@ -30,6 +30,10 @@ export interface SocketEvents {
   connect: () => void;
   disconnect: () => void;
   auth_broadcast: (data: { type: string; user?: any }) => void;
+  rateLimitExceeded: (data: {
+    type: string;
+    message: string;
+  }) => void;
 }
 
 class SocketSingleton {
@@ -117,6 +121,12 @@ class SocketSingleton {
     this.socket.on('forceLogout', (data: any) => {
       // Emit a custom event that the AuthContext can listen to
       window.dispatchEvent(new CustomEvent('forceLogout', { detail: data }));
+    });
+
+    // Set up rate limiting error listener
+    this.socket.on('RATE_LIMIT_EXCEEDED', (data: any) => {
+      // Emit a custom event for rate limiting errors
+      window.dispatchEvent(new CustomEvent('rateLimitExceeded', { detail: data }));
     });
   }
 

@@ -312,7 +312,14 @@
       "userAlreadyVerified": "المستخدم محقق بالفعل",
       "sessionNotFound": "الجلسة غير موجودة",
       "cannotDeleteCurrentSession": "لا يمكن حذف الجلسة الحالية",
-      "notificationNotFound": "الإشعار غير موجود"
+      "notificationNotFound": "الإشعار غير موجود",
+      "rateLimitExceeded": "طلبات كثيرة جداً. يرجى المحاولة لاحقاً",
+      "rateLimitExceededAuth": "محاولات مصادقة كثيرة جداً. يرجى المحاولة لاحقاً",
+      "rateLimitExceededPassword": "محاولات إعادة تعيين كلمة المرور كثيرة جداً. يرجى المحاولة لاحقاً",
+      "rateLimitExceededEmail": "محاولات التحقق من البريد الإلكتروني كثيرة جداً. يرجى المحاولة لاحقاً",
+      "rateLimitExceededWebSocket": "تم تجاوز حد الاتصال. يرجى المحاولة لاحقاً",
+      "rateLimitExceededWebSocketMessage": "تم تجاوز حد الرسائل. يرجى التباطؤ",
+      "rateLimitExceededWebSocketAuth": "تم تجاوز حد مصادقة الاتصال. يرجى المحاولة لاحقاً"
     },
     "twoFactor": {
       "title": "المصادقة الثنائية",

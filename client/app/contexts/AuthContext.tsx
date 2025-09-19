@@ -398,7 +398,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return { success: true, user: userData };
     } else {
       // Map server error messages to translation keys
-      const messageKey = mapServerErrorToTranslationKey(response.error);
+      const messageKey = response.error ? mapServerErrorToTranslationKey(response.error) : null;
       return {
         success: false,
         message: messageKey ? undefined : response.error,
@@ -476,7 +476,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } else {
         const errorData = await response.json();
-        const messageKey = mapServerErrorToTranslationKey(errorData.message);
+        const messageKey = errorData.message ? mapServerErrorToTranslationKey(errorData.message) : null;
         return {
           success: false,
           message: messageKey ? undefined : errorData.message,
@@ -601,7 +601,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         const errorData = await response.json();
         // Map server error messages to translation keys
-        const messageKey = mapServerErrorToTranslationKey(errorData.message);
+        const messageKey = errorData.message ? mapServerErrorToTranslationKey(errorData.message) : null;
         return {
           success: false,
           message: messageKey ? undefined : errorData.message,
@@ -736,6 +736,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let isMounted = true;
+
+    // Handle rate limiting errors from WebSocket
+    const handleRateLimitError = (event: CustomEvent) => {
+      const { type, message } = event.detail;
+      // You can add specific handling here if needed
+      // For now, we'll just log it - the error will be handled by the backend message translation
+      logWarning('Rate limit exceeded', {
+        component: 'AuthContext',
+        action: 'handleRateLimitError',
+        metadata: { type, message }
+      });
+    };
 
     const initializeAuth = async () => {
       if (isMounted) {
@@ -907,6 +919,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Also listen for custom force logout events (for timing issues)
           window.addEventListener('forceLogout', handleForceLogout);
 
+          // Add rate limiting error listener
+          window.addEventListener('rateLimitExceeded', handleRateLimitError as EventListener);
+
           // Add a general event listener for socket events
           socketSingleton.on('connect', () => {
             // Socket connected
@@ -922,8 +937,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Return cleanup function
     return () => {
       isMounted = false;
-      // Clean up the custom event listener
+      // Clean up the custom event listeners
       window.removeEventListener('forceLogout', handleForceLogout);
+      window.removeEventListener('rateLimitExceeded', handleRateLimitError as EventListener);
     };
   }, [checkAuthStatus, loginWithTokens, user, handleForceLogout, logout]);
 

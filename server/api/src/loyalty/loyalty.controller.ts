@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   DefaultValuePipe,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Request as ExpressRequest } from 'express';
 import {
   LoyaltyService,
@@ -47,6 +48,7 @@ export class LoyaltyController {
   ) {}
 
   @Get('me')
+  @Throttle({ loyalty: { limit: 30, ttl: 60000 } }) // 30 loyalty account requests per minute
   @ApiOperation({ summary: 'Get current user loyalty account information' })
   @ApiResponse({
     status: 200,
@@ -112,6 +114,7 @@ export class LoyaltyController {
   }
 
   @Get('transactions')
+  @Throttle({ loyalty: { limit: 30, ttl: 60000 } }) // 30 transaction history requests per minute
   @ApiOperation({ summary: 'Get user loyalty transaction history' })
   @ApiQuery({
     name: 'cursor',

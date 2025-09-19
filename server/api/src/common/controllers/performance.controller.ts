@@ -1,4 +1,5 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -14,6 +15,7 @@ import { CronService } from '../services/cron.service';
 @Controller('performance')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
+@Throttle({ api: { limit: 20, ttl: 60000 } }) // 20 performance requests per minute
 export class PerformanceController {
   constructor(
     private performanceService: PerformanceService,

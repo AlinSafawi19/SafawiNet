@@ -22,6 +22,7 @@ import { SecurityUtils } from '../common/security/security.utils';
 import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
 import { OfflineMessageService } from '../common/services/offline-message.service';
 import { LoggerService } from '../common/services/logger.service';
+import { WebSocketRateLimitService } from '../common/services/websocket-rate-limit.service';
 import { UsersModule } from '../users/users.module';
 
 @Module({
@@ -62,6 +63,7 @@ import { UsersModule } from '../users/users.module';
     AuthWebSocketGateway,
     OfflineMessageService,
     LoggerService,
+    WebSocketRateLimitService,
   ],
   exports: [
     AuthService,

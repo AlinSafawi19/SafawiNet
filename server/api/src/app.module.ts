@@ -1,8 +1,10 @@
 import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bullmq';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './health/health.module';
@@ -44,6 +46,56 @@ import { PerformanceController } from './common/controllers/performance.controll
       },
       prefix: process.env.BULLMQ_PREFIX || 'safawinet',
     }),
+    // Rate limiting configuration - only enabled in production
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        const isProduction = configService.get('NODE_ENV') === 'production';
+        
+        if (!isProduction) {
+          // Disable rate limiting in non-production environments
+          return {
+            throttlers: [],
+          };
+        }
+
+        // Production rate limiting configuration
+        return {
+          throttlers: [
+            // General API rate limiting
+            {
+              name: 'api',
+              ttl: 60000, // 1 minute
+              limit: 100, // 100 requests per minute
+            },
+            // Auth endpoints - more restrictive
+            {
+              name: 'auth',
+              ttl: 60000, // 1 minute
+              limit: 20, // 20 requests per minute
+            },
+            // User management endpoints
+            {
+              name: 'users',
+              ttl: 60000, // 1 minute
+              limit: 50, // 50 requests per minute
+            },
+            // Loyalty endpoints
+            {
+              name: 'loyalty',
+              ttl: 60000, // 1 minute
+              limit: 30, // 30 requests per minute
+            },
+          ],
+          storage: {
+            host: configService.get('REDIS_HOST', 'localhost'),
+            port: parseInt(configService.get('REDIS_PORT', '6379')),
+            password: configService.get('REDIS_PASSWORD'),
+          },
+        };
+      },
+      inject: [ConfigService],
+    }),
     HealthModule,
     UsersModule,
     AuthModule,
@@ -63,6 +115,15 @@ import { PerformanceController } from './common/controllers/performance.controll
     EmailMonitoringService,
     OfflineMessageService,
     LoggerService,
+    // Global rate limiting guard - only active in production
+    {
+      provide: APP_GUARD,
+      useFactory: (configService: ConfigService) => {
+        const isProduction = configService.get('NODE_ENV') === 'production';
+        return isProduction ? new ThrottlerGuard() : null;
+      },
+      inject: [ConfigService],
+    },
   ],
 })
 export class AppModule {

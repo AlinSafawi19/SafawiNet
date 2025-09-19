@@ -15,6 +15,7 @@ import { Role } from '@prisma/client';
 import { AuthenticatedSocket } from '../auth/guards/ws-jwt.guard';
 import { isJwtPayload } from '../auth/types/jwt.types';
 import { OfflineMessageService } from '../common/services/offline-message.service';
+import { WebSocketRateLimitService } from '../common/services/websocket-rate-limit.service';
 
 // User data interface for WebSocket events
 interface UserData {
@@ -104,16 +105,42 @@ export class AuthWebSocketGateway
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly offlineMessageService: OfflineMessageService,
+    private readonly rateLimitService: WebSocketRateLimitService,
   ) {}
 
   afterInit(server: Server) {
     this.server = server;
   }
 
-  handleConnection(client: AuthenticatedSocket) {
+  /**
+   * Check if a message is allowed based on rate limits
+   */
+  private async checkMessageRateLimit(client: AuthenticatedSocket): Promise<boolean> {
+    const isAllowed = await this.rateLimitService.checkMessageLimit(client.id);
+    if (!isAllowed) {
+      client.emit('error', {
+        type: 'RATE_LIMIT_EXCEEDED',
+        message: 'Message rate limit exceeded. Please slow down.',
+      });
+    }
+    return isAllowed;
+  }
+
+  async handleConnection(client: AuthenticatedSocket) {
     try {
       // Ensure server is initialized
       if (!this.server) {
+        client.disconnect();
+        return;
+      }
+
+      // Check connection rate limit
+      const isConnectionAllowed = await this.rateLimitService.checkConnectionLimit(client.id);
+      if (!isConnectionAllowed) {
+        client.emit('error', {
+          type: 'RATE_LIMIT_EXCEEDED',
+          message: 'Connection rate limit exceeded. Please try again later.',
+        });
         client.disconnect();
         return;
       }
@@ -191,10 +218,14 @@ export class AuthWebSocketGateway
   }
 
   @SubscribeMessage('joinVerificationRoom')
-  handleJoinVerificationRoom(
+  async handleJoinVerificationRoom(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { userId: string },
   ) {
+    // Check rate limit
+    if (!(await this.checkMessageRateLimit(client))) {
+      return;
+    }
     if (client.user && client.user.id === data.userId) {
       this.addToVerificationRoom(data.userId, client.id);
       client.emit('verificationRoomJoined', { success: true });
@@ -207,10 +238,14 @@ export class AuthWebSocketGateway
   }
 
   @SubscribeMessage('leaveVerificationRoom')
-  handleLeaveVerificationRoom(
+  async handleLeaveVerificationRoom(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { userId: string },
   ) {
+    // Check rate limit
+    if (!(await this.checkMessageRateLimit(client))) {
+      return;
+    }
     if (client.user && client.user.id === data.userId) {
       this.removeFromVerificationRoom(data.userId, client.id);
       client.emit('verificationRoomLeft', { success: true });
@@ -218,10 +253,14 @@ export class AuthWebSocketGateway
   }
 
   @SubscribeMessage('joinPendingVerificationRoom')
-  handleJoinPendingVerificationRoom(
+  async handleJoinPendingVerificationRoom(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { email: string },
   ) {
+    // Check rate limit
+    if (!(await this.checkMessageRateLimit(client))) {
+      return;
+    }
     // Allow anonymous connections to join pending verification rooms
     const email = data.email.toLowerCase();
     void this.addToPendingVerificationRoom(email, client.id);
@@ -232,20 +271,28 @@ export class AuthWebSocketGateway
   }
 
   @SubscribeMessage('leavePendingVerificationRoom')
-  handleLeavePendingVerificationRoom(
+  async handleLeavePendingVerificationRoom(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { email: string },
   ) {
+    // Check rate limit
+    if (!(await this.checkMessageRateLimit(client))) {
+      return;
+    }
     const email = data.email.toLowerCase();
     void this.removeFromPendingVerificationRoom(email, client.id);
     client.emit('pendingVerificationRoomLeft', { success: true, email });
   }
 
   @SubscribeMessage('joinPasswordResetRoom')
-  handleJoinPasswordResetRoom(
+  async handleJoinPasswordResetRoom(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { email: string },
   ) {
+    // Check rate limit
+    if (!(await this.checkMessageRateLimit(client))) {
+      return;
+    }
     // Allow anonymous connections to join password reset rooms
     const email = data.email.toLowerCase();
 
@@ -256,10 +303,14 @@ export class AuthWebSocketGateway
   }
 
   @SubscribeMessage('leavePasswordResetRoom')
-  handleLeavePasswordResetRoom(
+  async handleLeavePasswordResetRoom(
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { email: string },
   ) {
+    // Check rate limit
+    if (!(await this.checkMessageRateLimit(client))) {
+      return;
+    }
     const email = data.email.toLowerCase();
     this.removeFromPasswordResetRoom(email, client.id);
     client.emit('passwordResetRoomLeft', { success: true, email });

@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -81,6 +82,7 @@ interface EmailLogsResponse {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
 @ApiBearerAuth()
+@Throttle({ users: { limit: 20, ttl: 60000 } }) // 20 email monitoring requests per minute
 export class EmailMonitoringController {
   constructor(
     private readonly emailMonitoringService: EmailMonitoringService,
