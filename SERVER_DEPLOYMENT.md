@@ -308,9 +308,7 @@ NODE_OPTIONS=--max-old-space-size=2048
 ### 1. Health Checks
 Your app includes health checks at `/health` endpoint.
 
-### 2. Logging
-- **Structured logging** with Pino
-- **Request logging** with pino-http
+### 2. Error Tracking
 - **Error tracking** with Sentry
 
 ### 3. Metrics

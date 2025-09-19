@@ -12,7 +12,6 @@ import { LoyaltyModule } from './loyalty/loyalty.module';
 
 import { RedisService } from './common/services/redis.service';
 import { EmailService } from './common/services/email.service';
-import { PinoLoggerService } from './common/services/logger.service';
 import { TelemetryService } from './common/services/telemetry.service';
 import { SentryService } from './common/services/sentry.service';
 import { QueueService } from './common/services/queue.service';
@@ -53,7 +52,6 @@ import { PerformanceController } from './common/controllers/performance.controll
     AppService,
     RedisService,
     EmailService,
-    PinoLoggerService,
     TelemetryService,
     SentryService,
     QueueService,

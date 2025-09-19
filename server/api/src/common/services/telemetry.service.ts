@@ -16,9 +16,6 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
     const otelEndpoint = this.configService.get<string>('OTEL_ENDPOINT');
 
     if (!otelEndpoint) {
-      console.warn(
-        'OTEL_ENDPOINT not configured, skipping OpenTelemetry setup',
-      );
       return;
     }
 
@@ -42,7 +39,6 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
 
       this.sdk.start();
     } catch (error) {
-      console.error('Failed to start OpenTelemetry SDK:', error);
       // Continue without telemetry - don't crash the app
     }
   }
@@ -52,7 +48,6 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
       try {
         await this.sdk.shutdown();
       } catch (error) {
-        console.error('Failed to shutdown OpenTelemetry SDK:', error);
       }
     }
   }

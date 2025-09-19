@@ -39,7 +39,6 @@ export class PrismaService
       try {
         await this.$executeRawUnsafe(`TRUNCATE TABLE ${tables} CASCADE;`);
       } catch (error) {
-        console.error({ error });
       }
     }
   }

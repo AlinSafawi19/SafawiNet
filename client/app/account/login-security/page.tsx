@@ -110,19 +110,10 @@ export default function LoginSecurityPage() {
   const disablePasswordRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    console.log('🔍 LoginSecurityPage - Auth State Debug:', {
-      isLoading,
-      hasUser: !!user,
-      user: user ? { id: user.id, email: user.email, name: user.name } : null,
-      cookies: document.cookie
-    });
-    
     // Redirect unauthenticated users to login
     if (!isLoading && !user) {
-      console.log('🚀 Redirecting to login - no user');
       router.push('/auth');
     } else if (!isLoading && user) {
-      console.log('🚀 User authenticated, initializing form');
       // Initialize profile form data when user becomes available
       const userName = user.name || '';
       setProfileFormData({
@@ -566,12 +557,6 @@ export default function LoginSecurityPage() {
     }
 
     try {
-      console.log('🔍 Password Change - Making API call:', {
-        url: buildApiUrl(API_CONFIG.ENDPOINTS.USERS.CHANGE_PASSWORD),
-        cookies: document.cookie,
-        hasCredentials: 'include'
-      });
-      
       const response = await fetch(
         buildApiUrl(API_CONFIG.ENDPOINTS.USERS.CHANGE_PASSWORD),
         {
@@ -677,12 +662,10 @@ export default function LoginSecurityPage() {
         }
       } else {
         const errorData = await response.json();
-        console.error('2FA enable error:', errorData);
-        alert(errorData.message || `Failed to enable 2FA (${response.status})`);
+        // 2FA enable error
       }
     } catch (error) {
-      console.error('2FA enable exception:', error);
-      alert('An error occurred while enabling 2FA');
+      // 2FA enable exception
     } finally {
       setIs2FALoading(false);
     }

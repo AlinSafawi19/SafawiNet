@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
         try {
           await joinPasswordResetRoom(email);
         } catch (error) {
-          console.error('❌ Failed to join password reset room:', error);
+          // Failed to join password reset room
         }
       }
     };

@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
 import { NotificationListDto } from './schemas/auth.schemas';
 import { Prisma, Notification } from '@prisma/client';
@@ -159,7 +159,6 @@ function isValidNotificationPriority(
 
 @Injectable()
 export class NotificationsService {
-  private readonly logger = new Logger(NotificationsService.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -181,10 +180,6 @@ export class NotificationsService {
           expiresAt: data.expiresAt,
         },
       });
-
-    this.logger.log(
-      `Created notification ${notification.id} for user ${data.userId}`,
-    );
 
     return {
       id: notification.id,
@@ -290,10 +285,6 @@ export class NotificationsService {
         readAt: new Date(),
       },
     });
-
-    this.logger.log(
-      `Marked notification ${notificationId} as read for user ${userId}`,
-    );
   }
 
   /**
@@ -316,10 +307,6 @@ export class NotificationsService {
         },
       });
 
-    this.logger.log(
-      `Marked ${result.count} notifications as read for user ${userId}`,
-    );
-
     return { updatedCount: result.count };
   }
 
@@ -339,8 +326,6 @@ export class NotificationsService {
           readAt: new Date(),
         },
       });
-
-    this.logger.log(`Marked all notifications as read for user ${userId}`);
 
     return { updatedCount: result.count };
   }
@@ -372,7 +357,6 @@ export class NotificationsService {
       });
 
     if (result.count > 0) {
-      this.logger.log(`Cleaned up ${result.count} expired notifications`);
     }
 
     return { cleanedCount: result.count };

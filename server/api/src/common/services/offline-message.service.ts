@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 
 export interface OfflineMessagePayload {
@@ -30,7 +30,6 @@ export interface OfflineMessage {
 
 @Injectable()
 export class OfflineMessageService {
-  private readonly logger = new Logger(OfflineMessageService.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -50,16 +49,8 @@ export class OfflineMessageService {
         },
       });
 
-      this.logger.log(
-        `Created offline message for user ${dto.userId}: ${dto.event}`,
-      );
-
       return message as OfflineMessage;
     } catch (error) {
-      this.logger.error(
-        `Failed to create offline message for user ${dto.userId}:`,
-        error,
-      );
       throw error;
     }
   }
@@ -78,16 +69,8 @@ export class OfflineMessageService {
         orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }],
       });
 
-      this.logger.log(
-        `Retrieved ${messages.length} unprocessed messages for user ${userId}`,
-      );
-
       return messages as OfflineMessage[];
     } catch (error) {
-      this.logger.error(
-        `Failed to get unprocessed messages for user ${userId}:`,
-        error,
-      );
       throw error;
     }
   }
@@ -105,12 +88,7 @@ export class OfflineMessageService {
         },
       });
 
-      this.logger.log(`Marked message ${messageId} as processed`);
     } catch (error) {
-      this.logger.error(
-        `Failed to mark message ${messageId} as processed:`,
-        error,
-      );
       throw new Error(`Failed to mark message ${messageId} as processed`);
     }
   }
@@ -128,9 +106,7 @@ export class OfflineMessageService {
         },
       });
 
-      this.logger.log(`Marked ${messageIds.length} messages as processed`);
     } catch (error) {
-      this.logger.error(`Failed to mark messages as processed:`, error);
       throw error;
     }
   }
@@ -150,10 +126,6 @@ export class OfflineMessageService {
 
       return count > 0;
     } catch (error) {
-      this.logger.error(
-        `Failed to check unprocessed messages for user ${userId}:`,
-        error,
-      );
       return false;
     }
   }
@@ -169,10 +141,8 @@ export class OfflineMessageService {
         },
       });
 
-      this.logger.log(`Cleaned up ${result.count} expired messages`);
       return result.count;
     } catch (error) {
-      this.logger.error('Failed to cleanup expired messages:', error);
       throw error;
     }
   }
@@ -192,10 +162,8 @@ export class OfflineMessageService {
         },
       });
 
-      this.logger.log(`Cleaned up ${result.count} old processed messages`);
       return result.count;
     } catch (error) {
-      this.logger.error('Failed to cleanup old processed messages:', error);
       throw error;
     }
   }
@@ -237,10 +205,6 @@ export class OfflineMessageService {
 
       return { total, unprocessed, processed, expired };
     } catch (error) {
-      this.logger.error(
-        `Failed to get message stats for user ${userId}:`,
-        error,
-      );
       throw new Error(`Failed to get message stats for user ${userId}`);
     }
   }

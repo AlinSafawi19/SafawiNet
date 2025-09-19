@@ -65,7 +65,7 @@ export default function ResetPasswordPage() {
       try {
         await connect();
       } catch (error) {
-        console.error('❌ Failed to connect to socket:', error);
+        // Failed to connect to socket
       }
     };
 
@@ -181,7 +181,7 @@ export default function ResetPasswordPage() {
             // Small delay to ensure room joining is complete before logout emission
             await new Promise((resolve) => setTimeout(resolve, 100));
           } catch (error) {
-            console.error('❌ Failed to join password reset room:', error);
+            // Failed to join password reset room
           }
         }
 

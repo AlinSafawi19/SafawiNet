@@ -48,9 +48,6 @@ class SocketSingleton {
     // Private constructor for singleton pattern
     SocketSingleton.instanceCounter++;
     this.instanceId = `instance_${SocketSingleton.instanceCounter}`;
-    console.log('🔧 SocketSingleton constructor called', {
-      instanceId: this.instanceId
-    });
   }
 
   public static getInstance(): SocketSingleton {
@@ -62,10 +59,6 @@ class SocketSingleton {
 
   public async initialize(): Promise<void> {
     if (this.isInitialized) {
-      console.log('🔧 Socket already initialized, skipping initialization', {
-        instanceId: this.getInstanceId(),
-        socketExists: !!this.socket
-      });
       return;
     }
 
@@ -75,9 +68,6 @@ class SocketSingleton {
 
     try {
       const socketUrl = buildWebSocketUrl(API_CONFIG.ENDPOINTS.WEBSOCKET.AUTH);
-      console.log('🔧 Creating socket connection to:', socketUrl, {
-        instanceId: this.getInstanceId()
-      });
       this.socket = io(socketUrl, {
         transports: ['websocket', 'polling'],
         autoConnect: false,
@@ -87,7 +77,7 @@ class SocketSingleton {
       this.setupEventListeners();
       this.isInitialized = true;
     } catch (error) {
-      console.warn('Failed to initialize socket service:', error);
+      // Failed to initialize socket service
     }
   }
 
@@ -97,36 +87,30 @@ class SocketSingleton {
     this.socket.on('connect', () => {
       this.isConnected = true;
       this.reconnectAttempts = 0;
-      console.log('🔌 Socket connected successfully');
     });
 
     this.socket.on('disconnect', () => {
       this.isConnected = false;
-      console.log('🔌 Socket disconnected');
       this.attemptReconnect();
     });
 
     // Listen for pending verification room responses
     this.socket.on('pendingVerificationRoomJoined', (data: any) => {
-      console.log('✅ Server confirmed pending verification room joined:', data);
+      // Server confirmed pending verification room joined
     });
 
     this.socket.on('pendingVerificationRoomLeft', (data: any) => {
-      console.log('✅ Server confirmed pending verification room left:', data);
+      // Server confirmed pending verification room left
     });
 
     this.socket.on('connect_error', (error: any) => {
       this.isConnected = false;
-      console.error('❌ Socket connection error:', error);
       this.attemptReconnect();
     });
 
-    // Add general event listener to debug all events
+    // Add general event listener for all events
     this.socket.onAny((eventName: string, ...args: any[]) => {
-      console.log('📡 Received socket event:', eventName, 'with data:', args);
-      if (eventName === 'emailVerified') {
-        console.log('🎯 EMAIL VERIFIED EVENT RECEIVED!', args);
-      }
+      // Received socket event
     });
 
     // Set up force logout listener immediately when socket is created
@@ -157,7 +141,6 @@ class SocketSingleton {
   public async connect(token?: string): Promise<void> {
     // If already connected, don't connect again
     if (this.isConnected) {
-      console.log('🔧 Socket already connected, skipping connection');
       return;
     }
 
@@ -166,7 +149,6 @@ class SocketSingleton {
     }
 
     if (this.connectionPromise) {
-      console.log('🔧 Connection already in progress, waiting...');
       return this.connectionPromise;
     }
 
@@ -190,7 +172,6 @@ class SocketSingleton {
         };
 
         const onError = (error: any) => {
-          console.error('❌ Socket connection failed:', error);
           this.socket?.off('connect', onConnect);
           this.socket?.off('connect_error', onError);
           this.connectionPromise = null;
@@ -202,7 +183,6 @@ class SocketSingleton {
         this.socket.on('connect_error', onError);
 
         // Start connection
-        console.log('🔧 Attempting to connect socket...');
         this.socket.connect();
       });
 
@@ -230,17 +210,13 @@ class SocketSingleton {
   }
 
   public async joinPendingVerificationRoom(email: string): Promise<void> {
-    console.log('🔧 Attempting to join pending verification room for email:', email);
     if (this.socket && this.isConnected) {
-      console.log('🔧 Emitting joinPendingVerificationRoom message to server');
       this.socket.emit('joinPendingVerificationRoom', { email });
     } else if (this.socket && !this.isConnected) {
-      console.log('🔧 Socket not connected, waiting for connection...');
       // Wait for connection to be established
       await new Promise<void>((resolve) => {
         const checkConnection = () => {
           if (this.isConnected) {
-            console.log('🔧 Connection established, emitting joinPendingVerificationRoom message');
             this.socket?.emit('joinPendingVerificationRoom', { email });
             resolve();
           } else {
@@ -249,10 +225,6 @@ class SocketSingleton {
         };
         checkConnection();
       });
-    } else {
-      console.warn(
-        '⚠️ Cannot join pending verification room - socket not initialized'
-      );
     }
   }
 
@@ -278,10 +250,6 @@ class SocketSingleton {
         };
         checkConnection();
       });
-    } else {
-      console.warn(
-        '⚠️ Cannot join password reset room - socket not initialized'
-      );
     }
   }
 
@@ -295,12 +263,8 @@ class SocketSingleton {
     event: T,
     callback: SocketEvents[T]
   ): void {
-    console.log('🔧 Setting up socket listener for event:', event, { socketExists: !!this.socket, isConnected: this.isConnected });
     if (this.socket) {
       this.socket.on(event, callback as any);
-      console.log('✅ Socket listener set up for event:', event);
-    } else {
-      console.warn('⚠️ Cannot set up socket listener - socket not initialized');
     }
   }
 
@@ -351,42 +315,24 @@ class SocketSingleton {
 
   // Ensure socket is ready for immediate use
   public async ensureReady(): Promise<void> {
-    console.log('🔧 Ensuring socket is ready...', { 
-      isInitialized: this.isInitialized, 
-      isConnected: this.isConnected,
-      socketExists: !!this.socket,
-      instanceId: this.getInstanceId()
-    });
-    
     // If we have a socket but state is inconsistent, fix it
     if (this.socket && !this.isInitialized) {
-      console.log('🔧 Socket exists but not marked as initialized, fixing state...');
       this.isInitialized = true;
     }
     
     // If we have a socket and it's connected, we're ready
     if (this.socket && this.isConnected) {
-      console.log('🔧 Socket already ready, skipping initialization');
       return;
     }
     
     if (!this.isInitialized) {
-      console.log('🔧 Initializing socket...');
       await this.initialize();
     }
     
     // If not connected, connect without token (anonymous connection)
     if (!this.isConnected) {
-      console.log('🔧 Connecting socket...');
       await this.connect();
     }
-    
-    console.log('✅ Socket is ready!', { 
-      isInitialized: this.isInitialized, 
-      isConnected: this.isConnected,
-      socketExists: !!this.socket,
-      instanceId: this.getInstanceId()
-    });
   }
 
   private getInstanceId(): string {

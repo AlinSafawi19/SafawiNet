@@ -1,6 +1,5 @@
 import {
   Injectable,
-  Logger,
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
@@ -46,8 +45,6 @@ function nullToUndefined<T>(value: T | null): T | undefined {
 
 @Injectable()
 export class SessionsService {
-  private readonly logger = new Logger(SessionsService.name);
-
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -117,7 +114,6 @@ export class SessionsService {
     try {
       // Check if prisma is properly injected
       if (!this.prisma) {
-        this.logger.error('PrismaService is not properly injected');
         throw new Error('Database service not available');
       }
 
@@ -125,7 +121,6 @@ export class SessionsService {
       try {
         await this.prisma.$queryRaw`SELECT 1`;
       } catch (dbError) {
-        this.logger.error('Database connection failed:', dbError);
         throw new Error('Database connection failed');
       }
 
@@ -133,10 +128,6 @@ export class SessionsService {
       try {
         await this.prisma.userSession.findFirst();
       } catch (tableError) {
-        this.logger.error(
-          'userSession table does not exist or is not accessible:',
-          tableError,
-        );
         throw new Error(
           'Database table userSession not found. Please run database migrations.',
         );
@@ -166,9 +157,7 @@ export class SessionsService {
         data: sessionData,
       });
 
-      this.logger.log(`Created new session for user ${userId}`);
     } catch (error) {
-      this.logger.error(`Failed to create session for user ${userId}:`, error);
       throw error;
     }
   }
@@ -301,7 +290,6 @@ export class SessionsService {
       where: deleteWhere,
     });
 
-    this.logger.log(`Deleted session ${sessionId} for user ${userId}`);
   }
 
   /**
@@ -336,10 +324,6 @@ export class SessionsService {
 
     // Delete user sessions
     await this.prisma.userSession.deleteMany({ where });
-
-    this.logger.log(
-      `Revoked ${sessionsToRevoke.length} sessions for user ${userId}`,
-    );
 
     return { revokedCount: sessionsToRevoke.length };
   }
@@ -433,8 +417,6 @@ export class SessionsService {
       where: deleteWhere,
     });
 
-    this.logger.log(`Cleaned up ${expiredSessions.length} expired sessions`);
-
     return { cleanedCount: expiredSessions.length };
   }
 
@@ -482,9 +464,6 @@ export class SessionsService {
       };
     });
 
-    this.logger.warn(
-      `Revoked token family ${familyId}: ${result.revokedCount} sessions`,
-    );
     return result;
   }
 
@@ -543,9 +522,6 @@ export class SessionsService {
       };
     });
 
-    this.logger.warn(
-      `Revoked all sessions for user ${userId}: ${result.revokedCount} sessions. Reason: ${reason || 'No reason provided'}`,
-    );
     return result;
   }
 
@@ -563,10 +539,6 @@ export class SessionsService {
         const result = await this.revokeAllUserSessions(userId, reason);
         results[userId] = result.revokedCount;
       } catch (error) {
-        this.logger.error(
-          `Failed to revoke sessions for user ${userId}:`,
-          error,
-        );
         results[userId] = 0;
       }
     }

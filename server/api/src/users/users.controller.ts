@@ -11,7 +11,6 @@ import {
   Patch,
   Put,
   Request,
-  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -68,7 +67,6 @@ export class UsersController {
   // For regular customer registration, use POST /auth/register instead
   // GET /users/admins - Get all admin users (admin-only)
   // GET /users/customers - Get all customer users (admin-only)
-  private readonly logger = new Logger(UsersController.name)
 
   constructor(
     private readonly usersService: UsersService,
@@ -170,21 +168,6 @@ export class UsersController {
   async getCurrentUser(
     @Request() req: ExpressRequest,
   ): Promise<{ user: Omit<User, 'password'> | null; authenticated: boolean }> {
-    this.logger.log('🚀 /users/me endpoint reached!');
-    
-    // Debug logging for request details
-    this.logger.log('🔍 /users/me Request Debug Info:', {
-      hasCookies: !!req.cookies,
-      cookieKeys: req.cookies ? Object.keys(req.cookies) : [],
-      hasAuthHeader: !!req.headers.authorization,
-      authHeader: req.headers.authorization,
-      userAgent: req.headers['user-agent'],
-      referer: req.headers.referer,
-      origin: req.headers.origin,
-      host: req.headers.host,
-      url: req.url,
-      method: req.method
-    });
     
     try {
       // Extract token from cookies first, then from Authorization header
@@ -193,21 +176,16 @@ export class UsersController {
       // Check cookies first
       if (req.cookies?.accessToken) {
         token = req.cookies.accessToken;
-        this.logger.log('🚀 Token found in cookies:', token!.substring(0, 20) + '...');
       } else {
-        this.logger.log('🚀 No accessToken in cookies, checking Authorization header');
         // Fallback to Authorization header
         const authHeader = req.headers.authorization;
         if (authHeader && authHeader.startsWith('Bearer ')) {
           token = authHeader.substring(7);
-          this.logger.log('🚀 Token found in Authorization header:', token!.substring(0, 20) + '...');
         } else {
-          this.logger.log('🚀 No Authorization header or invalid format');
         }
       }
 
       if (!token) {
-        this.logger.log('🚀 No token found - user not authenticated');
         return { user: null, authenticated: false };
       }
 
@@ -215,14 +193,11 @@ export class UsersController {
       const jwtSecret = this.configService.get<string>('JWT_SECRET') || 'fallback-secret';
       const payload = this.jwtService.verify(token!, { secret: jwtSecret });
       
-      this.logger.log('🚀 Token verified, payload:', payload);
-
       // Get user data
       const user = await this.usersService.getCurrentUser(payload.sub);
       return { user, authenticated: true };
       
     } catch (error) {
-      this.logger.log('🚀 Authentication failed:', error instanceof Error ? error.message : String(error));
       return { user: null, authenticated: false };
     }
   }
@@ -485,21 +460,6 @@ export class UsersController {
     @Request() req: ExpressRequest,
     @Body() changePasswordDto: ChangePasswordDto,
   ): Promise<{ message: string; messageKey: string }> {
-    this.logger.log('🚀 /users/me/change-password endpoint reached!');
-    
-    // Debug logging for request details
-    this.logger.log('🔍 Request Debug Info:', {
-      hasCookies: !!req.cookies,
-      cookieKeys: req.cookies ? Object.keys(req.cookies) : [],
-      hasAuthHeader: !!req.headers.authorization,
-      authHeader: req.headers.authorization,
-      userAgent: req.headers['user-agent'],
-      referer: req.headers.referer,
-      origin: req.headers.origin,
-      host: req.headers.host,
-      url: req.url,
-      method: req.method
-    });
     
     try {
       // Extract token from cookies first, then from Authorization header
@@ -508,21 +468,16 @@ export class UsersController {
       // Check cookies first
       if (req.cookies?.accessToken) {
         token = req.cookies.accessToken;
-        this.logger.log('🚀 Token found in cookies:', token!.substring(0, 20) + '...');
       } else {
-        this.logger.log('🚀 No accessToken in cookies, checking Authorization header');
         // Fallback to Authorization header
         const authHeader = req.headers.authorization;
         if (authHeader && authHeader.startsWith('Bearer ')) {
           token = authHeader.substring(7);
-          this.logger.log('🚀 Token found in Authorization header:', token!.substring(0, 20) + '...');
         } else {
-          this.logger.log('🚀 No Authorization header or invalid format');
         }
       }
 
       if (!token) {
-        this.logger.log('🚀 No token found - user not authenticated');
         throw new UnauthorizedException('Authentication required');
       }
 
@@ -530,7 +485,6 @@ export class UsersController {
       const jwtSecret = this.configService.get<string>('JWT_SECRET') || 'fallback-secret';
       const payload = this.jwtService.verify(token!, { secret: jwtSecret });
       
-      this.logger.log('🚀 Token verified, payload:', payload);
 
       // Get user data to verify they exist and are verified
       const user = await this.usersService.getCurrentUser(payload.sub);
@@ -550,7 +504,6 @@ export class UsersController {
     return result;
       
     } catch (error) {
-      this.logger.log('🚀 Password change failed:', error instanceof Error ? error.message : String(error));
       if (error instanceof UnauthorizedException) {
         throw error;
       }

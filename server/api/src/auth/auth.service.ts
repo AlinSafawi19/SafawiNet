@@ -1,6 +1,5 @@
 import {
   Injectable,
-  Logger,
   UnauthorizedException,
   ConflictException,
   BadRequestException,
@@ -61,8 +60,6 @@ interface JwtPayload {
 export class AuthService {
   private readonly maxLoginAttempts = 5;
   private readonly lockoutDuration = 15 * 60; // 15 minutes in seconds
-
-  private readonly logger = new Logger(AuthService.name);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -179,9 +176,6 @@ export class AuthService {
                 tierUpgradedAt: new Date(),
               },
             });
-            this.logger.log(
-              `Created loyalty account for new customer: ${user.email}`,
-            );
           }
         }
 
@@ -199,12 +193,7 @@ export class AuthService {
         name: result.user.name || 'User',
         verificationUrl,
       });
-      this.logger.log(`Verification email sent to ${result.user.email}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to send verification email to ${result.user.email}:`,
-        error,
-      );
       // Don't fail registration if email fails
     }
 
@@ -219,9 +208,7 @@ export class AuthService {
         userWithoutPassword,
       );
     } catch (error) {
-      this.logger.warn(
-        `Failed to emit WebSocket registration event: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
+  
     }
 
     return {
@@ -236,15 +223,8 @@ export class AuthService {
     user: Omit<User, 'password'>;
     tokens?: AuthTokens;
   }> {
-    console.log('🔍 AuthService.verifyEmail called with:', {
-      hasToken: !!verifyEmailDto.token,
-      tokenLength: verifyEmailDto.token?.length || 0
-    });
-    
     const { token } = verifyEmailDto;
     const tokenHash: string = SecurityUtils.hashToken(token as string);
-    
-    console.log('🔍 Token hash generated:', tokenHash.substring(0, 10) + '...');
 
     // Find and validate token atomically
     const result: User = await this.prisma.$transaction(async (tx) => {
@@ -279,50 +259,20 @@ export class AuthService {
     });
 
     // Generate tokens for automatic login
-    console.log('🔑 Generating tokens for verified user:', result.email);
     const tokens: AuthTokens = await this.generateTokens(result, undefined);
-    console.log('🔑 Tokens generated successfully:', {
-      hasAccessToken: !!tokens.accessToken,
-      hasRefreshToken: !!tokens.refreshToken,
-      expiresIn: tokens.expiresIn
-    });
 
     // Emit WebSocket event for real-time notification
     try {
-      this.logger.log(
-        `📡 Emitting WebSocket events for verified user: ${result.email}`,
-      );
-
       // Log current room states before emitting
       const roomStates = this.webSocketGateway.getRoomStates();
-      this.logger.log(
-        `📊 Current room states before verification:`,
-        roomStates,
-      );
-
+      
       this.webSocketGateway.emitVerificationSuccess(
         result.id,
         this.excludePassword(result),
       );
-
-      // Also notify pending verification room for cross-browser sync with tokens
-      this.logger.log(
-        `🔑 Sending tokens to pending verification room for: ${result.email}`,
-      );
-      this.logger.log(`🔑 Tokens data:`, {
-        accessToken: tokens.accessToken ? 'PRESENT' : 'MISSING',
-        refreshToken: tokens.refreshToken ? 'PRESENT' : 'MISSING',
-        expiresIn: tokens.expiresIn
-      });
       
       // Log the user data being sent
       const userData = this.excludePassword(result);
-      this.logger.log(`👤 User data being sent:`, {
-        id: userData.id,
-        email: userData.email,
-        isVerified: userData.isVerified,
-        roles: userData.roles
-      });
       
       this.webSocketGateway.emitVerificationSuccessToPendingRoom(
         result.email,
@@ -332,23 +282,13 @@ export class AuthService {
 
       // Also broadcast login to all devices
       this.webSocketGateway.broadcastLogin(this.excludePassword(result));
-      this.logger.log(
-        `✅ All WebSocket events emitted successfully for user: ${result.email}`,
-      );
 
       // Log room states after emitting
       const roomStatesAfter = this.webSocketGateway.getRoomStates();
-      this.logger.log(
-        `📊 Current room states after verification:`,
-        roomStatesAfter,
-      );
-    } catch (error) {
-      this.logger.warn(
-        `Failed to emit WebSocket verification event: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-    }
 
-    this.logger.log(`Email verified for user ${result.email}`);
+    } catch (error) {
+ 
+    }
 
     const message: string = 'Email verified successfully';
 
@@ -414,10 +354,7 @@ export class AuthService {
       try {
         await this.simpleTwoFactorService.sendTwoFactorCode(user.id);
       } catch (error) {
-        this.logger.error(
-          `Failed to send 2FA code to user ${user.email}:`,
-          error,
-        );
+   
         // Continue with 2FA flow even if email sending fails
       }
 
@@ -432,8 +369,6 @@ export class AuthService {
 
     // Generate tokens
     const tokens: AuthTokens = await this.generateTokens(user, req);
-
-    this.logger.log(`User ${user.email} logged in successfully`);
 
     return {
       tokens,
@@ -468,7 +403,6 @@ export class AuthService {
     // Generate tokens
     const tokens: AuthTokens = await this.generateTokens(user, req);
 
-    this.logger.log(`User ${user.email} logged in successfully with 2FA`);
 
     return {
       tokens,
@@ -529,17 +463,11 @@ export class AuthService {
           });
         }
       } catch (error) {
-        this.logger.error(
-          'Failed to update user session during token refresh:',
-          error,
-        );
         // Don't fail token refresh if session update fails
       }
 
-      this.logger.log(`Tokens refreshed for user ${session.user.email}`);
       return tokens;
     } catch (error) {
-      this.logger.error('Token refresh failed:', error);
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -557,9 +485,7 @@ export class AuthService {
 
     if (!user) {
       // Don't reveal if user exists or not for security
-      this.logger.log(
-        `Password reset requested for non-existent email: ${emailKey}`,
-      );
+  
       return {
         message:
           'If an account with this email exists, a password reset link has been sent.',
@@ -596,12 +522,8 @@ export class AuthService {
     // Send password reset email
     try {
       await this.emailService.sendPasswordResetEmail(user.email, resetToken);
-      this.logger.log(`Password reset email sent to ${user.email}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to send password reset email to ${user.email}:`,
-        error,
-      );
+ 
       // Don't fail the request if email fails
     }
 
@@ -664,11 +586,6 @@ export class AuthService {
       return oneTimeToken.user;
     });
 
-    // Log security event
-    this.logger.warn(
-      `Password reset completed for user ${result.email} - all sessions invalidated`,
-    );
-
     // Send password reset security alert email
     try {
       await this.emailService.sendTemplateEmail(
@@ -688,10 +605,6 @@ export class AuthService {
         },
       );
     } catch (error) {
-      this.logger.error(
-        `Failed to send password reset security alert to ${result.email}:`,
-        error,
-      );
       // Don't fail password reset if email fails
     }
 
@@ -702,15 +615,7 @@ export class AuthService {
         'password_reset',
         'Your password has been reset. Please log in with your new password.',
       );
-
-      this.logger.log(
-        `Offline logout message created for password reset - user: ${result.email}`,
-      );
     } catch (error) {
-      this.logger.error(
-        `Failed to create offline logout message for password reset - user: ${result.email}:`,
-        error,
-      );
       // Don't fail the password reset if offline message creation fails
     }
 
@@ -730,7 +635,6 @@ export class AuthService {
       try {
         const deviceInfo = this.sessionsService.extractDeviceInfo(req);
         await this.sessionsService.createSession(user.id, tokenId, deviceInfo);
-        this.logger.log(`Session created successfully for user ${user.id}`);
 
         // Create login notification
         void this.notificationsService.createAccountUpdate(
@@ -744,7 +648,6 @@ export class AuthService {
           },
         );
       } catch (error) {
-        this.logger.error('Failed to create user session:', error);
         // If session creation fails, don't include refreshTokenId in JWT
         // This will allow login to work but without session validation
         return this.generateTokensWithoutSession(user);
@@ -827,9 +730,6 @@ export class AuthService {
     if (attempts >= this.maxLoginAttempts) {
       const lockoutKey: string = `login_lockout:${email}`;
       await this.redisService.set(lockoutKey, 'locked', this.lockoutDuration);
-      this.logger.warn(
-        `Account locked for ${email} due to too many failed login attempts`,
-      );
     }
   }
 
@@ -862,9 +762,7 @@ export class AuthService {
         });
       }
 
-      this.logger.log('Refresh token invalidated successfully');
     } catch (error) {
-      this.logger.error('Failed to invalidate refresh token:', error);
       // Don't throw error as logout should succeed even if token invalidation fails
     }
   }
@@ -921,14 +819,9 @@ export class AuthService {
         name: user.name || 'User',
         verificationUrl,
       });
-      this.logger.log(`Verification email resent to ${user.email}`);
 
       return { message: 'Verification email sent successfully' };
     } catch (error) {
-      this.logger.error(
-        `Failed to resend verification email to ${email}:`,
-        error,
-      );
       throw error;
     }
   }
@@ -972,12 +865,7 @@ export class AuthService {
         name: user.name || 'User',
         verificationUrl,
       });
-      this.logger.log(`Verification email resent to ${user.email}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to resend verification email to ${user.email}:`,
-        error,
-      );
     }
   }
 
@@ -1032,9 +920,6 @@ export class AuthService {
       path: '/',
     });
 
-    this.logger.log(
-      `Auth cookies set for ${isProduction ? 'production' : 'development'} environment`,
-    );
   }
 
   clearAuthCookies(res: Response): void {

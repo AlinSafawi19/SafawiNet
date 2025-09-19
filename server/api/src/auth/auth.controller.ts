@@ -197,34 +197,18 @@ export class AuthController {
     @Body() verifyEmailDto: VerifyEmailDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<VerifyEmailResponse> {
-    console.log('📧 Verify-email endpoint called with token:', verifyEmailDto.token ? 'PRESENT' : 'MISSING');
-    console.log('📧 Full verify-email request body:', JSON.stringify(verifyEmailDto, null, 2));
     
     const result = await this.authService.verifyEmail(verifyEmailDto);
-    console.log('📧 Verify-email service result:', {
-      hasTokens: !!result.tokens,
-      hasUser: !!result.user,
-      userEmail: result.user?.email,
-      message: result.message,
-      tokensPresent: result.tokens ? {
-        hasAccessToken: !!result.tokens.accessToken,
-        hasRefreshToken: !!result.tokens.refreshToken,
-        expiresIn: result.tokens.expiresIn
-      } : 'NO_TOKENS'
-    });
 
     // If verification was successful and tokens were generated, set them as HTTP-only cookies
     if (result.tokens) {
-      console.log('🍪 Setting HTTP-only cookies for verify-email');
       this.authService.setAuthCookies(res, result.tokens);
       // Remove tokens from response body for security
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { tokens: _, ...responseWithoutTokens } = result;
-      console.log('📧 Returning response without tokens');
       return responseWithoutTokens;
     }
 
-    console.log('⚠️ No tokens in verify-email result, returning full result');
     return result;
   }
 
@@ -645,9 +629,6 @@ export class AuthController {
 
       return { message: 'Logged out successfully' };
     } catch (error) {
-      // Log the error but don't fail the logout
-      console.error('Error during logout:', error);
-
       // Still clear cookies even if token invalidation fails
       this.authService.clearAuthCookies(res);
 
@@ -710,7 +691,6 @@ export class AuthController {
         count: messages.length,
       };
     } catch (error) {
-      console.error('Error fetching offline messages:', error);
       throw new BadRequestException('Failed to fetch offline messages');
     }
   }
@@ -768,7 +748,6 @@ export class AuthController {
         processedCount: body.messageIds.length,
       };
     } catch (error) {
-      console.error('Error marking messages as processed:', error);
       throw new BadRequestException('Failed to mark messages as processed');
     }
   }

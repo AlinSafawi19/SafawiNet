@@ -33,11 +33,8 @@ export async function POST(request: NextRequest) {
 
     // Forward cookies from the request to the backend
     const cookieHeader = request.headers.get('cookie');
-    console.log('🍪 Frontend API - Cookie header:', cookieHeader);
-    console.log('🍪 Frontend API - All headers:', Object.fromEntries(request.headers.entries()));
     
     if (!cookieHeader) {
-      console.log('❌ Frontend API - No cookies found in request');
       return NextResponse.json(
         { message: 'Authentication required' },
         { status: 401 }
@@ -88,7 +85,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data, { status: 200 });
   } catch (error) {
-    console.error('Error changing password:', error);
     return NextResponse.json(
       {
         message: 'Internal server error',

@@ -71,7 +71,6 @@ export async function PATCH(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error updating profile:', error);
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
@@ -142,7 +141,6 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating admin user:', error);
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

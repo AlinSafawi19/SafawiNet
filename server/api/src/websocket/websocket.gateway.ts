@@ -9,7 +9,6 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Role } from '@prisma/client';
@@ -97,7 +96,6 @@ export class AuthWebSocketGateway
   @WebSocketServer()
   server!: Server;
 
-  private readonly logger = new Logger(AuthWebSocketGateway.name);
   private readonly verificationRooms = new Map<string, Set<string>>(); // userId -> Set of socketIds
   private readonly pendingVerificationRooms = new Map<string, Set<string>>(); // email -> Set of socketIds
   private readonly passwordResetRooms = new Map<string, Set<string>>(); // email -> Set of socketIds
@@ -109,7 +107,6 @@ export class AuthWebSocketGateway
   ) {}
 
   afterInit(server: Server) {
-    this.logger.log('WebSocket Gateway initialized');
     this.server = server;
   }
 
@@ -117,7 +114,6 @@ export class AuthWebSocketGateway
     try {
       // Ensure server is initialized
       if (!this.server) {
-        this.logger.error('WebSocket server not initialized');
         client.disconnect();
         return;
       }
@@ -149,10 +145,6 @@ export class AuthWebSocketGateway
             isVerified: verified,
           };
 
-          this.logger.log(
-            `Authenticated WebSocket connection for user ${client.user.email}`,
-          );
-
           // Join user to their personal room
           void client.join(`user:${client.user.id}`);
 
@@ -163,39 +155,29 @@ export class AuthWebSocketGateway
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : 'Unknown error';
-          this.logger.warn(
-            `Invalid token in WebSocket connection: ${errorMessage}`,
-          );
           client.disconnect();
           return;
         }
       } else {
-        this.logger.log('Anonymous WebSocket connection');
       }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Error handling WebSocket connection: ${errorMessage}`);
       client.disconnect();
     }
   }
 
   handleDisconnect(client: AuthenticatedSocket) {
     if (client.user) {
-      this.logger.log(`WebSocket disconnected for user ${client.user.email}`);
       // Remove from verification room if they were there
       void this.removeFromVerificationRoom(client.user.id, client.id);
     } else {
-      this.logger.log('Anonymous WebSocket disconnected');
     }
 
     // Remove from all pending verification rooms (for anonymous connections)
     // This is important for cross-browser sync cleanup
     for (const [email, room] of this.pendingVerificationRooms.entries()) {
       if (room.has(client.id)) {
-        this.logger.log(
-          `🧹 Cleaning up anonymous client ${client.id} from pending verification room for ${email}`,
-        );
         void this.removeFromPendingVerificationRoom(email, client.id);
       }
     }
@@ -203,9 +185,6 @@ export class AuthWebSocketGateway
     // Remove from all password reset rooms (for anonymous connections)
     for (const [email, room] of this.passwordResetRooms.entries()) {
       if (room.has(client.id)) {
-        this.logger.log(
-          `🧹 Cleaning up anonymous client ${client.id} from password reset room for ${email}`,
-        );
         void this.removeFromPasswordResetRoom(email, client.id);
       }
     }
@@ -245,27 +224,11 @@ export class AuthWebSocketGateway
   ) {
     // Allow anonymous connections to join pending verification rooms
     const email = data.email.toLowerCase();
-    this.logger.log(
-      `🔗 User ${client.id} attempting to join pending verification room for email: ${email}`,
-    );
-
     void this.addToPendingVerificationRoom(email, client.id);
     client.emit('pendingVerificationRoomJoined', { success: true, email });
-    this.logger.log(
-      `✅ User ${client.id} successfully joined pending verification room for email: ${email}`,
-    );
 
     // Log current room state
     const room = this.pendingVerificationRooms.get(email);
-    this.logger.log(
-      `📊 Pending verification room for ${email} now has ${room?.size || 0} users`,
-    );
-
-    // Log all current pending verification rooms for debugging
-    this.logger.log(
-      `📊 All pending verification rooms:`,
-      this.getRoomStates().pendingVerificationRooms,
-    );
   }
 
   @SubscribeMessage('leavePendingVerificationRoom')
@@ -274,14 +237,8 @@ export class AuthWebSocketGateway
     @MessageBody() data: { email: string },
   ) {
     const email = data.email.toLowerCase();
-    this.logger.log(
-      `🔗 User ${client.id} attempting to leave pending verification room for email: ${email}`,
-    );
     void this.removeFromPendingVerificationRoom(email, client.id);
     client.emit('pendingVerificationRoomLeft', { success: true, email });
-    this.logger.log(
-      `✅ User ${client.id} successfully left pending verification room for email: ${email}`,
-    );
   }
 
   @SubscribeMessage('joinPasswordResetRoom')
@@ -291,21 +248,11 @@ export class AuthWebSocketGateway
   ) {
     // Allow anonymous connections to join password reset rooms
     const email = data.email.toLowerCase();
-    this.logger.log(
-      `🔗 User ${client.id} attempting to join password reset room for email: ${email}`,
-    );
 
     void this.addToPasswordResetRoom(email, client.id);
     client.emit('passwordResetRoomJoined', { success: true, email });
-    this.logger.log(
-      `✅ User ${client.id} successfully joined password reset room for email: ${email}`,
-    );
-
     // Log current room state
     const room = this.passwordResetRooms.get(email);
-    this.logger.log(
-      `📊 Password reset room for ${email} now has ${room?.size || 0} users`,
-    );
   }
 
   @SubscribeMessage('leavePasswordResetRoom')
@@ -314,21 +261,12 @@ export class AuthWebSocketGateway
     @MessageBody() data: { email: string },
   ) {
     const email = data.email.toLowerCase();
-    this.logger.log(
-      `🔗 User ${client.id} attempting to leave password reset room for email: ${email}`,
-    );
     this.removeFromPasswordResetRoom(email, client.id);
     client.emit('passwordResetRoomLeft', { success: true, email });
-    this.logger.log(
-      `✅ User ${client.id} successfully left password reset room for email: ${email}`,
-    );
   }
 
   private addToVerificationRoom(userId: string, socketId: string) {
     if (!this.server) {
-      this.logger.error(
-        'WebSocket server not initialized, cannot add user to verification room',
-      );
       return;
     }
 
@@ -341,20 +279,14 @@ export class AuthWebSocketGateway
     // Use the server's socket adapter to join the room
     try {
       this.server.in(socketId).socketsJoin(`verification:${userId}`);
-      this.logger.log(`User ${userId} added to verification room`);
     } catch (error) {
-      this.logger.warn(
-        `Failed to add user ${userId} to verification room:`,
-        error,
-      );
+    
     }
   }
 
   private removeFromVerificationRoom(userId: string, socketId: string) {
     if (!this.server) {
-      this.logger.error(
-        'WebSocket server not initialized, cannot remove user from verification room',
-      );
+ 
       return;
     }
 
@@ -368,21 +300,15 @@ export class AuthWebSocketGateway
       // Leave the verification room
       try {
         this.server.in(socketId).socketsLeave(`verification:${userId}`);
-        this.logger.log(`User ${userId} removed from verification room`);
       } catch (error) {
-        this.logger.warn(
-          `Failed to remove user ${userId} from verification room:`,
-          error,
-        );
+     
       }
     }
   }
 
   private addToPendingVerificationRoom(email: string, socketId: string) {
     if (!this.server) {
-      this.logger.error(
-        'WebSocket server not initialized, cannot add user to pending verification room',
-      );
+  
       return;
     }
 
@@ -393,22 +319,15 @@ export class AuthWebSocketGateway
 
     try {
       this.server.in(socketId).socketsJoin(`pending_verification:${email}`);
-      this.logger.log(
-        `User added to pending verification room for email: ${email}`,
-      );
+  
     } catch (error) {
-      this.logger.warn(
-        `Failed to add user to pending verification room for email ${email}:`,
-        error,
-      );
+ 
     }
   }
 
   private removeFromPendingVerificationRoom(email: string, socketId: string) {
     if (!this.server) {
-      this.logger.error(
-        'WebSocket server not initialized, cannot remove user from pending verification room',
-      );
+
       return;
     }
 
@@ -421,23 +340,16 @@ export class AuthWebSocketGateway
 
       try {
         this.server.in(socketId).socketsLeave(`pending_verification:${email}`);
-        this.logger.log(
-          `User removed from pending verification room for email: ${email}`,
-        );
+ 
       } catch (error) {
-        this.logger.warn(
-          `Failed to remove user from pending verification room for email ${email}:`,
-          error,
-        );
+
       }
     }
   }
 
   private addToPasswordResetRoom(email: string, socketId: string) {
     if (!this.server) {
-      this.logger.error(
-        'WebSocket server not initialized, cannot add user to password reset room',
-      );
+  
       return;
     }
 
@@ -448,20 +360,14 @@ export class AuthWebSocketGateway
 
     try {
       this.server.in(socketId).socketsJoin(`password_reset:${email}`);
-      this.logger.log(`User added to password reset room for email: ${email}`);
     } catch (error) {
-      this.logger.warn(
-        `Failed to add user to password reset room for email ${email}:`,
-        error,
-      );
+
     }
   }
 
   private removeFromPasswordResetRoom(email: string, socketId: string) {
     if (!this.server) {
-      this.logger.error(
-        'WebSocket server not initialized, cannot remove user from password reset room',
-      );
+   
       return;
     }
 
@@ -474,14 +380,9 @@ export class AuthWebSocketGateway
 
       try {
         this.server.in(socketId).socketsLeave(`password_reset:${email}`);
-        this.logger.log(
-          `User removed from password reset room for email: ${email}`,
-        );
+      
       } catch (error) {
-        this.logger.warn(
-          `Failed to remove user from password reset room for email ${email}:`,
-          error,
-        );
+ 
       }
     }
   }
@@ -489,9 +390,7 @@ export class AuthWebSocketGateway
   // Method to emit verification success to all sockets in a user's verification room
   emitVerificationSuccess(userId: string, userData: UserData) {
     if (!this.server) {
-      this.logger.error(
-        'WebSocket server not initialized, cannot emit verification success',
-      );
+  
       return;
     }
 
@@ -506,18 +405,12 @@ export class AuthWebSocketGateway
 
         this.server.to(`verification:${userId}`).emit('emailVerified', payload);
 
-        this.logger.log(`Verification success emitted to user ${userId}`);
       } catch (error) {
-        this.logger.error(
-          `Failed to emit verification success to user ${userId}:`,
-          error,
-        );
+     
       }
     } else {
       // No verification room - user is not connected via WebSocket
-      this.logger.log(
-        `No verification room found for user ${userId} - user not connected via WebSocket`,
-      );
+   
     }
   }
 
@@ -528,30 +421,15 @@ export class AuthWebSocketGateway
     tokens?: AuthTokens,
   ) {
     if (!this.server) {
-      this.logger.error(
-        'WebSocket server not initialized, cannot emit verification success to pending room',
-      );
+
       return;
     }
 
-    this.logger.log(
-      `🔍 Looking for pending verification room for email: ${email}`,
-    );
     const room = this.pendingVerificationRooms.get(email.toLowerCase());
-    this.logger.log(
-      `📊 Pending verification room state for ${email}: ${room ? `Found with ${room.size} users` : 'Not found'}`,
-    );
-    this.logger.log(
-      `📊 All pending verification rooms before emission:`,
-      this.getRoomStates().pendingVerificationRooms,
-    );
+
 
     if (room && room.size > 0) {
       try {
-        this.logger.log(
-          `📡 Emitting emailVerified to pending verification room: pending_verification:${email.toLowerCase()}`,
-        );
-        this.logger.log(`📡 Room contains sockets:`, Array.from(room));
 
         // Create payload with or without tokens
         const payload:
@@ -574,14 +452,8 @@ export class AuthWebSocketGateway
           .to(`pending_verification:${email.toLowerCase()}`)
           .emit('emailVerified', payload);
 
-        this.logger.log(
-          `✅ Verification success emitted to pending room for email: ${email} with tokens`,
-        );
 
         // Clean up the pending verification room after successful emission
-        this.logger.log(
-          `🧹 Cleaning up pending verification room for email: ${email}`,
-        );
         this.pendingVerificationRooms.delete(email.toLowerCase());
 
         // Also remove all sockets from the room
@@ -591,39 +463,20 @@ export class AuthWebSocketGateway
               .in(socketId)
               .socketsLeave(`pending_verification:${email.toLowerCase()}`);
           } catch (error) {
-            this.logger.warn(
-              `Failed to remove socket ${socketId} from pending verification room:`,
-              error,
-            );
+       
           }
         }
 
-        this.logger.log(
-          `✅ Pending verification room cleaned up for email: ${email}`,
-        );
       } catch (error) {
-        this.logger.error(
-          `❌ Failed to emit verification success to pending room for email ${email}:`,
-          error,
-        );
+ 
       }
     } else {
-      this.logger.warn(
-        `⚠️ No pending verification room found for email: ${email}`,
-      );
-      this.logger.log(
-        `🔍 Available pending verification rooms:`,
-        Array.from(this.pendingVerificationRooms.keys()),
-      );
     }
   }
 
   // Method to emit verification failure
   emitVerificationFailure(userId: string, error: string) {
     if (!this.server) {
-      this.logger.error(
-        'WebSocket server not initialized, cannot emit verification failure',
-      );
       return;
     }
 
@@ -639,12 +492,7 @@ export class AuthWebSocketGateway
           .to(`verification:${userId}`)
           .emit('emailVerificationFailed', payload);
 
-        this.logger.log(`Verification failure emitted to user ${userId}`);
       } catch (error) {
-        this.logger.error(
-          `Failed to emit verification failure to user ${userId}:`,
-          error,
-        );
       }
     }
   }
@@ -652,9 +500,7 @@ export class AuthWebSocketGateway
   // Method to emit login success
   emitLoginSuccess(userId: string, userData: UserData) {
     if (!this.server) {
-      this.logger.error(
-        'WebSocket server not initialized, cannot emit login success',
-      );
+
       return;
     }
 
@@ -666,21 +512,15 @@ export class AuthWebSocketGateway
 
       this.server.to(`user:${userId}`).emit('loginSuccess', payload);
 
-      this.logger.log(`Login success emitted to user ${userId}`);
     } catch (error) {
-      this.logger.error(
-        `Failed to emit login success to user ${userId}:`,
-        error,
-      );
+ 
     }
   }
 
   // Method to broadcast login to all devices (called after successful verification)
   broadcastLogin(user: UserData) {
     if (!this.server) {
-      this.logger.error(
-        'WebSocket server not initialized, cannot broadcast login',
-      );
+  
       return;
     }
 
@@ -692,18 +532,13 @@ export class AuthWebSocketGateway
 
       // Broadcast to all connected clients
       this.server.emit('auth_broadcast', payload);
-      this.logger.log(`Login broadcasted to all devices`);
     } catch (error) {
-      this.logger.error(`Failed to broadcast login`, error);
     }
   }
 
   // Method to emit logout event to all connected devices (global logout)
   emitGlobalLogout(reason: string = 'security_event') {
     if (!this.server) {
-      this.logger.error(
-        'WebSocket server not initialized, cannot emit global logout',
-      );
       return;
     }
 
@@ -718,11 +553,7 @@ export class AuthWebSocketGateway
       // Broadcast to all connected clients
       this.server.emit('forceLogout', payload);
 
-      this.logger.log(
-        `Global logout emitted to all devices - reason: ${reason}`,
-      );
     } catch (error) {
-      this.logger.error(`Failed to emit global logout:`, error);
     }
   }
 

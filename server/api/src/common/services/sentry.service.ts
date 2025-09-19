@@ -14,7 +14,6 @@ export class SentryService implements OnModuleInit {
     );
 
     if (!dsn) {
-      console.warn('SENTRY_DSN not configured, skipping Sentry setup');
       return;
     }
 
@@ -36,7 +35,6 @@ export class SentryService implements OnModuleInit {
         },
       });
     } catch (error) {
-      console.error('Failed to initialize Sentry:', error);
     }
   }
 

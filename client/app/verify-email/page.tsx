@@ -51,20 +51,14 @@ export default function VerifyEmailPage() {
   }, [setVerificationSuccessKey]);
 
   useEffect(() => {
-    console.log('🔍 Verify-email page loaded');
-    console.log('🔍 Search params:', searchParams.toString());
-    console.log('🔍 Token from URL:', searchParams.get('token'));
-    
     // Prevent multiple verifications
     if (hasVerifiedRef.current) {
-      console.log('🔍 Verification already attempted, skipping');
       return;
     }
 
     // If user is already logged in via AuthContext, show success and redirect
     if (!isLoading && user) {
       hasVerifiedRef.current = true;
-      console.log('✅ User already logged in, redirecting...');
       
       setVerificationState({
         status: 'success',
@@ -84,12 +78,9 @@ export default function VerifyEmailPage() {
     }
 
     const verifyEmail = async () => {
-      console.log('🔍 verifyEmail function called');
       const token = searchParams.get('token');
-      console.log('🔍 Token extracted from URL:', token ? 'PRESENT' : 'MISSING');
 
       if (!token) {
-        console.log('❌ No token found in URL');
         setVerificationState({
           status: 'invalid',
         });
@@ -101,7 +92,6 @@ export default function VerifyEmailPage() {
         // Mark as attempting verification to prevent multiple calls
         hasVerifiedRef.current = true;
 
-        console.log('📧 Calling verify-email API...');
         const response = await fetch(
           buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.VERIFY_EMAIL),
           {
@@ -116,7 +106,6 @@ export default function VerifyEmailPage() {
 
         if (response.ok) {
           const successData = await response.json();
-          console.log('📧 Verify-email API response:', successData);
 
           // Set success state
           if (successData.message) {
@@ -130,7 +119,6 @@ export default function VerifyEmailPage() {
 
           // Since server sets HTTP-only cookies, we need to check if user is logged in
           // by making a request to /users/me endpoint
-          console.log('🔍 Checking if user is logged in via HTTP-only cookies...');
           
           try {
             const userResponse = await fetch(
@@ -143,10 +131,8 @@ export default function VerifyEmailPage() {
 
             if (userResponse.ok) {
               const userData = await userResponse.json();
-              console.log('✅ User is logged in via HTTP-only cookies:', userData);
               
               // Update the user state in AuthContext to reflect the login
-              console.log('🔄 Updating user state in AuthContext...');
               updateUser(userData.user);
               
               // User is logged in, redirect based on role
@@ -161,14 +147,12 @@ export default function VerifyEmailPage() {
                 }
               }, 2000);
             } else {
-              console.log('❌ User not logged in, redirecting to login');
               // User not logged in - redirect to login page after 3 seconds
               setTimeout(() => {
                 router.push('/auth');
               }, 3000);
             }
           } catch (error) {
-            console.error('❌ Error checking user login status:', error);
             // Error checking login status - redirect to login page after 3 seconds
             setTimeout(() => {
               router.push('/auth');
@@ -176,7 +160,6 @@ export default function VerifyEmailPage() {
           }
         } else {
           const errorData = await response.json();
-          console.error('❌ Verify-email API error:', errorData);
 
           // Map server error message to translation key
           if (errorData.message) {
@@ -189,7 +172,6 @@ export default function VerifyEmailPage() {
           });
         }
       } catch (error) {
-        console.error('❌ Email verification error:', error);
         setVerificationState({
           status: 'error',
         });
@@ -301,41 +283,6 @@ export default function VerifyEmailPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 border-t-transparent mx-auto"></div>
         )}
 
-        {/* Debug: Test verification button for development */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              Debug: Test verification with a sample token
-            </p>
-            <button
-              onClick={() => {
-                const testToken = 'test-token-123';
-                console.log('🧪 Testing verification with token:', testToken);
-                // Manually trigger verification
-                window.location.href = `/verify-email?token=${testToken}`;
-              }}
-              className="bg-blue-500 text-white px-4 py-2 rounded text-sm mr-2"
-            >
-              Test with Sample Token
-            </button>
-            <button
-              onClick={() => {
-                console.log('🧪 Testing verification with real token from URL');
-                const currentToken = searchParams.get('token');
-                if (currentToken) {
-                  console.log('🧪 Current token:', currentToken);
-                  // Reload the page to trigger verification
-                  window.location.reload();
-                } else {
-                  console.log('❌ No token in current URL');
-                }
-              }}
-              className="bg-green-500 text-white px-4 py-2 rounded text-sm"
-            >
-              Test with Current Token
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

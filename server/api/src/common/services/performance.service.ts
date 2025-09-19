@@ -1,5 +1,4 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { PinoLoggerService } from './logger.service';
 import { RedisService } from './redis.service';
 import { TelemetryService } from './telemetry.service';
 
@@ -53,7 +52,6 @@ export class PerformanceService implements OnModuleInit {
     new Map();
 
   constructor(
-    private logger: PinoLoggerService,
     private redis: RedisService,
     private telemetry: TelemetryService,
   ) {
@@ -62,7 +60,6 @@ export class PerformanceService implements OnModuleInit {
   }
 
   onModuleInit() {
-    this.logger.log('Performance service initialized', 'PerformanceService');
   }
 
   private initializePerformanceBudgets() {
@@ -115,11 +112,7 @@ export class PerformanceService implements OnModuleInit {
       void this.checkPerformanceBudget(metrics);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error(
-        'Failed to record performance metrics',
-        errorMessage,
-        'PerformanceService',
-      );
+ 
     }
   }
 
@@ -127,10 +120,7 @@ export class PerformanceService implements OnModuleInit {
     try {
       // Check if Redis is connected before attempting to store metrics
       if (!this.redis.isRedisConnected()) {
-        this.logger.warn(
-          'Redis not connected, skipping metrics storage',
-          'PerformanceService',
-        );
+    
         return;
       }
 
@@ -164,11 +154,7 @@ export class PerformanceService implements OnModuleInit {
         );
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error(
-        'Failed to store metrics in Redis',
-        errorMessage,
-        'PerformanceService',
-      );
+  
       // Don't throw error to avoid breaking the application flow
     }
   }
@@ -179,10 +165,7 @@ export class PerformanceService implements OnModuleInit {
 
     // Check P99 threshold
     if (metrics.duration > budget.p99Threshold) {
-      this.logger.warn(
-        `Performance budget exceeded for ${metrics.route}: ${metrics.duration}ms > ${budget.p99Threshold}ms`,
-        'PerformanceService',
-      );
+   
     }
 
     // Check burst rate (simplified - in practice you'd use a sliding window)
@@ -195,10 +178,7 @@ export class PerformanceService implements OnModuleInit {
     }
 
     if (currentBurst > budget.burstLimit) {
-      this.logger.warn(
-        `Burst rate exceeded for ${metrics.route}: ${currentBurst} > ${budget.burstLimit}`,
-        'PerformanceService',
-      );
+     
     }
   }
 
@@ -253,11 +233,7 @@ export class PerformanceService implements OnModuleInit {
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error(
-        'Failed to get route performance',
-        errorMessage,
-        'PerformanceService',
-      );
+  
       throw error;
     }
   }
@@ -287,11 +263,7 @@ export class PerformanceService implements OnModuleInit {
       return stats;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error(
-        'Failed to get all performance stats',
-        errorMessage,
-        'PerformanceService',
-      );
+
       throw error;
     }
   }
@@ -333,11 +305,7 @@ export class PerformanceService implements OnModuleInit {
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.stack : String(error);
-        this.logger.error(
-          `Failed to check performance budget for ${route}`,
-          errorMessage,
-          'PerformanceService',
-        );
+    
       }
     }
 
@@ -366,11 +334,7 @@ export class PerformanceService implements OnModuleInit {
       return burstRates;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.stack : String(error);
-      this.logger.error(
-        'Failed to get current burst rates',
-        errorMessage,
-        'PerformanceService',
-      );
+     
       throw error;
     }
   }

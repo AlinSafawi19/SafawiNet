@@ -138,7 +138,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return false;
       }
     } catch (error) {
-      console.error('🔄 AuthContext - Refresh error:', error);
       // Only log actual network/technical errors
       // Don't set user to null immediately - let the next auth check handle it
       return false;
@@ -154,16 +153,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       expiresIn: number;
     }): Promise<{ success: boolean; message?: string }> => {
       try {
-        console.log('🔑 Processing token-based login...', {
-          hasAccessToken: !!tokens.accessToken,
-          hasRefreshToken: !!tokens.refreshToken,
-          expiresIn: tokens.expiresIn
-        });
-
         // Note: Server should have already set HTTP-only cookies
         // We just need to fetch user data to verify the login worked
-        console.log('🍪 Checking if server set cookies...');
-        console.log('🍪 Current cookies:', document.cookie);
 
         // Fetch user data to set the user state
         const response = await fetch(
@@ -284,15 +275,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               }
             );
           } catch (error) {
-            console.error(
-              '❌ Failed to mark offline messages as processed:',
-              error
-            );
           }
         }
       }
     } catch (error) {
-      console.error('❌ Error checking offline messages:', error);
     }
   }, [handleForceLogout]);
 
@@ -546,13 +532,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         import('../services/socket.singleton')
           .then(async ({ socketSingleton }) => {
             try {
-              console.log('🔧 Register: Ensuring socket is ready for pending verification room');
               await socketSingleton.ensureReady(); // Connect and wait for connection
-              console.log('🔧 Register: Joining pending verification room for email:', email.toLowerCase());
               await socketSingleton.joinPendingVerificationRoom(
                 email.toLowerCase()
               );
-              console.log('✅ Register: Successfully joined pending verification room');
 
               // Set up emailVerified listener immediately for this registration
               socketSingleton.on('emailVerified', async (data: any) => {
@@ -562,10 +545,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     try {
                       await loginWithTokens(data.tokens);
                     } catch (error) {
-                      console.error(
-                        '❌ Registration: Error during token-based login:',
-                        error
-                      );
                     }
                   } else {
                     // Only set user if they are verified
@@ -599,11 +578,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 }
               });
             } catch (error) {
-              console.error('❌ Failed to connect socket or join room:', error);
             }
           })
           .catch((error) => {
-            console.error('❌ Failed to import socket service:', error);
           });
 
         return {
@@ -734,10 +711,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await socketSingleton.ensureReady();
       await socketSingleton.joinPendingVerificationRoom(email.toLowerCase());
     } catch (error) {
-      console.error(
-        '❌ AuthContext: Failed to join pending verification room:',
-        error
-      );
     }
   };
 
@@ -805,54 +778,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await socketSingleton.ensureReady();
 
           // Listen for email verification events in pending rooms
-          console.log('🔧 Setting up emailVerified listener');
           socketSingleton.on('emailVerified', async (data: any) => {
-            console.log('📧 Received emailVerified event:', data);
-            console.log('📧 Event data type:', typeof data);
-            console.log('📧 Event data keys:', data ? Object.keys(data) : 'no data');
-            console.log('📧 Full event data:', JSON.stringify(data, null, 2));
-            
             if (data.success && data.user) {
-              console.log('✅ Email verification successful, processing login...');
-              
               // Check if we have tokens in the data
               if (data.tokens) {
-                console.log('🔑 Tokens found, attempting token-based login...', {
-                  hasAccessToken: !!data.tokens.accessToken,
-                  hasRefreshToken: !!data.tokens.refreshToken,
-                  expiresIn: data.tokens.expiresIn
-                });
-                
                 try {
                   const loginResult = await loginWithTokens(data.tokens);
-                  console.log('🔑 Token-based login result:', loginResult);
                   
                   if (loginResult.success) {
-                    console.log('✅ Successfully logged in with tokens');
+                    // Successfully logged in with tokens
                   } else {
-                    console.error('❌ Token-based login failed:', loginResult.message);
                     // Fallback to setting user directly
                     if (data.user.isVerified) {
-                      console.log('🔄 Falling back to direct user setting...');
                       setUser(data.user);
                     }
                   }
                 } catch (error) {
-                  console.error('❌ Error during token-based login:', error);
                   // Fallback to setting user directly
                   if (data.user.isVerified) {
-                    console.log('🔄 Falling back to direct user setting after error...');
                     setUser(data.user);
                   }
                 }
               } else {
-                console.log('⚠️ No tokens found, setting user directly...');
                 // Only set user if they are verified
                 if (data.user.isVerified) {
                   setUser(data.user);
-                  console.log('✅ User set directly (no tokens)');
                 } else {
-                  console.log('❌ User not verified, not setting login state');
                   return;
                 }
               }
@@ -900,10 +851,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                       try {
                         await socketSingleton.joinPendingVerificationRoom(email);
                       } catch (error) {
-                        console.error(
-                          '❌ Failed to join pending verification room:',
-                          error
-                        );
+                        // Failed to join pending verification room
                       }
                     }
                   };
@@ -938,9 +886,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
 
           // Listen for force logout events (password change/reset)
-          console.log('🔧 Setting up forceLogout listener');
           socketSingleton.on('forceLogout', async (data: any) => {
-            console.log('🚪 Received forceLogout event:', data);
             // Use existing logout function
             await logout();
 
@@ -951,35 +897,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Also listen for custom force logout events (for timing issues)
           window.addEventListener('forceLogout', handleForceLogout);
 
-          // Add a general event listener to debug all socket events
+          // Add a general event listener for socket events
           socketSingleton.on('connect', () => {
-            console.log('🔌 Socket connected in AuthContext');
+            // Socket connected
           });
-
-          // Listen for any event to debug
-          const originalOn = socketSingleton.on.bind(socketSingleton);
-          socketSingleton.on = (event: any, callback: any) => {
-            console.log('🔧 Setting up listener for event:', event);
-            return originalOn(event, (...args: any[]) => {
-              console.log('📡 Received event:', event, 'with data:', args);
-              return callback(...args);
-            });
-          };
-
-          // Test WebSocket communication by emitting a test event
-          setTimeout(() => {
-            if (socketSingleton.isSocketConnected()) {
-              // Try to emit a test event to see if the connection is working
-              const socket = socketSingleton.getSocket();
-              if (socket) {
-                socket.emit('test', {
-                  message: 'Testing WebSocket connection',
-                });
-              }
-            }
-          }, 2000);
       } catch (error) {
-        console.error('❌ Failed to initialize socket service:', error);
+        // Failed to initialize socket service
       }
     };
 

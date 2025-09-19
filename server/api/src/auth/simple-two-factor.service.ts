@@ -1,6 +1,5 @@
 import {
   Injectable,
-  Logger,
   BadRequestException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -17,7 +16,6 @@ export interface TwoFactorCodeResult {
 
 @Injectable()
 export class SimpleTwoFactorService {
-  private readonly logger = new Logger(SimpleTwoFactorService.name);
   private readonly codeExpirationMinutes = 10; // 10 minutes expiration
 
   constructor(
@@ -48,7 +46,6 @@ export class SimpleTwoFactorService {
       data: { twoFactorEnabled: true },
     });
 
-    this.logger.log(`2FA enabled for user ${user.email}`);
     return { message: 'Two-factor authentication enabled successfully' };
   }
 
@@ -72,16 +69,13 @@ export class SimpleTwoFactorService {
     }
 
     // Verify current password
-    this.logger.log(`Verifying password for user ${user.email}`);
     const isPasswordValid = await SecurityUtils.verifyPassword(
       user.password,
       currentPassword,
     );
     if (!isPasswordValid) {
-      this.logger.warn(`Password verification failed for user ${user.email}`);
       throw new UnauthorizedException('Invalid current password');
     }
-    this.logger.log(`Password verification successful for user ${user.email}`);
 
     // Disable 2FA and clean up any existing 2FA data
     await this.prisma.$transaction(async (tx) => {
@@ -119,10 +113,7 @@ export class SimpleTwoFactorService {
         timestamp: new Date().toLocaleString(),
       });
     } catch (error) {
-      this.logger.error(
-        `Failed to send 2FA disabled notification to ${user.email}:`,
-        error,
-      );
+
       // Don't fail 2FA disable if email fails
     }
 
@@ -134,20 +125,10 @@ export class SimpleTwoFactorService {
         'Two-factor authentication has been disabled. Please log in again.',
       );
 
-      this.logger.log(
-        `Offline logout message created for 2FA disable - user: ${user.email}`,
-      );
     } catch (error) {
-      this.logger.error(
-        `Failed to create offline logout message for 2FA disable - user: ${user.email}:`,
-        error,
-      );
       // Don't fail the 2FA disable if offline message creation fails
     }
 
-    this.logger.log(
-      `2FA disabled for user ${user.email} - all sessions invalidated`,
-    );
     return {
       message: 'Two-factor authentication disabled successfully',
       forceLogout: true,
@@ -202,7 +183,6 @@ export class SimpleTwoFactorService {
       expirationMinutes: this.codeExpirationMinutes,
     });
 
-    this.logger.log(`2FA code sent to user ${user.email}`);
     return { message: 'Two-factor authentication code sent to your email' };
   }
 
@@ -258,9 +238,6 @@ export class SimpleTwoFactorService {
       where: { userId },
     });
 
-    this.logger.log(
-      `Revoked all refresh tokens and sessions for user ${userId}`,
-    );
   }
 
   /**

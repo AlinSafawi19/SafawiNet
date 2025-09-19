@@ -262,7 +262,7 @@ export const useLoyalty = () => {
           throw new Error('Failed to fetch transactions');
         }
       } catch (err) {
-        console.error('Error fetching loyalty transactions:', err);
+        // Error fetching loyalty transactions
         return null;
       }
     },

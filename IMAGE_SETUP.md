@@ -54,7 +54,6 @@ async function uploadLogo() {
       access: 'public',
     });
   } catch (error) {
-    console.error('Upload failed:', error);
   }
 }
 
