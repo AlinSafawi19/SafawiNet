@@ -13,6 +13,7 @@ import { SecurityUtils } from '../common/security/security.utils';
 import { SimpleTwoFactorService } from './simple-two-factor.service';
 import { SessionsService } from './sessions.service';
 import { NotificationsService } from './notifications.service';
+import { LoggerService } from '../common/services/logger.service';
 import {
   RegisterDto,
   VerifyEmailDto,
@@ -72,6 +73,7 @@ export class AuthService {
     private readonly notificationsService: NotificationsService,
     private readonly webSocketGateway: AuthWebSocketGateway,
     private readonly offlineMessageService: OfflineMessageService,
+    private readonly loggerService: LoggerService,
   ) {}
 
   async register(
@@ -79,12 +81,21 @@ export class AuthService {
   ): Promise<{ message: string; user: Omit<User, 'password'> }> {
     const { email, password, name } = registerDto;
 
+    this.loggerService.info('User registration process started', {
+      source: 'auth',
+      metadata: { operation: 'register', email }
+    });
+
     // Check if user already exists
     const existingUser: User | null = await this.prisma.user.findUnique({
       where: { email: (email as string).toLowerCase() },
     });
 
     if (existingUser) {
+      this.loggerService.warn('User registration failed - email already exists', {
+        source: 'auth',
+        metadata: { operation: 'register', reason: 'email_exists', email }
+      });
       throw new ConflictException('User with this email already exists');
     }
 
@@ -201,6 +212,18 @@ export class AuthService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = result.user;
 
+    // Log successful registration
+    this.loggerService.info('User registration completed successfully', {
+      userId: result.user.id,
+      source: 'auth',
+      metadata: { 
+        operation: 'register',
+        roles: result.user.roles,
+        loyaltyAccountCreated: result.user.roles.includes('CUSTOMER'),
+        email: result.user.email
+      }
+    });
+
     // Emit WebSocket event for new user registration
     try {
       this.webSocketGateway.emitVerificationSuccess(
@@ -208,7 +231,11 @@ export class AuthService {
         userWithoutPassword,
       );
     } catch (error) {
-  
+      this.loggerService.warn('Failed to emit WebSocket verification event', {
+        userId: result.user.id,
+        source: 'auth',
+        metadata: { operation: 'register', error: error instanceof Error ? error.message : String(error) }
+      });
     }
 
     return {

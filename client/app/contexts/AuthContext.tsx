@@ -21,6 +21,8 @@ import React, {
   useCallback,
 } from 'react';
 import { buildApiUrl, API_CONFIG } from '../config/api';
+import { logError, logWarning } from '../utils/errorLogger';
+import { apiLogger } from '../services/api-logger.service';
 
 interface User {
   id: string;
@@ -347,72 +349,60 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     messageKey?: string;
     user?: User;
   }> => {
-    try {
-      const response = await fetch(
-        buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN),
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include', // Include cookies for session management
-          body: JSON.stringify({ email, password }),
-        }
-      );
+    const response = await apiLogger.post(
+      API_CONFIG.ENDPOINTS.AUTH.LOGIN,
+      { email, password },
+      {
+        component: 'AuthContext',
+        action: 'login',
+        metadata: { email }
+      }
+    );
 
-      if (response.ok) {
-        const data = await response.json();
+    if (response.success && response.data) {
+      const {
+        user: userData,
+        requiresTwoFactor,
+        requiresVerification,
+      } = response.data;
 
-        const {
-          user: userData,
-          requiresTwoFactor,
-          requiresVerification,
-        } = data;
-
-        // Check if user is verified before setting login state
-        if (requiresVerification) {
-          // User is not verified, don't set login state
-          return {
-            success: false,
-            messageKey: 'auth.messages.emailVerificationRequired',
-            user: userData, // Still return user data for the form to check
-          };
-        }
-
-        // Check if 2FA is required
-        if (requiresTwoFactor) {
-          // User needs to enter 2FA code
-          return {
-            success: false,
-            messageKey: 'auth.messages.twoFactorRequired',
-            user: userData, // Return user data for 2FA form
-            requiresTwoFactor: true,
-          } as any;
-        }
-
-        // User is verified and no 2FA required, set login state
-        setUser(userData);
-
-        // Check for offline messages after successful authentication
-        setTimeout(() => {
-          checkOfflineMessages();
-        }, 1000); // Small delay to ensure user state is set
-
-        return { success: true, user: userData };
-      } else {
-        const errorData = await response.json();
-        // Map server error messages to translation keys
-        const messageKey = mapServerErrorToTranslationKey(errorData.message);
+      // Check if user is verified before setting login state
+      if (requiresVerification) {
+        // User is not verified, don't set login state
         return {
           success: false,
-          message: messageKey ? undefined : errorData.message,
-          messageKey: messageKey || undefined,
+          messageKey: 'auth.messages.emailVerificationRequired',
+          user: userData, // Still return user data for the form to check
         };
       }
-    } catch (error) {
+
+      // Check if 2FA is required
+      if (requiresTwoFactor) {
+        // User needs to enter 2FA code
+        return {
+          success: false,
+          messageKey: 'auth.messages.twoFactorRequired',
+          user: userData, // Return user data for 2FA form
+          requiresTwoFactor: true,
+        } as any;
+      }
+
+      // User is verified and no 2FA required, set login state
+      setUser(userData);
+
+      // Check for offline messages after successful authentication
+      setTimeout(() => {
+        checkOfflineMessages();
+      }, 1000); // Small delay to ensure user state is set
+
+      return { success: true, user: userData };
+    } else {
+      // Map server error messages to translation keys
+      const messageKey = mapServerErrorToTranslationKey(response.error);
       return {
         success: false,
-        messageKey: 'auth.messages.generalError',
+        message: messageKey ? undefined : response.error,
+        messageKey: messageKey || undefined,
       };
     }
   };
@@ -578,9 +568,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 }
               });
             } catch (error) {
+              logError(
+                'Socket initialization failed during registration',
+                error instanceof Error ? error : new Error(String(error)),
+                {
+                  component: 'AuthContext',
+                  action: 'register',
+                  userId: user?.id,
+                  metadata: { step: 'socket_init' }
+                }
+              );
             }
           })
           .catch((error) => {
+            logError(
+              'Socket service import failed during registration',
+              error instanceof Error ? error : new Error(String(error)),
+              {
+                component: 'AuthContext',
+                action: 'register',
+                userId: user?.id,
+                metadata: { step: 'socket_import' }
+              }
+            );
           });
 
         return {

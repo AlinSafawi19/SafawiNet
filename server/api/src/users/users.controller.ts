@@ -28,6 +28,7 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles } from '../auth/guards/roles.guard';
 import { Role, User } from '@prisma/client';
+import { LoggerService } from '../common/services/logger.service';
 import {
   CreateUserSchema,
   CreateUserDto,
@@ -72,6 +73,7 @@ export class UsersController {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly loggerService: LoggerService,
   ) {}
 
   @Post()
@@ -104,11 +106,29 @@ export class UsersController {
   async createUser(
     @Body() createUserDto: CreateUserDto,
   ): Promise<{ message: string; user: Omit<User, 'password'> }> {
-    const user = await this.usersService.createUser(createUserDto);
-    return {
-      message: 'Admin user created successfully',
-      user,
-    };
+    this.loggerService.info('Admin user creation attempt', {
+      source: 'api',
+      metadata: { endpoint: 'createUser', service: 'users', email: createUserDto.email }
+    });
+
+    try {
+      const user = await this.usersService.createUser(createUserDto);
+      this.loggerService.info('Admin user created successfully', {
+        userId: user.id,
+        source: 'api',
+        metadata: { endpoint: 'createUser', service: 'users', email: user.email }
+      });
+      return {
+        message: 'Admin user created successfully',
+        user,
+      };
+    } catch (error) {
+      this.loggerService.error('Admin user creation failed', error as Error, {
+        source: 'api',
+        metadata: { endpoint: 'createUser', service: 'users', email: createUserDto.email }
+      });
+      throw error;
+    }
   }
 
   @Get('admins')

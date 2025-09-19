@@ -42,6 +42,7 @@ import { AuthenticatedRequest } from './types/auth.types';
 import { User } from '@prisma/client';
 import { AuthTokens, LoginResult } from './auth.service';
 import { OfflineMessageService } from '../common/services/offline-message.service';
+import { LoggerService } from '../common/services/logger.service';
 
 // Response interfaces for better type safety
 interface RegisterResponse {
@@ -92,6 +93,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly simpleTwoFactorService: SimpleTwoFactorService,
     private readonly offlineMessageService: OfflineMessageService,
+    private readonly loggerService: LoggerService,
   ) {}
 
   @Post('register')
@@ -137,7 +139,26 @@ export class AuthController {
   })
   @UsePipes(new ZodValidationPipe(RegisterSchema))
   async register(@Body() registerDto: RegisterDto): Promise<RegisterResponse> {
-    return this.authService.register(registerDto);
+    this.loggerService.info('User registration attempt', {
+      source: 'auth',
+      metadata: { endpoint: 'register', email: registerDto.email }
+    });
+
+    try {
+      const result = await this.authService.register(registerDto);
+      this.loggerService.info('User registration successful', {
+        userId: result.user.id,
+        source: 'auth',
+        metadata: { endpoint: 'register', email: result.user.email }
+      });
+      return result;
+    } catch (error) {
+      this.loggerService.error('User registration failed', error as Error, {
+        source: 'auth',
+        metadata: { endpoint: 'register', email: registerDto.email }
+      });
+      throw error;
+    }
   }
 
   @Post('verify-email')
@@ -317,18 +338,42 @@ export class AuthController {
     @Request() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResult> {
-    const result = await this.authService.login(loginDto, req);
+    this.loggerService.info('User login attempt', {
+      source: 'auth',
+      metadata: { endpoint: 'login', email: loginDto.email }
+    });
 
-    // If login was successful and tokens were generated, set them as HTTP-only cookies
-    if (result.tokens) {
-      this.authService.setAuthCookies(res, result.tokens);
-      // Remove tokens from response body for security
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { tokens: _, ...responseWithoutTokens } = result;
-      return responseWithoutTokens;
+    try {
+      const result = await this.authService.login(loginDto, req);
+
+      // If login was successful and tokens were generated, set them as HTTP-only cookies
+      if (result.tokens) {
+        this.authService.setAuthCookies(res, result.tokens);
+        this.loggerService.info('User login successful', {
+          userId: result.user?.id,
+          source: 'auth',
+          metadata: { endpoint: 'login', email: loginDto.email }
+        });
+        // Remove tokens from response body for security
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { tokens: _, ...responseWithoutTokens } = result;
+        return responseWithoutTokens;
+      }
+
+      this.loggerService.info('User login successful (no tokens)', {
+        userId: result.user?.id,
+        source: 'auth',
+        metadata: { endpoint: 'login', email: loginDto.email }
+      });
+
+      return result;
+    } catch (error) {
+      this.loggerService.error('User login failed', error as Error, {
+        source: 'auth',
+        metadata: { endpoint: 'login', email: loginDto.email }
+      });
+      throw error;
     }
-
-    return result;
   }
 
   @Post('refresh')

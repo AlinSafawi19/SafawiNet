@@ -5,6 +5,8 @@ import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { Request, Response } from 'express';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { LoggerService } from './common/services/logger.service';
 
 // Extended Request type for custom properties
 type ExtendedRequest = Request & {
@@ -16,6 +18,10 @@ type ExtendedRequest = Request & {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Get logger service and set up global exception filter
+  const loggerService = app.get(LoggerService);
+  app.useGlobalFilters(new GlobalExceptionFilter(loggerService));
 
   // Enable WebSockets
   app.useWebSocketAdapter(new IoAdapter(app));

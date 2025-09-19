@@ -20,11 +20,13 @@ import { PerformanceService } from './common/services/performance.service';
 import { PrismaService } from './common/services/prisma.service';
 import { EmailMonitoringService } from './common/services/email-monitoring.service';
 import { OfflineMessageService } from './common/services/offline-message.service';
+import { LoggerService } from './common/services/logger.service';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { IdempotencyMiddleware } from './common/middleware/idempotency.middleware';
 import { SecurityMiddleware } from './common/middleware/security.middleware';
 import { PerformanceMiddleware } from './common/middleware/performance.middleware';
 import { BasicAuthMiddleware } from './common/middleware/basic-auth.middleware';
+import { RequestLoggingMiddleware } from './common/middleware/request-logging.middleware';
 import { PerformanceController } from './common/controllers/performance.controller';
 
 @Module({
@@ -60,12 +62,15 @@ import { PerformanceController } from './common/controllers/performance.controll
     PrismaService,
     EmailMonitoringService,
     OfflineMessageService,
+    LoggerService,
   ],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(RequestIdMiddleware)
+      .forRoutes('*')
+      .apply(RequestLoggingMiddleware)
       .forRoutes('*')
       .apply(SecurityMiddleware)
       .forRoutes('*')
