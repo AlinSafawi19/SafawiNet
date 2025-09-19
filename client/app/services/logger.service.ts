@@ -18,7 +18,6 @@ interface ClientErrorLog {
 }
 
 class ClientLogger {
-  private isEnabled: boolean = true;
   private apiEndpoint: string = '/api/logs';
   private logQueue: ClientErrorLog[] = [];
   private maxQueueSize: number = 50;
@@ -26,17 +25,16 @@ class ClientLogger {
   private flushTimer: NodeJS.Timeout | null = null;
 
   constructor() {
-    // Only enable logging in production or when explicitly enabled
-    this.isEnabled = process.env.NODE_ENV === 'production' || 
-                    localStorage.getItem('debug-logging') === 'true';
-    
-    // Start periodic flush
-    this.startFlushTimer();
-    
-    // Flush logs before page unload
-    window.addEventListener('beforeunload', () => {
-      this.flush();
-    });
+    // Only initialize in browser environment
+    if (typeof window !== 'undefined') {
+      // Start periodic flush
+      this.startFlushTimer();
+      
+      // Flush logs before page unload
+      window.addEventListener('beforeunload', () => {
+        this.flush();
+      });
+    }
   }
 
   private startFlushTimer(): void {
@@ -68,8 +66,9 @@ class ClientLogger {
   }
 
   private addToQueue(log: ClientErrorLog): void {
-    if (!this.isEnabled) return;
-
+    // Only add to queue in browser environment
+    if (typeof window === 'undefined') return;
+    
     this.logQueue.push(log);
 
     // If queue is full, remove oldest logs
@@ -105,8 +104,8 @@ class ClientLogger {
       level,
       message,
       stack: error?.stack,
-      url: context?.url || window.location.href,
-      userAgent: context?.userAgent || navigator.userAgent,
+      url: context?.url || (typeof window !== 'undefined' ? window.location.href : ''),
+      userAgent: context?.userAgent || (typeof window !== 'undefined' ? navigator.userAgent : ''),
       metadata: {
         ...context?.metadata,
         component: context?.component,
@@ -147,11 +146,6 @@ class ClientLogger {
     this.addToQueue(logEntry);
   }
 
-  // Enable/disable logging
-  setEnabled(enabled: boolean): void {
-    this.isEnabled = enabled;
-    localStorage.setItem('debug-logging', enabled.toString());
-  }
 
   // Force flush logs
   async forceFlush(): Promise<void> {

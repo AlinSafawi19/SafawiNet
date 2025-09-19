@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoyaltyController } from './loyalty.controller';
 import { LoyaltyService } from './loyalty.service';
 import { PrismaService } from '../common/services/prisma.service';
+import { LoggerService } from '../common/services/logger.service';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { PrismaService } from '../common/services/prisma.service';
     }),
   ],
   controllers: [LoyaltyController],
-  providers: [LoyaltyService, PrismaService],
+  providers: [LoyaltyService, PrismaService, LoggerService],
   exports: [LoyaltyService],
 })
 export class LoyaltyModule {}

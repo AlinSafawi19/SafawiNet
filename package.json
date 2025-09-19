@@ -9,9 +9,12 @@
     "docker:logs": "docker compose logs -f",
     "docker:restart": "docker compose restart"
   },
-  "devDependencies": {},
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "@types/winston": "^2.4.4",
+    "winston": "^3.17.0"
   }
 }

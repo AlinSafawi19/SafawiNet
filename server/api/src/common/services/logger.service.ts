@@ -11,6 +11,7 @@ export interface LogContext {
   userAgent?: string;
   ipAddress?: string;
   source?: 'server' | 'client' | 'api' | 'auth' | 'database';
+  level?: 'error' | 'warning' | 'warn' | 'info' | 'debug';
   metadata?: Record<string, any>;
 }
 
@@ -156,5 +157,32 @@ export class LoggerService implements OnModuleInit {
   // Get error logger instance
   getErrorLogger(): winston.Logger {
     return this.errorLogger;
+  }
+
+  // Log with metadata and custom type
+  logWithMetadata(message: string, context: LogContext, type?: string): void {
+    const logData = {
+      ...context,
+      ...(type && { type }),
+    };
+    
+    // Use appropriate log level based on context level
+    const level = context.level || 'info';
+    switch (level) {
+      case 'error':
+        this.error(message, undefined, logData);
+        break;
+      case 'warning':
+      case 'warn':
+        this.warn(message, logData);
+        break;
+      case 'debug':
+        this.debug(message, logData);
+        break;
+      case 'info':
+      default:
+        this.info(message, logData);
+        break;
+    }
   }
 }

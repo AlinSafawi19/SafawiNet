@@ -21,6 +21,7 @@ import { SentryService } from '../common/services/sentry.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
 import { OfflineMessageService } from '../common/services/offline-message.service';
+import { LoggerService } from '../common/services/logger.service';
 import { UsersModule } from '../users/users.module';
 
 @Module({
@@ -60,6 +61,7 @@ import { UsersModule } from '../users/users.module';
     SecurityUtils,
     AuthWebSocketGateway,
     OfflineMessageService,
+    LoggerService,
   ],
   exports: [
     AuthService,

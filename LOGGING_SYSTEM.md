@@ -58,7 +58,6 @@ this.loggerService.debug('Debug message', context);
 - Automatic error capture (unhandled errors, promise rejections, resource errors)
 - React Error Boundary integration
 - Queued logging with automatic server transmission
-- Development/production mode detection
 - User context tracking
 
 ### Files Created
@@ -101,16 +100,13 @@ logInfo('Info message', {
 # Server
 LOG_DIR=./logs                    # Log directory (default: ./logs)
 NODE_ENV=production               # Environment (affects log levels)
-
-# Client
-NODE_ENV=production               # Environment (affects logging behavior)
 ```
 
 ### Log Levels
 - **error**: Critical errors that need immediate attention
 - **warning**: Warnings that should be monitored
 - **info**: General information about application flow
-- **debug**: Detailed debugging information (development only)
+- **debug**: Detailed debugging information
 
 ## Log Structure
 
@@ -173,13 +169,16 @@ The structured JSON format makes it easy to integrate with:
 
 ## Testing the System
 
-Use the `LoggingExample` component to test the logging system:
+Test the logging system by using the utility functions in your components:
 
 ```tsx
-import { LoggingExample } from './components/LoggingExample';
+import { logError, logWarning, logInfo } from '../utils/errorLogger';
 
-// Add to any page for testing
-<LoggingExample />
+// Test error logging
+logError('Test error message', new Error('Test error'), {
+  component: 'TestComponent',
+  action: 'testFunction'
+});
 ```
 
 ## Best Practices
@@ -188,7 +187,7 @@ import { LoggingExample } from './components/LoggingExample';
    - `error`: Only for actual errors that need attention
    - `warning`: For potential issues or deprecated usage
    - `info`: For important application flow events
-   - `debug`: For detailed debugging (development only)
+   - `debug`: For detailed debugging information
 
 2. **Include context**:
    - Always include component/action information
@@ -207,9 +206,9 @@ import { LoggingExample } from './components/LoggingExample';
 ## Troubleshooting
 
 ### Client Logs Not Appearing
-1. Check if logging is enabled: `localStorage.getItem('debug-logging')`
-2. Check browser console for network errors
-3. Verify API endpoint is accessible
+1. Check browser console for network errors
+2. Verify API endpoint is accessible
+3. Check if client logger is properly initialized
 
 ### Server Logs Not Appearing
 1. Check if `LOG_DIR` directory exists and is writable
