@@ -132,7 +132,6 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     // Set up event handlers
     this.setupQueueEvents();
     this.setupWorkerEvents();
-
   }
 
   async onModuleDestroy() {
@@ -152,12 +151,9 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   private setupWorkerEvents() {
     [this.emailWorker, this.securityWorker, this.maintenanceWorker].forEach(
       (worker) => {
-        worker.on('completed', (job: Job) => {
-        });
+        worker.on('completed', () => {});
 
-        worker.on('failed', (job: Job | undefined, err: Error) => {
-        
-        });
+        worker.on('failed', () => {});
       },
     );
   }
@@ -176,9 +172,8 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   // Job processing methods
-  private async processEmailJob(job: Job<EmailJobData>) {
-   
-
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  private async processEmailJob(_job: Job<EmailJobData>) {
     // TODO: Implement actual email sending logic
     // This would integrate with your existing EmailService
 
@@ -186,7 +181,6 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async processSecurityJob(job: Job<SecurityJobData>) {
-
     switch (job.data.type) {
       case 'token_cleanup':
         // TODO: Implement token cleanup logic
@@ -203,7 +197,6 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async processMaintenanceJob(job: Job<MaintenanceJobData>) {
-
     switch (job.data.type) {
       case 'db_cleanup':
         // TODO: Implement database cleanup logic

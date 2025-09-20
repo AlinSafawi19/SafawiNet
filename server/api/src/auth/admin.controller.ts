@@ -444,10 +444,7 @@ export class AdminController {
 
   @Delete('sessions/:sessionId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async revokeSession(
-    @Param('sessionId') sessionId: string,
-    @Request() req: AuthenticatedRequest,
-  ): Promise<void> {
+  async revokeSession(@Param('sessionId') sessionId: string): Promise<void> {
     await this.prisma.userSession.delete({ where: { id: sessionId } });
   }
 
@@ -455,7 +452,6 @@ export class AdminController {
   @Post('notifications/broadcast')
   async broadcastNotification(
     @Body() body: BroadcastNotificationBody,
-    @Request() req: AuthenticatedRequest,
   ): Promise<BroadcastNotificationResponse> {
     const { title, message, type, priority, targetRoles } = body;
 

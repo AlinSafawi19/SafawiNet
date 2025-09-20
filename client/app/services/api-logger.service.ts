@@ -96,19 +96,23 @@ class ApiLoggerService {
       };
     } catch (error) {
       const duration = Date.now() - startTime;
-      
-      logError('API Request Failed', error instanceof Error ? error : new Error(String(error)), {
-        component,
-        action,
-        userId,
-        metadata: {
-          ...metadata,
-          url,
-          method: fetchOptions.method || 'GET',
-          duration,
-          endpoint,
-        },
-      });
+
+      logError(
+        'API Request Failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component,
+          action,
+          userId,
+          metadata: {
+            ...metadata,
+            url,
+            method: fetchOptions.method || 'GET',
+            duration,
+            endpoint,
+          },
+        }
+      );
 
       return {
         status: 0,
@@ -120,7 +124,7 @@ class ApiLoggerService {
 
   private async parseResponse(response: Response): Promise<any> {
     const contentType = response.headers.get('content-type');
-    
+
     if (contentType && contentType.includes('application/json')) {
       try {
         return await response.json();
@@ -128,16 +132,23 @@ class ApiLoggerService {
         return { error: 'Failed to parse JSON response' };
       }
     }
-    
+
     return await response.text();
   }
 
   // Convenience methods for common HTTP methods
-  async get<T = any>(endpoint: string, options: Omit<ApiCallOptions, 'method'> = {}): Promise<ApiResponse<T>> {
+  async get<T = any>(
+    endpoint: string,
+    options: Omit<ApiCallOptions, 'method'> = {}
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { ...options, method: 'GET' });
   }
 
-  async post<T = any>(endpoint: string, data?: any, options: Omit<ApiCallOptions, 'method' | 'body'> = {}): Promise<ApiResponse<T>> {
+  async post<T = any>(
+    endpoint: string,
+    data?: any,
+    options: Omit<ApiCallOptions, 'method' | 'body'> = {}
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
@@ -149,7 +160,11 @@ class ApiLoggerService {
     });
   }
 
-  async put<T = any>(endpoint: string, data?: any, options: Omit<ApiCallOptions, 'method' | 'body'> = {}): Promise<ApiResponse<T>> {
+  async put<T = any>(
+    endpoint: string,
+    data?: any,
+    options: Omit<ApiCallOptions, 'method' | 'body'> = {}
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
@@ -161,7 +176,11 @@ class ApiLoggerService {
     });
   }
 
-  async patch<T = any>(endpoint: string, data?: any, options: Omit<ApiCallOptions, 'method' | 'body'> = {}): Promise<ApiResponse<T>> {
+  async patch<T = any>(
+    endpoint: string,
+    data?: any,
+    options: Omit<ApiCallOptions, 'method' | 'body'> = {}
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PATCH',
@@ -173,13 +192,18 @@ class ApiLoggerService {
     });
   }
 
-  async delete<T = any>(endpoint: string, options: Omit<ApiCallOptions, 'method'> = {}): Promise<ApiResponse<T>> {
+  async delete<T = any>(
+    endpoint: string,
+    options: Omit<ApiCallOptions, 'method'> = {}
+  ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
 }
 
 // Create singleton instance
-export const apiLogger = new ApiLoggerService(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001');
+export const apiLogger = new ApiLoggerService(
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+);
 
 // Export the class for testing
 export { ApiLoggerService };

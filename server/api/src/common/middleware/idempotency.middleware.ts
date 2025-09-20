@@ -1,4 +1,4 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { RedisService } from '../services/redis.service';
 
@@ -12,11 +12,6 @@ interface ProcessingResponse {
   body: { message: string };
 }
 
-type IdempotencyError = Error & {
-  code?: string;
-  errno?: number;
-};
-
 interface IdempotencyRequest extends Request {
   headers: Request['headers'] & {
     'idempotency-key'?: string;
@@ -26,6 +21,7 @@ interface IdempotencyRequest extends Request {
 
 @Injectable()
 export class IdempotencyMiddleware implements NestMiddleware {
+  private readonly logger = new Logger(IdempotencyMiddleware.name);
 
   constructor(private readonly redisService: RedisService) {}
 
@@ -97,8 +93,12 @@ export class IdempotencyMiddleware implements NestMiddleware {
       };
 
       next();
-    } catch (error: unknown) {
-      const idempotencyError = error as IdempotencyError;
+    } catch (error) {
+      this.logger.warn('Failed to use idempotency middleware', error, {
+        source: 'idempotency',
+        req: req.method,
+        path: req.path,
+      });
       // Continue without idempotency if Redis fails
       next();
     }

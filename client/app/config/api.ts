@@ -46,6 +46,9 @@ export const buildApiUrl = (endpoint: string): string => {
 
 // Helper function to build WebSocket URLs
 export const buildWebSocketUrl = (endpoint: string): string => {
-  const baseUrl = API_CONFIG.BASE_URL.replace('http://', 'ws://').replace('https://', 'wss://');
+  const baseUrl = API_CONFIG.BASE_URL.replace('http://', 'ws://').replace(
+    'https://',
+    'wss://'
+  );
   return `${baseUrl}${endpoint}`;
 };

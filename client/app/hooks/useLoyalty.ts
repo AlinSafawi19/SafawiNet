@@ -165,14 +165,11 @@ export const useLoyalty = () => {
     });
 
     try {
-      const response = await apiLogger.get(
-        API_CONFIG.ENDPOINTS.LOYALTY.ME,
-        {
-          component: 'useLoyalty',
-          action: 'fetchLoyaltyAccount',
-          userId: user.id,
-        }
-      );
+      const response = await apiLogger.get(API_CONFIG.ENDPOINTS.LOYALTY.ME, {
+        component: 'useLoyalty',
+        action: 'fetchLoyaltyAccount',
+        userId: user.id,
+      });
 
       if (response.success && response.data) {
         const data = response.data;
@@ -205,7 +202,8 @@ export const useLoyalty = () => {
         // Only set error for actual server errors, not 404s
 
         // Update global state
-        globalLoyaltyState.error = response.error || 'Failed to fetch loyalty account';
+        globalLoyaltyState.error =
+          response.error || 'Failed to fetch loyalty account';
         globalLoyaltyState.data = null;
         globalLoyaltyState.lastFetchUserId = user.id;
 
@@ -240,7 +238,7 @@ export const useLoyalty = () => {
         callback(globalLoyaltyState);
       });
     }
-  }, [user, authenticatedFetch]);
+  }, [user]);
 
   const fetchTransactions = useCallback(
     async (

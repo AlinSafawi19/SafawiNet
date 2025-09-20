@@ -4,17 +4,8 @@ import { AppModule } from './app.module';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import { Request, Response } from 'express';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { LoggerService } from './common/services/logger.service';
-
-// Extended Request type for custom properties
-type ExtendedRequest = Request & {
-  requestId?: string;
-  user?: {
-    id: string;
-  };
-};
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -37,6 +37,8 @@ export interface ValidatedUser {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  private readonly logger = new Logger(JwtStrategy.name);
+
   constructor(
     configService: ConfigService,
     private readonly prisma: PrismaService,
@@ -108,11 +110,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
               where: { id: userSession.id },
               data: { lastActiveAt: new Date() },
             });
-          } catch (error: unknown) {
+          } catch (error) {
+            this.logger.warn('Failed to update session activity', error, {
+              source: 'jwt-strategy',
+              sessionId: userSession.id,
+            });
             // Don't fail validation if session update fails
           }
         }
-      } catch (error: unknown) {
+      } catch (error) {
+        this.logger.warn('Failed to validate session', error, {
+          source: 'jwt-strategy',
+          userId: payload.sub,
+          refreshTokenId: payload.refreshTokenId,
+        });
         // Don't fail validation if database query fails
         // This ensures login works even if session tracking is temporarily unavailable
       }

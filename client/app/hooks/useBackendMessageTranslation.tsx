@@ -127,10 +127,13 @@ const mapBackendMessageToKey = (message: string): string => {
     // Rate limiting messages
     'ThrottlerException: Too Many Requests': 'auth.messages.rateLimitExceeded',
     'Too Many Requests': 'auth.messages.rateLimitExceeded',
-    'Rate limit exceeded. Please try again later.': 'auth.messages.rateLimitExceeded',
-    'RATE_LIMIT_EXCEEDED': 'auth.messages.rateLimitExceededWebSocket',
-    'Rate limit exceeded. Please slow down': 'auth.messages.rateLimitExceededWebSocketMessage',
-    'Authentication rate limit exceeded. Please try again later': 'auth.messages.rateLimitExceededWebSocketAuth',
+    'Rate limit exceeded. Please try again later.':
+      'auth.messages.rateLimitExceeded',
+    RATE_LIMIT_EXCEEDED: 'auth.messages.rateLimitExceededWebSocket',
+    'Rate limit exceeded. Please slow down':
+      'auth.messages.rateLimitExceededWebSocketMessage',
+    'Authentication rate limit exceeded. Please try again later':
+      'auth.messages.rateLimitExceededWebSocketAuth',
   };
 
   return messageMap[message] || 'auth.messages.generalError';

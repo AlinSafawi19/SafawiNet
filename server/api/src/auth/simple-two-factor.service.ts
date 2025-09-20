@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
 import { EmailService } from '../common/services/email.service';
@@ -16,6 +17,7 @@ export interface TwoFactorCodeResult {
 
 @Injectable()
 export class SimpleTwoFactorService {
+  private readonly logger = new Logger(SimpleTwoFactorService.name);
   private readonly codeExpirationMinutes = 10; // 10 minutes expiration
 
   constructor(
@@ -113,7 +115,14 @@ export class SimpleTwoFactorService {
         timestamp: new Date().toLocaleString(),
       });
     } catch (error) {
-
+      this.logger.warn(
+        'Failed to send 2FA disabled notification email',
+        error,
+        {
+          source: 'simple-two-factor',
+          userId,
+        },
+      );
       // Don't fail 2FA disable if email fails
     }
 
@@ -124,8 +133,11 @@ export class SimpleTwoFactorService {
         '2fa_disabled',
         'Two-factor authentication has been disabled. Please log in again.',
       );
-
     } catch (error) {
+      this.logger.warn('Failed to create offline message for logout', error, {
+        source: 'simple-two-factor',
+        userId,
+      });
       // Don't fail the 2FA disable if offline message creation fails
     }
 
@@ -236,7 +248,6 @@ export class SimpleTwoFactorService {
     await this.prisma.userSession.deleteMany({
       where: { userId },
     });
-
   }
 
   /**

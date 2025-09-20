@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
@@ -23,21 +28,23 @@ export interface AuthenticatedSocket extends Socket {
 
 @Injectable()
 export class WsJwtGuard implements CanActivate {
+  private readonly logger = new Logger(WsJwtGuard.name);
+
   constructor(
     private jwtService: JwtService,
     private configService: ConfigService,
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
-    try {
-      const client: Socket = context.switchToWs().getClient();
-      const token: string | undefined =
-        (client.handshake.auth as { token?: string }).token ||
-        (client.handshake.headers.authorization as string)?.replace(
-          'Bearer ',
-          '',
-        );
+    const client: Socket = context.switchToWs().getClient();
+    const token: string | undefined =
+      (client.handshake.auth as { token?: string }).token ||
+      (client.handshake.headers.authorization as string)?.replace(
+        'Bearer ',
+        '',
+      );
 
+    try {
       if (!token) {
         throw new WsException('Token not provided');
       }
@@ -70,10 +77,14 @@ export class WsJwtGuard implements CanActivate {
       (client as AuthenticatedSocket).user = user;
 
       return true;
-    } catch (err: unknown) {
-      if (err instanceof WsException) {
-        throw err;
+    } catch (error) {
+      if (error instanceof WsException) {
+        throw error;
       }
+      this.logger.warn('Failed to activate WsJwtGuard', error, {
+        source: 'ws-jwt-guard',
+        token,
+      });
       throw new WsException('Invalid token');
     }
   }

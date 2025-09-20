@@ -25,9 +25,10 @@ export const useGlobalErrorHandler = () => {
 
     // Handle unhandled promise rejections
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      const error = event.reason instanceof Error 
-        ? event.reason 
-        : new Error(String(event.reason));
+      const error =
+        event.reason instanceof Error
+          ? event.reason
+          : new Error(String(event.reason));
 
       clientLogger.error(
         `Unhandled Promise Rejection: ${error.message}`,
@@ -71,7 +72,10 @@ export const useGlobalErrorHandler = () => {
     // Cleanup
     return () => {
       window.removeEventListener('error', handleError);
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener(
+        'unhandledrejection',
+        handleUnhandledRejection
+      );
       window.removeEventListener('error', handleResourceError, true);
     };
   }, []);

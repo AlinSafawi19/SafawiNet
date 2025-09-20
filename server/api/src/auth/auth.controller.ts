@@ -79,10 +79,6 @@ interface TwoFactorDisableResponse {
   forceLogout: boolean;
 }
 
-interface RefreshTokenResponse {
-  message: string;
-}
-
 interface LogoutResponse {
   message: string;
 }
@@ -143,7 +139,7 @@ export class AuthController {
   async register(@Body() registerDto: RegisterDto): Promise<RegisterResponse> {
     this.loggerService.info('User registration attempt', {
       source: 'auth',
-      metadata: { endpoint: 'register', email: registerDto.email }
+      metadata: { endpoint: 'register', email: registerDto.email },
     });
 
     try {
@@ -151,13 +147,13 @@ export class AuthController {
       this.loggerService.info('User registration successful', {
         userId: result.user.id,
         source: 'auth',
-        metadata: { endpoint: 'register', email: result.user.email }
+        metadata: { endpoint: 'register', email: result.user.email },
       });
       return result;
     } catch (error) {
       this.loggerService.error('User registration failed', error as Error, {
         source: 'auth',
-        metadata: { endpoint: 'register', email: registerDto.email }
+        metadata: { endpoint: 'register', email: registerDto.email },
       });
       throw error;
     }
@@ -220,7 +216,6 @@ export class AuthController {
     @Body() verifyEmailDto: VerifyEmailDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<VerifyEmailResponse> {
-    
     const result = await this.authService.verifyEmail(verifyEmailDto);
 
     // If verification was successful and tokens were generated, set them as HTTP-only cookies
@@ -343,7 +338,7 @@ export class AuthController {
   ): Promise<LoginResult> {
     this.loggerService.info('User login attempt', {
       source: 'auth',
-      metadata: { endpoint: 'login', email: loginDto.email }
+      metadata: { endpoint: 'login', email: loginDto.email },
     });
 
     try {
@@ -355,7 +350,7 @@ export class AuthController {
         this.loggerService.info('User login successful', {
           userId: result.user?.id,
           source: 'auth',
-          metadata: { endpoint: 'login', email: loginDto.email }
+          metadata: { endpoint: 'login', email: loginDto.email },
         });
         // Remove tokens from response body for security
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -366,14 +361,14 @@ export class AuthController {
       this.loggerService.info('User login successful (no tokens)', {
         userId: result.user?.id,
         source: 'auth',
-        metadata: { endpoint: 'login', email: loginDto.email }
+        metadata: { endpoint: 'login', email: loginDto.email },
       });
 
       return result;
     } catch (error) {
       this.loggerService.error('User login failed', error as Error, {
         source: 'auth',
-        metadata: { endpoint: 'login', email: loginDto.email }
+        metadata: { endpoint: 'login', email: loginDto.email },
       });
       throw error;
     }
@@ -408,6 +403,10 @@ export class AuthController {
       this.authService.setAuthCookies(res, tokens);
       return { message: 'Token refreshed successfully', success: true };
     } catch (error) {
+      this.loggerService.error('Failed to refresh token', error as Error, {
+        source: 'auth',
+        metadata: { endpoint: 'refresh' },
+      });
       return { message: 'Invalid refresh token', success: false };
     }
   }
@@ -680,6 +679,10 @@ export class AuthController {
 
       return { message: 'Logged out successfully' };
     } catch (error) {
+      this.loggerService.error('Failed to logout', error as Error, {
+        source: 'auth',
+        metadata: { endpoint: 'logout' },
+      });
       // Still clear cookies even if token invalidation fails
       this.authService.clearAuthCookies(res);
 
@@ -742,6 +745,14 @@ export class AuthController {
         count: messages.length,
       };
     } catch (error) {
+      this.loggerService.error(
+        'Failed to fetch offline messages',
+        error as Error,
+        {
+          source: 'auth',
+          metadata: { endpoint: 'getOfflineMessages' },
+        },
+      );
       throw new BadRequestException('Failed to fetch offline messages');
     }
   }
@@ -799,6 +810,14 @@ export class AuthController {
         processedCount: body.messageIds.length,
       };
     } catch (error) {
+      this.loggerService.error(
+        'Failed to mark messages as processed',
+        error as Error,
+        {
+          source: 'auth',
+          metadata: { endpoint: 'markMessagesAsProcessed' },
+        },
+      );
       throw new BadRequestException('Failed to mark messages as processed');
     }
   }

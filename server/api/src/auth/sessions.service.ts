@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
 import { Request } from 'express';
@@ -45,6 +46,8 @@ function nullToUndefined<T>(value: T | null): T | undefined {
 
 @Injectable()
 export class SessionsService {
+  private readonly logger = new Logger(SessionsService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -111,55 +114,57 @@ export class SessionsService {
     refreshTokenId: string,
     deviceInfo: DeviceInfo,
   ): Promise<void> {
-    try {
-      // Check if prisma is properly injected
-      if (!this.prisma) {
-        throw new Error('Database service not available');
-      }
-
-      // Check if prisma is connected
-      try {
-        await this.prisma.$queryRaw`SELECT 1`;
-      } catch (dbError) {
-        throw new Error('Database connection failed');
-      }
-
-      // Check if userSession table exists
-      try {
-        await this.prisma.userSession.findFirst();
-      } catch (tableError) {
-        throw new Error(
-          'Database table userSession not found. Please run database migrations.',
-        );
-      }
-
-      // Mark all existing sessions as not current
-      await this.prisma.userSession.updateMany({
-        where: { userId },
-        data: { isCurrent: false },
-      });
-
-      // Create new session
-      const sessionData: Prisma.UserSessionCreateInput = {
-        user: { connect: { id: userId } },
-        refreshTokenId,
-        deviceFingerprint: deviceInfo.deviceFingerprint,
-        userAgent: deviceInfo.userAgent,
-        ipAddress: deviceInfo.ipAddress,
-        location: deviceInfo.location,
-        deviceType: deviceInfo.deviceType,
-        browser: deviceInfo.browser,
-        os: deviceInfo.os,
-        isCurrent: true,
-      };
-
-      await this.prisma.userSession.create({
-        data: sessionData,
-      });
-
-    } catch (error) {
-      throw error;
+    // Check if prisma is properly injected
+    if (!this.prisma) {
+      throw new Error('Database service not available');
     }
+
+    // Check if prisma is connected
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+    } catch (error) {
+      this.logger.warn('Failed to check database connection', error, {
+        source: 'sessions',
+      });
+      throw new Error('Database connection failed');
+    }
+
+    // Check if userSession table exists
+    try {
+      await this.prisma.userSession.findFirst();
+    } catch (error) {
+      this.logger.warn('Failed to find user session', error, {
+        source: 'sessions',
+        userId,
+      });
+      throw new Error(
+        'Database table userSession not found. Please run database migrations.',
+      );
+    }
+
+    // Mark all existing sessions as not current
+    await this.prisma.userSession.updateMany({
+      where: { userId },
+      data: { isCurrent: false },
+    });
+
+    // Create new session
+    const sessionData: Prisma.UserSessionCreateInput = {
+      user: { connect: { id: userId } },
+      refreshTokenId,
+      deviceFingerprint: deviceInfo.deviceFingerprint,
+      userAgent: deviceInfo.userAgent,
+      ipAddress: deviceInfo.ipAddress,
+      location: deviceInfo.location,
+      deviceType: deviceInfo.deviceType,
+      browser: deviceInfo.browser,
+      os: deviceInfo.os,
+      isCurrent: true,
+    };
+
+    await this.prisma.userSession.create({
+      data: sessionData,
+    });
   }
 
   /**
@@ -289,7 +294,6 @@ export class SessionsService {
     await this.prisma.userSession.delete({
       where: deleteWhere,
     });
-
   }
 
   /**
@@ -539,6 +543,10 @@ export class SessionsService {
         const result = await this.revokeAllUserSessions(userId, reason);
         results[userId] = result.revokedCount;
       } catch (error) {
+        this.logger.warn('Failed to revoke sessions for user', error, {
+          source: 'sessions',
+          userId,
+        });
         results[userId] = 0;
       }
     }

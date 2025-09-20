@@ -2,11 +2,13 @@ import {
   PipeTransform,
   Injectable,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { ZodSchema, z } from 'zod';
 
 @Injectable()
 export class ZodValidationPipe<T extends ZodSchema> implements PipeTransform {
+  private readonly logger = new Logger(ZodValidationPipe.name);
 
   constructor(private schema: T) {}
 
@@ -36,12 +38,12 @@ export class ZodValidationPipe<T extends ZodSchema> implements PipeTransform {
         message: 'Validation failed',
         errors: validationErrors,
       });
-    } catch (error: unknown) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-
+    } catch (error) {
       // Handle any other errors (like the defaultErrorMap issue)
+      this.logger.warn('Validation failed', error, {
+        source: 'zod-validation',
+        value,
+      });
       throw new BadRequestException({
         message: 'Validation failed',
         errors: [{ field: 'unknown', message: 'Invalid request data' }],

@@ -110,7 +110,11 @@ export class UsersController {
   ): Promise<{ message: string; user: Omit<User, 'password'> }> {
     this.loggerService.info('Admin user creation attempt', {
       source: 'api',
-      metadata: { endpoint: 'createUser', service: 'users', email: createUserDto.email }
+      metadata: {
+        endpoint: 'createUser',
+        service: 'users',
+        email: createUserDto.email,
+      },
     });
 
     try {
@@ -118,7 +122,11 @@ export class UsersController {
       this.loggerService.info('Admin user created successfully', {
         userId: user.id,
         source: 'api',
-        metadata: { endpoint: 'createUser', service: 'users', email: user.email }
+        metadata: {
+          endpoint: 'createUser',
+          service: 'users',
+          email: user.email,
+        },
       });
       return {
         message: 'Admin user created successfully',
@@ -127,7 +135,11 @@ export class UsersController {
     } catch (error) {
       this.loggerService.error('Admin user creation failed', error as Error, {
         source: 'api',
-        metadata: { endpoint: 'createUser', service: 'users', email: createUserDto.email }
+        metadata: {
+          endpoint: 'createUser',
+          service: 'users',
+          email: createUserDto.email,
+        },
       });
       throw error;
     }
@@ -172,13 +184,15 @@ export class UsersController {
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
     status: 200,
-    description: 'User profile retrieved successfully or user not authenticated',
+    description:
+      'User profile retrieved successfully or user not authenticated',
     schema: {
       type: 'object',
       properties: {
         user: {
           type: 'object',
-          description: 'User profile if authenticated, null if not authenticated',
+          description:
+            'User profile if authenticated, null if not authenticated',
         },
         authenticated: {
           type: 'boolean',
@@ -190,11 +204,10 @@ export class UsersController {
   async getCurrentUser(
     @Request() req: ExpressRequest,
   ): Promise<{ user: Omit<User, 'password'> | null; authenticated: boolean }> {
-    
     try {
       // Extract token from cookies first, then from Authorization header
       let token: string | undefined;
-      
+
       // Check cookies first
       if (req.cookies?.accessToken) {
         token = req.cookies.accessToken;
@@ -203,8 +216,8 @@ export class UsersController {
         const authHeader = req.headers.authorization;
         if (authHeader && authHeader.startsWith('Bearer ')) {
           token = authHeader.substring(7);
-        } else {
         }
+        // No token found in Authorization header
       }
 
       if (!token) {
@@ -212,14 +225,21 @@ export class UsersController {
       }
 
       // Verify the token
-      const jwtSecret = this.configService.get<string>('JWT_SECRET') || 'fallback-secret';
-      const payload = this.jwtService.verify(token!, { secret: jwtSecret });
-      
+      const jwtSecret =
+        this.configService.get<string>('JWT_SECRET') || 'fallback-secret';
+      const payload = this.jwtService.verify(token, { secret: jwtSecret });
+
       // Get user data
       const user = await this.usersService.getCurrentUser(payload.sub);
       return { user, authenticated: true };
-      
     } catch (error) {
+      this.loggerService.error('Failed to get current user', error as Error, {
+        source: 'api',
+        metadata: {
+          endpoint: 'getCurrentUser',
+          service: 'users',
+        },
+      });
       return { user: null, authenticated: false };
     }
   }
@@ -486,11 +506,10 @@ export class UsersController {
     @Request() req: ExpressRequest,
     @Body() changePasswordDto: ChangePasswordDto,
   ): Promise<{ message: string; messageKey: string }> {
-    
     try {
       // Extract token from cookies first, then from Authorization header
       let token: string | undefined;
-      
+
       // Check cookies first
       if (req.cookies?.accessToken) {
         token = req.cookies.accessToken;
@@ -499,8 +518,8 @@ export class UsersController {
         const authHeader = req.headers.authorization;
         if (authHeader && authHeader.startsWith('Bearer ')) {
           token = authHeader.substring(7);
-        } else {
         }
+        // No token found in Authorization header
       }
 
       if (!token) {
@@ -508,9 +527,9 @@ export class UsersController {
       }
 
       // Verify the token
-      const jwtSecret = this.configService.get<string>('JWT_SECRET') || 'fallback-secret';
-      const payload = this.jwtService.verify(token!, { secret: jwtSecret });
-      
+      const jwtSecret =
+        this.configService.get<string>('JWT_SECRET') || 'fallback-secret';
+      const payload = this.jwtService.verify(token, { secret: jwtSecret });
 
       // Get user data to verify they exist and are verified
       const user = await this.usersService.getCurrentUser(payload.sub);
@@ -523,17 +542,20 @@ export class UsersController {
       }
 
       // Proceed with password change
-    const result = await this.usersService.changePassword(
+      const result = await this.usersService.changePassword(
         payload.sub,
-      changePasswordDto,
-    );
-    return result;
-      
+        changePasswordDto,
+      );
+      return result;
     } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-      throw new UnauthorizedException('Authentication failed');
+      this.loggerService.error('Failed to process request', error as Error, {
+        source: 'api',
+        metadata: {
+          endpoint: 'unknown',
+          service: 'users',
+        },
+      });
+      throw error;
     }
   }
 }

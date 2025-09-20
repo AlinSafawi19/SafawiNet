@@ -39,19 +39,16 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Make request to your backend API
-    const backendResponse = await fetch(
-      buildApiUrl('/users/me'),
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Cookie: cookieHeader,
-        },
-        body: JSON.stringify({
-          name: name?.trim(),
-        }),
-      }
-    );
+    const backendResponse = await fetch(buildApiUrl('/users/me'), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: cookieHeader,
+      },
+      body: JSON.stringify({
+        name: name?.trim(),
+      }),
+    });
 
     if (!backendResponse.ok) {
       const errorData = await backendResponse.json();
@@ -108,20 +105,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Make request to your backend API
-    const backendResponse = await fetch(
-      buildApiUrl('/users'),
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          name,
-        }),
-      }
-    );
+    const backendResponse = await fetch(buildApiUrl('/users'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        name,
+      }),
+    });
 
     if (!backendResponse.ok) {
       const errorData = await backendResponse.json();

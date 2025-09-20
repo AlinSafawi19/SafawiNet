@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as winston from 'winston';
 import 'winston-daily-rotate-file';
 import * as path from 'path';
+import * as fs from 'fs';
 
 export interface LogContext {
   userId?: string;
@@ -24,10 +25,12 @@ export class LoggerService implements OnModuleInit {
 
   onModuleInit() {
     const logDir = this.configService.get<string>('LOG_DIR', './logs');
-    const environment = this.configService.get<string>('NODE_ENV', 'development');
+    const environment = this.configService.get<string>(
+      'NODE_ENV',
+      'development',
+    );
 
     // Create logs directory if it doesn't exist
-    const fs = require('fs');
     if (!fs.existsSync(logDir)) {
       fs.mkdirSync(logDir, { recursive: true });
     }
@@ -46,7 +49,7 @@ export class LoggerService implements OnModuleInit {
           ...(typeof meta === 'object' && meta !== null ? meta : {}),
         };
         return JSON.stringify(logEntry);
-      })
+      }),
     );
 
     // General logger for all logs
@@ -59,7 +62,7 @@ export class LoggerService implements OnModuleInit {
         new winston.transports.Console({
           format: winston.format.combine(
             winston.format.colorize(),
-            winston.format.simple()
+            winston.format.simple(),
           ),
         }),
         // Daily rotate file for all logs
@@ -83,7 +86,7 @@ export class LoggerService implements OnModuleInit {
         new winston.transports.Console({
           format: winston.format.combine(
             winston.format.colorize(),
-            winston.format.simple()
+            winston.format.simple(),
           ),
         }),
         // Daily rotate file for errors only
@@ -165,7 +168,7 @@ export class LoggerService implements OnModuleInit {
       ...context,
       ...(type && { type }),
     };
-    
+
     // Use appropriate log level based on context level
     const level = context.level || 'info';
     switch (level) {

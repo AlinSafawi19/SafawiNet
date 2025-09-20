@@ -32,7 +32,7 @@ export function ParallaxImage({
 
     // Set initial screen size
     handleResize();
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -44,12 +44,15 @@ export function ParallaxImage({
         const rect = parallaxRef.current.getBoundingClientRect();
         const scrolled = window.pageYOffset;
         const windowHeight = window.innerHeight;
-        
+
         // Much more conservative parallax movement to prevent cutoff
         const maxOffset = isSmallScreen ? 20 : 40; // Very small movement
         const parallaxRate = isSmallScreen ? -0.05 : -0.1; // Very slow movement
-        const rate = Math.max(Math.min(scrolled * parallaxRate, maxOffset), -maxOffset);
-        
+        const rate = Math.max(
+          Math.min(scrolled * parallaxRate, maxOffset),
+          -maxOffset
+        );
+
         // Minimal scaling to prevent image from moving out of bounds
         const maxScale = isSmallScreen ? 1.02 : 1.05; // Very minimal scaling
         const scaleRate = isSmallScreen ? 0.0001 : 0.0002; // Very slow scaling
@@ -65,7 +68,7 @@ export function ParallaxImage({
   }, [isSmallScreen]);
 
   // Get responsive image sizing based on screen size
-  const imageSizing = isSmallScreen 
+  const imageSizing = isSmallScreen
     ? { width: '180%', height: '180%', left: '-40%', top: '-40%' }
     : { width: '120%', height: '120%', left: '-10%', top: '-10%' };
 

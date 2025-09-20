@@ -172,10 +172,16 @@ async function makeRequest(endpoint, method, data, requestNumber) {
     const response = await axios(config);
     return response;
   } catch (error) {
+    logger.error(`❌ Request failed: ${error.message}`, {
+      error: error.message,
+      stack: error.stack,
+      endpoint,
+      method,
+      source: 'rate-limit-test'
+    });
     if (error.response) {
       return error.response;
     }
-    throw error;
   }
 }
 

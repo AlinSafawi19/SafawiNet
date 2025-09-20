@@ -59,7 +59,7 @@ export default function VerifyEmailPage() {
     // If user is already logged in via AuthContext, show success and redirect
     if (!isLoading && user) {
       hasVerifiedRef.current = true;
-      
+
       setVerificationState({
         status: 'success',
       });
@@ -119,7 +119,7 @@ export default function VerifyEmailPage() {
 
           // Since server sets HTTP-only cookies, we need to check if user is logged in
           // by making a request to /users/me endpoint
-          
+
           try {
             const userResponse = await fetch(
               buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
@@ -131,10 +131,10 @@ export default function VerifyEmailPage() {
 
             if (userResponse.ok) {
               const userData = await userResponse.json();
-              
+
               // Update the user state in AuthContext to reflect the login
               updateUser(userData.user);
-              
+
               // User is logged in, redirect based on role
               setTimeout(() => {
                 if (
@@ -187,6 +187,7 @@ export default function VerifyEmailPage() {
     t,
     user,
     isLoading,
+    updateUser,
     setVerificationBackendError,
     setVerificationBackendSuccess,
     setVerificationErrorKey,
@@ -282,7 +283,6 @@ export default function VerifyEmailPage() {
         {verificationState.status === 'verifying' && (
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-600 border-t-transparent mx-auto"></div>
         )}
-
       </div>
     </div>
   );

@@ -287,7 +287,6 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
             )}
           </button>
 
-
           <button
             onClick={handleLogout}
             className={`flex items-center hover:text-purple-500 transition-colors text-sm font-medium space-x-2 w-full px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 ${

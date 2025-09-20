@@ -1,9 +1,11 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as Sentry from '@sentry/node';
 
 @Injectable()
 export class SentryService implements OnModuleInit {
+  private readonly logger = new Logger(SentryService.name);
+
   constructor(private configService: ConfigService) {}
 
   onModuleInit() {
@@ -35,6 +37,9 @@ export class SentryService implements OnModuleInit {
         },
       });
     } catch (error) {
+      this.logger.warn('Failed to initialize Sentry', error, {
+        source: 'sentry',
+      });
     }
   }
 

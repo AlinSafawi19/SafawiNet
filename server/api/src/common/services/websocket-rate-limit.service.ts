@@ -28,9 +28,13 @@ export class WebSocketRateLimitService {
 
     const key = `ws:connection:${clientId}`;
     const current = await this.redisService.get(key);
-    
+
     if (!current) {
-      await this.redisService.set(key, '1', this.rateLimits.connection.ttl / 1000);
+      await this.redisService.set(
+        key,
+        '1',
+        this.rateLimits.connection.ttl / 1000,
+      );
       return true;
     }
 
@@ -53,7 +57,7 @@ export class WebSocketRateLimitService {
 
     const key = `ws:message:${clientId}`;
     const current = await this.redisService.get(key);
-    
+
     if (!current) {
       await this.redisService.set(key, '1', this.rateLimits.message.ttl / 1000);
       return true;
@@ -78,7 +82,7 @@ export class WebSocketRateLimitService {
 
     const key = `ws:auth:${clientId}`;
     const current = await this.redisService.get(key);
-    
+
     if (!current) {
       await this.redisService.set(key, '1', this.rateLimits.auth.ttl / 1000);
       return true;
@@ -96,14 +100,17 @@ export class WebSocketRateLimitService {
   /**
    * Get remaining rate limit count for a client
    */
-  async getRemainingLimit(clientId: string, type: 'connection' | 'message' | 'auth'): Promise<number> {
+  async getRemainingLimit(
+    clientId: string,
+    type: 'connection' | 'message' | 'auth',
+  ): Promise<number> {
     if (!this.isProduction) {
       return 999; // No limits in non-production
     }
 
     const key = `ws:${type}:${clientId}`;
     const current = await this.redisService.get(key);
-    
+
     if (!current) {
       return this.rateLimits[type].limit;
     }
@@ -115,7 +122,10 @@ export class WebSocketRateLimitService {
   /**
    * Reset rate limit for a client (useful for testing or manual reset)
    */
-  async resetLimit(clientId: string, type: 'connection' | 'message' | 'auth'): Promise<void> {
+  async resetLimit(
+    clientId: string,
+    type: 'connection' | 'message' | 'auth',
+  ): Promise<void> {
     const key = `ws:${type}:${clientId}`;
     await this.redisService.del(key);
   }

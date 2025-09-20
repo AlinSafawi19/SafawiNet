@@ -28,11 +28,24 @@ export class RequestLoggingMiddleware implements NestMiddleware {
     });
 
     // Override res.end to log response
-    const originalEnd = res.end;
+    const originalEnd = res.end.bind(res) as (
+      chunk?: any,
+      encoding?: BufferEncoding,
+      cb?: () => void,
+    ) => Response;
     const loggerService = this.loggerService;
-    res.end = function (chunk?: any, encoding?: any) {
+    res.end = function (
+      chunk?: any,
+      encodingOrCb?: BufferEncoding | (() => void),
+      cb?: () => void,
+    ): Response {
       const duration = Date.now() - startTime;
       const { statusCode } = res;
+
+      // Determine actual encoding and callback
+      const encoding =
+        typeof encodingOrCb === 'string' ? encodingOrCb : undefined;
+      const callback = typeof encodingOrCb === 'function' ? encodingOrCb : cb;
 
       // Log outgoing response
       loggerService.http('API Response', {
@@ -45,12 +58,22 @@ export class RequestLoggingMiddleware implements NestMiddleware {
           method,
           statusCode,
           duration,
-          responseSize: chunk ? Buffer.byteLength(chunk, encoding) : 0,
+          responseSize: chunk
+            ? Buffer.byteLength(
+                chunk as
+                  | string
+                  | Buffer
+                  | ArrayBuffer
+                  | SharedArrayBuffer
+                  | NodeJS.ArrayBufferView,
+                encoding,
+              )
+            : 0,
         },
       });
 
       // Call original end method and return its result
-      return originalEnd.call(res, chunk, encoding);
+      return originalEnd(chunk, encoding, callback);
     };
 
     next();
@@ -58,9 +81,9 @@ export class RequestLoggingMiddleware implements NestMiddleware {
 
   private sanitizeBody(body: any): any {
     if (!body) return body;
-    
+
     const sanitized = { ...body };
-    
+
     // Remove sensitive fields
     const sensitiveFields = ['password', 'token', 'secret', 'key', 'auth'];
     for (const field of sensitiveFields) {
@@ -68,15 +91,15 @@ export class RequestLoggingMiddleware implements NestMiddleware {
         sanitized[field] = '[REDACTED]';
       }
     }
-    
+
     return sanitized;
   }
 
   private sanitizeHeaders(headers: any): any {
     if (!headers) return headers;
-    
+
     const sanitized = { ...headers };
-    
+
     // Remove sensitive headers
     const sensitiveHeaders = ['authorization', 'cookie', 'x-api-key'];
     for (const header of sensitiveHeaders) {
@@ -84,7 +107,7 @@ export class RequestLoggingMiddleware implements NestMiddleware {
         sanitized[header] = '[REDACTED]';
       }
     }
-    
+
     return sanitized;
   }
 }

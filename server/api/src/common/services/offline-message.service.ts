@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 
 export interface OfflineMessagePayload {
@@ -30,6 +30,7 @@ export interface OfflineMessage {
 
 @Injectable()
 export class OfflineMessageService {
+  private readonly logger = new Logger(OfflineMessageService.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -37,22 +38,18 @@ export class OfflineMessageService {
    * Create an offline message for a user
    */
   async createMessage(dto: CreateOfflineMessageDto): Promise<OfflineMessage> {
-    try {
-      const message = await this.prisma.offlineMessage.create({
-        data: {
-          userId: dto.userId,
-          type: dto.type,
-          event: dto.event,
-          payload: dto.payload,
-          priority: dto.priority || 'normal',
-          expiresAt: dto.expiresAt,
-        },
-      });
+    const message = await this.prisma.offlineMessage.create({
+      data: {
+        userId: dto.userId,
+        type: dto.type,
+        event: dto.event,
+        payload: dto.payload,
+        priority: dto.priority || 'normal',
+        expiresAt: dto.expiresAt,
+      },
+    });
 
-      return message as OfflineMessage;
-    } catch (error) {
-      throw error;
-    }
+    return message as OfflineMessage;
   }
 
   /**
@@ -71,7 +68,11 @@ export class OfflineMessageService {
 
       return messages as OfflineMessage[];
     } catch (error) {
-      throw error;
+      this.logger.error('Failed to get offline messages', error, {
+        source: 'offline-message',
+        userId,
+      });
+      return [];
     }
   }
 
@@ -87,8 +88,11 @@ export class OfflineMessageService {
           processedAt: new Date(),
         },
       });
-
     } catch (error) {
+      this.logger.error('Failed to mark message as processed', error, {
+        source: 'offline-message',
+        messageId,
+      });
       throw new Error(`Failed to mark message ${messageId} as processed`);
     }
   }
@@ -105,9 +109,11 @@ export class OfflineMessageService {
           processedAt: new Date(),
         },
       });
-
     } catch (error) {
-      throw error;
+      this.logger.error('Failed to mark messages as processed', error, {
+        source: 'offline-message',
+        messageIds,
+      });
     }
   }
 
@@ -126,6 +132,10 @@ export class OfflineMessageService {
 
       return count > 0;
     } catch (error) {
+      this.logger.error('Failed to check for unprocessed messages', error, {
+        source: 'offline-message',
+        userId,
+      });
       return false;
     }
   }
@@ -143,7 +153,10 @@ export class OfflineMessageService {
 
       return result.count;
     } catch (error) {
-      throw error;
+      this.logger.error('Failed to cleanup expired messages', error, {
+        source: 'offline-message',
+      });
+      return 0;
     }
   }
 
@@ -151,21 +164,17 @@ export class OfflineMessageService {
    * Clean up old processed messages (older than 30 days)
    */
   async cleanupOldProcessedMessages(): Promise<number> {
-    try {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const result = await this.prisma.offlineMessage.deleteMany({
-        where: {
-          isProcessed: true,
-          processedAt: { lt: thirtyDaysAgo },
-        },
-      });
+    const result = await this.prisma.offlineMessage.deleteMany({
+      where: {
+        isProcessed: true,
+        processedAt: { lt: thirtyDaysAgo },
+      },
+    });
 
-      return result.count;
-    } catch (error) {
-      throw error;
-    }
+    return result.count;
   }
 
   /**
@@ -205,6 +214,10 @@ export class OfflineMessageService {
 
       return { total, unprocessed, processed, expired };
     } catch (error) {
+      this.logger.error('Failed to get message stats for user', error, {
+        source: 'offline-message',
+        userId,
+      });
       throw new Error(`Failed to get message stats for user ${userId}`);
     }
   }

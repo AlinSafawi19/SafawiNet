@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -59,6 +60,7 @@ interface JwtPayload {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly maxLoginAttempts = 5;
   private readonly lockoutDuration = 15 * 60; // 15 minutes in seconds
 
@@ -83,7 +85,7 @@ export class AuthService {
 
     this.loggerService.info('User registration process started', {
       source: 'auth',
-      metadata: { operation: 'register', email }
+      metadata: { operation: 'register', email },
     });
 
     // Check if user already exists
@@ -92,10 +94,13 @@ export class AuthService {
     });
 
     if (existingUser) {
-      this.loggerService.warn('User registration failed - email already exists', {
-        source: 'auth',
-        metadata: { operation: 'register', reason: 'email_exists', email }
-      });
+      this.loggerService.warn(
+        'User registration failed - email already exists',
+        {
+          source: 'auth',
+          metadata: { operation: 'register', reason: 'email_exists', email },
+        },
+      );
       throw new ConflictException('User with this email already exists');
     }
 
@@ -205,6 +210,10 @@ export class AuthService {
         verificationUrl,
       });
     } catch (error) {
+      this.logger.warn('Failed to send verification email', error, {
+        source: 'auth',
+        userId: result.user.id,
+      });
       // Don't fail registration if email fails
     }
 
@@ -216,12 +225,12 @@ export class AuthService {
     this.loggerService.info('User registration completed successfully', {
       userId: result.user.id,
       source: 'auth',
-      metadata: { 
+      metadata: {
         operation: 'register',
         roles: result.user.roles,
         loyaltyAccountCreated: result.user.roles.includes('CUSTOMER'),
-        email: result.user.email
-      }
+        email: result.user.email,
+      },
     });
 
     // Emit WebSocket event for new user registration
@@ -234,7 +243,10 @@ export class AuthService {
       this.loggerService.warn('Failed to emit WebSocket verification event', {
         userId: result.user.id,
         source: 'auth',
-        metadata: { operation: 'register', error: error instanceof Error ? error.message : String(error) }
+        metadata: {
+          operation: 'register',
+          error: error instanceof Error ? error.message : String(error),
+        },
       });
     }
 
@@ -291,16 +303,16 @@ export class AuthService {
     // Emit WebSocket event for real-time notification
     try {
       // Log current room states before emitting
-      const roomStates = this.webSocketGateway.getRoomStates();
-      
+      this.webSocketGateway.getRoomStates();
+
       this.webSocketGateway.emitVerificationSuccess(
         result.id,
         this.excludePassword(result),
       );
-      
+
       // Log the user data being sent
       const userData = this.excludePassword(result);
-      
+
       this.webSocketGateway.emitVerificationSuccessToPendingRoom(
         result.email,
         userData,
@@ -311,10 +323,12 @@ export class AuthService {
       this.webSocketGateway.broadcastLogin(this.excludePassword(result));
 
       // Log room states after emitting
-      const roomStatesAfter = this.webSocketGateway.getRoomStates();
-
+      this.webSocketGateway.getRoomStates();
     } catch (error) {
- 
+      this.logger.error('Failed to broadcast login or get room states', error, {
+        source: 'auth',
+        userId: result.id,
+      });
     }
 
     const message: string = 'Email verified successfully';
@@ -381,7 +395,10 @@ export class AuthService {
       try {
         await this.simpleTwoFactorService.sendTwoFactorCode(user.id);
       } catch (error) {
-   
+        this.logger.warn('Failed to send 2FA code', error, {
+          source: 'auth',
+          userId: user.id,
+        });
         // Continue with 2FA flow even if email sending fails
       }
 
@@ -429,7 +446,6 @@ export class AuthService {
 
     // Generate tokens
     const tokens: AuthTokens = await this.generateTokens(user, req);
-
 
     return {
       tokens,
@@ -490,11 +506,19 @@ export class AuthService {
           });
         }
       } catch (error) {
+        this.logger.warn('Failed to refresh token', error, {
+          source: 'auth',
+          refreshToken,
+        });
         // Don't fail token refresh if session update fails
       }
 
       return tokens;
     } catch (error) {
+      this.logger.warn('Failed to refresh token', error, {
+        source: 'auth',
+        refreshToken,
+      });
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -512,7 +536,7 @@ export class AuthService {
 
     if (!user) {
       // Don't reveal if user exists or not for security
-  
+
       return {
         message:
           'If an account with this email exists, a password reset link has been sent.',
@@ -550,7 +574,10 @@ export class AuthService {
     try {
       await this.emailService.sendPasswordResetEmail(user.email, resetToken);
     } catch (error) {
- 
+      this.logger.warn('Failed to send password reset email', error, {
+        source: 'auth',
+        userId: user.id,
+      });
       // Don't fail the request if email fails
     }
 
@@ -632,6 +659,14 @@ export class AuthService {
         },
       );
     } catch (error) {
+      this.logger.warn(
+        'Failed to send password reset notification email',
+        error,
+        {
+          source: 'auth',
+          userId: result.id,
+        },
+      );
       // Don't fail password reset if email fails
     }
 
@@ -643,6 +678,14 @@ export class AuthService {
         'Your password has been reset. Please log in with your new password.',
       );
     } catch (error) {
+      this.logger.warn(
+        'Failed to create offline message for password reset',
+        error,
+        {
+          source: 'auth',
+          userId: result.id,
+        },
+      );
       // Don't fail the password reset if offline message creation fails
     }
 
@@ -675,6 +718,10 @@ export class AuthService {
           },
         );
       } catch (error) {
+        this.logger.warn('Failed to create login notification', error, {
+          source: 'auth',
+          userId: user.id,
+        });
         // If session creation fails, don't include refreshTokenId in JWT
         // This will allow login to work but without session validation
         return this.generateTokensWithoutSession(user);
@@ -788,69 +835,67 @@ export class AuthService {
           data: { isCurrent: false },
         });
       }
-
     } catch (error) {
       // Don't throw error as logout should succeed even if token invalidation fails
+      this.logger.warn('Failed to invalidate token during logout', error, {
+        source: 'auth',
+      });
     }
   }
 
   async resendVerificationEmail(email: string): Promise<{ message: string }> {
-    try {
-      // Find user by email
-      const user: User | null = await this.prisma.user.findUnique({
-        where: { email },
-      });
+    // Find user by email
+    const user: User | null = await this.prisma.user.findUnique({
+      where: { email },
+    });
 
-      if (!user) {
-        throw new BadRequestException('User not found');
-      }
-
-      if (user.isVerified) {
-        throw new BadRequestException('User is already verified');
-      }
-
-      // Invalidate any existing verification tokens for this user
-      await this.prisma.oneTimeToken.updateMany({
-        where: {
-          userId: user.id,
-          purpose: 'email_verification',
-          usedAt: null,
-        },
-        data: {
-          usedAt: new Date(),
-        },
-      });
-
-      // Generate new verification token
-      const verificationToken: string = SecurityUtils.generateSecureToken(32);
-      const tokenHash: string = SecurityUtils.hashToken(verificationToken);
-      const expiresAt: Date = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
-
-      // Store new verification token
-      await this.prisma.oneTimeToken.create({
-        data: {
-          purpose: 'email_verification',
-          hash: tokenHash,
-          userId: user.id,
-          expiresAt,
-        },
-      });
-
-      // Send verification email
-      const frontendDomain: string = this.configService.get<string>(
-        'FRONTEND_DOMAIN',
-        'localhost:3001',
-      );
-      const verificationUrl = `http://${frontendDomain}/verify-email?token=${verificationToken}`;
-      await this.emailService.sendEmailVerification(user.email, {
-        name: user.name || 'User',
-        verificationUrl,
-      });
-
-      return { message: 'Verification email sent successfully' };
-    } catch (error) {
-      throw error;
+    if (!user) {
+      throw new BadRequestException('User not found');
     }
+
+    if (user.isVerified) {
+      throw new BadRequestException('User is already verified');
+    }
+
+    // Invalidate any existing verification tokens for this user
+    await this.prisma.oneTimeToken.updateMany({
+      where: {
+        userId: user.id,
+        purpose: 'email_verification',
+        usedAt: null,
+      },
+      data: {
+        usedAt: new Date(),
+      },
+    });
+
+    // Generate new verification token
+    const verificationToken: string = SecurityUtils.generateSecureToken(32);
+    const tokenHash: string = SecurityUtils.hashToken(verificationToken);
+    const expiresAt: Date = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+
+    // Store new verification token
+    await this.prisma.oneTimeToken.create({
+      data: {
+        purpose: 'email_verification',
+        hash: tokenHash,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    // Send verification email
+    const frontendDomain: string = this.configService.get<string>(
+      'FRONTEND_DOMAIN',
+      'localhost:3001',
+    );
+    const verificationUrl = `http://${frontendDomain}/verify-email?token=${verificationToken}`;
+    await this.emailService.sendEmailVerification(user.email, {
+      name: user.name || 'User',
+      verificationUrl,
+    });
+
+    return { message: 'Verification email sent successfully' };
   }
 
   private async resendVerificationEmailInternal(user: User): Promise<void> {
@@ -893,6 +938,11 @@ export class AuthService {
         verificationUrl,
       });
     } catch (error) {
+      this.logger.error('Failed to send email verification', error, {
+        source: 'auth',
+        userId: user.id,
+        email: user.email,
+      });
     }
   }
 
@@ -946,7 +996,6 @@ export class AuthService {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       path: '/',
     });
-
   }
 
   clearAuthCookies(res: Response): void {

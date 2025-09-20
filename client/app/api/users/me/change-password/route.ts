@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     // Forward cookies from the request to the backend
     const cookieHeader = request.headers.get('cookie');
-    
+
     if (!cookieHeader) {
       return NextResponse.json(
         { message: 'Authentication required' },

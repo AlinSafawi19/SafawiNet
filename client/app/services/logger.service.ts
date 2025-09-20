@@ -29,7 +29,7 @@ class ClientLogger {
     if (typeof window !== 'undefined') {
       // Start periodic flush
       this.startFlushTimer();
-      
+
       // Flush logs before page unload
       window.addEventListener('beforeunload', () => {
         this.flush();
@@ -41,7 +41,7 @@ class ClientLogger {
     if (this.flushTimer) {
       clearInterval(this.flushTimer);
     }
-    
+
     this.flushTimer = setInterval(() => {
       this.flush();
     }, this.flushInterval);
@@ -68,7 +68,7 @@ class ClientLogger {
   private addToQueue(log: ClientErrorLog): void {
     // Only add to queue in browser environment
     if (typeof window === 'undefined') return;
-    
+
     this.logQueue.push(log);
 
     // If queue is full, remove oldest logs
@@ -89,9 +89,7 @@ class ClientLogger {
     this.logQueue = [];
 
     // Send logs in parallel
-    await Promise.all(
-      logsToSend.map(log => this.sendToServer(log))
-    );
+    await Promise.all(logsToSend.map((log) => this.sendToServer(log)));
   }
 
   private createLogEntry(
@@ -104,8 +102,12 @@ class ClientLogger {
       level,
       message,
       stack: error?.stack,
-      url: context?.url || (typeof window !== 'undefined' ? window.location.href : ''),
-      userAgent: context?.userAgent || (typeof window !== 'undefined' ? navigator.userAgent : ''),
+      url:
+        context?.url ||
+        (typeof window !== 'undefined' ? window.location.href : ''),
+      userAgent:
+        context?.userAgent ||
+        (typeof window !== 'undefined' ? navigator.userAgent : ''),
       metadata: {
         ...context?.metadata,
         component: context?.component,
@@ -137,7 +139,6 @@ class ClientLogger {
     const logEntry = this.createLogEntry('debug', message, context);
     this.addToQueue(logEntry);
   }
-
 
   // Force flush logs
   async forceFlush(): Promise<void> {

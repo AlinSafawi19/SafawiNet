@@ -16,6 +16,7 @@ import { AuthenticatedSocket } from '../auth/guards/ws-jwt.guard';
 import { isJwtPayload } from '../auth/types/jwt.types';
 import { OfflineMessageService } from '../common/services/offline-message.service';
 import { WebSocketRateLimitService } from '../common/services/websocket-rate-limit.service';
+import { LoggerService } from '../common/services/logger.service';
 
 // User data interface for WebSocket events
 interface UserData {
@@ -81,7 +82,11 @@ interface RoomStates {
   cors: {
     origin: (origin, callback) => {
       // Allow all localhost origins for development
-      if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      if (
+        !origin ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1')
+      ) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
@@ -106,6 +111,7 @@ export class AuthWebSocketGateway
     private readonly configService: ConfigService,
     private readonly offlineMessageService: OfflineMessageService,
     private readonly rateLimitService: WebSocketRateLimitService,
+    private readonly logger: LoggerService,
   ) {}
 
   afterInit(server: Server) {
@@ -115,7 +121,9 @@ export class AuthWebSocketGateway
   /**
    * Check if a message is allowed based on rate limits
    */
-  private async checkMessageRateLimit(client: AuthenticatedSocket): Promise<boolean> {
+  private async checkMessageRateLimit(
+    client: AuthenticatedSocket,
+  ): Promise<boolean> {
     const isAllowed = await this.rateLimitService.checkMessageLimit(client.id);
     if (!isAllowed) {
       client.emit('error', {
@@ -135,7 +143,8 @@ export class AuthWebSocketGateway
       }
 
       // Check connection rate limit
-      const isConnectionAllowed = await this.rateLimitService.checkConnectionLimit(client.id);
+      const isConnectionAllowed =
+        await this.rateLimitService.checkConnectionLimit(client.id);
       if (!isConnectionAllowed) {
         client.emit('error', {
           type: 'RATE_LIMIT_EXCEEDED',
@@ -180,16 +189,37 @@ export class AuthWebSocketGateway
             this.addToVerificationRoom(client.user.id, client.id);
           }
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
+          this.logger.error(
+            'Failed to verify JWT token during WebSocket connection',
+            error instanceof Error ? error : undefined,
+            {
+              source: 'api',
+              userAgent: client.handshake.headers['user-agent'],
+              ipAddress: client.handshake.address,
+              metadata: {
+                socketId: client.id,
+                hasToken: !!token,
+              },
+            },
+          );
           client.disconnect();
           return;
         }
-      } else {
       }
+      // No action needed for other cases
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(
+        'Failed to handle WebSocket connection',
+        error instanceof Error ? error : undefined,
+        {
+          source: 'api',
+          userAgent: client.handshake.headers['user-agent'],
+          ipAddress: client.handshake.address,
+          metadata: {
+            socketId: client.id,
+          },
+        },
+      );
       client.disconnect();
     }
   }
@@ -198,8 +228,8 @@ export class AuthWebSocketGateway
     if (client.user) {
       // Remove from verification room if they were there
       void this.removeFromVerificationRoom(client.user.id, client.id);
-    } else {
     }
+    // No action needed for anonymous connections
 
     // Remove from all pending verification rooms (for anonymous connections)
     // This is important for cross-browser sync cleanup
@@ -267,7 +297,7 @@ export class AuthWebSocketGateway
     client.emit('pendingVerificationRoomJoined', { success: true, email });
 
     // Log current room state
-    const room = this.pendingVerificationRooms.get(email);
+    this.pendingVerificationRooms.get(email);
   }
 
   @SubscribeMessage('leavePendingVerificationRoom')
@@ -299,7 +329,7 @@ export class AuthWebSocketGateway
     void this.addToPasswordResetRoom(email, client.id);
     client.emit('passwordResetRoomJoined', { success: true, email });
     // Log current room state
-    const room = this.passwordResetRooms.get(email);
+    this.passwordResetRooms.get(email);
   }
 
   @SubscribeMessage('leavePasswordResetRoom')
@@ -331,13 +361,19 @@ export class AuthWebSocketGateway
     try {
       this.server.in(socketId).socketsJoin(`verification:${userId}`);
     } catch (error) {
-    
+      this.logger.warn('Failed to join verification room', {
+        source: 'api',
+        metadata: {
+          socketId,
+          userId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      });
     }
   }
 
   private removeFromVerificationRoom(userId: string, socketId: string) {
     if (!this.server) {
- 
       return;
     }
 
@@ -352,14 +388,20 @@ export class AuthWebSocketGateway
       try {
         this.server.in(socketId).socketsLeave(`verification:${userId}`);
       } catch (error) {
-     
+        this.logger.warn('Failed to leave verification room', {
+          source: 'api',
+          metadata: {
+            socketId,
+            userId,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        });
       }
     }
   }
 
   private addToPendingVerificationRoom(email: string, socketId: string) {
     if (!this.server) {
-  
       return;
     }
 
@@ -370,15 +412,20 @@ export class AuthWebSocketGateway
 
     try {
       this.server.in(socketId).socketsJoin(`pending_verification:${email}`);
-  
     } catch (error) {
- 
+      this.logger.warn('Failed to join pending verification room', {
+        source: 'api',
+        metadata: {
+          socketId,
+          email,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      });
     }
   }
 
   private removeFromPendingVerificationRoom(email: string, socketId: string) {
     if (!this.server) {
-
       return;
     }
 
@@ -391,16 +438,21 @@ export class AuthWebSocketGateway
 
       try {
         this.server.in(socketId).socketsLeave(`pending_verification:${email}`);
- 
       } catch (error) {
-
+        this.logger.warn('Failed to leave pending verification room', {
+          source: 'api',
+          metadata: {
+            socketId,
+            email,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        });
       }
     }
   }
 
   private addToPasswordResetRoom(email: string, socketId: string) {
     if (!this.server) {
-  
       return;
     }
 
@@ -412,13 +464,19 @@ export class AuthWebSocketGateway
     try {
       this.server.in(socketId).socketsJoin(`password_reset:${email}`);
     } catch (error) {
-
+      this.logger.warn('Failed to join password reset room', {
+        source: 'api',
+        metadata: {
+          socketId,
+          email,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      });
     }
   }
 
   private removeFromPasswordResetRoom(email: string, socketId: string) {
     if (!this.server) {
-   
       return;
     }
 
@@ -431,9 +489,15 @@ export class AuthWebSocketGateway
 
       try {
         this.server.in(socketId).socketsLeave(`password_reset:${email}`);
-      
       } catch (error) {
- 
+        this.logger.warn('Failed to leave password reset room', {
+          source: 'api',
+          metadata: {
+            socketId,
+            email,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        });
       }
     }
   }
@@ -441,7 +505,6 @@ export class AuthWebSocketGateway
   // Method to emit verification success to all sockets in a user's verification room
   emitVerificationSuccess(userId: string, userData: UserData) {
     if (!this.server) {
-  
       return;
     }
 
@@ -455,14 +518,20 @@ export class AuthWebSocketGateway
         };
 
         this.server.to(`verification:${userId}`).emit('emailVerified', payload);
-
       } catch (error) {
-     
+        this.logger.error(
+          'Failed to emit email verified event',
+          error instanceof Error ? error : undefined,
+          {
+            source: 'api',
+            metadata: {
+              userId,
+            },
+          },
+        );
       }
-    } else {
-      // No verification room - user is not connected via WebSocket
-   
     }
+    // No verification room - user is not connected via WebSocket
   }
 
   // Method to emit verification success to pending verification room (for cross-browser sync)
@@ -472,16 +541,13 @@ export class AuthWebSocketGateway
     tokens?: AuthTokens,
   ) {
     if (!this.server) {
-
       return;
     }
 
     const room = this.pendingVerificationRooms.get(email.toLowerCase());
 
-
     if (room && room.size > 0) {
       try {
-
         // Create payload with or without tokens
         const payload:
           | VerificationSuccessPayload
@@ -503,7 +569,6 @@ export class AuthWebSocketGateway
           .to(`pending_verification:${email.toLowerCase()}`)
           .emit('emailVerified', payload);
 
-
         // Clean up the pending verification room after successful emission
         this.pendingVerificationRooms.delete(email.toLowerCase());
 
@@ -514,15 +579,33 @@ export class AuthWebSocketGateway
               .in(socketId)
               .socketsLeave(`pending_verification:${email.toLowerCase()}`);
           } catch (error) {
-       
+            this.logger.warn(
+              'Failed to leave pending verification room for socket',
+              {
+                source: 'api',
+                metadata: {
+                  socketId,
+                  email,
+                  error: error instanceof Error ? error.message : String(error),
+                },
+              },
+            );
           }
         }
-
       } catch (error) {
- 
+        this.logger.warn(
+          'Failed to process pending verification room cleanup',
+          {
+            source: 'api',
+            metadata: {
+              email,
+              error: error instanceof Error ? error.message : String(error),
+            },
+          },
+        );
       }
-    } else {
     }
+    // No pending verification room found
   }
 
   // Method to emit verification failure
@@ -542,8 +625,17 @@ export class AuthWebSocketGateway
         this.server
           .to(`verification:${userId}`)
           .emit('emailVerificationFailed', payload);
-
       } catch (error) {
+        this.logger.error(
+          'Failed to emit email verification failed event',
+          error instanceof Error ? error : undefined,
+          {
+            source: 'api',
+            metadata: {
+              userId,
+            },
+          },
+        );
       }
     }
   }
@@ -551,7 +643,6 @@ export class AuthWebSocketGateway
   // Method to emit login success
   emitLoginSuccess(userId: string, userData: UserData) {
     if (!this.server) {
-
       return;
     }
 
@@ -562,16 +653,23 @@ export class AuthWebSocketGateway
       };
 
       this.server.to(`user:${userId}`).emit('loginSuccess', payload);
-
     } catch (error) {
- 
+      this.logger.error(
+        'Failed to emit login success event',
+        error instanceof Error ? error : undefined,
+        {
+          source: 'api',
+          metadata: {
+            userId,
+          },
+        },
+      );
     }
   }
 
   // Method to broadcast login to all devices (called after successful verification)
   broadcastLogin(user: UserData) {
     if (!this.server) {
-  
       return;
     }
 
@@ -584,6 +682,16 @@ export class AuthWebSocketGateway
       // Broadcast to all connected clients
       this.server.emit('auth_broadcast', payload);
     } catch (error) {
+      this.logger.error(
+        'Failed to emit auth broadcast event',
+        error instanceof Error ? error : undefined,
+        {
+          source: 'api',
+          metadata: {
+            userId: user.id,
+          },
+        },
+      );
     }
   }
 
@@ -603,8 +711,17 @@ export class AuthWebSocketGateway
 
       // Broadcast to all connected clients
       this.server.emit('forceLogout', payload);
-
     } catch (error) {
+      this.logger.error(
+        'Failed to emit force logout event',
+        error instanceof Error ? error : undefined,
+        {
+          source: 'api',
+          metadata: {
+            reason,
+          },
+        },
+      );
     }
   }
 

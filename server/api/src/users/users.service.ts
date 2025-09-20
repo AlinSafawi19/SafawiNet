@@ -9,6 +9,7 @@ import { PrismaService } from '../common/services/prisma.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { EmailService } from '../common/services/email.service';
 import { OfflineMessageService } from '../common/services/offline-message.service';
+import { LoggerService } from '../common/services/logger.service';
 import {
   CreateUserDto,
   UpdateProfileDto,
@@ -55,12 +56,12 @@ interface UserNotificationPreferences {
 
 @Injectable()
 export class UsersService {
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
     private readonly offlineMessageService: OfflineMessageService,
+    private readonly logger: LoggerService,
   ) {}
 
   async createUser(
@@ -170,6 +171,14 @@ export class UsersService {
         verificationUrl,
       });
     } catch (error) {
+      this.logger.warn('Failed to send welcome email during user creation', {
+        source: 'api',
+        userId: user.id,
+        metadata: {
+          email: user.email,
+          error,
+        },
+      });
       // Don't fail user creation if email fails
     }
 
@@ -349,6 +358,16 @@ export class UsersService {
           String(currentPassword),
         );
       } catch (error) {
+        this.logger.warn(
+          'Password verification failed during password change',
+          {
+            source: 'api',
+            userId,
+            metadata: {
+              error,
+            },
+          },
+        );
         // If verification fails due to hash format issues, treat as incorrect password
         isCurrentPasswordValid = false;
       }
@@ -392,6 +411,13 @@ export class UsersService {
           },
         );
       } catch (error) {
+        this.logger.warn('Failed to send password change notification email', {
+          source: 'api',
+          userId,
+          metadata: {
+            error,
+          },
+        });
         // Don't fail password change if email fails
       }
 
@@ -402,8 +428,17 @@ export class UsersService {
           'password_changed',
           'Your password has been changed. Please log in again.',
         );
-
       } catch (error) {
+        this.logger.warn(
+          'Failed to create offline message for password change',
+          {
+            source: 'api',
+            userId,
+            metadata: {
+              error,
+            },
+          },
+        );
         // Don't fail the password change if offline message creation fails
       }
 
@@ -413,6 +448,14 @@ export class UsersService {
         forceLogout: true,
       };
     } catch (error) {
+      this.logger.error(
+        'Failed to change password',
+        error instanceof Error ? error : undefined,
+        {
+          source: 'api',
+          userId,
+        },
+      );
       throw error;
     }
   }

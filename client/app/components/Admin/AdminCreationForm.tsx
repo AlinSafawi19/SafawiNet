@@ -261,7 +261,7 @@ export default function AdminCreationForm({
     logInfo('Admin creation form submission', {
       component: 'AdminCreationForm',
       action: 'handleSubmit',
-      metadata: { email: formData.email }
+      metadata: { email: formData.email },
     });
 
     // Mark all fields as touched
@@ -295,7 +295,7 @@ export default function AdminCreationForm({
       logInfo('Admin creation form validation failed', {
         component: 'AdminCreationForm',
         action: 'handleSubmit',
-        metadata: { errors }
+        metadata: { errors },
       });
       setIsLoading(false);
       return;
@@ -308,22 +308,24 @@ export default function AdminCreationForm({
         {
           component: 'AdminCreationForm',
           action: 'createAdmin',
-          metadata: { email: formData.email }
+          metadata: { email: formData.email },
         }
       );
 
       if (response.success && response.data) {
         // Use setBackendSuccess which automatically maps to translation keys
-        setBackendSuccess(response.data.message || 'Admin user created successfully!');
+        setBackendSuccess(
+          response.data.message || 'Admin user created successfully!'
+        );
 
         // Log successful admin creation
         logInfo('Admin user created successfully', {
           component: 'AdminCreationForm',
           action: 'createAdmin',
-          metadata: { 
+          metadata: {
             email: formData.email,
-            adminId: response.data.user?.id 
-          }
+            adminId: response.data.user?.id,
+          },
         });
 
         // Reset form
@@ -347,21 +349,29 @@ export default function AdminCreationForm({
       } else {
         // Use setBackendError which automatically maps to translation keys
         setBackendError(response.error || 'Server error');
-        
+
         // Log admin creation failure
-        logError('Admin user creation failed', new Error(response.error || 'Unknown error'), {
-          component: 'AdminCreationForm',
-          action: 'createAdmin',
-          metadata: { email: formData.email }
-        });
+        logError(
+          'Admin user creation failed',
+          new Error(response.error || 'Unknown error'),
+          {
+            component: 'AdminCreationForm',
+            action: 'createAdmin',
+            metadata: { email: formData.email },
+          }
+        );
       }
     } catch (error) {
       // Use setBackendError for network errors - it will map to appropriate translation key
-      logError('Admin creation form submission failed', error instanceof Error ? error : new Error(String(error)), {
-        component: 'AdminCreationForm',
-        action: 'handleSubmit',
-        metadata: { email: formData.email }
-      });
+      logError(
+        'Admin creation form submission failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component: 'AdminCreationForm',
+          action: 'handleSubmit',
+          metadata: { email: formData.email },
+        }
+      );
       setBackendError('Network error. Please try again.');
     } finally {
       setIsLoading(false);

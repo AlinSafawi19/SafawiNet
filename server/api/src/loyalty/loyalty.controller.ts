@@ -92,22 +92,24 @@ export class LoyaltyController {
     this.loggerService.info('Loyalty account fetch attempt', {
       userId: req.user.id,
       source: 'api',
-      metadata: { endpoint: 'getMyLoyaltyAccount', service: 'loyalty' }
+      metadata: { endpoint: 'getMyLoyaltyAccount', service: 'loyalty' },
     });
 
     try {
-      const result = await this.loyaltyService.getUserLoyaltyAccount(req.user.id);
+      const result = await this.loyaltyService.getUserLoyaltyAccount(
+        req.user.id,
+      );
       this.loggerService.info('Loyalty account fetched successfully', {
         userId: req.user.id,
         source: 'api',
-        metadata: { endpoint: 'getMyLoyaltyAccount', service: 'loyalty' }
+        metadata: { endpoint: 'getMyLoyaltyAccount', service: 'loyalty' },
       });
       return result;
     } catch (error) {
       this.loggerService.error('Loyalty account fetch failed', error as Error, {
         userId: req.user.id,
         source: 'api',
-        metadata: { endpoint: 'getMyLoyaltyAccount', service: 'loyalty' }
+        metadata: { endpoint: 'getMyLoyaltyAccount', service: 'loyalty' },
       });
       throw error;
     }

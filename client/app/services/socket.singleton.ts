@@ -30,10 +30,7 @@ export interface SocketEvents {
   connect: () => void;
   disconnect: () => void;
   auth_broadcast: (data: { type: string; user?: any }) => void;
-  rateLimitExceeded: (data: {
-    type: string;
-    message: string;
-  }) => void;
+  rateLimitExceeded: (data: { type: string; message: string }) => void;
 }
 
 class SocketSingleton {
@@ -126,7 +123,9 @@ class SocketSingleton {
     // Set up rate limiting error listener
     this.socket.on('RATE_LIMIT_EXCEEDED', (data: any) => {
       // Emit a custom event for rate limiting errors
-      window.dispatchEvent(new CustomEvent('rateLimitExceeded', { detail: data }));
+      window.dispatchEvent(
+        new CustomEvent('rateLimitExceeded', { detail: data })
+      );
     });
   }
 
@@ -317,7 +316,7 @@ class SocketSingleton {
     if (!this.isInitialized) {
       await this.initialize();
     }
-    
+
     if (!this.isConnected) {
       await this.connect(token);
     }
@@ -329,16 +328,16 @@ class SocketSingleton {
     if (this.socket && !this.isInitialized) {
       this.isInitialized = true;
     }
-    
+
     // If we have a socket and it's connected, we're ready
     if (this.socket && this.isConnected) {
       return;
     }
-    
+
     if (!this.isInitialized) {
       await this.initialize();
     }
-    
+
     // If not connected, connect without token (anonymous connection)
     if (!this.isConnected) {
       await this.connect();

@@ -6,7 +6,9 @@ interface GlobalErrorHandlerProps {
   children: React.ReactNode;
 }
 
-export const GlobalErrorHandler: React.FC<GlobalErrorHandlerProps> = ({ children }) => {
+export const GlobalErrorHandler: React.FC<GlobalErrorHandlerProps> = ({
+  children,
+}) => {
   useGlobalErrorHandler();
   return <>{children}</>;
 };

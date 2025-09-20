@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../common/services/prisma.service';
@@ -44,6 +45,8 @@ interface AuthenticatedRequest extends Request {
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
+  private readonly logger = new Logger(JwtAuthGuard.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
@@ -99,7 +102,7 @@ export class JwtAuthGuard implements CanActivate {
             // Don't throw an error
             // This allows login to work even if session tracking fails
           } else if (!userSession.isCurrent) {
-           // Don't throw an error
+            // Don't throw an error
             // This allows login to work even if session tracking fails
           } else {
             // Update session activity only if session is valid
@@ -109,10 +112,19 @@ export class JwtAuthGuard implements CanActivate {
                 data: { lastActiveAt: new Date() },
               });
             } catch (error) {
+              this.logger.warn('Failed to update session activity', error, {
+                source: 'jwt-auth-guard',
+                sessionId: userSession.id,
+              });
               // Don't fail validation if session update fails
             }
           }
         } catch (error) {
+          this.logger.warn('Failed to validate session', error, {
+            source: 'jwt-auth-guard',
+            userId: payload.sub,
+            refreshTokenId: payload.refreshTokenId,
+          });
           // Don't fail validation if database query fails
           // This ensures login works even if session tracking is temporarily unavailable
         }
@@ -131,6 +143,10 @@ export class JwtAuthGuard implements CanActivate {
 
       return true;
     } catch (error) {
+      this.logger.warn('Failed to activate JwtAuthGuard', error, {
+        source: 'jwt-auth-guard',
+        token,
+      });
       throw new UnauthorizedException('Invalid token');
     }
   }
