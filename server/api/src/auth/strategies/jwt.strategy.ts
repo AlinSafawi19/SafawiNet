@@ -3,8 +3,9 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/services/prisma.service';
+import { SessionCacheService } from '../../common/services/session-cache.service';
 import { Request } from 'express';
-import { User, UserSession, Role } from '@prisma/client';
+import { User, Role } from '@prisma/client';
 import { JwtPayload } from '../types/auth.types';
 
 // Type for request object with cookies
@@ -21,7 +22,7 @@ type UserWithRoles = Pick<User, 'id' | 'email' | 'name' | 'isVerified'> & {
 };
 
 // Type for user session data returned from Prisma query
-type UserSessionData = Pick<UserSession, 'id' | 'isCurrent' | 'lastActiveAt'>;
+//type UserSessionData = Pick<UserSession, 'id' | 'isCurrent' | 'lastActiveAt'>;
 
 // Type for the return value of validate method
 export interface ValidatedUser {
@@ -42,6 +43,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly sessionCacheService: SessionCacheService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
@@ -81,50 +83,52 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Email not verified');
     }
 
-    // Validate session against UserSession table
+    // Validate session using Redis cache first, fallback to database
     if (payload.refreshTokenId) {
       try {
-        const userSession: UserSessionData | null =
-          await this.prisma.userSession.findFirst({
-            where: {
+        const cachedSession = await this.sessionCacheService.getSession(
+          payload.sub,
+          payload.refreshTokenId,
+        );
+
+        if (cachedSession) {
+          // Session found in cache - update activity asynchronously
+          if (cachedSession.isCurrent) {
+            // Update session activity in background (non-blocking)
+            this.sessionCacheService
+              .updateSessionActivity(payload.sub, payload.refreshTokenId)
+              .catch((error) => {
+                this.logger.warn(
+                  'Failed to update session activity in cache',
+                  error,
+                  {
+                    source: 'jwt-strategy',
+                    userId: payload.sub,
+                    refreshTokenId: payload.refreshTokenId,
+                  },
+                );
+              });
+          } else {
+            this.logger.debug('Session found but not current', {
               userId: payload.sub,
               refreshTokenId: payload.refreshTokenId,
-            },
-            select: {
-              id: true,
-              isCurrent: true,
-              lastActiveAt: true,
-            },
-          });
-
-        if (!userSession) {
-          // Don't throw an error
-          // This allows login to work even if session tracking fails
-        } else if (!userSession.isCurrent) {
-          // Don't throw an error
-          // This allows login to work even if session tracking fails
-        } else {
-          // Update session activity only if session is valid
-          try {
-            await this.prisma.userSession.update({
-              where: { id: userSession.id },
-              data: { lastActiveAt: new Date() },
-            });
-          } catch (error) {
-            this.logger.warn('Failed to update session activity', error, {
               source: 'jwt-strategy',
-              sessionId: userSession.id,
             });
-            // Don't fail validation if session update fails
           }
+        } else {
+          this.logger.debug('Session not found in cache or database', {
+            userId: payload.sub,
+            refreshTokenId: payload.refreshTokenId,
+            source: 'jwt-strategy',
+          });
         }
       } catch (error) {
-        this.logger.warn('Failed to validate session', error, {
+        this.logger.warn('Failed to validate session via cache', error, {
           source: 'jwt-strategy',
           userId: payload.sub,
           refreshTokenId: payload.refreshTokenId,
         });
-        // Don't fail validation if database query fails
+        // Don't fail validation if cache/database query fails
         // This ensures login works even if session tracking is temporarily unavailable
       }
     }

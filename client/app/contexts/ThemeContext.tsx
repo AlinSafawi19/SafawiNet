@@ -53,7 +53,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     } else if (savedTheme && ['light', 'dark'].includes(savedTheme)) {
       setThemeState(savedTheme);
     }
-  }, [user?.preferences?.theme, user]);
+  }, [user?.preferences?.theme]);
 
   // Apply theme to document
   useEffect(() => {

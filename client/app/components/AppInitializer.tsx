@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { LoadingPage } from './LoadingPage';
+import { OptimizedLoadingWrapper } from './OptimizedLoadingWrapper';
 
 interface AppInitializerProps {
   children: React.ReactNode;
@@ -42,7 +42,15 @@ export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
     isAuthPage || isAccountPage ? isAuthLoading : isCriticalLoading;
 
   if (shouldShowLoading) {
-    return <LoadingPage />;
+    return (
+      <OptimizedLoadingWrapper
+        showSkeleton={isAuthPage || isAccountPage}
+        skeletonLines={isAuthPage ? 2 : 4}
+        minLoadingTime={100}
+      >
+        {children}
+      </OptimizedLoadingWrapper>
+    );
   }
 
   return <>{children}</>;

@@ -28,6 +28,11 @@ model User {
   userSessions            UserSession[]
   offlineMessages         OfflineMessage[]
 
+  @@index([isVerified])
+  @@index([twoFactorEnabled])
+  @@index([createdAt])
+  @@index([roles])
+  @@index([email, isVerified])
   @@map("users")
 }
 
@@ -61,6 +66,9 @@ model RefreshSession {
   @@index([familyId])
   @@index([expiresAt])
   @@index([isActive])
+  @@index([userId, isActive])
+  @@index([userId, expiresAt])
+  @@index([createdAt])
   @@map("refresh_sessions")
 }
 
@@ -109,6 +117,11 @@ model UserSession {
   @@index([userId, isCurrent])
   @@index([userId, lastActiveAt])
   @@index([refreshTokenId])
+  @@index([deviceType])
+  @@index([browser])
+  @@index([os])
+  @@index([ipAddress])
+  @@index([createdAt])
   @@map("user_sessions")
 }
 
@@ -146,6 +159,8 @@ model LoyaltyTier {
   loyaltyAccounts LoyaltyAccount[]
 
   @@index([minPoints])
+  @@index([name])
+  @@index([maxPoints])
   @@map("loyalty_tiers")
 }
 
@@ -166,6 +181,9 @@ model LoyaltyAccount {
 
   @@index([currentPoints])
   @@index([currentTierId])
+  @@index([userId])
+  @@index([lifetimePoints])
+  @@index([tierUpgradedAt])
   @@map("loyalty_accounts")
 }
 
@@ -184,6 +202,8 @@ model LoyaltyTransaction {
   @@index([loyaltyAccountId, createdAt])
   @@index([type, createdAt])
   @@index([expiresAt])
+  @@index([orderId])
+  @@index([points])
   @@map("loyalty_transactions")
 }
 
@@ -198,6 +218,8 @@ model EmailLog {
   @@index([email, createdAt])
   @@index([status, createdAt])
   @@index([type, createdAt])
+  @@index([email, status])
+  @@index([email, type])
   @@map("email_logs")
 }
 

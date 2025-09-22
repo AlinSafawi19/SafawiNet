@@ -17,6 +17,7 @@ import { isJwtPayload } from '../auth/types/jwt.types';
 import { OfflineMessageService } from '../common/services/offline-message.service';
 import { WebSocketRateLimitService } from '../common/services/websocket-rate-limit.service';
 import { LoggerService } from '../common/services/logger.service';
+import { WebSocketMonitoringService } from '../common/services/websocket-monitoring.service';
 
 // User data interface for WebSocket events
 interface UserData {
@@ -105,6 +106,15 @@ export class AuthWebSocketGateway
   private readonly verificationRooms = new Map<string, Set<string>>(); // userId -> Set of socketIds
   private readonly pendingVerificationRooms = new Map<string, Set<string>>(); // email -> Set of socketIds
   private readonly passwordResetRooms = new Map<string, Set<string>>(); // email -> Set of socketIds
+  private readonly roomCleanupInterval: NodeJS.Timeout;
+  private readonly connectionMetrics = new Map<
+    string,
+    {
+      connectedAt: Date;
+      lastActivity: Date;
+      messageCount: number;
+    }
+  >();
 
   constructor(
     private readonly jwtService: JwtService,
@@ -112,7 +122,18 @@ export class AuthWebSocketGateway
     private readonly offlineMessageService: OfflineMessageService,
     private readonly rateLimitService: WebSocketRateLimitService,
     private readonly logger: LoggerService,
-  ) {}
+    private readonly monitoringService: WebSocketMonitoringService,
+  ) {
+    // Set up room cleanup interval (every 5 minutes)
+    this.roomCleanupInterval = setInterval(
+      () => {
+        this.cleanupEmptyRooms();
+        this.cleanupInactiveConnections();
+        this.updateMonitoringMetrics();
+      },
+      5 * 60 * 1000,
+    );
+  }
 
   afterInit(server: Server) {
     this.server = server;
@@ -142,10 +163,27 @@ export class AuthWebSocketGateway
         return;
       }
 
+      // Security: Validate client headers and origin
+      if (!this.validateClientSecurity(client)) {
+        this.logger.warn(
+          'Security validation failed for WebSocket connection',
+          {
+            source: 'api',
+            socketId: client.id,
+            userAgent: client.handshake.headers['user-agent'],
+            origin: client.handshake.headers.origin,
+            ipAddress: client.handshake.address,
+          },
+        );
+        client.disconnect();
+        return;
+      }
+
       // Check connection rate limit
       const isConnectionAllowed =
         await this.rateLimitService.checkConnectionLimit(client.id);
       if (!isConnectionAllowed) {
+        this.monitoringService.recordRateLimitViolation('connection');
         client.emit('error', {
           type: 'RATE_LIMIT_EXCEEDED',
           message: 'Connection rate limit exceeded. Please try again later.',
@@ -153,6 +191,20 @@ export class AuthWebSocketGateway
         client.disconnect();
         return;
       }
+
+      // Track connection metrics
+      this.connectionMetrics.set(client.id, {
+        connectedAt: new Date(),
+        lastActivity: new Date(),
+        messageCount: 0,
+      });
+
+      // Record connection in monitoring service
+      this.monitoringService.recordConnection(
+        client.id,
+        client.user?.id,
+        client.user?.email,
+      );
 
       // Extract token from handshake auth
       const token =
@@ -225,6 +277,12 @@ export class AuthWebSocketGateway
   }
 
   handleDisconnect(client: AuthenticatedSocket) {
+    // Record disconnection in monitoring service
+    this.monitoringService.recordDisconnection(client.id);
+
+    // Clean up connection metrics
+    this.connectionMetrics.delete(client.id);
+
     if (client.user) {
       // Remove from verification room if they were there
       void this.removeFromVerificationRoom(client.user.id, client.id);
@@ -252,6 +310,9 @@ export class AuthWebSocketGateway
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { userId: string },
   ) {
+    // Update connection activity
+    this.updateConnectionActivity(client.id);
+
     // Check rate limit
     if (!(await this.checkMessageRateLimit(client))) {
       return;
@@ -272,6 +333,9 @@ export class AuthWebSocketGateway
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { userId: string },
   ) {
+    // Update connection activity
+    this.updateConnectionActivity(client.id);
+
     // Check rate limit
     if (!(await this.checkMessageRateLimit(client))) {
       return;
@@ -287,6 +351,9 @@ export class AuthWebSocketGateway
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { email: string },
   ) {
+    // Update connection activity
+    this.updateConnectionActivity(client.id);
+
     // Check rate limit
     if (!(await this.checkMessageRateLimit(client))) {
       return;
@@ -305,6 +372,9 @@ export class AuthWebSocketGateway
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { email: string },
   ) {
+    // Update connection activity
+    this.updateConnectionActivity(client.id);
+
     // Check rate limit
     if (!(await this.checkMessageRateLimit(client))) {
       return;
@@ -319,6 +389,9 @@ export class AuthWebSocketGateway
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { email: string },
   ) {
+    // Update connection activity
+    this.updateConnectionActivity(client.id);
+
     // Check rate limit
     if (!(await this.checkMessageRateLimit(client))) {
       return;
@@ -337,6 +410,9 @@ export class AuthWebSocketGateway
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() data: { email: string },
   ) {
+    // Update connection activity
+    this.updateConnectionActivity(client.id);
+
     // Check rate limit
     if (!(await this.checkMessageRateLimit(client))) {
       return;
@@ -744,5 +820,301 @@ export class AuthWebSocketGateway
         ),
       ),
     };
+  }
+
+  /**
+   * Clean up empty rooms to prevent memory leaks
+   */
+  private cleanupEmptyRooms() {
+    // Clean up verification rooms
+    for (const [userId, room] of this.verificationRooms.entries()) {
+      if (room.size === 0) {
+        this.verificationRooms.delete(userId);
+        this.logger.debug(
+          `Cleaned up empty verification room for user: ${userId}`,
+        );
+      }
+    }
+
+    // Clean up pending verification rooms
+    for (const [email, room] of this.pendingVerificationRooms.entries()) {
+      if (room.size === 0) {
+        this.pendingVerificationRooms.delete(email);
+        this.logger.debug(
+          `Cleaned up empty pending verification room for email: ${email}`,
+        );
+      }
+    }
+
+    // Clean up password reset rooms
+    for (const [email, room] of this.passwordResetRooms.entries()) {
+      if (room.size === 0) {
+        this.passwordResetRooms.delete(email);
+        this.logger.debug(
+          `Cleaned up empty password reset room for email: ${email}`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Clean up inactive connections
+   */
+  private cleanupInactiveConnections() {
+    const now = new Date();
+    const inactiveThreshold = 30 * 60 * 1000; // 30 minutes
+
+    for (const [socketId, metrics] of this.connectionMetrics.entries()) {
+      const timeSinceLastActivity =
+        now.getTime() - metrics.lastActivity.getTime();
+
+      if (timeSinceLastActivity > inactiveThreshold) {
+        const socket = this.server.sockets.sockets.get(socketId);
+        if (socket) {
+          this.logger.debug(`Disconnecting inactive socket: ${socketId}`);
+          socket.disconnect();
+        }
+        this.connectionMetrics.delete(socketId);
+      }
+    }
+  }
+
+  /**
+   * Update connection activity
+   */
+  private updateConnectionActivity(socketId: string) {
+    const metrics = this.connectionMetrics.get(socketId);
+    if (metrics) {
+      metrics.lastActivity = new Date();
+      metrics.messageCount++;
+    }
+  }
+
+  /**
+   * Get connection statistics
+   */
+  public getConnectionStats() {
+    return {
+      totalConnections: this.connectionMetrics.size,
+      verificationRooms: this.verificationRooms.size,
+      pendingVerificationRooms: this.pendingVerificationRooms.size,
+      passwordResetRooms: this.passwordResetRooms.size,
+      connections: Array.from(this.connectionMetrics.entries()).map(
+        ([id, metrics]) => ({
+          socketId: id,
+          connectedAt: metrics.connectedAt,
+          lastActivity: metrics.lastActivity,
+          messageCount: metrics.messageCount,
+        }),
+      ),
+    };
+  }
+
+  /**
+   * Update monitoring metrics
+   */
+  private updateMonitoringMetrics() {
+    // Update room counts
+    this.monitoringService.updateRoomCounts({
+      verification: this.verificationRooms.size,
+      pendingVerification: this.pendingVerificationRooms.size,
+      passwordReset: this.passwordResetRooms.size,
+    });
+
+    // Update memory usage
+    this.monitoringService.updateMemoryUsage({
+      rooms:
+        this.verificationRooms.size +
+        this.pendingVerificationRooms.size +
+        this.passwordResetRooms.size,
+      connections: this.connectionMetrics.size,
+      rateLimits: 0, // This would need to be tracked separately
+    });
+  }
+
+  /**
+   * Get monitoring metrics
+   */
+  public getMonitoringMetrics() {
+    return this.monitoringService.getMetrics();
+  }
+
+  /**
+   * Get performance summary
+   */
+  public getPerformanceSummary() {
+    return this.monitoringService.getPerformanceSummary();
+  }
+
+  /**
+   * Validate client security
+   */
+  private validateClientSecurity(client: AuthenticatedSocket): boolean {
+    const headers = client.handshake.headers;
+    const userAgent = headers['user-agent'];
+    const origin = headers.origin;
+    const ipAddress = client.handshake.address;
+
+    // Check for required headers
+    if (!userAgent) {
+      this.logger.warn('Missing User-Agent header', {
+        source: 'api',
+        socketId: client.id,
+        ipAddress,
+      });
+      return false;
+    }
+
+    // Validate User-Agent (basic bot detection)
+    const suspiciousUserAgents = [
+      'bot',
+      'crawler',
+      'spider',
+      'scraper',
+      'curl',
+      'wget',
+      'python-requests',
+    ];
+    const userAgentLower = userAgent.toLowerCase();
+    if (suspiciousUserAgents.some((agent) => userAgentLower.includes(agent))) {
+      this.logger.warn('Suspicious User-Agent detected', {
+        source: 'api',
+        socketId: client.id,
+        userAgent,
+        ipAddress,
+      });
+      return false;
+    }
+
+    // Validate origin (if provided)
+    if (origin) {
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'https://localhost:3000',
+        'https://127.0.0.1:3000',
+        // Add production domains here
+      ];
+
+      if (!allowedOrigins.includes(origin)) {
+        this.logger.warn('Invalid origin', {
+          source: 'api',
+          socketId: client.id,
+          origin,
+          ipAddress,
+        });
+        return false;
+      }
+    }
+
+    // Check for suspicious IP patterns (basic)
+    if (ipAddress && this.isSuspiciousIP(ipAddress)) {
+      this.logger.warn('Suspicious IP address', {
+        source: 'api',
+        socketId: client.id,
+        ipAddress,
+      });
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Check if IP address is suspicious
+   */
+  private isSuspiciousIP(ipAddress: string): boolean {
+    // Basic checks for suspicious IP patterns
+    const suspiciousPatterns = [
+      /^0\.0\.0\.0$/, // Invalid IP
+      /^127\.0\.0\.1$/, // Localhost (might be suspicious in production)
+      /^::1$/, // IPv6 localhost
+    ];
+
+    return suspiciousPatterns.some((pattern) => pattern.test(ipAddress));
+  }
+
+  /**
+   * Validate message payload
+   */
+  private validateMessagePayload(data: any): boolean {
+    // Check for required fields
+    if (!data || typeof data !== 'object') {
+      return false;
+    }
+
+    // Check for suspicious content
+    const suspiciousPatterns = [
+      /<script/i,
+      /javascript:/i,
+      /on\w+\s*=/i,
+      /eval\s*\(/i,
+      /function\s*\(/i,
+    ];
+
+    const dataString = JSON.stringify(data);
+    return !suspiciousPatterns.some((pattern) => pattern.test(dataString));
+  }
+
+  /**
+   * Enhanced message handler with security validation
+   */
+  private async handleMessageWithSecurity(
+    client: AuthenticatedSocket,
+    messageType: string,
+    data: any,
+    handler: () => Promise<void>,
+  ): Promise<void> {
+    // Validate message payload
+    if (!this.validateMessagePayload(data)) {
+      this.logger.warn('Invalid message payload detected', {
+        source: 'api',
+        socketId: client.id,
+        messageType,
+        userId: client.user?.id,
+      });
+      this.monitoringService.recordError('message');
+      return;
+    }
+
+    // Check message size (prevent large payload attacks)
+    const messageSize = JSON.stringify(data).length;
+    if (messageSize > 1024 * 10) {
+      // 10KB limit
+      this.logger.warn('Message too large', {
+        source: 'api',
+        socketId: client.id,
+        messageType,
+        messageSize,
+        userId: client.user?.id,
+      });
+      this.monitoringService.recordError('message');
+      return;
+    }
+
+    try {
+      await handler();
+    } catch (error) {
+      this.logger.error(
+        'Error handling WebSocket message',
+        error instanceof Error ? error : undefined,
+        {
+          source: 'api',
+          socketId: client.id,
+          messageType,
+          userId: client.user?.id,
+        },
+      );
+      this.monitoringService.recordError('message');
+    }
+  }
+
+  /**
+   * Cleanup on module destruction
+   */
+  onModuleDestroy() {
+    if (this.roomCleanupInterval) {
+      clearInterval(this.roomCleanupInterval);
+    }
   }
 }

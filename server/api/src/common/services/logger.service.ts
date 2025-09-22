@@ -11,6 +11,10 @@ export interface LogContext {
   url?: string;
   userAgent?: string;
   ipAddress?: string;
+  socketId?: string;
+  origin?: string;
+  messageType?: string;
+  messageSize?: number;
   source?: 'server' | 'client' | 'api' | 'auth' | 'database';
   level?: 'error' | 'warning' | 'warn' | 'info' | 'debug';
   metadata?: Record<string, any>;

@@ -246,6 +246,64 @@ export const SessionRevokeAllSchema = z.object({
     .describe('Whether to keep the current session'),
 });
 
+// Batch session operation schemas
+export const SessionBatchUpdateSchema = z.object({
+  sessionIds: z
+    .array(z.string().min(1, { message: 'Session ID is required' }))
+    .min(1, { message: 'At least one session ID is required' })
+    .max(50, { message: 'Maximum 50 sessions can be updated at once' })
+    .describe('Array of session IDs to update'),
+  updates: z
+    .object({
+      isCurrent: z.boolean().optional().describe('Set as current session'),
+      lastActiveAt: z
+        .string()
+        .datetime()
+        .optional()
+        .describe('Update last active timestamp'),
+    })
+    .describe('Updates to apply to sessions'),
+});
+
+export const SessionBatchDeleteSchema = z.object({
+  sessionIds: z
+    .array(z.string().min(1, { message: 'Session ID is required' }))
+    .min(1, { message: 'At least one session ID is required' })
+    .max(50, { message: 'Maximum 50 sessions can be deleted at once' })
+    .describe('Array of session IDs to delete'),
+  reason: z
+    .string()
+    .optional()
+    .describe('Reason for deletion (for audit logs)'),
+});
+
+export const SessionBatchRevokeSchema = z.object({
+  sessionIds: z
+    .array(z.string().min(1, { message: 'Session ID is required' }))
+    .min(1, { message: 'At least one session ID is required' })
+    .max(50, { message: 'Maximum 50 sessions can be revoked at once' })
+    .describe('Array of session IDs to revoke'),
+  reason: z
+    .string()
+    .optional()
+    .describe('Reason for revocation (for audit logs)'),
+});
+
+export const SessionBatchStatusUpdateSchema = z.object({
+  sessionIds: z
+    .array(z.string().min(1, { message: 'Session ID is required' }))
+    .min(1, { message: 'At least one session ID is required' })
+    .max(50, { message: 'Maximum 50 sessions can be updated at once' })
+    .describe('Array of session IDs to update'),
+  status: z
+    .enum(['active', 'inactive', 'suspended'])
+    .describe('New status for sessions'),
+  reason: z
+    .string()
+    .optional()
+    .describe('Reason for status change (for audit logs)'),
+});
+
 // Notification schemas
 export const NotificationListSchema = z.object({
   cursor: z.string().optional().describe('Cursor for pagination'),
@@ -312,6 +370,67 @@ export class SessionRevokeAllDto extends createZodDto(SessionRevokeAllSchema) {
   };
 }
 
+// Batch session operation DTOs
+export class SessionBatchUpdateDto extends createZodDto(
+  SessionBatchUpdateSchema,
+) {
+  static examples = {
+    batchUpdate: {
+      summary: 'Update multiple sessions',
+      value: {
+        sessionIds: ['session1', 'session2', 'session3'],
+        updates: {
+          isCurrent: false,
+          lastActiveAt: '2024-01-15T10:30:00Z',
+        },
+      },
+    },
+  };
+}
+
+export class SessionBatchDeleteDto extends createZodDto(
+  SessionBatchDeleteSchema,
+) {
+  static examples = {
+    batchDelete: {
+      summary: 'Delete multiple sessions',
+      value: {
+        sessionIds: ['session1', 'session2', 'session3'],
+        reason: 'Security cleanup',
+      },
+    },
+  };
+}
+
+export class SessionBatchRevokeDto extends createZodDto(
+  SessionBatchRevokeSchema,
+) {
+  static examples = {
+    batchRevoke: {
+      summary: 'Revoke multiple sessions',
+      value: {
+        sessionIds: ['session1', 'session2', 'session3'],
+        reason: 'Suspicious activity detected',
+      },
+    },
+  };
+}
+
+export class SessionBatchStatusUpdateDto extends createZodDto(
+  SessionBatchStatusUpdateSchema,
+) {
+  static examples = {
+    batchStatusUpdate: {
+      summary: 'Update status of multiple sessions',
+      value: {
+        sessionIds: ['session1', 'session2', 'session3'],
+        status: 'suspended',
+        reason: 'Account security review',
+      },
+    },
+  };
+}
+
 // DTOs for notifications
 export class NotificationListDto extends createZodDto(NotificationListSchema) {
   static examples = {
@@ -364,4 +483,32 @@ export class NotificationListResponseDto {
 
 export class UnreadCountResponseDto {
   count!: number;
+}
+
+// Batch operation response DTOs
+export class BatchOperationResultDto {
+  success!: boolean;
+  processedCount!: number;
+  failedCount!: number;
+  errors?: Array<{
+    sessionId: string;
+    error: string;
+  }>;
+}
+
+export class SessionBatchUpdateResponseDto extends BatchOperationResultDto {
+  updatedSessions!: string[];
+}
+
+export class SessionBatchDeleteResponseDto extends BatchOperationResultDto {
+  deletedSessions!: string[];
+}
+
+export class SessionBatchRevokeResponseDto extends BatchOperationResultDto {
+  revokedSessions!: string[];
+}
+
+export class SessionBatchStatusUpdateResponseDto extends BatchOperationResultDto {
+  updatedSessions!: string[];
+  newStatus!: string;
 }

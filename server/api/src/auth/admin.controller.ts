@@ -11,7 +11,9 @@ import {
   Request,
   HttpStatus,
   HttpCode,
+  Logger,
 } from '@nestjs/common';
+import { ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard, Roles } from './guards/roles.guard';
@@ -161,6 +163,8 @@ interface BroadcastNotificationResponse {
 @Roles(Role.ADMIN)
 @Throttle({ users: { limit: 100, ttl: 60000 } }) // 100 requests per minute for admin endpoints
 export class AdminController {
+  private readonly logger = new Logger(AdminController.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailMonitoring: EmailMonitoringService,
@@ -446,6 +450,491 @@ export class AdminController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async revokeSession(@Param('sessionId') sessionId: string): Promise<void> {
     await this.prisma.userSession.delete({ where: { id: sessionId } });
+  }
+
+  // Batch session management endpoints
+  @Put('sessions/batch/update')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Admin batch update sessions',
+    description: 'Update multiple sessions across users (admin only)',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        sessionIds: {
+          type: 'array',
+          items: { type: 'string' },
+          minItems: 1,
+          maxItems: 100,
+        },
+        updates: {
+          type: 'object',
+          properties: {
+            isCurrent: { type: 'boolean' },
+            lastActiveAt: { type: 'string', format: 'date-time' },
+          },
+        },
+        reason: { type: 'string' },
+      },
+      required: ['sessionIds', 'updates'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Sessions updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        processedCount: { type: 'number' },
+        failedCount: { type: 'number' },
+        updatedSessions: { type: 'array', items: { type: 'string' } },
+        errors: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              sessionId: { type: 'string' },
+              error: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  })
+  async batchUpdateSessions(
+    @Body()
+    body: {
+      sessionIds: string[];
+      updates: {
+        isCurrent?: boolean;
+        lastActiveAt?: string;
+      };
+      reason?: string;
+    },
+  ): Promise<{
+    success: boolean;
+    processedCount: number;
+    failedCount: number;
+    updatedSessions: string[];
+    errors: Array<{ sessionId: string; error: string }>;
+  }> {
+    const errors: Array<{ sessionId: string; error: string }> = [];
+    const updatedSessions: string[] = [];
+    let processedCount = 0;
+    let failedCount = 0;
+
+    try {
+      // Get sessions to update with validation
+      const sessionsToUpdate = await this.prisma.userSession.findMany({
+        where: { id: { in: body.sessionIds } },
+        select: { id: true, userId: true, isCurrent: true },
+      });
+
+      const existingSessionIds = new Set(sessionsToUpdate.map((s) => s.id));
+      const invalidSessionIds = body.sessionIds.filter(
+        (id) => !existingSessionIds.has(id),
+      );
+
+      // Add errors for invalid session IDs
+      for (const sessionId of invalidSessionIds) {
+        errors.push({
+          sessionId,
+          error: 'Session not found',
+        });
+        failedCount++;
+      }
+
+      // Filter out invalid sessions
+      const validSessions = sessionsToUpdate;
+
+      if (validSessions.length === 0) {
+        return {
+          success: false,
+          processedCount: 0,
+          failedCount,
+          updatedSessions: [],
+          errors,
+        };
+      }
+
+      // Group sessions by user for proper isCurrent handling
+      const sessionsByUser = new Map<string, string[]>();
+      for (const session of validSessions) {
+        if (!sessionsByUser.has(session.userId)) {
+          sessionsByUser.set(session.userId, []);
+        }
+        sessionsByUser.get(session.userId)!.push(session.id);
+      }
+
+      // Prepare update data
+      const updateData: any = {};
+
+      if (body.updates.isCurrent !== undefined) {
+        updateData.isCurrent = body.updates.isCurrent;
+
+        // If setting sessions as current, first mark all other sessions as not current for each user
+        if (body.updates.isCurrent) {
+          for (const [userId] of sessionsByUser) {
+            await this.prisma.userSession.updateMany({
+              where: { userId, isCurrent: true },
+              data: { isCurrent: false },
+            });
+          }
+        }
+      }
+
+      if (body.updates.lastActiveAt !== undefined) {
+        updateData.lastActiveAt = new Date(body.updates.lastActiveAt);
+      }
+
+      // Perform batch update
+      const result = await this.prisma.userSession.updateMany({
+        where: { id: { in: validSessions.map((s) => s.id) } },
+        data: updateData,
+      });
+
+      processedCount = result.count;
+      updatedSessions.push(...validSessions.map((s) => s.id));
+
+      // Log admin action
+      this.logger.log('Admin batch session update completed', {
+        processedCount,
+        reason: body.reason,
+        source: 'admin-sessions',
+      });
+
+      return {
+        success: true,
+        processedCount,
+        failedCount,
+        updatedSessions,
+        errors,
+      };
+    } catch (error) {
+      this.logger.error('Failed to batch update sessions (admin)', error, {
+        sessionIds: body.sessionIds,
+        reason: body.reason,
+        source: 'admin-sessions',
+      });
+
+      // Mark all sessions as failed
+      for (const sessionId of body.sessionIds) {
+        errors.push({
+          sessionId,
+          error: 'Internal server error during batch update',
+        });
+        failedCount++;
+      }
+
+      return {
+        success: false,
+        processedCount: 0,
+        failedCount,
+        updatedSessions: [],
+        errors,
+      };
+    }
+  }
+
+  @Post('sessions/batch/delete')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Admin batch delete sessions',
+    description: 'Delete multiple sessions across users (admin only)',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        sessionIds: {
+          type: 'array',
+          items: { type: 'string' },
+          minItems: 1,
+          maxItems: 100,
+        },
+        reason: { type: 'string' },
+      },
+      required: ['sessionIds'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Sessions deleted successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        processedCount: { type: 'number' },
+        failedCount: { type: 'number' },
+        deletedSessions: { type: 'array', items: { type: 'string' } },
+        errors: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              sessionId: { type: 'string' },
+              error: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  })
+  async batchDeleteSessions(
+    @Body() body: { sessionIds: string[]; reason?: string },
+  ): Promise<{
+    success: boolean;
+    processedCount: number;
+    failedCount: number;
+    deletedSessions: string[];
+    errors: Array<{ sessionId: string; error: string }>;
+  }> {
+    const errors: Array<{ sessionId: string; error: string }> = [];
+    const deletedSessions: string[] = [];
+    let processedCount = 0;
+    let failedCount = 0;
+
+    try {
+      // Get sessions to delete with validation
+      const sessionsToDelete = await this.prisma.userSession.findMany({
+        where: { id: { in: body.sessionIds } },
+        select: { id: true, refreshTokenId: true },
+      });
+
+      const existingSessionIds = new Set(sessionsToDelete.map((s) => s.id));
+      const invalidSessionIds = body.sessionIds.filter(
+        (id) => !existingSessionIds.has(id),
+      );
+
+      // Add errors for invalid session IDs
+      for (const sessionId of invalidSessionIds) {
+        errors.push({
+          sessionId,
+          error: 'Session not found',
+        });
+        failedCount++;
+      }
+
+      // Filter out invalid sessions
+      const validSessions = sessionsToDelete;
+
+      if (validSessions.length === 0) {
+        return {
+          success: false,
+          processedCount: 0,
+          failedCount,
+          deletedSessions: [],
+          errors,
+        };
+      }
+
+      const validSessionIds = validSessions.map((s) => s.id);
+      const refreshTokenIds = validSessions.map((s) => s.refreshTokenId);
+
+      // Mark refresh sessions as inactive
+      await this.prisma.refreshSession.updateMany({
+        where: { tokenId: { in: refreshTokenIds } },
+        data: { isActive: false },
+      });
+
+      // Delete user sessions
+      const result = await this.prisma.userSession.deleteMany({
+        where: { id: { in: validSessionIds } },
+      });
+
+      processedCount = result.count;
+      deletedSessions.push(...validSessionIds);
+
+      // Log admin action
+      this.logger.log('Admin batch session deletion completed', {
+        deletedCount: processedCount,
+        reason: body.reason,
+        source: 'admin-sessions',
+      });
+
+      return {
+        success: true,
+        processedCount,
+        failedCount,
+        deletedSessions,
+        errors,
+      };
+    } catch (error) {
+      this.logger.error('Failed to batch delete sessions (admin)', error, {
+        sessionIds: body.sessionIds,
+        reason: body.reason,
+        source: 'admin-sessions',
+      });
+
+      // Mark all sessions as failed
+      for (const sessionId of body.sessionIds) {
+        errors.push({
+          sessionId,
+          error: 'Internal server error during batch delete',
+        });
+        failedCount++;
+      }
+
+      return {
+        success: false,
+        processedCount: 0,
+        failedCount,
+        deletedSessions: [],
+        errors,
+      };
+    }
+  }
+
+  @Post('sessions/batch/revoke')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Admin batch revoke sessions',
+    description: 'Revoke multiple sessions across users (admin only)',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        sessionIds: {
+          type: 'array',
+          items: { type: 'string' },
+          minItems: 1,
+          maxItems: 100,
+        },
+        reason: { type: 'string' },
+      },
+      required: ['sessionIds'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Sessions revoked successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        processedCount: { type: 'number' },
+        failedCount: { type: 'number' },
+        revokedSessions: { type: 'array', items: { type: 'string' } },
+        errors: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              sessionId: { type: 'string' },
+              error: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  })
+  async batchRevokeSessions(
+    @Body() body: { sessionIds: string[]; reason?: string },
+  ): Promise<{
+    success: boolean;
+    processedCount: number;
+    failedCount: number;
+    revokedSessions: string[];
+    errors: Array<{ sessionId: string; error: string }>;
+  }> {
+    const errors: Array<{ sessionId: string; error: string }> = [];
+    const revokedSessions: string[] = [];
+    let processedCount = 0;
+    let failedCount = 0;
+
+    try {
+      // Get sessions to revoke with validation
+      const sessionsToRevoke = await this.prisma.userSession.findMany({
+        where: { id: { in: body.sessionIds } },
+        select: { id: true, refreshTokenId: true },
+      });
+
+      const existingSessionIds = new Set(sessionsToRevoke.map((s) => s.id));
+      const invalidSessionIds = body.sessionIds.filter(
+        (id) => !existingSessionIds.has(id),
+      );
+
+      // Add errors for invalid session IDs
+      for (const sessionId of invalidSessionIds) {
+        errors.push({
+          sessionId,
+          error: 'Session not found',
+        });
+        failedCount++;
+      }
+
+      // Filter out invalid sessions
+      const validSessions = sessionsToRevoke;
+
+      if (validSessions.length === 0) {
+        return {
+          success: false,
+          processedCount: 0,
+          failedCount,
+          revokedSessions: [],
+          errors,
+        };
+      }
+
+      const validSessionIds = validSessions.map((s) => s.id);
+      const refreshTokenIds = validSessions.map((s) => s.refreshTokenId);
+
+      // Mark refresh sessions as inactive
+      await this.prisma.refreshSession.updateMany({
+        where: { tokenId: { in: refreshTokenIds } },
+        data: { isActive: false },
+      });
+
+      // Delete user sessions
+      const result = await this.prisma.userSession.deleteMany({
+        where: { id: { in: validSessionIds } },
+      });
+
+      processedCount = result.count;
+      revokedSessions.push(...validSessionIds);
+
+      // Log admin action
+      this.logger.log('Admin batch session revocation completed', {
+        revokedCount: processedCount,
+        reason: body.reason,
+        source: 'admin-sessions',
+      });
+
+      return {
+        success: true,
+        processedCount,
+        failedCount,
+        revokedSessions,
+        errors,
+      };
+    } catch (error) {
+      this.logger.error('Failed to batch revoke sessions (admin)', error, {
+        sessionIds: body.sessionIds,
+        reason: body.reason,
+        source: 'admin-sessions',
+      });
+
+      // Mark all sessions as failed
+      for (const sessionId of body.sessionIds) {
+        errors.push({
+          sessionId,
+          error: 'Internal server error during batch revoke',
+        });
+        failedCount++;
+      }
+
+      return {
+        success: false,
+        processedCount: 0,
+        failedCount,
+        revokedSessions: [],
+        errors,
+      };
+    }
   }
 
   // Notification Management

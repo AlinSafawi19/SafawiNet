@@ -15,6 +15,7 @@ import { SimpleTwoFactorService } from './simple-two-factor.service';
 import { SessionsService } from './sessions.service';
 import { NotificationsService } from './notifications.service';
 import { LoggerService } from '../common/services/logger.service';
+import { SessionCacheService } from '../common/services/session-cache.service';
 import {
   RegisterDto,
   VerifyEmailDto,
@@ -76,6 +77,7 @@ export class AuthService {
     private readonly webSocketGateway: AuthWebSocketGateway,
     private readonly offlineMessageService: OfflineMessageService,
     private readonly loggerService: LoggerService,
+    private readonly sessionCacheService: SessionCacheService,
   ) {}
 
   async register(

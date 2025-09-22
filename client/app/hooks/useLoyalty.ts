@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { buildApiUrl, API_CONFIG } from '../config/api';
-import { apiLogger } from '../services/api-logger.service';
+import { optimizedApi } from '../services/optimized-api.service';
 
 // Global state to prevent multiple API calls across different hook instances
 let globalLoyaltyState = {
@@ -165,7 +165,7 @@ export const useLoyalty = () => {
     });
 
     try {
-      const response = await apiLogger.get(API_CONFIG.ENDPOINTS.LOYALTY.ME, {
+      const response = await optimizedApi.get(API_CONFIG.ENDPOINTS.LOYALTY.ME, {
         component: 'useLoyalty',
         action: 'fetchLoyaltyAccount',
         userId: user.id,

@@ -5,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
+import { SessionCacheService } from '../common/services/session-cache.service';
 import { Request } from 'express';
 import { SessionListDto } from './schemas/auth.schemas';
 import { Prisma } from '@prisma/client';
@@ -48,7 +49,10 @@ function nullToUndefined<T>(value: T | null): T | undefined {
 export class SessionsService {
   private readonly logger = new Logger(SessionsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly sessionCacheService: SessionCacheService,
+  ) {}
 
   /**
    * Extract device information from request
@@ -162,9 +166,28 @@ export class SessionsService {
       isCurrent: true,
     };
 
-    await this.prisma.userSession.create({
+    const createdSession = await this.prisma.userSession.create({
       data: sessionData,
     });
+
+    // Cache the new session
+    try {
+      await this.sessionCacheService.cacheSession(createdSession);
+      this.logger.debug('Session cached successfully', {
+        userId,
+        refreshTokenId,
+        sessionId: createdSession.id,
+        source: 'sessions',
+      });
+    } catch (error) {
+      this.logger.warn('Failed to cache session after creation', error, {
+        userId,
+        refreshTokenId,
+        sessionId: createdSession.id,
+        source: 'sessions',
+      });
+      // Don't fail session creation if caching fails
+    }
   }
 
   /**
@@ -176,10 +199,20 @@ export class SessionsService {
       lastActiveAt: new Date(),
     };
 
-    await this.prisma.userSession.update({
+    const updatedSession = await this.prisma.userSession.update({
       where: whereClause,
       data: updateData,
     });
+
+    // Update cache with new activity time
+    try {
+      await this.sessionCacheService.cacheSession(updatedSession);
+    } catch (error) {
+      this.logger.warn('Failed to update session in cache', error, {
+        sessionId,
+        source: 'sessions',
+      });
+    }
   }
 
   /**
@@ -289,6 +322,21 @@ export class SessionsService {
       data: refreshSessionData,
     });
 
+    // Invalidate cache before deleting
+    try {
+      await this.sessionCacheService.invalidateSession(
+        userId,
+        session.refreshTokenId,
+      );
+    } catch (error) {
+      this.logger.warn('Failed to invalidate session from cache', error, {
+        userId,
+        sessionId,
+        refreshTokenId: session.refreshTokenId,
+        source: 'sessions',
+      });
+    }
+
     // Delete the user session
     const deleteWhere: Prisma.UserSessionWhereUniqueInput = { id: sessionId };
     await this.prisma.userSession.delete({
@@ -325,6 +373,17 @@ export class SessionsService {
       where: { tokenId: { in: refreshTokenIds } },
       data: { isActive: false },
     });
+
+    // Invalidate all user sessions from cache
+    try {
+      await this.sessionCacheService.invalidateUserSessions(userId);
+    } catch (error) {
+      this.logger.warn('Failed to invalidate user sessions from cache', error, {
+        userId,
+        sessionCount: sessionsToRevoke.length,
+        source: 'sessions',
+      });
+    }
 
     // Delete user sessions
     await this.prisma.userSession.deleteMany({ where });
@@ -552,6 +611,442 @@ export class SessionsService {
     }
 
     return results;
+  }
+
+  /**
+   * Batch update multiple sessions
+   */
+  async batchUpdateSessions(
+    userId: string,
+    sessionIds: string[],
+    updates: {
+      isCurrent?: boolean;
+      lastActiveAt?: string;
+    },
+  ): Promise<{
+    success: boolean;
+    processedCount: number;
+    failedCount: number;
+    updatedSessions: string[];
+    errors: Array<{ sessionId: string; error: string }>;
+  }> {
+    const errors: Array<{ sessionId: string; error: string }> = [];
+    const updatedSessions: string[] = [];
+    let processedCount = 0;
+    let failedCount = 0;
+
+    try {
+      // Validate that all sessions belong to the user
+      const existingSessions = await this.prisma.userSession.findMany({
+        where: {
+          id: { in: sessionIds },
+          userId,
+        },
+        select: { id: true, isCurrent: true },
+      });
+
+      const existingSessionIds = new Set(existingSessions.map((s) => s.id));
+      const invalidSessionIds = sessionIds.filter(
+        (id) => !existingSessionIds.has(id),
+      );
+
+      // Add errors for invalid session IDs
+      for (const sessionId of invalidSessionIds) {
+        errors.push({
+          sessionId,
+          error: 'Session not found or does not belong to user',
+        });
+        failedCount++;
+      }
+
+      // Filter out invalid sessions
+      const validSessionIds = sessionIds.filter((id) =>
+        existingSessionIds.has(id),
+      );
+
+      if (validSessionIds.length === 0) {
+        return {
+          success: false,
+          processedCount: 0,
+          failedCount,
+          updatedSessions: [],
+          errors,
+        };
+      }
+
+      // Prepare update data
+      const updateData: Prisma.UserSessionUpdateManyMutationInput = {};
+
+      if (updates.isCurrent !== undefined) {
+        updateData.isCurrent = updates.isCurrent;
+
+        // If setting sessions as current, first mark all other sessions as not current
+        if (updates.isCurrent) {
+          await this.prisma.userSession.updateMany({
+            where: { userId, isCurrent: true },
+            data: { isCurrent: false },
+          });
+        }
+      }
+
+      if (updates.lastActiveAt !== undefined) {
+        updateData.lastActiveAt = new Date(updates.lastActiveAt);
+      }
+
+      // Perform batch update
+      const result = await this.prisma.userSession.updateMany({
+        where: {
+          id: { in: validSessionIds },
+          userId,
+        },
+        data: updateData,
+      });
+
+      processedCount = result.count;
+      updatedSessions.push(...validSessionIds);
+
+      // Invalidate cache for updated sessions
+      try {
+        const sessionsToInvalidate = await this.prisma.userSession.findMany({
+          where: { id: { in: validSessionIds } },
+          select: { refreshTokenId: true },
+        });
+
+        for (const session of sessionsToInvalidate) {
+          await this.sessionCacheService.invalidateSession(
+            userId,
+            session.refreshTokenId,
+          );
+        }
+      } catch (error) {
+        this.logger.warn(
+          'Failed to invalidate session cache during batch update',
+          error,
+          {
+            userId,
+            sessionIds: validSessionIds,
+            source: 'sessions',
+          },
+        );
+      }
+
+      return {
+        success: true,
+        processedCount,
+        failedCount,
+        updatedSessions,
+        errors,
+      };
+    } catch (error) {
+      this.logger.error('Failed to batch update sessions', error, {
+        userId,
+        sessionIds,
+        source: 'sessions',
+      });
+
+      // Mark all sessions as failed
+      for (const sessionId of sessionIds) {
+        errors.push({
+          sessionId,
+          error: 'Internal server error during batch update',
+        });
+        failedCount++;
+      }
+
+      return {
+        success: false,
+        processedCount: 0,
+        failedCount,
+        updatedSessions: [],
+        errors,
+      };
+    }
+  }
+
+  /**
+   * Batch delete multiple sessions
+   */
+  async batchDeleteSessions(
+    userId: string,
+    sessionIds: string[],
+    reason?: string,
+  ): Promise<{
+    success: boolean;
+    processedCount: number;
+    failedCount: number;
+    deletedSessions: string[];
+    errors: Array<{ sessionId: string; error: string }>;
+  }> {
+    const errors: Array<{ sessionId: string; error: string }> = [];
+    const deletedSessions: string[] = [];
+    let processedCount = 0;
+    let failedCount = 0;
+
+    try {
+      // Get sessions to delete with validation
+      const sessionsToDelete = await this.prisma.userSession.findMany({
+        where: {
+          id: { in: sessionIds },
+          userId,
+        },
+        select: { id: true, isCurrent: true, refreshTokenId: true },
+      });
+
+      const existingSessionIds = new Set(sessionsToDelete.map((s) => s.id));
+      const invalidSessionIds = sessionIds.filter(
+        (id) => !existingSessionIds.has(id),
+      );
+
+      // Add errors for invalid session IDs
+      for (const sessionId of invalidSessionIds) {
+        errors.push({
+          sessionId,
+          error: 'Session not found or does not belong to user',
+        });
+        failedCount++;
+      }
+
+      // Check for current sessions that cannot be deleted
+      const currentSessions = sessionsToDelete.filter((s) => s.isCurrent);
+      for (const session of currentSessions) {
+        errors.push({
+          sessionId: session.id,
+          error: 'Cannot delete current session',
+        });
+        failedCount++;
+      }
+
+      // Filter out invalid and current sessions
+      const validSessions = sessionsToDelete.filter((s) => !s.isCurrent);
+
+      if (validSessions.length === 0) {
+        return {
+          success: false,
+          processedCount: 0,
+          failedCount,
+          deletedSessions: [],
+          errors,
+        };
+      }
+
+      const validSessionIds = validSessions.map((s) => s.id);
+      const refreshTokenIds = validSessions.map((s) => s.refreshTokenId);
+
+      // Mark refresh sessions as inactive
+      await this.prisma.refreshSession.updateMany({
+        where: { tokenId: { in: refreshTokenIds } },
+        data: { isActive: false },
+      });
+
+      // Invalidate cache before deleting
+      try {
+        for (const session of validSessions) {
+          await this.sessionCacheService.invalidateSession(
+            userId,
+            session.refreshTokenId,
+          );
+        }
+      } catch (error) {
+        this.logger.warn(
+          'Failed to invalidate session cache during batch delete',
+          error,
+          {
+            userId,
+            sessionIds: validSessionIds,
+            source: 'sessions',
+          },
+        );
+      }
+
+      // Delete user sessions
+      const result = await this.prisma.userSession.deleteMany({
+        where: {
+          id: { in: validSessionIds },
+          userId,
+        },
+      });
+
+      processedCount = result.count;
+      deletedSessions.push(...validSessionIds);
+
+      // Log security event
+      this.logger.log('Batch session deletion completed', {
+        userId,
+        deletedCount: processedCount,
+        reason,
+        source: 'sessions',
+      });
+
+      return {
+        success: true,
+        processedCount,
+        failedCount,
+        deletedSessions,
+        errors,
+      };
+    } catch (error) {
+      this.logger.error('Failed to batch delete sessions', error, {
+        userId,
+        sessionIds,
+        reason,
+        source: 'sessions',
+      });
+
+      // Mark all sessions as failed
+      for (const sessionId of sessionIds) {
+        errors.push({
+          sessionId,
+          error: 'Internal server error during batch delete',
+        });
+        failedCount++;
+      }
+
+      return {
+        success: false,
+        processedCount: 0,
+        failedCount,
+        deletedSessions: [],
+        errors,
+      };
+    }
+  }
+
+  /**
+   * Batch revoke multiple sessions
+   */
+  async batchRevokeSessions(
+    userId: string,
+    sessionIds: string[],
+    reason?: string,
+  ): Promise<{
+    success: boolean;
+    processedCount: number;
+    failedCount: number;
+    revokedSessions: string[];
+    errors: Array<{ sessionId: string; error: string }>;
+  }> {
+    const errors: Array<{ sessionId: string; error: string }> = [];
+    const revokedSessions: string[] = [];
+    let processedCount = 0;
+    let failedCount = 0;
+
+    try {
+      // Get sessions to revoke with validation
+      const sessionsToRevoke = await this.prisma.userSession.findMany({
+        where: {
+          id: { in: sessionIds },
+          userId,
+        },
+        select: { id: true, refreshTokenId: true },
+      });
+
+      const existingSessionIds = new Set(sessionsToRevoke.map((s) => s.id));
+      const invalidSessionIds = sessionIds.filter(
+        (id) => !existingSessionIds.has(id),
+      );
+
+      // Add errors for invalid session IDs
+      for (const sessionId of invalidSessionIds) {
+        errors.push({
+          sessionId,
+          error: 'Session not found or does not belong to user',
+        });
+        failedCount++;
+      }
+
+      // Filter out invalid sessions
+      const validSessions = sessionsToRevoke;
+
+      if (validSessions.length === 0) {
+        return {
+          success: false,
+          processedCount: 0,
+          failedCount,
+          revokedSessions: [],
+          errors,
+        };
+      }
+
+      const validSessionIds = validSessions.map((s) => s.id);
+      const refreshTokenIds = validSessions.map((s) => s.refreshTokenId);
+
+      // Mark refresh sessions as inactive
+      await this.prisma.refreshSession.updateMany({
+        where: { tokenId: { in: refreshTokenIds } },
+        data: { isActive: false },
+      });
+
+      // Invalidate cache
+      try {
+        for (const session of validSessions) {
+          await this.sessionCacheService.invalidateSession(
+            userId,
+            session.refreshTokenId,
+          );
+        }
+      } catch (error) {
+        this.logger.warn(
+          'Failed to invalidate session cache during batch revoke',
+          error,
+          {
+            userId,
+            sessionIds: validSessionIds,
+            source: 'sessions',
+          },
+        );
+      }
+
+      // Delete user sessions
+      const result = await this.prisma.userSession.deleteMany({
+        where: {
+          id: { in: validSessionIds },
+          userId,
+        },
+      });
+
+      processedCount = result.count;
+      revokedSessions.push(...validSessionIds);
+
+      // Log security event
+      this.logger.log('Batch session revocation completed', {
+        userId,
+        revokedCount: processedCount,
+        reason,
+        source: 'sessions',
+      });
+
+      return {
+        success: true,
+        processedCount,
+        failedCount,
+        revokedSessions,
+        errors,
+      };
+    } catch (error) {
+      this.logger.error('Failed to batch revoke sessions', error, {
+        userId,
+        sessionIds,
+        reason,
+        source: 'sessions',
+      });
+
+      // Mark all sessions as failed
+      for (const sessionId of sessionIds) {
+        errors.push({
+          sessionId,
+          error: 'Internal server error during batch revoke',
+        });
+        failedCount++;
+      }
+
+      return {
+        success: false,
+        processedCount: 0,
+        failedCount,
+        revokedSessions: [],
+        errors,
+      };
+    }
   }
 
   /**

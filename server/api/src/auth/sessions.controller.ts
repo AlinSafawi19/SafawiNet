@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Delete,
+  Put,
+  Post,
   Param,
   Query,
   Body,
@@ -29,9 +31,20 @@ import {
   SessionListDto,
   SessionDeleteDto,
   SessionRevokeAllDto,
+  SessionBatchUpdateDto,
+  SessionBatchDeleteDto,
+  SessionBatchRevokeDto,
+  SessionBatchUpdateResponseDto,
+  SessionBatchDeleteResponseDto,
+  SessionBatchRevokeResponseDto,
 } from './schemas/auth.schemas';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { SessionListSchema } from './schemas/auth.schemas';
+import {
+  SessionListSchema,
+  SessionBatchUpdateSchema,
+  SessionBatchDeleteSchema,
+  SessionBatchRevokeSchema,
+} from './schemas/auth.schemas';
 import {
   AuthenticatedRequest,
   RevokeUserSessionsBody,
@@ -310,5 +323,142 @@ export class SessionsController {
   ): Promise<SecurityAuditInfo> {
     // TODO: Add admin role check here
     return this.sessionsService.getSecurityAuditInfo(userId);
+  }
+
+  @Put('batch/update')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Batch update multiple sessions',
+    description:
+      'Update multiple user sessions in a single operation. Can update isCurrent status and lastActiveAt timestamp.',
+  })
+  @ApiBody({ type: SessionBatchUpdateDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Sessions updated successfully',
+    type: SessionBatchUpdateResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid request data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 422, description: 'Validation error' })
+  @UsePipes(new ZodValidationPipe(SessionBatchUpdateSchema))
+  async batchUpdateSessions(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: SessionBatchUpdateDto,
+  ): Promise<SessionBatchUpdateResponseDto> {
+    const result = await this.sessionsService.batchUpdateSessions(
+      req.user.sub,
+      body.sessionIds,
+      body.updates,
+    );
+
+    // Create security notification for batch updates
+    if (result.success && result.processedCount > 0) {
+      const metadata: SecurityAlertMetadata = {
+        sessionIds: result.updatedSessions,
+        action: 'batch_session_update',
+        processedCount: result.processedCount,
+      };
+      await this.notificationsService.createSecurityAlert(
+        req.user.sub,
+        'Sessions Updated',
+        `${result.processedCount} device sessions have been updated.`,
+        metadata,
+      );
+    }
+
+    return result;
+  }
+
+  @Post('batch/delete')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Batch delete multiple sessions',
+    description:
+      'Delete multiple user sessions in a single operation. Cannot delete the current session.',
+  })
+  @ApiBody({ type: SessionBatchDeleteDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Sessions deleted successfully',
+    type: SessionBatchDeleteResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid request data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 422, description: 'Validation error' })
+  @UsePipes(new ZodValidationPipe(SessionBatchDeleteSchema))
+  async batchDeleteSessions(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: SessionBatchDeleteDto,
+  ): Promise<SessionBatchDeleteResponseDto> {
+    const result = await this.sessionsService.batchDeleteSessions(
+      req.user.sub,
+      body.sessionIds,
+      body.reason,
+    );
+
+    // Create security notification for batch deletions
+    if (result.success && result.processedCount > 0) {
+      const metadata: SecurityAlertMetadata = {
+        sessionIds: result.deletedSessions,
+        action: 'batch_session_delete',
+        processedCount: result.processedCount,
+        reason: body.reason,
+      };
+      await this.notificationsService.createSecurityAlert(
+        req.user.sub,
+        'Sessions Deleted',
+        `${result.processedCount} device sessions have been deleted.`,
+        metadata,
+      );
+    }
+
+    return result;
+  }
+
+  @Post('batch/revoke')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Batch revoke multiple sessions',
+    description:
+      'Revoke multiple user sessions in a single operation. This will invalidate refresh tokens and delete sessions.',
+  })
+  @ApiBody({ type: SessionBatchRevokeDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Sessions revoked successfully',
+    type: SessionBatchRevokeResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid request data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 422, description: 'Validation error' })
+  @UsePipes(new ZodValidationPipe(SessionBatchRevokeSchema))
+  async batchRevokeSessions(
+    @Request() req: AuthenticatedRequest,
+    @Body() body: SessionBatchRevokeDto,
+  ): Promise<SessionBatchRevokeResponseDto> {
+    const result = await this.sessionsService.batchRevokeSessions(
+      req.user.sub,
+      body.sessionIds,
+      body.reason,
+    );
+
+    // Create security notification for batch revocations
+    if (result.success && result.processedCount > 0) {
+      const metadata: SecurityAlertMetadata = {
+        sessionIds: result.revokedSessions,
+        action: 'batch_session_revoke',
+        processedCount: result.processedCount,
+        reason: body.reason,
+      };
+      await this.notificationsService.createSecurityAlert(
+        req.user.sub,
+        'Sessions Revoked',
+        `${result.processedCount} device sessions have been revoked.`,
+        metadata,
+      );
+    }
+
+    return result;
   }
 }

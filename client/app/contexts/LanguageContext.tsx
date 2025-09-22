@@ -73,7 +73,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
         setLocaleState(savedLocale);
       }
     }
-  }, [user]);
+  }, [user?.preferences?.language]);
 
   // Translation function
   const t = (key: string): string => {

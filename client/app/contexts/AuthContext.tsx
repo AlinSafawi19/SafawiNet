@@ -22,7 +22,6 @@ import React, {
 } from 'react';
 import { buildApiUrl, API_CONFIG } from '../config/api';
 import { logError, logWarning } from '../utils/errorLogger';
-import { apiLogger } from '../services/api-logger.service';
 
 interface User {
   id: string;
@@ -103,6 +102,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasInitialized, setHasInitialized] = useState(false);
   const isInitializingRef = useRef(false);
+
+  // Cache for API responses to prevent duplicate calls
+  const apiCache = useRef<Map<string, { data: any; timestamp: number }>>(
+    new Map()
+  );
+  const CACHE_DURATION = 30000; // 30 seconds cache
+
+  // Cached fetch function to prevent duplicate API calls
+  const cachedFetch = useCallback(
+    async (url: string, options: RequestInit = {}): Promise<Response> => {
+      const cacheKey = `${url}-${JSON.stringify(options)}`;
+      const cached = apiCache.current.get(cacheKey);
+      const now = Date.now();
+
+      // Return cached data if it's still valid
+      if (cached && now - cached.timestamp < CACHE_DURATION) {
+        return new Response(JSON.stringify(cached.data), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Make the actual request
+      const response = await fetch(url, options);
+
+      // Cache successful responses
+      if (response.ok) {
+        const data = await response.clone().json();
+        apiCache.current.set(cacheKey, { data, timestamp: now });
+      }
+
+      return response;
+    },
+    []
+  );
 
   const refreshToken = useCallback(async (): Promise<boolean> => {
     // Prevent multiple simultaneous refresh attempts
@@ -201,6 +235,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     []
   );
 
+  // Cache invalidation function
+  const invalidateCache = useCallback((pattern?: string) => {
+    if (pattern) {
+      // Invalidate specific cache entries matching pattern
+      for (const [key] of apiCache.current) {
+        if (key.includes(pattern)) {
+          apiCache.current.delete(key);
+        }
+      }
+    } else {
+      // Invalidate all cache
+      apiCache.current.clear();
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       // Call the logout endpoint to invalidate the session on the server
@@ -220,8 +269,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Clear user-specific localStorage data
       localStorage.removeItem('theme');
       localStorage.removeItem('locale');
+
+      // Clear all cached data on logout
+      invalidateCache();
     }
-  }, []);
+  }, [invalidateCache]);
 
   // Define force logout handler before useEffect to avoid scope issues
   const handleForceLogout = useCallback(async () => {
@@ -291,10 +343,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Always check the backend for authentication status
       // HTTP-only cookies can't be read by JavaScript, so we rely on the backend
-      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME), {
-        method: 'GET',
-        credentials: 'include', // Include cookies for session management
-      });
+      const response = await cachedFetch(
+        buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
+        {
+          method: 'GET',
+          credentials: 'include', // Include cookies for session management
+        }
+      );
 
       if (response.ok) {
         const userData = await response.json();
@@ -318,7 +373,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Check for offline messages after successful authentication - defer to avoid blocking
         setTimeout(() => {
           checkOfflineMessages();
-        }, 2000); // Increased delay to not block initial render
+        }, 1000); // Reduced delay for better UX
       } else {
         // Handle any non-200 responses (shouldn't happen with new server format)
         setUser(null);
@@ -333,7 +388,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setHasInitialized(true);
       isInitializingRef.current = false; // Reset the ref after initialization
     }
-  }, [hasInitialized, checkOfflineMessages]);
+  }, [hasInitialized, checkOfflineMessages, cachedFetch]);
 
   const login = async (
     email: string,
@@ -344,62 +399,76 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     messageKey?: string;
     user?: User;
   }> => {
-    const response = await apiLogger.post(
-      API_CONFIG.ENDPOINTS.AUTH.LOGIN,
-      { email, password },
+    const response = await cachedFetch(
+      buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN),
       {
-        component: 'AuthContext',
-        action: 'login',
-        metadata: { email },
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
       }
     );
 
-    if (response.success && response.data) {
-      const {
-        user: userData,
-        requiresTwoFactor,
-        requiresVerification,
-      } = response.data;
+    if (response.ok) {
+      const responseData = await response.json();
 
-      // Check if user is verified before setting login state
-      if (requiresVerification) {
-        // User is not verified, don't set login state
+      // Handle the actual response structure from the backend
+      if (responseData.user) {
+        const {
+          user: userData,
+          requiresTwoFactor,
+          requiresVerification,
+        } = responseData;
+
+        // Check if user is verified before setting login state
+        if (requiresVerification) {
+          // User is not verified, don't set login state
+          return {
+            success: false,
+            messageKey: 'auth.messages.emailVerificationRequired',
+            user: userData, // Still return user data for the form to check
+          };
+        }
+
+        // Check if 2FA is required
+        if (requiresTwoFactor) {
+          // User needs to enter 2FA code
+          return {
+            success: false,
+            messageKey: 'auth.messages.twoFactorRequired',
+            user: userData, // Return user data for 2FA form
+            requiresTwoFactor: true,
+          } as any;
+        }
+
+        // User is verified and no 2FA required, set login state
+        setUser(userData);
+
+        // Check for offline messages after successful authentication
+        setTimeout(() => {
+          checkOfflineMessages();
+        }, 1000); // Small delay to ensure user state is set
+
+        return { success: true, user: userData };
+      } else {
+        // Map server error messages to translation keys
+        const messageKey = responseData.message
+          ? mapServerErrorToTranslationKey(responseData.message)
+          : null;
         return {
           success: false,
-          messageKey: 'auth.messages.emailVerificationRequired',
-          user: userData, // Still return user data for the form to check
+          message: messageKey ? undefined : responseData.message,
+          messageKey: messageKey || undefined,
         };
       }
-
-      // Check if 2FA is required
-      if (requiresTwoFactor) {
-        // User needs to enter 2FA code
-        return {
-          success: false,
-          messageKey: 'auth.messages.twoFactorRequired',
-          user: userData, // Return user data for 2FA form
-          requiresTwoFactor: true,
-        } as any;
-      }
-
-      // User is verified and no 2FA required, set login state
-      setUser(userData);
-
-      // Check for offline messages after successful authentication
-      setTimeout(() => {
-        checkOfflineMessages();
-      }, 1000); // Small delay to ensure user state is set
-
-      return { success: true, user: userData };
     } else {
-      // Map server error messages to translation keys
-      const messageKey = response.error
-        ? mapServerErrorToTranslationKey(response.error)
-        : null;
+      // Handle network error
       return {
         success: false,
-        message: messageKey ? undefined : response.error,
-        messageKey: messageKey || undefined,
+        message: 'Network error',
+        messageKey: 'auth.networkError',
       };
     }
   };
@@ -521,7 +590,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         import('../services/socket.singleton')
           .then(async ({ socketSingleton }) => {
             try {
-              await socketSingleton.ensureReady(); // Connect and wait for connection
+              // Only connect if not already connected
+              if (!socketSingleton.isSocketConnected()) {
+                await socketSingleton.ensureReady();
+              }
               await socketSingleton.joinPendingVerificationRoom(
                 email.toLowerCase()
               );
@@ -688,11 +760,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return await refreshToken();
   }, [isRefreshing, refreshToken, user]);
 
-  // Utility function for making authenticated API calls with automatic token refresh
+  // Utility function for making authenticated API calls with automatic token refresh and caching
   const authenticatedFetch = useCallback(
     async (url: string, options: RequestInit = {}): Promise<Response> => {
-      // Make the initial request
-      let response = await fetch(url, {
+      // Make the initial request with caching
+      let response = await cachedFetch(url, {
         ...options,
         credentials: 'include',
       });
@@ -701,8 +773,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.status === 401) {
         const refreshSuccess = await autoRefreshToken();
         if (refreshSuccess) {
-          // Retry the original request with the new token
-          response = await fetch(url, {
+          // Invalidate cache for this URL and retry
+          invalidateCache(url);
+          response = await cachedFetch(url, {
             ...options,
             credentials: 'include',
           });
@@ -711,14 +784,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       return response;
     },
-    [autoRefreshToken]
+    [autoRefreshToken, cachedFetch, invalidateCache]
   );
 
   // Utility function to join pending verification room for cross-browser sync
   const joinPendingVerificationRoom = async (email: string) => {
     try {
       const { socketSingleton } = await import('../services/socket.singleton');
-      await socketSingleton.ensureReady();
+      // Only connect if not already connected
+      if (!socketSingleton.isSocketConnected()) {
+        await socketSingleton.ensureReady();
+      }
       await socketSingleton.joinPendingVerificationRoom(email.toLowerCase());
     } catch (error) {}
   };
@@ -797,8 +873,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           '../services/socket.singleton'
         );
 
-        // Ensure connection is established immediately
-        await socketSingleton.ensureReady();
+        // Only ensure connection if user is authenticated
+        if (user) {
+          await socketSingleton.ensureReady();
+        }
 
         // Listen for email verification events in pending rooms
         socketSingleton.on('emailVerified', async (data: any) => {
@@ -948,7 +1026,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         handleRateLimitError as EventListener
       );
     };
-  }, [checkAuthStatus, loginWithTokens, user, handleForceLogout, logout]);
+  }, [checkAuthStatus, loginWithTokens, handleForceLogout, logout, user]);
 
   // Set up automatic token refresh timer
   useEffect(() => {
@@ -966,9 +1044,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, [user, autoRefreshToken]);
 
-  const updateUser = useCallback((updatedUser: User) => {
-    setUser(updatedUser);
-  }, []);
+  const updateUser = useCallback(
+    (updatedUser: User) => {
+      setUser(updatedUser);
+      // Invalidate user-related cache when user data changes
+      invalidateCache('/users/me');
+    },
+    [invalidateCache]
+  );
 
   // Role checking functions
   const isAdmin = useCallback(() => {

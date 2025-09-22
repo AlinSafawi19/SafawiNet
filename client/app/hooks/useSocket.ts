@@ -15,36 +15,51 @@ export const useSocket = () => {
 
   // Ensure socket is ready for immediate use
   const ensureReady = useCallback(async () => {
-    await socketSingleton.ensureReady();
+    // Only connect if not already connected
+    if (!socketSingleton.isSocketConnected()) {
+      await socketSingleton.ensureReady();
+    }
   }, []);
 
   const joinVerificationRoom = useCallback(async (userId: string) => {
-    await socketSingleton.ensureReady();
+    if (!socketSingleton.isSocketConnected()) {
+      await socketSingleton.ensureReady();
+    }
     await socketSingleton.joinVerificationRoom(userId);
   }, []);
 
   const leaveVerificationRoom = useCallback(async (userId: string) => {
-    await socketSingleton.ensureReady();
+    if (!socketSingleton.isSocketConnected()) {
+      await socketSingleton.ensureReady();
+    }
     await socketSingleton.leaveVerificationRoom(userId);
   }, []);
 
   const joinPendingVerificationRoom = useCallback(async (email: string) => {
-    await socketSingleton.ensureReady();
+    if (!socketSingleton.isSocketConnected()) {
+      await socketSingleton.ensureReady();
+    }
     await socketSingleton.joinPendingVerificationRoom(email);
   }, []);
 
   const leavePendingVerificationRoom = useCallback(async (email: string) => {
-    await socketSingleton.ensureReady();
+    if (!socketSingleton.isSocketConnected()) {
+      await socketSingleton.ensureReady();
+    }
     await socketSingleton.leavePendingVerificationRoom(email);
   }, []);
 
   const joinPasswordResetRoom = useCallback(async (email: string) => {
-    await socketSingleton.ensureReady();
+    if (!socketSingleton.isSocketConnected()) {
+      await socketSingleton.ensureReady();
+    }
     await socketSingleton.joinPasswordResetRoom(email);
   }, []);
 
   const leavePasswordResetRoom = useCallback(async (email: string) => {
-    await socketSingleton.ensureReady();
+    if (!socketSingleton.isSocketConnected()) {
+      await socketSingleton.ensureReady();
+    }
     await socketSingleton.leavePasswordResetRoom(email);
   }, []);
 
@@ -53,7 +68,9 @@ export const useSocket = () => {
       event: T,
       callback: import('../services/socket.singleton').SocketEvents[T]
     ) => {
-      await socketSingleton.ensureReady();
+      if (!socketSingleton.isSocketConnected()) {
+        await socketSingleton.ensureReady();
+      }
       socketSingleton.on(event, callback);
     },
     []
@@ -64,7 +81,9 @@ export const useSocket = () => {
       event: T,
       callback: import('../services/socket.singleton').SocketEvents[T]
     ) => {
-      await socketSingleton.ensureReady();
+      if (!socketSingleton.isSocketConnected()) {
+        await socketSingleton.ensureReady();
+      }
       await socketSingleton.off(event, callback);
     },
     []
@@ -73,7 +92,9 @@ export const useSocket = () => {
   // Listen for authentication broadcasts from other devices
   const onAuthBroadcast = useCallback(
     async (callback: (data: { type: string; user?: any }) => void) => {
-      await socketSingleton.ensureReady();
+      if (!socketSingleton.isSocketConnected()) {
+        await socketSingleton.ensureReady();
+      }
       await socketSingleton.onAuthBroadcast(callback);
     },
     []
@@ -82,7 +103,9 @@ export const useSocket = () => {
   // Remove auth broadcast listener
   const offAuthBroadcast = useCallback(
     async (callback: (data: { type: string; user?: any }) => void) => {
-      await socketSingleton.ensureReady();
+      if (!socketSingleton.isSocketConnected()) {
+        await socketSingleton.ensureReady();
+      }
       await socketSingleton.offAuthBroadcast(callback);
     },
     []

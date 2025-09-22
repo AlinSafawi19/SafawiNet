@@ -8,6 +8,7 @@ import DynamicLangAttribute from './components/DynamicLangAttribute';
 import { AppInitializer } from './components/AppInitializer';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalErrorHandler } from './components/GlobalErrorHandler';
+import { PerformanceMonitor } from './components/PerformanceMonitor';
 
 /**
  * Using force dynamic so changes in business assets (e.g. services) are immediately reflected.
@@ -65,19 +66,23 @@ export default function RootLayout({
       <body className="text-black bg-site dark:text-white dark:bg-dark-bg transition-colors duration-200">
         <ErrorBoundary>
           <GlobalErrorHandler>
-            <AuthProvider>
-              <ThemeProvider>
-                <LanguageProvider>
-                  <AppInitializer>
-                    <DynamicLangAttribute />
-                    <Header />
-                    <main className="bg-site dark:bg-dark-bg">{children}</main>
+            <PerformanceMonitor>
+              <AuthProvider>
+                <ThemeProvider>
+                  <LanguageProvider>
+                    <AppInitializer>
+                      <DynamicLangAttribute />
+                      <Header />
+                      <main className="bg-site dark:bg-dark-bg">
+                        {children}
+                      </main>
 
-                    <FooterWrapper />
-                  </AppInitializer>
-                </LanguageProvider>
-              </ThemeProvider>
-            </AuthProvider>
+                      <FooterWrapper />
+                    </AppInitializer>
+                  </LanguageProvider>
+                </ThemeProvider>
+              </AuthProvider>
+            </PerformanceMonitor>
           </GlobalErrorHandler>
         </ErrorBoundary>
       </body>

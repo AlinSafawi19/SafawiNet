@@ -23,6 +23,8 @@ import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
 import { OfflineMessageService } from '../common/services/offline-message.service';
 import { LoggerService } from '../common/services/logger.service';
 import { WebSocketRateLimitService } from '../common/services/websocket-rate-limit.service';
+import { WebSocketMonitoringService } from '../common/services/websocket-monitoring.service';
+import { SessionCacheService } from '../common/services/session-cache.service';
 import { UsersModule } from '../users/users.module';
 
 @Module({
@@ -64,6 +66,8 @@ import { UsersModule } from '../users/users.module';
     OfflineMessageService,
     LoggerService,
     WebSocketRateLimitService,
+    WebSocketMonitoringService,
+    SessionCacheService,
   ],
   exports: [
     AuthService,
