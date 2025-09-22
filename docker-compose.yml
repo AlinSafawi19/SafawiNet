@@ -1,0 +1,107 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: safawinet-postgres
+    environment:
+      POSTGRES_DB: safawinet_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: alin123M
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - safawinet-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: safawinet-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - safawinet-network
+
+  # MailHog for Email Testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: safawinet-mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - safawinet-network
+
+  # OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: safawinet-otel
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics
+      - "8889:8889"   # Prometheus exporter metrics
+    networks:
+      - safawinet-network
+
+  # NestJS API Server
+  api:
+    build:
+      context: ./server/api
+      dockerfile: Dockerfile.dev
+    container_name: safawinet-api
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:alin123M@postgres:5432/safawinet_dev
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - EMAIL_HOST=mailhog
+      - EMAIL_PORT=1025
+      - OTEL_ENDPOINT=http://otel-collector:4317
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server/api:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+      - redis
+      - mailhog
+      - otel-collector
+    networks:
+      - safawinet-network
+    command: ["npm", "run", "start:with-db"]
+
+  # Next.js Client
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: safawinet-client
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - api
+    networks:
+      - safawinet-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  safawinet-network:
+    driver: bridge
