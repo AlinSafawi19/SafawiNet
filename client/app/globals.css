@@ -4,29 +4,23 @@
 
 /* Arabic Calligraphy Font Import - Font loaded via HTML head */
 
+/* Optimized font loading with preload */
 @font-face {
-  font-display: block;
+  font-display: swap;
   font-family: Avenir-LT-W01_35-Light1475496;
-  src: url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/edefe737-dc78-4aa3-ad03-3c6f908330ed.eot?#iefix);
-  src: url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/edefe737-dc78-4aa3-ad03-3c6f908330ed.eot?#iefix)
-      format('eot'),
-    url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/0078f486-8e52-42c0-ad81-3c8d3d43f48e.woff2)
-      format('woff2'),
-    url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/908c4810-64db-4b46-bb8e-823eb41f68c0.woff)
-      format('woff'),
-    url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/4577388c-510f-4366-addb-8b663bcc762a.ttf)
-      format('truetype'),
-    url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/b0268c31-e450-4159-bfea-e0d20e2b5c0c.svg#b0268c31-e450-4159-bfea-e0d20e2b5c0c)
-      format('svg');
+  src: url(//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/0078f486-8e52-42c0-ad81-3c8d3d43f48e.woff2)
+      format('woff2');
 }
 
 @font-face {
+  font-display: swap;
   font-family: 'Helvetica-W01-Light';
   src: url('//static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/03805817-4611-4dbc-8c65-0f73031c3973.woff')
     format('woff');
 }
 
 @font-face {
+  font-display: swap;
   font-family: 'Poppins-SemiBold';
   font-weight: 700;
   src: url('//fonts.gstatic.com/s/poppins/v5/aDjpMND83pDErGXlVEr-Sfk_vArhqVIZ0nv9q090hN8.woff2')
@@ -214,7 +208,7 @@
     margin-right: 0.5rem;
   }
 
-  .rtl .sm\\:ml-2 {
+  .rtl .sm\:ml-2 {
     margin-left: 0;
     margin-right: 0.5rem;
   }
@@ -282,176 +276,16 @@ input:focus-visible {
   box-shadow: none !important;
 }
 
-/* Custom Autofill Styles */
+/* Simplified Autofill Styles */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.1) inset !important;
+  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
   -webkit-text-fill-color: #ffffff !important;
-  -webkit-border-radius: 8px !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
   transition: background-color 5000s ease-in-out 0s;
-}
-
-/* Firefox autofill styles */
-input:-moz-autofill,
-input:-moz-autofill:focus {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
-  border-color: #a855f7 !important;
-}
-
-/* Edge autofill styles */
-input:-ms-input-placeholder {
-  color: rgba(255, 255, 255, 0.5) !important;
-}
-
-/* Custom autofill for specific input types */
-input[type='password']:-webkit-autofill,
-input[type='text']:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.1) inset !important;
-  -webkit-text-fill-color: #ffffff !important;
-}
-
-/* Enhanced autofill styles for the login form */
-input[type='password']:focus:-webkit-autofill,
-input[type='text']:focus:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.15) inset !important;
-  -webkit-text-fill-color: #ffffff !important;
-  border-color: #a855f7 !important;
-}
-
-/* Autofill styles for inputs with white/10 background class */
-input.bg-white\/10:-webkit-autofill,
-input.bg-white\/10:-webkit-autofill:hover,
-input.bg-white\/10:-webkit-autofill:focus,
-input.bg-white\/10:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.1) inset !important;
-  -webkit-text-fill-color: #ffffff !important;
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-/* Autofill animation */
-@keyframes autofillFadeIn {
-  from {
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-
-  to {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-}
-
-input:-webkit-autofill {
-  animation: autofillFadeIn 0.3s ease-in-out;
-}
-
-/* AGGRESSIVE AUTOFILL OVERRIDE - More specific selectors */
-input[type='password']:-webkit-autofill,
-input[type='password']:-webkit-autofill:hover,
-input[type='password']:-webkit-autofill:focus,
-input[type='password']:-webkit-autofill:active,
-input[type='text']:-webkit-autofill,
-input[type='text']:-webkit-autofill:hover,
-input[type='text']:-webkit-autofill:focus,
-input[type='text']:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
-  -webkit-text-fill-color: #ffffff !important;
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  border-radius: 8px !important;
-  color: #ffffff !important;
-}
-
-/* Force autofill background override with very large box-shadow */
-input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
-  -webkit-text-fill-color: #ffffff !important;
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
-}
-
-/* Additional specificity for form inputs */
-form input:-webkit-autofill,
-form input:-webkit-autofill:hover,
-form input:-webkit-autofill:focus,
-form input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
-  -webkit-text-fill-color: #ffffff !important;
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
-}
-
-/* Specific class targeting */
-.bg-white\/10:-webkit-autofill,
-.bg-white\/10:-webkit-autofill:hover,
-.bg-white\/10:-webkit-autofill:focus,
-.bg-white\/10:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.1) inset !important;
-  -webkit-text-fill-color: #ffffff !important;
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
-}
-
-/* Autofill detection animations */
-@keyframes onAutoFillStart {
-  from {
-    /**/
-  }
-
-  to {
-    /**/
-  }
-}
-
-@keyframes onAutoFillCancel {
-  from {
-    /**/
-  }
-
-  to {
-    /**/
-  }
-}
-
-/* Apply animations to inputs for autofill detection */
-input:-webkit-autofill {
-  animation-name: onAutoFillStart;
-}
-
-input:not(:-webkit-autofill) {
-  animation-name: onAutoFillCancel;
-}
-
-/* Autofilled class styling */
-input.autofilled,
-input.autofilled:focus,
-input.autofilled:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  -webkit-text-fill-color: #ffffff !important;
-}
-
-/* Modern CSS autofill pseudo-classes (for browsers that support them) */
-input:autofill {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-input:autofill:focus {
-  background-color: rgba(255, 255, 255, 0.15) !important;
-  border-color: #a855f7 !important;
-}
-
-/* Additional autofill override attempts */
-input[type='password']:autofill,
-input[type='text']:autofill {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Search input animations */

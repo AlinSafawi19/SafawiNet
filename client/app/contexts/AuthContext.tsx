@@ -826,7 +826,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const initializeAuth = async () => {
       if (isMounted) {
-        await checkAuthStatus();
+        // Use requestIdleCallback for better performance
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          requestIdleCallback(() => {
+            if (isMounted) {
+              checkAuthStatus();
+            }
+          });
+        } else {
+          // Fallback for browsers without requestIdleCallback
+          setTimeout(() => {
+            if (isMounted) {
+              checkAuthStatus();
+            }
+          }, 0);
+        }
       }
     };
 

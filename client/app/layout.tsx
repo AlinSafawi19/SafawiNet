@@ -1,9 +1,7 @@
 import './globals.css';
 import FooterWrapper from '@app/components/Layout/FooterWrapper';
 import Header from '@app/components/Layout/Header';
-import { AuthProvider } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { LanguageProvider } from './contexts/LanguageContext';
+import { OptimizedContextProvider } from './components/OptimizedContextProvider';
 import DynamicLangAttribute from './components/DynamicLangAttribute';
 import { AppInitializer } from './components/AppInitializer';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -31,6 +29,22 @@ export default function RootLayout({
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
+        
+        {/* Preload critical fonts for better performance */}
+        <link
+          rel="preload"
+          href="https://static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/0078f486-8e52-42c0-ad81-3c8d3d43f48e.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="https://fonts.gstatic.com/s/poppins/v5/aDjpMND83pDErGXlVEr-Sfk_vArhqVIZ0nv9q090hN8.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         <style
           dangerouslySetInnerHTML={{
             __html: `
@@ -66,23 +80,16 @@ export default function RootLayout({
       <body className="text-black bg-site dark:text-white dark:bg-dark-bg transition-colors duration-200">
         <ErrorBoundary>
           <GlobalErrorHandler>
-            <PerformanceMonitor>
-              <AuthProvider>
-                <ThemeProvider>
-                  <LanguageProvider>
-                    <AppInitializer>
-                      <DynamicLangAttribute />
-                      <Header />
-                      <main className="bg-site dark:bg-dark-bg">
-                        {children}
-                      </main>
-
-                      <FooterWrapper />
-                    </AppInitializer>
-                  </LanguageProvider>
-                </ThemeProvider>
-              </AuthProvider>
-            </PerformanceMonitor>
+            <OptimizedContextProvider>
+              <AppInitializer>
+                <DynamicLangAttribute />
+                <Header />
+                <main className="bg-site dark:bg-dark-bg">
+                  {children}
+                </main>
+                <FooterWrapper />
+              </AppInitializer>
+            </OptimizedContextProvider>
           </GlobalErrorHandler>
         </ErrorBoundary>
       </body>

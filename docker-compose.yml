@@ -1,3 +1,8 @@
+# SAFAWI NET Development Environment
+# Use 'docker-compose up' to start all services
+# Use 'docker-compose up [service-name]' to start specific services
+# Use 'docker-compose down' to stop all services
+
 services:
   # PostgreSQL Database
   postgres:
@@ -87,20 +92,26 @@ services:
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:3000
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
     ports:
       - "3001:3001"
     volumes:
       - ./client:/app
       - /app/node_modules
       - /app/.next
+      - client_cache:/app/.next/cache
     depends_on:
       - api
     networks:
       - safawinet-network
+    # Enable hot reloading and faster file watching
+    command: ["npm", "run", "dev"]
 
 volumes:
   postgres_data:
   redis_data:
+  client_cache:
 
 networks:
   safawinet-network:

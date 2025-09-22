@@ -22,9 +22,56 @@ const nextConfig = {
     optimizeCss: true,
     optimizePackageImports: ['react-icons', 'socket.io-client'],
   },
+  // Updated turbopack configuration (replaces deprecated turbo)
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
+  },
   // Compiler optimizations
   compiler: {
-    removeConsole: false,
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  // Webpack optimizations
+  webpack: (config, { dev, isServer }) => {
+    // Optimize bundle splitting for both dev and production
+    config.optimization.splitChunks = {
+      chunks: 'all',
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all',
+          priority: 10,
+        },
+        common: {
+          name: 'common',
+          minChunks: 2,
+          chunks: 'all',
+          priority: 5,
+          enforce: true,
+        },
+        // Separate chunk for React
+        react: {
+          test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+          name: 'react',
+          chunks: 'all',
+          priority: 20,
+        },
+      },
+    };
+
+    // Optimize for development
+    if (dev) {
+      config.optimization.removeAvailableModules = false;
+      config.optimization.removeEmptyChunks = false;
+      config.optimization.splitChunks = false;
+    }
+    
+    return config;
   },
   // Headers for better caching
   async headers() {
