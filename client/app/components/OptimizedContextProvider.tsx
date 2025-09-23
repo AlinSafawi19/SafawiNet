@@ -17,14 +17,14 @@ interface OptimizedContextProviderProps {
   children: React.ReactNode;
 }
 
-export const OptimizedContextProvider: React.FC<OptimizedContextProviderProps> = ({ children }) => {
+export const OptimizedContextProvider: React.FC<
+  OptimizedContextProviderProps
+> = ({ children }) => {
   return (
     <ErrorBoundary>
       <AuthProvider>
         <ThemeProvider>
-          <LanguageProvider>
-            {children}
-          </LanguageProvider>
+          <LanguageProvider>{children}</LanguageProvider>
         </ThemeProvider>
       </AuthProvider>
     </ErrorBoundary>

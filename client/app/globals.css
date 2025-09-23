@@ -19,13 +19,7 @@
     format('woff');
 }
 
-@font-face {
-  font-display: swap;
-  font-family: 'Poppins-SemiBold';
-  font-weight: 700;
-  src: url('//fonts.gstatic.com/s/poppins/v5/aDjpMND83pDErGXlVEr-Sfk_vArhqVIZ0nv9q090hN8.woff2')
-    format('woff2');
-}
+/* Poppins font is now loaded via Google Fonts API in layout.tsx */
 
 @layer components {
   .btn-main {
@@ -51,7 +45,8 @@
   }
 
   .font-default {
-    font-family: 'Poppins-SemiBold', sans-serif;
+    font-family: var(--font-poppins), sans-serif;
+    font-weight: 700;
   }
 
   .font-helvetica {

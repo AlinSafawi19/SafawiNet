@@ -11,9 +11,10 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
   children,
 }) => {
   // Only enable performance monitoring when explicitly requested via URL parameter
-  const shouldMonitor = typeof window !== 'undefined' && 
+  const shouldMonitor =
+    typeof window !== 'undefined' &&
     window.location.search.includes('debug=performance');
-    
+
   const { getPerformanceScore, getMetrics } = usePerformanceMonitor({
     enableApiMonitoring: shouldMonitor,
     enableRenderMonitoring: shouldMonitor,

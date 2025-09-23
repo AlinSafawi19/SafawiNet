@@ -7,6 +7,14 @@ import { AppInitializer } from './components/AppInitializer';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalErrorHandler } from './components/GlobalErrorHandler';
 import { PerformanceMonitor } from './components/PerformanceMonitor';
+import { Poppins } from 'next/font/google';
+
+// Configure Poppins font with weight 700
+const poppins = Poppins({
+  weight: '700',
+  subsets: ['latin'],
+  display: 'swap',
+});
 
 /**
  * Using force dynamic so changes in business assets (e.g. services) are immediately reflected.
@@ -29,18 +37,13 @@ export default function RootLayout({
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
-        
+
+        {/* Fonts are now loaded via Next.js font optimization */}
+
         {/* Preload critical fonts for better performance */}
         <link
           rel="preload"
           href="https://static.parastorage.com/services/third-party/fonts/user-site-fonts/fonts/0078f486-8e52-42c0-ad81-3c8d3d43f48e.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preload"
-          href="https://fonts.gstatic.com/s/poppins/v5/aDjpMND83pDErGXlVEr-Sfk_vArhqVIZ0nv9q090hN8.woff2"
           as="font"
           type="font/woff2"
           crossOrigin="anonymous"
@@ -77,16 +80,16 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="text-black bg-site dark:text-white dark:bg-dark-bg transition-colors duration-200">
+      <body
+        className={`${poppins.className} text-black bg-site dark:text-white dark:bg-dark-bg transition-colors duration-200`}
+      >
         <ErrorBoundary>
           <GlobalErrorHandler>
             <OptimizedContextProvider>
               <AppInitializer>
                 <DynamicLangAttribute />
                 <Header />
-                <main className="bg-site dark:bg-dark-bg">
-                  {children}
-                </main>
+                <main className="bg-site dark:bg-dark-bg">{children}</main>
                 <FooterWrapper />
               </AppInitializer>
             </OptimizedContextProvider>
