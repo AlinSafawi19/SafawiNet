@@ -44,7 +44,6 @@ interface AuthenticatedRequest extends Request {
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-
   constructor(
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,

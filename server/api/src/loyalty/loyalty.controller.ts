@@ -41,9 +41,7 @@ interface AuthenticatedRequest extends ExpressRequest {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class LoyaltyController {
-  constructor(
-    private readonly loyaltyService: LoyaltyService,
-  ) {}
+  constructor(private readonly loyaltyService: LoyaltyService) {}
 
   @Get('me')
   @Throttle({ loyalty: { limit: 30, ttl: 60000 } }) // 30 loyalty account requests per minute
@@ -87,7 +85,6 @@ export class LoyaltyController {
   async getMyLoyaltyAccount(
     @Request() req: AuthenticatedRequest,
   ): Promise<LoyaltyAccountInfo> {
-
     try {
       const result = await this.loyaltyService.getUserLoyaltyAccount(
         req.user.id,

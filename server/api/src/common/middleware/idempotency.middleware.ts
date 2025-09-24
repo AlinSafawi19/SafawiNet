@@ -21,7 +21,6 @@ interface IdempotencyRequest extends Request {
 
 @Injectable()
 export class IdempotencyMiddleware implements NestMiddleware {
-
   constructor(private readonly redisService: RedisService) {}
 
   async use(

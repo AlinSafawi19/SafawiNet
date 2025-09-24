@@ -106,18 +106,12 @@ export class UsersController {
   async createUser(
     @Body() createUserDto: CreateUserDto,
   ): Promise<{ message: string; user: Omit<User, 'password'> }> {
+    const user = await this.usersService.createUser(createUserDto);
 
-    try {
-      const user = await this.usersService.createUser(createUserDto);
-
-      return {
-        message: 'Admin user created successfully',
-        user,
-      };
-    } catch (error) {
-      //console.error
-      throw error;
-    }
+    return {
+      message: 'Admin user created successfully',
+      user,
+    };
   }
 
   @Get('admins')
@@ -208,7 +202,10 @@ export class UsersController {
       const user = await this.usersService.getCurrentUser(payload.sub);
       return { user, authenticated: true };
     } catch (error) {
-      //console.error
+      console.error('Error getting current user', {
+        source: 'api',
+        error,
+      });
       return { user: null, authenticated: false };
     }
   }
@@ -474,50 +471,45 @@ export class UsersController {
     @Request() req: ExpressRequest,
     @Body() changePasswordDto: ChangePasswordDto,
   ): Promise<{ message: string; messageKey: string }> {
-    try {
-      // Extract token from cookies first, then from Authorization header
-      let token: string | undefined;
+    // Extract token from cookies first, then from Authorization header
+    let token: string | undefined;
 
-      // Check cookies first
-      if (req.cookies?.accessToken) {
-        token = req.cookies.accessToken;
-      } else {
-        // Fallback to Authorization header
-        const authHeader = req.headers.authorization;
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-          token = authHeader.substring(7);
-        }
-        // No token found in Authorization header
+    // Check cookies first
+    if (req.cookies?.accessToken) {
+      token = req.cookies.accessToken;
+    } else {
+      // Fallback to Authorization header
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
       }
-
-      if (!token) {
-        throw new UnauthorizedException('Authentication required');
-      }
-
-      // Verify the token
-      const jwtSecret =
-        this.configService.get<string>('JWT_SECRET') || 'fallback-secret';
-      const payload = this.jwtService.verify(token, { secret: jwtSecret });
-
-      // Get user data to verify they exist and are verified
-      const user = await this.usersService.getCurrentUser(payload.sub);
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
-
-      if (!user.isVerified) {
-        throw new UnauthorizedException('Email not verified');
-      }
-
-      // Proceed with password change
-      const result = await this.usersService.changePassword(
-        payload.sub,
-        changePasswordDto,
-      );
-      return result;
-    } catch (error) {
-      //console.error
-      throw error;
+      // No token found in Authorization header
     }
+
+    if (!token) {
+      throw new UnauthorizedException('Authentication required');
+    }
+
+    // Verify the token
+    const jwtSecret =
+      this.configService.get<string>('JWT_SECRET') || 'fallback-secret';
+    const payload = this.jwtService.verify(token, { secret: jwtSecret });
+
+    // Get user data to verify they exist and are verified
+    const user = await this.usersService.getCurrentUser(payload.sub);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (!user.isVerified) {
+      throw new UnauthorizedException('Email not verified');
+    }
+
+    // Proceed with password change
+    const result = await this.usersService.changePassword(
+      payload.sub,
+      changePasswordDto,
+    );
+    return result;
   }
 }

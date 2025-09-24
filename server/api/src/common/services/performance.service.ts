@@ -106,11 +106,11 @@ export class PerformanceService implements OnModuleInit {
     try {
       // Create telemetry span for performance tracking
       const span = this.telemetry.createSpan('performance.record_metrics', {
-        'route': metrics.route,
-        'method': metrics.method,
-        'duration': metrics.duration,
-        'status_code': metrics.statusCode,
-        'user_id': metrics.userId || 'anonymous',
+        route: metrics.route,
+        method: metrics.method,
+        duration: metrics.duration,
+        status_code: metrics.statusCode,
+        user_id: metrics.userId || 'anonymous',
       });
 
       try {
@@ -186,11 +186,11 @@ export class PerformanceService implements OnModuleInit {
     if (!budget) return;
 
     const span = this.telemetry.createSpan('performance.check_budget', {
-      'route': metrics.route,
-      'method': metrics.method,
-      'duration': metrics.duration,
-      'p99_threshold': budget.p99Threshold,
-      'burst_limit': budget.burstLimit,
+      route: metrics.route,
+      method: metrics.method,
+      duration: metrics.duration,
+      p99_threshold: budget.p99Threshold,
+      burst_limit: budget.burstLimit,
     });
 
     try {
@@ -201,7 +201,7 @@ export class PerformanceService implements OnModuleInit {
           'performance.violation_value': metrics.duration,
           'performance.threshold_value': budget.p99Threshold,
         });
-        
+
         // TODO: Implement P99 threshold violation handling
         // This could include alerting, logging, or triggering performance optimizations
       }
@@ -221,14 +221,16 @@ export class PerformanceService implements OnModuleInit {
           'performance.violation_value': currentBurst,
           'performance.threshold_value': budget.burstLimit,
         });
-        
+
         // TODO: Implement burst limit violation handling
         // This could include rate limiting, alerting, or circuit breaker activation
       }
 
       span.setAttributes({
         'performance.burst_count': currentBurst,
-        'performance.within_budget': metrics.duration <= budget.p99Threshold && currentBurst <= budget.burstLimit,
+        'performance.within_budget':
+          metrics.duration <= budget.p99Threshold &&
+          currentBurst <= budget.burstLimit,
       });
     } finally {
       span.end();
@@ -369,14 +371,10 @@ export class PerformanceService implements OnModuleInit {
           results.push({ route, violations });
         }
       } catch (error) {
-        console.warn(
-          'Failed to check performance budget for route',
-          error,
-          {
-            source: 'performance',
-            route,
-          },
-        );
+        console.warn('Failed to check performance budget for route', error, {
+          source: 'performance',
+          route,
+        });
       }
     }
 

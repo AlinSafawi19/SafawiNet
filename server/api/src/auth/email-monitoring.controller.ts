@@ -84,7 +84,6 @@ interface EmailLogsResponse {
 @ApiBearerAuth()
 @Throttle({ users: { limit: 20, ttl: 60000 } }) // 20 email monitoring requests per minute
 export class EmailMonitoringController {
-
   constructor(
     private readonly emailMonitoringService: EmailMonitoringService,
   ) {}

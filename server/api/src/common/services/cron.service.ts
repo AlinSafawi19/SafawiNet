@@ -1,15 +1,10 @@
-import {
-  Injectable,
-  OnModuleInit,
-  OnModuleDestroy,
-} from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { QueueService } from './queue.service';
 import { PrismaService } from './prisma.service';
 
 @Injectable()
 export class CronService implements OnModuleInit, OnModuleDestroy {
-
   constructor(
     private queueService: QueueService,
     private prisma: PrismaService,
@@ -63,14 +58,10 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
         data: { timestamp: new Date().toISOString() },
       });
     } catch (error) {
-      console.error(
-        'Failed to add notification cleanup job to queue',
-        error,
-        {
-          source: 'cron',
-          jobType: 'notification_cleanup',
-        },
-      );
+      console.error('Failed to add notification cleanup job to queue', error, {
+        source: 'cron',
+        jobType: 'notification_cleanup',
+      });
     }
   }
 
@@ -180,5 +171,4 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
 
     return result.count;
   }
-
 }

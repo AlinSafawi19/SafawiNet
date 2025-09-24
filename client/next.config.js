@@ -21,7 +21,7 @@ const nextConfig = {
   // Performance optimizations
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['react-icons', 'socket.io-client'],
+    optimizePackageImports: ['react-icons'],
   },
   // Updated turbopack configuration (replaces deprecated turbo)
   turbopack: {

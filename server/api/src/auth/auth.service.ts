@@ -252,7 +252,6 @@ export class AuthService {
     // Generate tokens for automatic login
     const tokens: AuthTokens = await this.generateTokens(result, undefined);
 
-
     const message: string = 'Email verified successfully';
 
     return {
@@ -427,10 +426,10 @@ export class AuthService {
             },
           });
         }
-    } catch (error) {
-      console.warn('Failed to refresh token', error, {
-        source: 'auth',
-        refreshToken,
+      } catch (error) {
+        console.warn('Failed to refresh token', error, {
+          source: 'auth',
+          refreshToken,
         });
         // Don't fail token refresh if session update fails
       }
@@ -581,17 +580,12 @@ export class AuthService {
         },
       );
     } catch (error) {
-      console.warn(
-        'Failed to send password reset notification email',
-        error,
-        {
-          source: 'auth',
-          userId: result.id,
-        },
-      );
+      console.warn('Failed to send password reset notification email', error, {
+        source: 'auth',
+        userId: result.id,
+      });
       // Don't fail password reset if email fails
     }
-
 
     return {
       message:

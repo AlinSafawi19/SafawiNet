@@ -13,15 +13,13 @@
     "perf:test": "node scripts/performance-test.js"
   },
   "dependencies": {
-    "bufferutil": "^4.0.9",
     "critters": "^0.0.23",
     "next": "^15.5.3",
     "next-intl": "^4.3.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.5.0",
-    "tailwind-scrollbar": "^3.0.5",
-    "utf-8-validate": "^5.0.10"
+    "tailwind-scrollbar": "^3.0.5"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^15.5.3",

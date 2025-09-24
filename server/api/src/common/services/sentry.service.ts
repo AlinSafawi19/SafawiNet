@@ -4,7 +4,6 @@ import * as Sentry from '@sentry/node';
 
 @Injectable()
 export class SentryService implements OnModuleInit {
-
   constructor(private configService: ConfigService) {}
 
   onModuleInit() {

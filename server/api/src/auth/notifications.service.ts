@@ -159,7 +159,6 @@ function isValidNotificationPriority(
 
 @Injectable()
 export class NotificationsService {
-
   constructor(private readonly prisma: PrismaService) {}
 
   /**

@@ -351,16 +351,13 @@ export class UsersService {
           String(currentPassword),
         );
       } catch (error) {
-        console.warn(
-          'Password verification failed during password change',
-          {
-            source: 'api',
-            userId,
-            metadata: {
-              error,
-            },
+        console.warn('Password verification failed during password change', {
+          source: 'api',
+          userId,
+          metadata: {
+            error,
           },
-        );
+        });
         // If verification fails due to hash format issues, treat as incorrect password
         isCurrentPasswordValid = false;
       }
@@ -413,7 +410,6 @@ export class UsersService {
         });
         // Don't fail password change if email fails
       }
-
 
       return {
         message: 'Password changed successfully',

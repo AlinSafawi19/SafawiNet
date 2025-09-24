@@ -132,7 +132,6 @@ export class AuthController {
   })
   @UsePipes(new ZodValidationPipe(RegisterSchema))
   async register(@Body() registerDto: RegisterDto): Promise<RegisterResponse> {
-
     try {
       const result = await this.authService.register(registerDto);
       return result;
@@ -323,7 +322,6 @@ export class AuthController {
     @Request() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResult> {
-
     try {
       const result = await this.authService.login(loginDto, req);
 
@@ -662,5 +660,4 @@ export class AuthController {
       return { message: 'Logged out successfully' };
     }
   }
-
 }

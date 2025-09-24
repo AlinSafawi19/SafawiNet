@@ -46,7 +46,6 @@ function nullToUndefined<T>(value: T | null): T | undefined {
 
 @Injectable()
 export class SessionsService {
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly sessionCacheService: SessionCacheService,

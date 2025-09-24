@@ -38,6 +38,12 @@ export class SecurityUtils {
       }
       return await argon2.verify(hash, password);
     } catch (error) {
+      console.error('Password verification failed', {
+        source: 'api',
+        hash,
+        password,
+        error,
+      });
       return false;
     }
   }

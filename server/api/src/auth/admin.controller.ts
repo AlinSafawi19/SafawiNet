@@ -162,7 +162,6 @@ interface BroadcastNotificationResponse {
 @Roles(Role.ADMIN)
 @Throttle({ users: { limit: 100, ttl: 60000 } }) // 100 requests per minute for admin endpoints
 export class AdminController {
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailMonitoring: EmailMonitoringService,

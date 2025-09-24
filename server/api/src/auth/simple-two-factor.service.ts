@@ -111,17 +111,12 @@ export class SimpleTwoFactorService {
         timestamp: new Date().toLocaleString(),
       });
     } catch (error) {
-      console.warn(
-        'Failed to send 2FA disabled notification email',
-        error,
-        {
-          source: 'simple-two-factor',
-          userId,
-        },
-      );
+      console.warn('Failed to send 2FA disabled notification email', error, {
+        source: 'simple-two-factor',
+        userId,
+      });
       // Don't fail 2FA disable if email fails
     }
-
 
     return {
       message: 'Two-factor authentication disabled successfully',
