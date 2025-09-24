@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as fs from 'fs/promises';
@@ -91,7 +91,6 @@ export interface NodemailerAuthConfig {
 
 @Injectable()
 export class EmailService {
-  private readonly logger = new Logger(EmailService.name);
   private transporter!: nodemailer.Transporter;
   private templates: Map<string, handlebars.TemplateDelegate> = new Map();
 
@@ -141,7 +140,7 @@ export class EmailService {
     try {
       await this.transporter.verify();
     } catch (error) {
-      this.logger.warn('Failed to verify email transporter connection', error, {
+      console.warn('Failed to verify email transporter connection', error, {
         source: 'email',
       });
     }
@@ -184,7 +183,7 @@ export class EmailService {
           break;
         }
       } catch (error) {
-        this.logger.warn('Failed to load templates', error, {
+        console.warn('Failed to load templates', error, {
           source: 'email',
           templatesDir,
         });
@@ -243,7 +242,7 @@ export class EmailService {
 
       await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      this.logger.error('Failed to send email', error, {
+      console.error('Failed to send email', error, {
         source: 'email',
         to: emailData.to,
         subject: emailData.subject,
@@ -432,7 +431,7 @@ export class EmailService {
       await this.transporter.verify();
       return true;
     } catch (error) {
-      this.logger.warn('Failed to verify email transporter connection', error, {
+      console.warn('Failed to verify email transporter connection', error, {
         source: 'email',
       });
       return false;

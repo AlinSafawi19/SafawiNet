@@ -42,7 +42,6 @@ import {
 import { AuthenticatedRequest } from './types/auth.types';
 import { User } from '@prisma/client';
 import { AuthTokens, LoginResult } from './auth.service';
-import { LoggerService } from '../common/services/logger.service';
 
 // Response interfaces for better type safety
 interface RegisterResponse {
@@ -88,7 +87,6 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly simpleTwoFactorService: SimpleTwoFactorService,
-    private readonly loggerService: LoggerService,
   ) {}
 
   @Post('register')
@@ -135,23 +133,15 @@ export class AuthController {
   })
   @UsePipes(new ZodValidationPipe(RegisterSchema))
   async register(@Body() registerDto: RegisterDto): Promise<RegisterResponse> {
-    this.loggerService.info('User registration attempt', {
-      source: 'auth',
-      metadata: { endpoint: 'register', email: registerDto.email },
-    });
 
     try {
       const result = await this.authService.register(registerDto);
-      this.loggerService.info('User registration successful', {
-        userId: result.user.id,
-        source: 'auth',
-        metadata: { endpoint: 'register', email: result.user.email },
-      });
       return result;
     } catch (error) {
-      this.loggerService.error('User registration failed', error as Error, {
+      console.error('User registration failed', error as Error, {
         source: 'auth',
-        metadata: { endpoint: 'register', email: registerDto.email },
+        endpoint: 'register',
+        email: registerDto.email,
       });
       throw error;
     }
@@ -334,10 +324,6 @@ export class AuthController {
     @Request() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResult> {
-    this.loggerService.info('User login attempt', {
-      source: 'auth',
-      metadata: { endpoint: 'login', email: loginDto.email },
-    });
 
     try {
       const result = await this.authService.login(loginDto, req);
@@ -345,28 +331,18 @@ export class AuthController {
       // If login was successful and tokens were generated, set them as HTTP-only cookies
       if (result.tokens) {
         this.authService.setAuthCookies(res, result.tokens);
-        this.loggerService.info('User login successful', {
-          userId: result.user?.id,
-          source: 'auth',
-          metadata: { endpoint: 'login', email: loginDto.email },
-        });
         // Remove tokens from response body for security
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { tokens: _, ...responseWithoutTokens } = result;
         return responseWithoutTokens;
       }
 
-      this.loggerService.info('User login successful (no tokens)', {
-        userId: result.user?.id,
-        source: 'auth',
-        metadata: { endpoint: 'login', email: loginDto.email },
-      });
-
       return result;
     } catch (error) {
-      this.loggerService.error('User login failed', error as Error, {
+      console.error('User login failed', error as Error, {
         source: 'auth',
-        metadata: { endpoint: 'login', email: loginDto.email },
+        endpoint: 'login',
+        email: loginDto.email,
       });
       throw error;
     }
@@ -401,9 +377,9 @@ export class AuthController {
       this.authService.setAuthCookies(res, tokens);
       return { message: 'Token refreshed successfully', success: true };
     } catch (error) {
-      this.loggerService.error('Failed to refresh token', error as Error, {
+      console.error('Failed to refresh token', error as Error, {
         source: 'auth',
-        metadata: { endpoint: 'refresh' },
+        endpoint: 'refresh',
       });
       return { message: 'Invalid refresh token', success: false };
     }
@@ -677,9 +653,9 @@ export class AuthController {
 
       return { message: 'Logged out successfully' };
     } catch (error) {
-      this.loggerService.error('Failed to logout', error as Error, {
+      console.error('Failed to logout', error as Error, {
         source: 'auth',
-        metadata: { endpoint: 'logout' },
+        endpoint: 'logout',
       });
       // Still clear cookies even if token invalidation fails
       this.authService.clearAuthCookies(res);

@@ -19,7 +19,6 @@ import { RedisService } from '../common/services/redis.service';
 import { EmailService } from '../common/services/email.service';
 import { SentryService } from '../common/services/sentry.service';
 import { SecurityUtils } from '../common/security/security.utils';
-import { LoggerService } from '../common/services/logger.service';
 import { SessionCacheService } from '../common/services/session-cache.service';
 import { UsersModule } from '../users/users.module';
 
@@ -58,7 +57,6 @@ import { UsersModule } from '../users/users.module';
     EmailService,
     SentryService,
     SecurityUtils,
-    LoggerService,
     SessionCacheService,
   ],
   exports: [

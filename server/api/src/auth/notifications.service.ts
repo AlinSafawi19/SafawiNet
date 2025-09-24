@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
 import { NotificationListDto } from './schemas/auth.schemas';
 import { Prisma, Notification } from '@prisma/client';
@@ -159,7 +159,6 @@ function isValidNotificationPriority(
 
 @Injectable()
 export class NotificationsService {
-  private readonly logger = new Logger(NotificationsService.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -356,13 +355,6 @@ export class NotificationsService {
           expiresAt: { lt: new Date() },
         },
       });
-
-    if (result.count > 0) {
-      this.logger.log(`Cleaned up ${result.count} expired notifications`, {
-        source: 'notifications',
-        cleanedCount: result.count,
-      });
-    }
 
     return { cleanedCount: result.count };
   }

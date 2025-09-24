@@ -2,7 +2,6 @@ import {
   Injectable,
   BadRequestException,
   UnauthorizedException,
-  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
 import { EmailService } from '../common/services/email.service';
@@ -16,7 +15,6 @@ export interface TwoFactorCodeResult {
 
 @Injectable()
 export class SimpleTwoFactorService {
-  private readonly logger = new Logger(SimpleTwoFactorService.name);
   private readonly codeExpirationMinutes = 10; // 10 minutes expiration
 
   constructor(
@@ -113,7 +111,7 @@ export class SimpleTwoFactorService {
         timestamp: new Date().toLocaleString(),
       });
     } catch (error) {
-      this.logger.warn(
+      console.warn(
         'Failed to send 2FA disabled notification email',
         error,
         {

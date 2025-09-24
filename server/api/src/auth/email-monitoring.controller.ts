@@ -7,7 +7,6 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
-  Logger,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
@@ -85,7 +84,6 @@ interface EmailLogsResponse {
 @ApiBearerAuth()
 @Throttle({ users: { limit: 20, ttl: 60000 } }) // 20 email monitoring requests per minute
 export class EmailMonitoringController {
-  private readonly logger = new Logger(EmailMonitoringController.name);
 
   constructor(
     private readonly emailMonitoringService: EmailMonitoringService,
@@ -302,7 +300,7 @@ export class EmailMonitoringController {
           status: 'failed',
           error: errorMessage,
         });
-        this.logger.warn('Failed to process bounce', error, {
+        console.warn('Failed to process bounce', error, {
           source: 'email-monitoring',
           email: recipient.emailAddress,
           bounceType: bounce.bounceType,
@@ -377,7 +375,7 @@ export class EmailMonitoringController {
           status: 'failed',
           error: errorMessage,
         });
-        this.logger.warn('Failed to process complaint', error, {
+        console.warn('Failed to process complaint', error, {
           source: 'email-monitoring',
           email: recipient.emailAddress,
           complaintFeedbackType: complaint.complaintFeedbackType,

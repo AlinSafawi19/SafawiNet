@@ -4,15 +4,12 @@ import { AppModule } from './app.module';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { LoggerService } from './common/services/logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Get logger service and set up global exception filter
-  const loggerService = app.get(LoggerService);
-  app.useGlobalFilters(new GlobalExceptionFilter(loggerService));
-
+  // Set up global exception filter
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Cookie parser middleware for HTTP-only cookies
   app.use(cookieParser());

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -38,7 +38,6 @@ export interface ValidatedUser {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  private readonly logger = new Logger(JwtStrategy.name);
 
   constructor(
     configService: ConfigService,
@@ -98,7 +97,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             this.sessionCacheService
               .updateSessionActivity(payload.sub, payload.refreshTokenId)
               .catch((error) => {
-                this.logger.warn(
+                console.warn(
                   'Failed to update session activity in cache',
                   error,
                   {
@@ -108,22 +107,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
                   },
                 );
               });
-          } else {
-            this.logger.debug('Session found but not current', {
-              userId: payload.sub,
-              refreshTokenId: payload.refreshTokenId,
-              source: 'jwt-strategy',
-            });
           }
-        } else {
-          this.logger.debug('Session not found in cache or database', {
-            userId: payload.sub,
-            refreshTokenId: payload.refreshTokenId,
-            source: 'jwt-strategy',
-          });
         }
       } catch (error) {
-        this.logger.warn('Failed to validate session via cache', error, {
+        console.warn('Failed to validate session via cache', error, {
           source: 'jwt-strategy',
           userId: payload.sub,
           refreshTokenId: payload.refreshTokenId,

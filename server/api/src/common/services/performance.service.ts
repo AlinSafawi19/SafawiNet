@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { RedisService } from './redis.service';
 import { TelemetryService } from './telemetry.service';
 
@@ -48,7 +48,6 @@ export interface PerformanceBudgetViolation {
 
 @Injectable()
 export class PerformanceService implements OnModuleInit {
-  private readonly logger = new Logger(PerformanceService.name);
   private readonly performanceBudgets: Map<string, PerformanceBudget> =
     new Map();
 
@@ -111,7 +110,7 @@ export class PerformanceService implements OnModuleInit {
       // Check performance budget violations
       void this.checkPerformanceBudget(metrics);
     } catch (error) {
-      this.logger.error('Failed to record performance metrics', error, {
+      console.error('Failed to record performance metrics', error, {
         source: 'performance',
         route: metrics.route,
         method: metrics.method,
@@ -156,7 +155,7 @@ export class PerformanceService implements OnModuleInit {
         );
     } catch (error) {
       // Don't throw error to avoid breaking the application flow
-      this.logger.warn('Failed to store metrics in Redis', error, {
+      console.warn('Failed to store metrics in Redis', error, {
         source: 'performance',
         route: metrics.route,
         method: metrics.method,
@@ -239,7 +238,7 @@ export class PerformanceService implements OnModuleInit {
         errorRate: (errorCount / parsedMetrics.length) * 100,
       };
     } catch (error) {
-      this.logger.warn('Failed to get route performance', error, {
+      console.warn('Failed to get route performance', error, {
         source: 'performance',
         route,
         method,
@@ -281,7 +280,7 @@ export class PerformanceService implements OnModuleInit {
 
       return stats;
     } catch (error) {
-      this.logger.error('Failed to get all performance stats', error, {
+      console.error('Failed to get all performance stats', error, {
         source: 'performance',
       });
       return [];
@@ -323,7 +322,7 @@ export class PerformanceService implements OnModuleInit {
           results.push({ route, violations });
         }
       } catch (error) {
-        this.logger.warn(
+        console.warn(
           'Failed to check performance budget for route',
           error,
           {
@@ -358,7 +357,7 @@ export class PerformanceService implements OnModuleInit {
 
       return burstRates;
     } catch (error) {
-      this.logger.error('Failed to get burst rates', error, {
+      console.error('Failed to get burst rates', error, {
         source: 'performance',
       });
       return [];

@@ -22,7 +22,6 @@ import {
   ApiBearerAuth,
   ApiQuery,
 } from '@nestjs/swagger';
-import { LoggerService } from '../common/services/logger.service';
 
 // Interface for authenticated request with user properties
 interface AuthenticatedRequest extends ExpressRequest {
@@ -44,7 +43,6 @@ interface AuthenticatedRequest extends ExpressRequest {
 export class LoyaltyController {
   constructor(
     private readonly loyaltyService: LoyaltyService,
-    private readonly loggerService: LoggerService,
   ) {}
 
   @Get('me')
@@ -89,24 +87,14 @@ export class LoyaltyController {
   async getMyLoyaltyAccount(
     @Request() req: AuthenticatedRequest,
   ): Promise<LoyaltyAccountInfo> {
-    this.loggerService.info('Loyalty account fetch attempt', {
-      userId: req.user.id,
-      source: 'api',
-      metadata: { endpoint: 'getMyLoyaltyAccount', service: 'loyalty' },
-    });
 
     try {
       const result = await this.loyaltyService.getUserLoyaltyAccount(
         req.user.id,
       );
-      this.loggerService.info('Loyalty account fetched successfully', {
-        userId: req.user.id,
-        source: 'api',
-        metadata: { endpoint: 'getMyLoyaltyAccount', service: 'loyalty' },
-      });
       return result;
     } catch (error) {
-      this.loggerService.error('Loyalty account fetch failed', error as Error, {
+      console.error('Loyalty account fetch failed', error as Error, {
         userId: req.user.id,
         source: 'api',
         metadata: { endpoint: 'getMyLoyaltyAccount', service: 'loyalty' },

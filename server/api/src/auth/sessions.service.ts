@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
 import { SessionCacheService } from '../common/services/session-cache.service';
@@ -47,7 +46,6 @@ function nullToUndefined<T>(value: T | null): T | undefined {
 
 @Injectable()
 export class SessionsService {
-  private readonly logger = new Logger(SessionsService.name);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -127,7 +125,7 @@ export class SessionsService {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
     } catch (error) {
-      this.logger.warn('Failed to check database connection', error, {
+      console.warn('Failed to check database connection', error, {
         source: 'sessions',
       });
       throw new Error('Database connection failed');
@@ -137,7 +135,7 @@ export class SessionsService {
     try {
       await this.prisma.userSession.findFirst();
     } catch (error) {
-      this.logger.warn('Failed to find user session', error, {
+      console.warn('Failed to find user session', error, {
         source: 'sessions',
         userId,
       });
@@ -173,14 +171,8 @@ export class SessionsService {
     // Cache the new session
     try {
       await this.sessionCacheService.cacheSession(createdSession);
-      this.logger.debug('Session cached successfully', {
-        userId,
-        refreshTokenId,
-        sessionId: createdSession.id,
-        source: 'sessions',
-      });
     } catch (error) {
-      this.logger.warn('Failed to cache session after creation', error, {
+      console.warn('Failed to cache session after creation', error, {
         userId,
         refreshTokenId,
         sessionId: createdSession.id,
@@ -208,7 +200,7 @@ export class SessionsService {
     try {
       await this.sessionCacheService.cacheSession(updatedSession);
     } catch (error) {
-      this.logger.warn('Failed to update session in cache', error, {
+      console.warn('Failed to update session in cache', error, {
         sessionId,
         source: 'sessions',
       });
@@ -329,7 +321,7 @@ export class SessionsService {
         session.refreshTokenId,
       );
     } catch (error) {
-      this.logger.warn('Failed to invalidate session from cache', error, {
+      console.warn('Failed to invalidate session from cache', error, {
         userId,
         sessionId,
         refreshTokenId: session.refreshTokenId,
@@ -378,7 +370,7 @@ export class SessionsService {
     try {
       await this.sessionCacheService.invalidateUserSessions(userId);
     } catch (error) {
-      this.logger.warn('Failed to invalidate user sessions from cache', error, {
+      console.warn('Failed to invalidate user sessions from cache', error, {
         userId,
         sessionCount: sessionsToRevoke.length,
         source: 'sessions',
@@ -602,7 +594,7 @@ export class SessionsService {
         const result = await this.revokeAllUserSessions(userId, reason);
         results[userId] = result.revokedCount;
       } catch (error) {
-        this.logger.warn('Failed to revoke sessions for user', error, {
+        console.warn('Failed to revoke sessions for user', error, {
           source: 'sessions',
           userId,
         });
@@ -719,7 +711,7 @@ export class SessionsService {
           );
         }
       } catch (error) {
-        this.logger.warn(
+        console.warn(
           'Failed to invalidate session cache during batch update',
           error,
           {
@@ -738,7 +730,7 @@ export class SessionsService {
         errors,
       };
     } catch (error) {
-      this.logger.error('Failed to batch update sessions', error, {
+      console.error('Failed to batch update sessions', error, {
         userId,
         sessionIds,
         source: 'sessions',
@@ -847,7 +839,7 @@ export class SessionsService {
           );
         }
       } catch (error) {
-        this.logger.warn(
+        console.warn(
           'Failed to invalidate session cache during batch delete',
           error,
           {
@@ -869,14 +861,6 @@ export class SessionsService {
       processedCount = result.count;
       deletedSessions.push(...validSessionIds);
 
-      // Log security event
-      this.logger.log('Batch session deletion completed', {
-        userId,
-        deletedCount: processedCount,
-        reason,
-        source: 'sessions',
-      });
-
       return {
         success: true,
         processedCount,
@@ -885,7 +869,7 @@ export class SessionsService {
         errors,
       };
     } catch (error) {
-      this.logger.error('Failed to batch delete sessions', error, {
+      console.error('Failed to batch delete sessions', error, {
         userId,
         sessionIds,
         reason,
@@ -985,7 +969,7 @@ export class SessionsService {
           );
         }
       } catch (error) {
-        this.logger.warn(
+        console.warn(
           'Failed to invalidate session cache during batch revoke',
           error,
           {
@@ -1007,14 +991,6 @@ export class SessionsService {
       processedCount = result.count;
       revokedSessions.push(...validSessionIds);
 
-      // Log security event
-      this.logger.log('Batch session revocation completed', {
-        userId,
-        revokedCount: processedCount,
-        reason,
-        source: 'sessions',
-      });
-
       return {
         success: true,
         processedCount,
@@ -1023,7 +999,7 @@ export class SessionsService {
         errors,
       };
     } catch (error) {
-      this.logger.error('Failed to batch revoke sessions', error, {
+      console.error('Failed to batch revoke sessions', error, {
         userId,
         sessionIds,
         reason,

@@ -3,7 +3,6 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
-  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -14,7 +13,6 @@ import { SecurityUtils } from '../common/security/security.utils';
 import { SimpleTwoFactorService } from './simple-two-factor.service';
 import { SessionsService } from './sessions.service';
 import { NotificationsService } from './notifications.service';
-import { LoggerService } from '../common/services/logger.service';
 import { SessionCacheService } from '../common/services/session-cache.service';
 import {
   RegisterDto,
@@ -59,7 +57,6 @@ interface JwtPayload {
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
   private readonly maxLoginAttempts = 5;
   private readonly lockoutDuration = 15 * 60; // 15 minutes in seconds
 
@@ -72,7 +69,6 @@ export class AuthService {
     private readonly simpleTwoFactorService: SimpleTwoFactorService,
     private readonly sessionsService: SessionsService,
     private readonly notificationsService: NotificationsService,
-    private readonly loggerService: LoggerService,
     private readonly sessionCacheService: SessionCacheService,
   ) {}
 
@@ -81,24 +77,12 @@ export class AuthService {
   ): Promise<{ message: string; user: Omit<User, 'password'> }> {
     const { email, password, name } = registerDto;
 
-    this.loggerService.info('User registration process started', {
-      source: 'auth',
-      metadata: { operation: 'register', email },
-    });
-
     // Check if user already exists
     const existingUser: User | null = await this.prisma.user.findUnique({
       where: { email: (email as string).toLowerCase() },
     });
 
     if (existingUser) {
-      this.loggerService.warn(
-        'User registration failed - email already exists',
-        {
-          source: 'auth',
-          metadata: { operation: 'register', reason: 'email_exists', email },
-        },
-      );
       throw new ConflictException('User with this email already exists');
     }
 
@@ -207,7 +191,7 @@ export class AuthService {
         verificationUrl,
       });
     } catch (error) {
-      this.logger.warn('Failed to send verification email', error, {
+      console.warn('Failed to send verification email', error, {
         source: 'auth',
         userId: result.user.id,
       });
@@ -217,19 +201,6 @@ export class AuthService {
     // Return user without password
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = result.user;
-
-    // Log successful registration
-    this.loggerService.info('User registration completed successfully', {
-      userId: result.user.id,
-      source: 'auth',
-      metadata: {
-        operation: 'register',
-        roles: result.user.roles,
-        loyaltyAccountCreated: result.user.roles.includes('CUSTOMER'),
-        email: result.user.email,
-      },
-    });
-
 
     return {
       message:
@@ -346,7 +317,7 @@ export class AuthService {
       try {
         await this.simpleTwoFactorService.sendTwoFactorCode(user.id);
       } catch (error) {
-        this.logger.warn('Failed to send 2FA code', error, {
+        console.warn('Failed to send 2FA code', error, {
           source: 'auth',
           userId: user.id,
         });
@@ -456,17 +427,17 @@ export class AuthService {
             },
           });
         }
-      } catch (error) {
-        this.logger.warn('Failed to refresh token', error, {
-          source: 'auth',
-          refreshToken,
+    } catch (error) {
+      console.warn('Failed to refresh token', error, {
+        source: 'auth',
+        refreshToken,
         });
         // Don't fail token refresh if session update fails
       }
 
       return tokens;
     } catch (error) {
-      this.logger.warn('Failed to refresh token', error, {
+      console.warn('Failed to refresh token', error, {
         source: 'auth',
         refreshToken,
       });
@@ -525,7 +496,7 @@ export class AuthService {
     try {
       await this.emailService.sendPasswordResetEmail(user.email, resetToken);
     } catch (error) {
-      this.logger.warn('Failed to send password reset email', error, {
+      console.warn('Failed to send password reset email', error, {
         source: 'auth',
         userId: user.id,
       });
@@ -610,7 +581,7 @@ export class AuthService {
         },
       );
     } catch (error) {
-      this.logger.warn(
+      console.warn(
         'Failed to send password reset notification email',
         error,
         {
@@ -651,7 +622,7 @@ export class AuthService {
           },
         );
       } catch (error) {
-        this.logger.warn('Failed to create login notification', error, {
+        console.warn('Failed to create login notification', error, {
           source: 'auth',
           userId: user.id,
         });
@@ -770,7 +741,7 @@ export class AuthService {
       }
     } catch (error) {
       // Don't throw error as logout should succeed even if token invalidation fails
-      this.logger.warn('Failed to invalidate token during logout', error, {
+      console.warn('Failed to invalidate token during logout', error, {
         source: 'auth',
       });
     }
@@ -871,7 +842,7 @@ export class AuthService {
         verificationUrl,
       });
     } catch (error) {
-      this.logger.error('Failed to send email verification', error, {
+      console.error('Failed to send email verification', error, {
         source: 'auth',
         userId: user.id,
         email: user.email,

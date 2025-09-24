@@ -5,7 +5,6 @@ import { UsersController } from './users.controller';
 import { PrismaService } from '../common/services/prisma.service';
 import { EmailService } from '../common/services/email.service';
 import { RedisService } from '../common/services/redis.service';
-import { LoggerService } from '../common/services/logger.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthModule } from '../auth/auth.module';
 
@@ -17,7 +16,6 @@ import { AuthModule } from '../auth/auth.module';
     PrismaService,
     EmailService,
     RedisService,
-    LoggerService,
     JwtAuthGuard,
   ],
   exports: [UsersService],

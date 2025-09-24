@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { RedisService } from './redis.service';
 import { PrismaService } from './prisma.service';
 import { UserSession } from '@prisma/client';
@@ -22,7 +22,6 @@ export interface CachedSessionData {
 
 @Injectable()
 export class SessionCacheService {
-  private readonly logger = new Logger(SessionCacheService.name);
   private readonly CACHE_TTL = 15 * 60; // 15 minutes (access token lifetime)
   private readonly CACHE_PREFIX = 'session';
 
@@ -44,20 +43,8 @@ export class SessionCacheService {
       // Try Redis cache first
       const cachedData = await this.redisService.get(cacheKey);
       if (cachedData) {
-        this.logger.debug('Session found in cache', {
-          userId,
-          refreshTokenId,
-          source: 'session-cache',
-        });
         return JSON.parse(cachedData) as CachedSessionData;
       }
-
-      // Fallback to database
-      this.logger.debug('Session not in cache, fetching from database', {
-        userId,
-        refreshTokenId,
-        source: 'session-cache',
-      });
 
       const session = await this.getSessionFromDatabase(userId, refreshTokenId);
       if (session) {
@@ -68,7 +55,7 @@ export class SessionCacheService {
 
       return null;
     } catch (error) {
-      this.logger.warn('Failed to get session from cache', error, {
+      console.warn('Failed to get session from cache', error, {
         userId,
         refreshTokenId,
         source: 'session-cache',
@@ -90,14 +77,8 @@ export class SessionCacheService {
         JSON.stringify(cacheData),
         this.CACHE_TTL,
       );
-
-      this.logger.debug('Session cached successfully', {
-        userId: session.userId,
-        refreshTokenId: session.refreshTokenId,
-        source: 'session-cache',
-      });
     } catch (error) {
-      this.logger.warn('Failed to cache session', error, {
+      console.warn('Failed to cache session', error, {
         userId: session.userId,
         refreshTokenId: session.refreshTokenId,
         source: 'session-cache',
@@ -126,15 +107,9 @@ export class SessionCacheService {
           JSON.stringify(sessionData),
           this.CACHE_TTL,
         );
-
-        this.logger.debug('Session activity updated in cache', {
-          userId,
-          refreshTokenId,
-          source: 'session-cache',
-        });
       }
     } catch (error) {
-      this.logger.warn('Failed to update session activity in cache', error, {
+      console.warn('Failed to update session activity in cache', error, {
         userId,
         refreshTokenId,
         source: 'session-cache',
@@ -153,13 +128,8 @@ export class SessionCacheService {
 
     try {
       await this.redisService.del(cacheKey);
-      this.logger.debug('Session invalidated from cache', {
-        userId,
-        refreshTokenId,
-        source: 'session-cache',
-      });
     } catch (error) {
-      this.logger.warn('Failed to invalidate session from cache', error, {
+      console.warn('Failed to invalidate session from cache', error, {
         userId,
         refreshTokenId,
         source: 'session-cache',
@@ -178,14 +148,9 @@ export class SessionCacheService {
 
       if (keys.length > 0) {
         await Promise.all(keys.map((key) => this.redisService.del(key)));
-        this.logger.debug('All user sessions invalidated from cache', {
-          userId,
-          sessionCount: keys.length,
-          source: 'session-cache',
-        });
       }
     } catch (error) {
-      this.logger.warn('Failed to invalidate user sessions from cache', error, {
+      console.warn('Failed to invalidate user sessions from cache', error, {
         userId,
         source: 'session-cache',
       });
@@ -220,13 +185,8 @@ export class SessionCacheService {
         this.cacheSession(session),
       );
       await Promise.all(cachePromises);
-
-      this.logger.log('Cache warmed up successfully', {
-        sessionCount: activeSessions.length,
-        source: 'session-cache',
-      });
     } catch (error) {
-      this.logger.warn('Failed to warm up cache', error, {
+      console.warn('Failed to warm up cache', error, {
         source: 'session-cache',
       });
     }
@@ -294,7 +254,7 @@ export class SessionCacheService {
 
       return keys;
     } catch (error) {
-      this.logger.warn('Failed to scan Redis keys', error, {
+      console.warn('Failed to scan Redis keys', error, {
         pattern,
         source: 'session-cache',
       });
@@ -326,7 +286,7 @@ export class SessionCacheService {
         memoryUsage,
       };
     } catch (error) {
-      this.logger.warn('Failed to get cache stats', error, {
+      console.warn('Failed to get cache stats', error, {
         source: 'session-cache',
       });
       return {

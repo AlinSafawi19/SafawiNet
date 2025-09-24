@@ -2,7 +2,6 @@ import {
   Injectable,
   OnModuleInit,
   OnModuleDestroy,
-  Logger,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
@@ -11,7 +10,6 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
-  private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
     super({
@@ -46,7 +44,7 @@ export class PrismaService
       try {
         await this.$executeRawUnsafe(`TRUNCATE TABLE ${tables} CASCADE;`);
       } catch (error) {
-        this.logger.warn('Failed to truncate tables', error, {
+        console.warn('Failed to truncate tables', error, {
           source: 'prisma',
           tables,
         });

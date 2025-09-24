@@ -3,7 +3,6 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
-  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../common/services/prisma.service';
@@ -45,7 +44,6 @@ interface AuthenticatedRequest extends Request {
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  private readonly logger = new Logger(JwtAuthGuard.name);
 
   constructor(
     private readonly jwtService: JwtService,
@@ -112,7 +110,7 @@ export class JwtAuthGuard implements CanActivate {
                 data: { lastActiveAt: new Date() },
               });
             } catch (error) {
-              this.logger.warn('Failed to update session activity', error, {
+              console.warn('Failed to update session activity', error, {
                 source: 'jwt-auth-guard',
                 sessionId: userSession.id,
               });
@@ -120,7 +118,7 @@ export class JwtAuthGuard implements CanActivate {
             }
           }
         } catch (error) {
-          this.logger.warn('Failed to validate session', error, {
+          console.warn('Failed to validate session', error, {
             source: 'jwt-auth-guard',
             userId: payload.sub,
             refreshTokenId: payload.refreshTokenId,
@@ -143,7 +141,7 @@ export class JwtAuthGuard implements CanActivate {
 
       return true;
     } catch (error) {
-      this.logger.warn('Failed to activate JwtAuthGuard', error, {
+      console.warn('Failed to activate JwtAuthGuard', error, {
         source: 'jwt-auth-guard',
         token,
       });

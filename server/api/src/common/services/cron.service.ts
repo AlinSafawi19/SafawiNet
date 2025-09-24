@@ -2,7 +2,6 @@ import {
   Injectable,
   OnModuleInit,
   OnModuleDestroy,
-  Logger,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { QueueService } from './queue.service';
@@ -10,7 +9,6 @@ import { PrismaService } from './prisma.service';
 
 @Injectable()
 export class CronService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(CronService.name);
 
   constructor(
     private queueService: QueueService,
@@ -31,7 +29,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
         data: { timestamp: new Date().toISOString() },
       });
     } catch (error) {
-      this.logger.error('Failed to add token cleanup job to queue', error, {
+      console.error('Failed to add token cleanup job to queue', error, {
         source: 'cron',
         jobType: 'token_cleanup',
       });
@@ -48,7 +46,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
         data: { timestamp: new Date().toISOString() },
       });
     } catch (error) {
-      this.logger.error('Failed to add session cleanup job to queue', error, {
+      console.error('Failed to add session cleanup job to queue', error, {
         source: 'cron',
         jobType: 'session_cleanup',
       });
@@ -65,7 +63,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
         data: { timestamp: new Date().toISOString() },
       });
     } catch (error) {
-      this.logger.error(
+      console.error(
         'Failed to add notification cleanup job to queue',
         error,
         {
@@ -86,7 +84,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
         data: { timestamp: new Date().toISOString() },
       });
     } catch (error) {
-      this.logger.error('Failed to add database cleanup job to queue', error, {
+      console.error('Failed to add database cleanup job to queue', error, {
         source: 'cron',
         jobType: 'db_cleanup',
       });
@@ -103,7 +101,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
         data: { timestamp: new Date().toISOString() },
       });
     } catch (error) {
-      this.logger.error('Failed to add log rotation job to queue', error, {
+      console.error('Failed to add log rotation job to queue', error, {
         source: 'cron',
         jobType: 'log_rotation',
       });
@@ -120,7 +118,7 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
         data: { timestamp: new Date().toISOString() },
       });
     } catch (error) {
-      this.logger.error('Failed to add health check job to queue', error, {
+      console.error('Failed to add health check job to queue', error, {
         source: 'cron',
         jobType: 'health_check',
       });

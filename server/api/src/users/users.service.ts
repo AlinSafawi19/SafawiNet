@@ -8,7 +8,6 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/services/prisma.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { EmailService } from '../common/services/email.service';
-import { LoggerService } from '../common/services/logger.service';
 import {
   CreateUserDto,
   UpdateProfileDto,
@@ -58,7 +57,6 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
-    private readonly logger: LoggerService,
   ) {}
 
   async createUser(
@@ -167,7 +165,7 @@ export class UsersService {
         verificationUrl,
       });
     } catch (error) {
-      this.logger.warn('Failed to send welcome email during user creation', {
+      console.warn('Failed to send welcome email during user creation', {
         source: 'api',
         userId: user.id,
         metadata: {
@@ -353,7 +351,7 @@ export class UsersService {
           String(currentPassword),
         );
       } catch (error) {
-        this.logger.warn(
+        console.warn(
           'Password verification failed during password change',
           {
             source: 'api',
@@ -406,7 +404,7 @@ export class UsersService {
           },
         );
       } catch (error) {
-        this.logger.warn('Failed to send password change notification email', {
+        console.warn('Failed to send password change notification email', {
           source: 'api',
           userId,
           metadata: {
@@ -423,7 +421,7 @@ export class UsersService {
         forceLogout: true,
       };
     } catch (error) {
-      this.logger.error(
+      console.error(
         'Failed to change password',
         error instanceof Error ? error : undefined,
         {

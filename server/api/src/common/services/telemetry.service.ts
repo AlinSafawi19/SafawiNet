@@ -2,7 +2,6 @@ import {
   Injectable,
   OnModuleInit,
   OnModuleDestroy,
-  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NodeSDK } from '@opentelemetry/sdk-node';
@@ -13,7 +12,6 @@ import { trace, SpanAttributes } from '@opentelemetry/api';
 
 @Injectable()
 export class TelemetryService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(TelemetryService.name);
   private sdk?: NodeSDK;
 
   constructor(private configService: ConfigService) {}
@@ -45,7 +43,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
 
       this.sdk.start();
     } catch (error) {
-      this.logger.warn('Failed to initialize telemetry SDK', error, {
+      console.warn('Failed to initialize telemetry SDK', error, {
         source: 'telemetry',
         otelEndpoint,
       });
@@ -58,7 +56,7 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
       try {
         await this.sdk.shutdown();
       } catch (error) {
-        this.logger.warn('Failed to shutdown telemetry SDK', error, {
+        console.warn('Failed to shutdown telemetry SDK', error, {
           source: 'telemetry',
         });
       }

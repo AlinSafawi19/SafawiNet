@@ -11,7 +11,6 @@ import {
   Request,
   HttpStatus,
   HttpCode,
-  Logger,
 } from '@nestjs/common';
 import { ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -163,7 +162,6 @@ interface BroadcastNotificationResponse {
 @Roles(Role.ADMIN)
 @Throttle({ users: { limit: 100, ttl: 60000 } }) // 100 requests per minute for admin endpoints
 export class AdminController {
-  private readonly logger = new Logger(AdminController.name);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -599,13 +597,6 @@ export class AdminController {
       processedCount = result.count;
       updatedSessions.push(...validSessions.map((s) => s.id));
 
-      // Log admin action
-      this.logger.log('Admin batch session update completed', {
-        processedCount,
-        reason: body.reason,
-        source: 'admin-sessions',
-      });
-
       return {
         success: true,
         processedCount,
@@ -614,7 +605,7 @@ export class AdminController {
         errors,
       };
     } catch (error) {
-      this.logger.error('Failed to batch update sessions (admin)', error, {
+      console.error('Failed to batch update sessions (admin)', error, {
         sessionIds: body.sessionIds,
         reason: body.reason,
         source: 'admin-sessions',
@@ -748,13 +739,6 @@ export class AdminController {
       processedCount = result.count;
       deletedSessions.push(...validSessionIds);
 
-      // Log admin action
-      this.logger.log('Admin batch session deletion completed', {
-        deletedCount: processedCount,
-        reason: body.reason,
-        source: 'admin-sessions',
-      });
-
       return {
         success: true,
         processedCount,
@@ -763,7 +747,7 @@ export class AdminController {
         errors,
       };
     } catch (error) {
-      this.logger.error('Failed to batch delete sessions (admin)', error, {
+      console.error('Failed to batch delete sessions (admin)', error, {
         sessionIds: body.sessionIds,
         reason: body.reason,
         source: 'admin-sessions',
@@ -897,13 +881,6 @@ export class AdminController {
       processedCount = result.count;
       revokedSessions.push(...validSessionIds);
 
-      // Log admin action
-      this.logger.log('Admin batch session revocation completed', {
-        revokedCount: processedCount,
-        reason: body.reason,
-        source: 'admin-sessions',
-      });
-
       return {
         success: true,
         processedCount,
@@ -912,7 +889,7 @@ export class AdminController {
         errors,
       };
     } catch (error) {
-      this.logger.error('Failed to batch revoke sessions (admin)', error, {
+      console.error('Failed to batch revoke sessions (admin)', error, {
         sessionIds: body.sessionIds,
         reason: body.reason,
         source: 'admin-sessions',
