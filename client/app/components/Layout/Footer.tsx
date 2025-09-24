@@ -1,21 +1,14 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '../../contexts/LanguageContext';
 
-const Footer = () => {
+const Footer = React.memo(() => {
   const { t, locale } = useLanguage();
 
-  // Performance logging
-  const footerStartTime = useRef(Date.now());
-  const footerLog = (message: string, data?: any) => {
-    const elapsed = Date.now() - footerStartTime.current;
-    console.log(`🦶 [Footer] ${message}`, data ? { ...data, elapsed: `${elapsed}ms` } : `(${elapsed}ms)`);
-  };
-
-  // Create footer sections with conditional ordering for RTL support
-  const footerSections = [
+  // Create footer sections with conditional ordering for RTL support - memoize to prevent re-creation
+  const footerSections = useMemo(() => [
     {
       key: 'quickLinks',
       title: t('footer.sections.quickLinks'),
@@ -59,20 +52,13 @@ const Footer = () => {
         { href: '/sitemap', text: t('footer.links.sitemap') },
       ],
     },
-  ];
+  ], [t]);
 
-  // Reverse the order for Arabic (RTL)
-  const orderedSections =
-    locale === 'ar' ? [...footerSections].reverse() : footerSections;
-
-  // Only log when locale changes
-  useEffect(() => {
-    footerLog('Footer state changed', {
-      locale,
-      sectionCount: footerSections.length,
-      orderedSections: orderedSections.length
-    });
-  }, [locale]);
+  // Reverse the order for Arabic (RTL) - memoize to prevent re-creation
+  const orderedSections = useMemo(() =>
+    locale === 'ar' ? [...footerSections].reverse() : footerSections,
+    [locale, footerSections]
+  );
 
   return (
     <footer className="w-full min-h-56 bg-turquoise-100 leading-7 transition-colors duration-200">
@@ -199,6 +185,8 @@ const Footer = () => {
       </div>
     </footer>
   );
-};
+});
+
+Footer.displayName = 'Footer';
 
 export default Footer;

@@ -1,14 +1,11 @@
 import './globals.css';
 import FooterWrapper from '@app/components/Layout/FooterWrapper';
 import Header from '@app/components/Layout/Header';
-import { OptimizedContextProvider } from './components/OptimizedContextProvider';
+import { ContextProvider } from './components/ContextProvider';
 import DynamicLangAttribute from './components/DynamicLangAttribute';
 import { AppInitializer } from './components/AppInitializer';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { GlobalErrorHandler } from './components/GlobalErrorHandler';
-import { GlobalPerformanceMonitor } from './components/GlobalPerformanceMonitor';
-import { PerformanceDashboard } from './components/PerformanceDashboard';
-import { PerformanceOptimizer } from './components/PerformanceOptimizer';
 // Fonts are now handled via globals.css only
 
 /**
@@ -22,9 +19,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Performance logging
-  const layoutStartTime = Date.now();
-  console.log(`🏗️ [RootLayout] Layout rendering started (${Date.now() - layoutStartTime}ms)`);
 
   return (
     <html lang="en">
@@ -36,26 +30,24 @@ export default function RootLayout({
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
+        <link rel="preconnect" href="https://static.wixstatic.com" />
+        <link rel="dns-prefetch" href="https://static.wixstatic.com" />
       </head>
       <body
         className="text-black bg-site transition-colors duration-200"
       >
-                <ErrorBoundary>
-                  <GlobalErrorHandler>
-                    <GlobalPerformanceMonitor>
-                      <PerformanceOptimizer />
-                      <OptimizedContextProvider>
-                        <AppInitializer>
-                          <DynamicLangAttribute />
-                          <Header />
-                          <main className="bg-site">{children}</main>
-                          <FooterWrapper />
-                          <PerformanceDashboard />
-                        </AppInitializer>
-                      </OptimizedContextProvider>
-                    </GlobalPerformanceMonitor>
-                  </GlobalErrorHandler>
-                </ErrorBoundary>
+        <ErrorBoundary>
+          <GlobalErrorHandler>
+            <ContextProvider>
+              <AppInitializer>
+                <DynamicLangAttribute />
+                <Header />
+                <main className="bg-site">{children}</main>
+                <FooterWrapper />
+              </AppInitializer>
+            </ContextProvider>
+          </GlobalErrorHandler>
+        </ErrorBoundary>
       </body>
     </html>
   );

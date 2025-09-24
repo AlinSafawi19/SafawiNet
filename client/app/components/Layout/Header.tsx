@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import {
   HiBell,
@@ -19,22 +19,15 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import UserDropdown from './UserDropdown';
 import LanguageToggle from './LanguageToggle';
 
-const Header = () => {
+const Header = React.memo(() => {
   const { user, logout, isLoading: isAuthLoading, isSuperAdmin } = useAuth();
-  const { locale, t } = useLanguage();
+  const { locale, t, isLoading: isLanguageLoading } = useLanguage();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Performance logging
-  const headerStartTime = useRef(Date.now());
-  const headerLog = (message: string, data?: any) => {
-    const elapsed = Date.now() - headerStartTime.current;
-    console.log(`📱 [Header] ${message}`, data ? { ...data, elapsed: `${elapsed}ms` } : `(${elapsed}ms)`);
-  };
-
-  // Admin navigation items
-  const adminNavigationItems = [
+  // Admin navigation items - memoize to prevent re-creation
+  const adminNavigationItems = useMemo(() => [
     {
       name: 'Dashboard',
       href: '/admin',
@@ -76,13 +69,13 @@ const Header = () => {
       icon: HiChartBar,
       label: 'admin.sidebar.analytics',
     },
-  ] as const;
+  ] as const, [isSuperAdmin]);
 
-  const toggleMobileMenu = () => {
+  const toggleMobileMenu = useCallback(() => {
     if (!isAnimating) {
       setIsMobileMenuOpen(!isMobileMenuOpen);
     }
-  };
+  }, [isAnimating, isMobileMenuOpen]);
 
   const closeMobileMenu = useCallback(() => {
     if (!isAnimating) {
@@ -118,21 +111,26 @@ const Header = () => {
     };
   }, [isMobileMenuOpen, closeMobileMenu]);
 
-  // Scroll detection
+  // Scroll detection with throttling for better performance
   useEffect(() => {
-    headerLog('Setting up scroll listener');
+    let ticking = false;
+    
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const newIsScrolled = scrollY > 0;
-      if (newIsScrolled !== isScrolled) {
-        headerLog('Scroll state changed', { scrollY, isScrolled: newIsScrolled });
-        setIsScrolled(newIsScrolled);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          const newIsScrolled = scrollY > 0;
+          if (newIsScrolled !== isScrolled) {
+            setIsScrolled(newIsScrolled);
+          }
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
-      headerLog('Removing scroll listener');
       window.removeEventListener('scroll', handleScroll);
     };
   }, [isScrolled]);
@@ -142,18 +140,6 @@ const Header = () => {
     user && user.roles && user.roles.includes('ADMIN'), 
     [user]
   );
-  
-  // Only log when significant values change
-  useEffect(() => {
-    headerLog('Header state changed', { 
-      isAdmin, 
-      isAuthLoading, 
-      isMobileMenuOpen, 
-      isScrolled,
-      hasUser: !!user,
-      locale 
-    });
-  }, [isAdmin, isAuthLoading, isMobileMenuOpen, isScrolled, user, locale]);
 
   return (
     <>
@@ -559,14 +545,16 @@ const Header = () => {
                   )}
 
                   {/* Language Section */}
-                  <div className="flex flex-col items-center space-y-3">
-                    <h4 className="text-white/60 text-sm font-medium uppercase tracking-wider">
-                      {t('header.mobile.language')}
-                    </h4>
-                    <div className="flex space-x-3">
-                      <LanguageToggle variant="mobile" />
+                  {!isLanguageLoading && (
+                    <div className="flex flex-col items-center space-y-3">
+                      <h4 className="text-white/60 text-sm font-medium uppercase tracking-wider">
+                        {t('header.mobile.language')}
+                      </h4>
+                      <div className="flex space-x-3">
+                        <LanguageToggle variant="mobile" />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -578,6 +566,8 @@ const Header = () => {
       <div className="h-header"></div>
     </>
   );
-};
+});
+
+Header.displayName = 'Header';
 
 export default Header;

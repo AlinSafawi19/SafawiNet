@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { buildApiUrl, API_CONFIG } from '../config/api';
-import { optimizedApi } from '../services/optimized-api.service';
 
 // Global state to prevent multiple API calls across different hook instances
 let globalLoyaltyState = {
@@ -165,14 +164,13 @@ export const useLoyalty = () => {
     });
 
     try {
-      const response = await optimizedApi.get(API_CONFIG.ENDPOINTS.LOYALTY.ME, {
-        component: 'useLoyalty',
-        action: 'fetchLoyaltyAccount',
-        userId: user.id,
-      });
+      const response = await authenticatedFetch(
+        buildApiUrl(API_CONFIG.ENDPOINTS.LOYALTY.ME)
+      );
 
-      if (response.success && response.data) {
-        const data = response.data;
+      if (response.ok) {
+        const responseData = await response.json();
+        const data = responseData;
 
         // Update global state
         globalLoyaltyState.data = data;
@@ -200,15 +198,16 @@ export const useLoyalty = () => {
         setError(null);
       } else {
         // Only set error for actual server errors, not 404s
+        const errorText = await response.text();
+        const errorMessage = errorText || 'Failed to fetch loyalty account';
 
         // Update global state
-        globalLoyaltyState.error =
-          response.error || 'Failed to fetch loyalty account';
+        globalLoyaltyState.error = errorMessage;
         globalLoyaltyState.data = null;
         globalLoyaltyState.lastFetchUserId = user.id;
 
         // Update local state
-        setError(response.error || 'Failed to fetch loyalty account');
+        setError(errorMessage);
         setLoyaltyAccount(null);
       }
     } catch (err) {

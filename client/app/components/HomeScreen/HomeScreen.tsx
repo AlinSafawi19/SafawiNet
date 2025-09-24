@@ -1,47 +1,37 @@
 'use client';
 
+import React from 'react';
 import Image from 'next/image';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { LoadingPage } from '../LoadingPage';
 
-export function HomeScreen() {
+export const HomeScreen = React.memo(() => {
   const { t, locale } = useLanguage();
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Performance logging
-  const homeStartTime = useRef(Date.now());
-  const homeLog = (message: string, data?: any) => {
-    const elapsed = Date.now() - homeStartTime.current;
-    console.log(`🏠 [HomeScreen] ${message}`, data ? { ...data, elapsed: `${elapsed}ms` } : `(${elapsed}ms)`);
-  };
+  // Memoize admin check to prevent unnecessary re-renders
+  const isAdmin = useMemo(() => 
+    user && user.roles && user.roles.includes('ADMIN'), 
+    [user]
+  );
 
   useEffect(() => {
-    homeLog('HomeScreen useEffect started', { isLoading, hasUser: !!user, isAdmin: user?.roles?.includes('ADMIN') });
     // Redirect admin users to admin dashboard
-    if (!isLoading && user && user.roles && user.roles.includes('ADMIN')) {
-      homeLog('Redirecting admin user to admin dashboard');
+    if (!isLoading && isAdmin) {
       setIsRedirecting(true);
       router.push('/admin');
-    } else {
-      homeLog('No redirect needed');
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router, isAdmin]);
 
   // Show loading page while redirecting
   if (isRedirecting) {
-    homeLog('Showing loading page for redirect');
     return <LoadingPage />;
   }
-
-  // Only log when significant values change
-  useEffect(() => {
-    homeLog('HomeScreen state changed', { locale, hasUser: !!user, isLoading });
-  }, [locale, user, isLoading]);
   
   return (
     <div className="home-screen mx-auto relative">
@@ -98,8 +88,8 @@ export function HomeScreen() {
               className="w-full px-10 sm:px-0"
               width={1000}
               height={800}
-              priority={true}
-              loading="eager"
+              priority={false}
+              loading="lazy"
               placeholder="blur"
               blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
             />
@@ -130,4 +120,6 @@ export function HomeScreen() {
       </div>
     </div>
   );
-}
+});
+
+HomeScreen.displayName = 'HomeScreen';

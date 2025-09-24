@@ -38,11 +38,6 @@ export class SecurityUtils {
       }
       return await argon2.verify(hash, password);
     } catch (error) {
-      // Log error in production, but don't expose sensitive data
-      console.warn(
-        'Failed to verify password:',
-        error instanceof Error ? error.message : 'Unknown error',
-      );
       return false;
     }
   }

@@ -19,15 +19,6 @@ const AuthForm = memo(function AuthForm() {
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Performance logging - only in development
-  const authFormStartTime = useRef(Date.now());
-  const authFormLog = (message: string, data?: any) => {
-    if (process.env.NODE_ENV === 'development') {
-      const elapsed = Date.now() - authFormStartTime.current;
-      console.log(`🔐 [AuthForm] ${message}`, data ? { ...data, elapsed: `${elapsed}ms` } : `(${elapsed}ms)`);
-    }
-  };
-
   // Use the new backend message translation hook
   const {
     error,
@@ -67,13 +58,6 @@ const AuthForm = memo(function AuthForm() {
   const hasInitialized = useRef(false);
   useEffect(() => {
     if (!hasInitialized.current && process.env.NODE_ENV === 'development') {
-      authFormLog('AuthForm component initialized', {
-        mode: 'login',
-        hasUser: !!user,
-        isLoading,
-        locale,
-        show2FAForm
-      });
       hasInitialized.current = true;
     }
   }, []);
@@ -105,28 +89,22 @@ const AuthForm = memo(function AuthForm() {
     );
 
     if (hasSignificantStateChange) {
-      authFormLog('AuthForm state changed (significant)', currentState);
       prevState.current = currentState;
     }
   }, [isFormLoading, isRedirecting, show2FAForm, user, isLoading, error, errorKey, successMessage, successKey]);
 
   // Redirect logged-in users
-  useEffect(() => {
-    authFormLog('Checking user redirect', { hasUser: !!user, isLoading, userRoles: user?.roles });
-    
+  useEffect(() => {    
     if (!isLoading && user) {
       // Check if user has admin role
       const isAdmin = user.roles && user.roles.includes('ADMIN');
-      authFormLog('User role check', { isAdmin, roles: user.roles });
 
       if (isAdmin) {
         // Redirect admin users to admin dashboard
-        authFormLog('Redirecting admin user to admin dashboard');
         setIsRedirecting(true);
         router.push('/admin');
       } else {
         // Redirect customer users to home page
-        authFormLog('Redirecting customer user to home page');
         setIsRedirecting(true);
         router.push('/');
       }
@@ -201,11 +179,6 @@ const AuthForm = memo(function AuthForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    authFormLog('Form submission started', { 
-      mode: 'login',
-      email: formData.email,
-      hasPassword: !!formData.password
-    });
     
     clearError();
     setIsFormLoading(true);
@@ -217,22 +190,13 @@ const AuthForm = memo(function AuthForm() {
     });
 
     // Validate form before submission
-    authFormLog('Validating form');
     if (!validateForm()) {
-      authFormLog('Form validation failed', { validationErrors });
       setIsFormLoading(false);
       return;
     }
-    authFormLog('Form validation passed');
 
     try {
-      authFormLog('Attempting login', { email: formData.email });
       const result = await login(formData.email, formData.password);
-        authFormLog('Login result received', { 
-          success: result.success, 
-          requiresTwoFactor: result.requiresTwoFactor,
-          hasUser: !!result.user 
-        });
         if (result.success) {
           // User is verified, check role and redirect accordingly
           const currentUser = result.user;
@@ -290,10 +254,8 @@ const AuthForm = memo(function AuthForm() {
           }
         }
     } catch (error) {
-      authFormLog('Form submission error', { error: error instanceof Error ? error.message : 'Unknown error' });
       setErrorKey('auth.messages.generalError');
     } finally {
-      authFormLog('Form submission completed');
       setIsFormLoading(false);
     }
   };
@@ -301,28 +263,19 @@ const AuthForm = memo(function AuthForm() {
   // Handle 2FA form submission
   const handle2FASubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    authFormLog('2FA form submission started', { 
-      userId: twoFactorUserId,
-      codeLength: twoFactorCode.length 
-    });
     
     clearError();
     setIs2FALoading(true);
 
     if (!twoFactorCode.trim()) {
-      authFormLog('2FA validation failed - empty code');
       setErrorKey('auth.twoFactor.codeRequired');
       setIs2FALoading(false);
       return;
     }
 
     try {
-      authFormLog('Attempting 2FA login', { userId: twoFactorUserId });
       const result = await loginWith2FA(twoFactorUserId, twoFactorCode);
-      authFormLog('2FA result received', { 
-        success: result.success,
-        hasUser: !!result.user 
-      });
+
       if (result.success) {
         // 2FA successful, redirect based on role
         const currentUser = result.user;
@@ -421,20 +374,12 @@ const AuthForm = memo(function AuthForm() {
     );
 
     if (hasSignificantChange) {
-      authFormLog('AuthForm rendered (significant change)', {
-        ...currentState,
-        formDataKeys: Object.keys(formData).filter(key => formData[key as keyof typeof formData]),
-        validationErrorCount: Object.keys(validationErrors).filter(key => validationErrors[key as keyof ValidationErrors]).length
-      });
       prevRenderState.current = currentState;
     }
   });
 
   // Show loading page while redirecting
   if (isRedirecting) {
-    if (process.env.NODE_ENV === 'development') {
-      authFormLog('Showing loading page - redirecting');
-    }
     return <LoadingPage />;
   }
 

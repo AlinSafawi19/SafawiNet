@@ -5,12 +5,12 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { AuthProvider } from '../contexts/AuthContext';
 import { LanguageProvider } from '../contexts/LanguageContext';
 
-interface OptimizedContextProviderProps {
+interface ContextProviderProps {
   children: React.ReactNode;
 }
 
-export const OptimizedContextProvider: React.FC<
-  OptimizedContextProviderProps
+export const ContextProvider: React.FC<
+  ContextProviderProps
 > = ({ children }) => {
   return (
     <ErrorBoundary>

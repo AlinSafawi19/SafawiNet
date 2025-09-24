@@ -19,6 +19,7 @@ import React, {
   ReactNode,
   useRef,
   useCallback,
+  useMemo,
 } from 'react';
 import { buildApiUrl, API_CONFIG } from '../config/api';
 import { logError, logWarning } from '../utils/errorLogger';
@@ -101,15 +102,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasInitialized, setHasInitialized] = useState(false);
   const isInitializingRef = useRef(false);
-
-  // Performance logging - only in development
-  const authStartTime = useRef(Date.now());
-  const authLog = (message: string, data?: any) => {
-    if (process.env.NODE_ENV === 'development' || (typeof window !== 'undefined' && window.location.search.includes('debug=performance'))) {
-      const elapsed = Date.now() - authStartTime.current;
-      console.log(`🔐 [AuthContext] ${message}`, data ? { ...data, elapsed: `${elapsed}ms` } : `(${elapsed}ms)`);
-    }
-  };
 
   // Cache for API responses to prevent duplicate calls
   const apiCache = useRef<Map<string, { data: any; timestamp: number }>>(
@@ -342,18 +334,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Prevent multiple calls during initialization to avoid duplicate API calls
     // This fixes the performance issue where /users/me and /v1/auth/refresh were called twice
     if (hasInitialized || isInitializingRef.current) {
-      authLog('checkAuthStatus skipped - already initialized or initializing');
       return;
     }
 
-    authLog('checkAuthStatus started');
     isInitializingRef.current = true;
 
     try {
       // Always check the backend for authentication status
       // HTTP-only cookies can't be read by JavaScript, so we rely on the backend
-      const apiStartTime = Date.now();
-      authLog('Making API call to /users/me');
       
       const response = await cachedFetch(
         buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
@@ -363,23 +351,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       );
 
-      const apiEndTime = Date.now();
-      authLog('API call to /users/me completed', { 
-        status: response.status, 
-        duration: `${apiEndTime - apiStartTime}ms` 
-      });
-
       if (response.ok) {
         const userData = await response.json();
-        authLog('User data received', { 
-          authenticated: userData.authenticated, 
-          hasUser: !!userData.user,
-          isVerified: userData.user?.isVerified 
-        });
 
         // Check if user is authenticated based on new response format
         if (!userData.authenticated || !userData.user) {
-          authLog('User not authenticated - setting user to null');
           setUser(null);
           return;
         }
@@ -388,12 +364,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Check if user is verified before setting login state
         if (!finalUserData.isVerified) {
-          authLog('User not verified - setting user to null');
           setUser(null);
           return;
         }
 
-        authLog('User authenticated and verified - setting user state');
         setUser(finalUserData);
 
         // Check for offline messages after successful authentication - defer to avoid blocking
@@ -402,19 +376,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }, 1000); // Reduced delay for better UX
       } else {
         // Handle any non-200 responses (shouldn't happen with new server format)
-        authLog('API call failed - setting user to null', { status: response.status });
         setUser(null);
       }
     } catch (error) {
       // Only log actual network/technical errors
-      authLog('API call error - setting user to null', { error: error instanceof Error ? error.message : 'Unknown error' });
       setUser(null);
     } finally {
       // Set loading to false after auth check is complete
       // This ensures that even if user is null, we know the auth state
-      authLog('Auth initialization completed - setting loading to false');
-      setIsLoading(false);
-      setHasInitialized(true);
+      // Batch state updates to prevent multiple re-renders
+      React.startTransition(() => {
+        setIsLoading(false);
+        setHasInitialized(true);
+      });
       isInitializingRef.current = false; // Reset the ref after initialization
     }
   }, [hasInitialized, checkOfflineMessages, cachedFetch]);
@@ -840,7 +814,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let isMounted = true;
-    authLog('AuthContext useEffect started');
+
+    // Prevent multiple initializations
+    if (hasInitialized) {
+      return;
+    }
 
     // Handle rate limiting errors from WebSocket
     const handleRateLimitError = (event: CustomEvent) => {
@@ -855,21 +833,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     const initializeAuth = async () => {
-      if (isMounted) {
-        authLog('Initializing auth check');
+      if (isMounted && !hasInitialized) {
         // Use requestIdleCallback for better performance
         if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-          authLog('Using requestIdleCallback for auth check');
           requestIdleCallback(() => {
-            if (isMounted) {
+            if (isMounted && !hasInitialized) {
               checkAuthStatus();
             }
           });
         } else {
           // Fallback for browsers without requestIdleCallback
-          authLog('Using setTimeout fallback for auth check');
           setTimeout(() => {
-            if (isMounted) {
+            if (isMounted && !hasInitialized) {
               checkAuthStatus();
             }
           }, 0);
@@ -878,38 +853,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     initializeAuth();
-
-    // Listen for WebSocket authentication broadcasts
-    const handleAuthBroadcast = (data: { type: string; user?: any }) => {
-      if (data.type === 'login' && data.user) {
-        // Only set user if they are verified
-        if (data.user.isVerified) {
-          setUser(data.user);
-        } else {
-          // User not verified, don't set login state
-          return;
-        }
-
-        // Check if user was on auth page and redirect based on role
-        const currentPath = window.location.pathname;
-        if (currentPath === '/auth' || currentPath.startsWith('/auth/')) {
-          // Use window.location for cross-device redirects
-          setTimeout(() => {
-            if (
-              data.user &&
-              data.user.isVerified &&
-              data.user.roles &&
-              data.user.roles.includes('ADMIN')
-            ) {
-              window.location.href = '/admin';
-            } else if (data.user && data.user.isVerified) {
-              window.location.href = '/';
-            }
-            // If user is not verified, stay on auth page
-          }, 2000);
-        }
-      }
-    };
 
     // Add event listeners
 
@@ -1073,7 +1016,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         handleRateLimitError as EventListener
       );
     };
-  }, [checkAuthStatus, loginWithTokens, handleForceLogout, logout, user]);
+  }, [checkAuthStatus, loginWithTokens, handleForceLogout, logout, hasInitialized]);
 
   // Set up automatic token refresh timer
   useEffect(() => {
@@ -1116,7 +1059,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     [user]
   );
 
-  const value: AuthContextType = {
+  const value: AuthContextType = useMemo(() => ({
     user,
     isLoading,
     login,
@@ -1132,7 +1075,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAdmin,
     isSuperAdmin,
     hasRole,
-  };
+  }), [
+    user,
+    isLoading,
+    login,
+    loginWith2FA,
+    loginWithTokens,
+    register,
+    logout,
+    checkAuthStatus,
+    refreshToken,
+    authenticatedFetch,
+    joinPendingVerificationRoom,
+    updateUser,
+    isAdmin,
+    isSuperAdmin,
+    hasRole,
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -3,17 +3,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingPage } from './LoadingPage';
-import { SmallLoadingSpinner, SkeletonLoader } from './SuspenseWrapper';
 
-interface OptimizedLoadingWrapperProps {
+interface LoadingWrapperProps {
   children: React.ReactNode;
   showSkeleton?: boolean;
   skeletonLines?: number;
   minLoadingTime?: number; // Minimum loading time to prevent flash
 }
 
-export const OptimizedLoadingWrapper: React.FC<
-  OptimizedLoadingWrapperProps
+export const LoadingWrapper: React.FC<
+  LoadingWrapperProps
 > = ({
   children,
   showSkeleton = false,
@@ -41,7 +40,7 @@ export const OptimizedLoadingWrapper: React.FC<
     if (showSkeleton) {
       return (
         <div className="p-4 space-y-4">
-          <SkeletonLoader lines={skeletonLines} />
+          <LoadingPage/>
         </div>
       );
     }

@@ -5,7 +5,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useBackendMessageTranslation } from '../../hooks/useBackendMessageTranslation';
 import { buildApiUrl, API_CONFIG } from '../../config/api';
 import { logInfo, logError } from '../../utils/errorLogger';
-import { optimizedApi } from '../../services/optimized-api.service';
+import { api } from '../../services/api.service';
 
 interface AdminUser {
   name: string;
@@ -294,7 +294,7 @@ export default function AdminCreationForm({
     }
 
     try {
-      const response = await optimizedApi.post(
+      const response = await api.post(
         API_CONFIG.ENDPOINTS.USERS.CREATE_USER,
         formData,
         {

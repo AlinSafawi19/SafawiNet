@@ -171,18 +171,6 @@ export class WebSocketRateLimitService {
       try {
         timestamps = JSON.parse(existingData);
       } catch (error) {
-        // If parsing fails, start fresh
-        console.error(
-          'Failed to parse timestamps from Redis for sliding window rate limiting:',
-          {
-            clientId,
-            type,
-            error: error instanceof Error ? error.message : String(error),
-            existingData:
-              existingData?.substring(0, 100) +
-              (existingData?.length > 100 ? '...' : ''),
-          },
-        );
         timestamps = [];
       }
     }

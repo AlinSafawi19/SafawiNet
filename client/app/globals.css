@@ -280,6 +280,23 @@ input:focus-visible {
   box-shadow: none !important;
 }
 
+/* Custom autofill styles - Light purple instead of default blue */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #f3e8ff inset !important;
+  -webkit-text-fill-color: #581c87 !important;
+  background-color: #f3e8ff !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* For Firefox autofill */
+input:-moz-autofill {
+  background-color: #f3e8ff !important;
+  color: #581c87 !important;
+}
+
 /* Search input animations */
 @keyframes slideInFromRight {
   from {
