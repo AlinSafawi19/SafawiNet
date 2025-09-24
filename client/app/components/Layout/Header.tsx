@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import {
   HiBell,
@@ -26,6 +26,13 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // Performance logging
+  const headerStartTime = useRef(Date.now());
+  const headerLog = (message: string, data?: any) => {
+    const elapsed = Date.now() - headerStartTime.current;
+    console.log(`📱 [Header] ${message}`, data ? { ...data, elapsed: `${elapsed}ms` } : `(${elapsed}ms)`);
+  };
 
   // Admin navigation items
   const adminNavigationItems = [
@@ -114,20 +121,40 @@ const Header = () => {
 
   // Scroll detection
   useEffect(() => {
+    headerLog('Setting up scroll listener');
     const handleScroll = () => {
-      if (window.scrollY > 0) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
+      const scrollY = window.scrollY;
+      const newIsScrolled = scrollY > 0;
+      if (newIsScrolled !== isScrolled) {
+        headerLog('Scroll state changed', { scrollY, isScrolled: newIsScrolled });
+        setIsScrolled(newIsScrolled);
       }
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    return () => {
+      headerLog('Removing scroll listener');
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isScrolled]);
 
-  // Check if user is admin
-  const isAdmin = user && user.roles && user.roles.includes('ADMIN');
+  // Check if user is admin - memoize to prevent re-renders
+  const isAdmin = useMemo(() => 
+    user && user.roles && user.roles.includes('ADMIN'), 
+    [user]
+  );
+  
+  // Only log when significant values change
+  useEffect(() => {
+    headerLog('Header state changed', { 
+      isAdmin, 
+      isAuthLoading, 
+      isMobileMenuOpen, 
+      isScrolled,
+      hasUser: !!user,
+      locale 
+    });
+  }, [isAdmin, isAuthLoading, isMobileMenuOpen, isScrolled, user, locale]);
 
   return (
     <>
@@ -190,6 +217,7 @@ const Header = () => {
             {/* Desktop Navigation */}
             <nav className="hidden lg-tablet:flex items-center space-x-4 xl:space-x-6">
               <button
+                type='button'
                 className="hover:text-purple-500 transition-colors"
                 aria-label={t('header.actions.notifications')}
               >
@@ -258,6 +286,7 @@ const Header = () => {
             {/* Mobile Menu Button */}
             <button
               onClick={toggleMobileMenu}
+              type='button'
               className="lg-tablet:hidden p-2 hover:text-purple-500 transition-colors"
               aria-label={t('accessibility.toggleMobileMenu')}
             >
@@ -297,6 +326,7 @@ const Header = () => {
           {/* Close Button */}
           <button
             onClick={closeMobileMenu}
+            type='button'
             className={`absolute top-6 text-white hover:text-purple-500 transition-all duration-300 z-[10000] right-6 ${
               isMobileMenuOpen
                 ? 'opacity-100 translate-x-0'
@@ -476,7 +506,7 @@ const Header = () => {
                       </span>
                     </Link>
                   )}
-                  <button className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group">
+                  <button type='button' className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group">
                     <div className="text-white group-hover:text-purple-400 transition-colors">
                       {HiBell({ className: 'w-7 h-7' })}
                     </div>
@@ -512,6 +542,7 @@ const Header = () => {
                         </span>
                       </div>
                       <button
+                        type='button'
                         onClick={() => {
                           logout();
                           closeMobileMenu();

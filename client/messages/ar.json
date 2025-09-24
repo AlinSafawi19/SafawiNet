@@ -218,8 +218,6 @@
       "createAccount": "إنشاء حساب",
       "signingIn": "جاري تسجيل الدخول...",
       "creatingAccount": "جاري إنشاء الحساب...",
-      "dontHaveAccount": "ليس لديك حساب؟",
-      "alreadyHaveAccount": "لديك حساب بالفعل؟",
       "signUp": "إنشاء حساب",
       "signInLink": "تسجيل الدخول",
       "forgotPassword": "نسيت كلمة المرور؟",
@@ -370,11 +368,7 @@
     },
     "copyright": {
       "by": "بواسطة",
-      "allRightsReserved": ".جميع الحقوق محفوظة"
-    },
-    "preferences": {
-      "theme": "المظهر",
-      "language": "اللغة"
+      "allRightsReserved": "جميع الحقوق محفوظة"
     }
   },
   "admin": {

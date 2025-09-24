@@ -1,27 +1,32 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
 import { LoadingPage } from '../LoadingPage';
-import { ParallaxImage } from '../ParallaxImage';
 import { useBackendMessageTranslation } from '../../hooks/useBackendMessageTranslation';
 
 interface ValidationErrors {
-  name?: string; // Translation key
   email?: string; // Translation key
   password?: string; // Translation key
-  confirmPassword?: string; // Translation key
 }
 
-export function AuthForm() {
-  const { login, loginWith2FA, register, user, isLoading } = useAuth();
+const AuthForm = memo(function AuthForm() {
+  const { login, loginWith2FA, user, isLoading } = useAuth();
   const { t, locale } = useLanguage();
   const router = useRouter();
-  const [isLogin, setIsLogin] = useState(true);
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Performance logging - only in development
+  const authFormStartTime = useRef(Date.now());
+  const authFormLog = (message: string, data?: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      const elapsed = Date.now() - authFormStartTime.current;
+      console.log(`🔐 [AuthForm] ${message}`, data ? { ...data, elapsed: `${elapsed}ms` } : `(${elapsed}ms)`);
+    }
+  };
 
   // Use the new backend message translation hook
   const {
@@ -30,29 +35,23 @@ export function AuthForm() {
     errorKey,
     successKey,
     setError,
-    setSuccess,
     setErrorKey,
     setSuccessKey,
     setBackendError,
     setBackendSuccess,
     clearMessages,
     clearError,
-    clearSuccess,
   } = useBackendMessageTranslation();
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
     password: '',
-    confirmPassword: '',
   });
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
   );
   const [touched, setTouched] = useState({
-    name: false,
     email: false,
     password: false,
-    confirmPassword: false,
   });
 
   // 2FA state
@@ -63,21 +62,71 @@ export function AuthForm() {
 
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-  const nameRef = useRef<HTMLInputElement>(null);
-  const confirmPasswordRef = useRef<HTMLInputElement>(null);
+
+  // Component initialization logging - only once (reduced logging for performance)
+  const hasInitialized = useRef(false);
+  useEffect(() => {
+    if (!hasInitialized.current && process.env.NODE_ENV === 'development') {
+      authFormLog('AuthForm component initialized', {
+        mode: 'login',
+        hasUser: !!user,
+        isLoading,
+        locale,
+        show2FAForm
+      });
+      hasInitialized.current = true;
+    }
+  }, []);
+
+  // State change logging - only log significant state changes
+  const prevState = useRef({
+    isFormLoading,
+    isRedirecting,
+    show2FAForm,
+    hasUser: !!user,
+    isLoading,
+    hasError: !!(error || errorKey),
+    hasSuccess: !!(successMessage || successKey)
+  });
+
+  useEffect(() => {
+    const currentState = {
+      isFormLoading,
+      isRedirecting,
+      show2FAForm,
+      hasUser: !!user,
+      isLoading,
+      hasError: !!(error || errorKey),
+      hasSuccess: !!(successMessage || successKey)
+    };
+
+    const hasSignificantStateChange = Object.keys(currentState).some(
+      key => prevState.current[key as keyof typeof currentState] !== currentState[key as keyof typeof currentState]
+    );
+
+    if (hasSignificantStateChange) {
+      authFormLog('AuthForm state changed (significant)', currentState);
+      prevState.current = currentState;
+    }
+  }, [isFormLoading, isRedirecting, show2FAForm, user, isLoading, error, errorKey, successMessage, successKey]);
 
   // Redirect logged-in users
   useEffect(() => {
+    authFormLog('Checking user redirect', { hasUser: !!user, isLoading, userRoles: user?.roles });
+    
     if (!isLoading && user) {
       // Check if user has admin role
       const isAdmin = user.roles && user.roles.includes('ADMIN');
+      authFormLog('User role check', { isAdmin, roles: user.roles });
 
       if (isAdmin) {
         // Redirect admin users to admin dashboard
+        authFormLog('Redirecting admin user to admin dashboard');
         setIsRedirecting(true);
         router.push('/admin');
       } else {
         // Redirect customer users to home page
+        authFormLog('Redirecting customer user to home page');
         setIsRedirecting(true);
         router.push('/');
       }
@@ -86,11 +135,11 @@ export function AuthForm() {
 
   // Consistent input styling for all form fields
   const inputClassName =
-    'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-purple-500 focus:bg-white/15 transition-all duration-300 autofill:bg-white/10 autofill:text-white text-sm sm:text-base';
+    'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-purple-500 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
 
   // Error input styling
   const errorInputClassName =
-    'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-red-500/50 rounded-lg text-white placeholder-white/50 focus:border-red-500 focus:bg-white/15 transition-all duration-300 autofill:bg-white/10 autofill:text-white text-sm sm:text-base';
+    'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-red-500/50 rounded-lg text-white placeholder-white/50 focus:border-red-500 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
 
   // Validation functions
   const validateEmail = (email: string): string | undefined => {
@@ -114,51 +163,17 @@ export function AuthForm() {
     return undefined;
   };
 
-  const validateName = (name: string): string | undefined => {
-    if (!name.trim()) {
-      return 'auth.validation.nameRequired';
-    }
-    if (name.length > 100) {
-      return 'auth.validation.nameTooLong';
-    }
-    return undefined;
-  };
 
-  const validateConfirmPassword = (
-    password: string,
-    confirmPassword: string
-  ): string | undefined => {
-    if (!confirmPassword.trim()) {
-      return 'auth.validation.confirmPasswordRequired';
-    }
-    if (password !== confirmPassword) {
-      return 'auth.validation.passwordsDoNotMatch';
-    }
-    return undefined;
-  };
 
   // Validate all fields
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
-
-    if (!isLogin) {
-      const nameError = validateName(formData.name);
-      if (nameError) errors.name = nameError;
-    }
 
     const emailError = validateEmail(formData.email);
     if (emailError) errors.email = emailError;
 
     const passwordError = validatePassword(formData.password);
     if (passwordError) errors.password = passwordError;
-
-    if (!isLogin) {
-      const confirmPasswordError = validateConfirmPassword(
-        formData.password,
-        formData.confirmPassword
-      );
-      if (confirmPasswordError) errors.confirmPassword = confirmPasswordError;
-    }
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -169,17 +184,11 @@ export function AuthForm() {
     let error: string | undefined;
 
     switch (name) {
-      case 'name':
-        error = validateName(value);
-        break;
       case 'email':
         error = validateEmail(value);
         break;
       case 'password':
         error = validatePassword(value);
-        break;
-      case 'confirmPassword':
-        error = validateConfirmPassword(formData.password, value);
         break;
     }
 
@@ -189,41 +198,41 @@ export function AuthForm() {
     }));
   };
 
-  const toggleMode = () => {
-    setIsLogin(!isLogin);
-    setFormData({ name: '', email: '', password: '', confirmPassword: '' });
-    clearMessages();
-    setValidationErrors({});
-    setTouched({
-      name: false,
-      email: false,
-      password: false,
-      confirmPassword: false,
-    });
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    authFormLog('Form submission started', { 
+      mode: 'login',
+      email: formData.email,
+      hasPassword: !!formData.password
+    });
+    
     clearError();
     setIsFormLoading(true);
 
     // Mark all fields as touched
     setTouched({
-      name: !isLogin,
       email: true,
       password: true,
-      confirmPassword: !isLogin,
     });
 
     // Validate form before submission
+    authFormLog('Validating form');
     if (!validateForm()) {
+      authFormLog('Form validation failed', { validationErrors });
       setIsFormLoading(false);
       return;
     }
+    authFormLog('Form validation passed');
 
     try {
-      if (isLogin) {
-        const result = await login(formData.email, formData.password);
+      authFormLog('Attempting login', { email: formData.email });
+      const result = await login(formData.email, formData.password);
+        authFormLog('Login result received', { 
+          success: result.success, 
+          requiresTwoFactor: result.requiresTwoFactor,
+          hasUser: !!result.user 
+        });
         if (result.success) {
           // User is verified, check role and redirect accordingly
           const currentUser = result.user;
@@ -280,49 +289,11 @@ export function AuthForm() {
             setErrorKey('auth.messages.invalidCredentials');
           }
         }
-      } else {
-        const result = await register(
-          formData.name,
-          formData.email,
-          formData.password
-        );
-        if (result.success) {
-          // Show server success message and switch to login mode
-          clearError();
-          if (result.messageKey) {
-            setSuccessKey(result.messageKey);
-          } else if (result.message) {
-            setBackendSuccess(result.message);
-          } else {
-            setSuccessKey('auth.messages.registrationSuccess');
-          }
-          setIsLogin(true);
-          setFormData({
-            name: '',
-            email: '',
-            password: '',
-            confirmPassword: '',
-          });
-          setValidationErrors({});
-          setTouched({
-            name: false,
-            email: false,
-            password: false,
-            confirmPassword: false,
-          });
-        } else {
-          if (result.messageKey) {
-            setErrorKey(result.messageKey);
-          } else if (result.message) {
-            setBackendError(result.message);
-          } else {
-            setErrorKey('auth.messages.registrationFailed');
-          }
-        }
-      }
     } catch (error) {
+      authFormLog('Form submission error', { error: error instanceof Error ? error.message : 'Unknown error' });
       setErrorKey('auth.messages.generalError');
     } finally {
+      authFormLog('Form submission completed');
       setIsFormLoading(false);
     }
   };
@@ -330,17 +301,28 @@ export function AuthForm() {
   // Handle 2FA form submission
   const handle2FASubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    authFormLog('2FA form submission started', { 
+      userId: twoFactorUserId,
+      codeLength: twoFactorCode.length 
+    });
+    
     clearError();
     setIs2FALoading(true);
 
     if (!twoFactorCode.trim()) {
+      authFormLog('2FA validation failed - empty code');
       setErrorKey('auth.twoFactor.codeRequired');
       setIs2FALoading(false);
       return;
     }
 
     try {
+      authFormLog('Attempting 2FA login', { userId: twoFactorUserId });
       const result = await loginWith2FA(twoFactorUserId, twoFactorCode);
+      authFormLog('2FA result received', { 
+        success: result.success,
+        hasUser: !!result.user 
+      });
       if (result.success) {
         // 2FA successful, redirect based on role
         const currentUser = result.user;
@@ -379,98 +361,80 @@ export function AuthForm() {
     }
   };
 
-  // Handle form data changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle form data changes - optimized to reduce re-renders
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
 
-    // Clear error when user starts typing
+    // Clear error when user starts typing (only if there's an error)
     if (validationErrors[name as keyof ValidationErrors]) {
       setValidationErrors((prev) => ({
         ...prev,
         [name]: undefined,
       }));
     }
-  };
+  }, [validationErrors]);
 
-  // Handle field blur for validation
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  // Handle field blur for validation - memoized
+  const handleBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    
     setTouched((prev) => ({
       ...prev,
       [name]: true,
     }));
     validateField(name, value);
-  };
+  }, []);
 
-  // Get input class based on validation state
-  const getInputClass = (fieldName: keyof ValidationErrors) => {
+  // Get input class based on validation state - memoized
+  const getInputClass = useCallback((fieldName: keyof ValidationErrors) => {
     const hasError = touched[fieldName] && validationErrors[fieldName];
     return hasError ? errorInputClassName : inputClassName;
-  };
+  }, [touched, validationErrors, errorInputClassName, inputClassName]);
 
-  // Handle autofill detection and styling
+  // Render tracking - only log significant changes
+  const prevRenderState = useRef({
+    isRedirecting,
+    show2FAForm,
+    isFormLoading,
+    is2FALoading,
+    hasError: !!(error || errorKey),
+    hasSuccess: !!(successMessage || successKey)
+  });
+
   useEffect(() => {
-    const handleAnimationStart = (e: AnimationEvent) => {
-      if (e.animationName === 'onAutoFillStart') {
-        const target = e.target as HTMLInputElement;
-        target.classList.add('autofilled');
-      }
+    const currentState = {
+      isRedirecting,
+      show2FAForm,
+      isFormLoading,
+      is2FALoading,
+      hasError: !!(error || errorKey),
+      hasSuccess: !!(successMessage || successKey)
     };
 
-    const handleAnimationEnd = (e: AnimationEvent) => {
-      if (e.animationName === 'onAutoFillCancel') {
-        const target = e.target as HTMLInputElement;
-        target.classList.remove('autofilled');
-      }
-    };
+    const hasSignificantChange = Object.keys(currentState).some(
+      key => prevRenderState.current[key as keyof typeof currentState] !== currentState[key as keyof typeof currentState]
+    );
 
-    document.addEventListener('animationstart', handleAnimationStart);
-    document.addEventListener('animationend', handleAnimationEnd);
-
-    return () => {
-      document.removeEventListener('animationstart', handleAnimationStart);
-      document.removeEventListener('animationend', handleAnimationEnd);
-    };
-  }, []);
-
-  // Check for autofill on mount and after a delay
-  useEffect(() => {
-    const checkAutofill = () => {
-      if (emailRef.current && emailRef.current.matches(':-webkit-autofill')) {
-        emailRef.current.classList.add('autofilled');
-      }
-      if (
-        passwordRef.current &&
-        passwordRef.current.matches(':-webkit-autofill')
-      ) {
-        passwordRef.current.classList.add('autofilled');
-      }
-      if (nameRef.current && nameRef.current.matches(':-webkit-autofill')) {
-        nameRef.current.classList.add('autofilled');
-      }
-      if (
-        confirmPasswordRef.current &&
-        confirmPasswordRef.current.matches(':-webkit-autofill')
-      ) {
-        confirmPasswordRef.current.classList.add('autofilled');
-      }
-    };
-
-    // Check immediately
-    checkAutofill();
-
-    // Check after a delay to catch delayed autofill
-    const timer = setTimeout(checkAutofill, 100);
-
-    return () => clearTimeout(timer);
-  }, []);
+    if (hasSignificantChange) {
+      authFormLog('AuthForm rendered (significant change)', {
+        ...currentState,
+        formDataKeys: Object.keys(formData).filter(key => formData[key as keyof typeof formData]),
+        validationErrorCount: Object.keys(validationErrors).filter(key => validationErrors[key as keyof ValidationErrors]).length
+      });
+      prevRenderState.current = currentState;
+    }
+  });
 
   // Show loading page while redirecting
   if (isRedirecting) {
+    if (process.env.NODE_ENV === 'development') {
+      authFormLog('Showing loading page - redirecting');
+    }
     return <LoadingPage />;
   }
 
@@ -488,16 +452,12 @@ export function AuthForm() {
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-2">
               {show2FAForm
                 ? t('auth.twoFactor.title')
-                : isLogin
-                ? t('auth.form.welcomeBack')
-                : t('auth.form.joinUs')}
+                : t('auth.form.welcomeBack')}
             </h1>
             <p className="text-white/70 text-xs sm:text-sm md:text-base">
               {show2FAForm
                 ? t('auth.twoFactor.subtitle')
-                : isLogin
-                ? t('auth.form.signInSubtitle')
-                : t('auth.form.createAccountSubtitle')}
+                : t('auth.form.signInSubtitle')}
             </p>
           </div>
 
@@ -576,32 +536,6 @@ export function AuthForm() {
               onSubmit={handleSubmit}
               className="space-y-3 sm:space-y-4 md:space-y-6"
             >
-              {!isLogin && (
-                <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2"
-                  >
-                    {t('auth.form.fullName')}
-                  </label>
-                  <input
-                    ref={nameRef}
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    className={getInputClass('name')}
-                    placeholder={t('auth.form.fullNamePlaceholder')}
-                  />
-                  {touched.name && validationErrors.name && (
-                    <p className="text-red-400 text-xs mt-1">
-                      {t(validationErrors.name)}
-                    </p>
-                  )}
-                </div>
-              )}
 
               <div>
                 <label
@@ -651,16 +585,10 @@ export function AuthForm() {
                     {t(validationErrors.password)}
                   </p>
                 )}
-                {!isLogin && (
-                  <p className="text-white/50 text-xs mt-1">
-                    {t('auth.form.passwordRequirement')}
-                  </p>
-                )}
               </div>
 
-              {/* Forgot Password Link - Only show in login mode */}
-              {isLogin && (
-                <div className="flex justify-end items-center">
+              {/* Forgot Password Link */}
+              <div className="flex justify-end items-center">
                   <button
                     type="button"
                     onClick={() => {
@@ -671,35 +599,7 @@ export function AuthForm() {
                     {t('auth.form.forgotPassword')}
                   </button>
                 </div>
-              )}
 
-              {!isLogin && (
-                <div>
-                  <label
-                    htmlFor="confirmPassword"
-                    className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2"
-                  >
-                    {t('auth.form.confirmPassword')}
-                  </label>
-                  <input
-                    ref={confirmPasswordRef}
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    className={getInputClass('confirmPassword')}
-                    placeholder={t('auth.form.confirmPasswordPlaceholder')}
-                  />
-                  {touched.confirmPassword &&
-                    validationErrors.confirmPassword && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {t(validationErrors.confirmPassword)}
-                      </p>
-                    )}
-                </div>
-              )}
 
               <button
                 type="submit"
@@ -707,44 +607,89 @@ export function AuthForm() {
                 className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] flex items-center justify-center"
               >
                 {isFormLoading ? (
-                  <>
-                    {isLogin
-                      ? t('auth.form.signingIn')
-                      : t('auth.form.creatingAccount')}
-                  </>
-                ) : isLogin ? (
-                  t('auth.form.signIn')
+                  t('auth.form.signingIn')
                 ) : (
-                  t('auth.form.createAccount')
+                  t('auth.form.signIn')
                 )}
               </button>
             </form>
           )}
 
-          {/* Toggle mode */}
-          <div className="text-center mt-3 sm:mt-4 md:mt-6">
-            <p className="text-white/70 text-xs sm:text-sm">
-              {isLogin
-                ? t('auth.form.dontHaveAccount')
-                : t('auth.form.alreadyHaveAccount')}
-              <button
-                onClick={toggleMode}
-                className="ml-1 sm:ml-2 text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200 min-h-[32px] px-2 py-1 rounded"
-              >
-                {isLogin ? t('auth.form.signUp') : t('auth.form.signInLink')}
-              </button>
-            </p>
-          </div>
         </div>
       </div>
 
-      {/* Right side - Image with Parallax */}
-      <ParallaxImage
-        src="https://static.wixstatic.com/media/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg/v1/fill/w_918,h_585,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg"
-        alt={t('auth.hero.imageAlt')}
-        title={t('auth.hero.title')}
-        subtitle={t('auth.hero.subtitle')}
-      />
+      {/* Right side - Register Form */}
+      <div className="flex-1 lg:basis-1/2 bg-site min-h-[300px] sm:min-h-[400px] md:min-h-[500px] lg:min-h-[600px] flex items-center justify-center p-6">
+          <div className="w-full max-w-md">
+            <div className="text-center mb-8">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 mb-2">
+                {t('auth.form.joinUs')}
+              </h1>
+              <p className="text-sm sm:text-base text-gray-700">
+                {t('auth.form.createAccountSubtitle')}
+              </p>
+            </div>
+          
+          <form className="space-y-4">
+            <div>
+              <label htmlFor="signup-name" className="block text-sm font-medium text-gray-800 mb-2">
+                {t('auth.form.fullName')}
+              </label>
+              <input
+                id="signup-name"
+                type="text"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm"
+                placeholder={t('auth.form.fullNamePlaceholder')}
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="signup-email" className="block text-sm font-medium text-gray-800 mb-2">
+                {t('auth.form.emailAddress')}
+              </label>
+              <input
+                id="signup-email"
+                type="email"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm"
+                placeholder={t('auth.form.emailPlaceholder')}
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="signup-password" className="block text-sm font-medium text-gray-800 mb-2">
+                {t('auth.form.password')}
+              </label>
+              <input
+                id="signup-password"
+                type="password"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm"
+                placeholder={t('auth.form.passwordPlaceholder')}
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="signup-confirm-password" className="block text-sm font-medium text-gray-800 mb-2">
+                {t('auth.form.confirmPassword')}
+              </label>
+              <input
+                id="signup-confirm-password"
+                type="password"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm"
+                placeholder={t('auth.form.confirmPasswordPlaceholder')}
+              />
+            </div>
+            
+            <button
+              type="submit"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent"
+            >
+              {t('auth.form.signUp')}
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   );
-}
+});
+
+export { AuthForm };

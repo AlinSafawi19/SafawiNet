@@ -82,6 +82,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        type='button'
         onClick={() => (isOpen ? closeDropdown() : openDropdown())}
         className="flex items-center hover:text-purple-500 transition-colors text-base font-medium space-x-2 max-w-32 sm:max-w-40 md:max-w-48"
         aria-label={t('accessibility.userMenu')}
@@ -265,6 +266,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
           )}
 
           <button
+            type='button'
             onClick={handleMyAccount}
             className={`flex items-center hover:text-purple-500 transition-colors text-sm font-medium space-x-2 w-full px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 ${
               isRTL ? 'text-right justify-end' : 'text-left'
@@ -288,6 +290,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
           </button>
 
           <button
+            type='button'
             onClick={handleLogout}
             className={`flex items-center hover:text-purple-500 transition-colors text-sm font-medium space-x-2 w-full px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 ${
               isRTL ? 'text-right justify-end' : 'text-left'

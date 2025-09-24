@@ -14,16 +14,20 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = 'default' }) => {
   const { t } = useLanguage();
 
   const toggleTheme = async () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
     try {
-      await setTheme(theme === 'light' ? 'dark' : 'light');
+      await setTheme(newTheme);
     } catch (error) {
-      // Failed to toggle theme
+      console.error('Failed to toggle theme:', error);
+      // Revert the theme state if the backend call failed
+      setTheme(theme);
     }
   };
 
   if (variant === 'mobile') {
     return (
       <button
+        type='button'
         onClick={toggleTheme}
         className="flex items-center transition-colors hover:text-purple-500 text-white border border-gray-300 rounded-lg px-3 py-2"
         aria-label={t('accessibility.toggleTheme')}
@@ -37,6 +41,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = 'default' }) => {
 
   return (
     <button
+      type='button'
       onClick={toggleTheme}
       className="flex items-center transition-colors hover:text-purple-500"
       aria-label={t('accessibility.toggleTheme')}

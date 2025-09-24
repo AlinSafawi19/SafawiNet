@@ -103,6 +103,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [hasInitialized, setHasInitialized] = useState(false);
   const isInitializingRef = useRef(false);
 
+  // Performance logging - only in development
+  const authStartTime = useRef(Date.now());
+  const authLog = (message: string, data?: any) => {
+    if (process.env.NODE_ENV === 'development' || (typeof window !== 'undefined' && window.location.search.includes('debug=performance'))) {
+      const elapsed = Date.now() - authStartTime.current;
+      console.log(`🔐 [AuthContext] ${message}`, data ? { ...data, elapsed: `${elapsed}ms` } : `(${elapsed}ms)`);
+    }
+  };
+
   // Cache for API responses to prevent duplicate calls
   const apiCache = useRef<Map<string, { data: any; timestamp: number }>>(
     new Map()
@@ -335,14 +344,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Prevent multiple calls during initialization to avoid duplicate API calls
     // This fixes the performance issue where /users/me and /v1/auth/refresh were called twice
     if (hasInitialized || isInitializingRef.current) {
+      authLog('checkAuthStatus skipped - already initialized or initializing');
       return;
     }
 
+    authLog('checkAuthStatus started');
     isInitializingRef.current = true;
 
     try {
       // Always check the backend for authentication status
       // HTTP-only cookies can't be read by JavaScript, so we rely on the backend
+      const apiStartTime = Date.now();
+      authLog('Making API call to /users/me');
+      
       const response = await cachedFetch(
         buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
         {
@@ -351,11 +365,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       );
 
+      const apiEndTime = Date.now();
+      authLog('API call to /users/me completed', { 
+        status: response.status, 
+        duration: `${apiEndTime - apiStartTime}ms` 
+      });
+
       if (response.ok) {
         const userData = await response.json();
+        authLog('User data received', { 
+          authenticated: userData.authenticated, 
+          hasUser: !!userData.user,
+          isVerified: userData.user?.isVerified 
+        });
 
         // Check if user is authenticated based on new response format
         if (!userData.authenticated || !userData.user) {
+          authLog('User not authenticated - setting user to null');
           setUser(null);
           return;
         }
@@ -364,10 +390,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         // Check if user is verified before setting login state
         if (!finalUserData.isVerified) {
+          authLog('User not verified - setting user to null');
           setUser(null);
           return;
         }
 
+        authLog('User authenticated and verified - setting user state');
         setUser(finalUserData);
 
         // Check for offline messages after successful authentication - defer to avoid blocking
@@ -376,14 +404,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }, 1000); // Reduced delay for better UX
       } else {
         // Handle any non-200 responses (shouldn't happen with new server format)
+        authLog('API call failed - setting user to null', { status: response.status });
         setUser(null);
       }
     } catch (error) {
       // Only log actual network/technical errors
+      authLog('API call error - setting user to null', { error: error instanceof Error ? error.message : 'Unknown error' });
       setUser(null);
     } finally {
       // Set loading to false after auth check is complete
       // This ensures that even if user is null, we know the auth state
+      authLog('Auth initialization completed - setting loading to false');
       setIsLoading(false);
       setHasInitialized(true);
       isInitializingRef.current = false; // Reset the ref after initialization
@@ -811,6 +842,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let isMounted = true;
+    authLog('AuthContext useEffect started');
 
     // Handle rate limiting errors from WebSocket
     const handleRateLimitError = (event: CustomEvent) => {
@@ -826,8 +858,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const initializeAuth = async () => {
       if (isMounted) {
+        authLog('Initializing auth check');
         // Use requestIdleCallback for better performance
         if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          authLog('Using requestIdleCallback for auth check');
           requestIdleCallback(() => {
             if (isMounted) {
               checkAuthStatus();
@@ -835,6 +869,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           });
         } else {
           // Fallback for browsers without requestIdleCallback
+          authLog('Using setTimeout fallback for auth check');
           setTimeout(() => {
             if (isMounted) {
               checkAuthStatus();

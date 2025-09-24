@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "next dev -p 3001 --turbopack",
     "build": "next build",
+    "build:optimized": "node scripts/build-optimized.js",
     "start": "next start -p 3001",
     "lint": "next lint --fix",
     "analyze": "ANALYZE=true npm run build",
-    "perf": "node scripts/analyze-bundle.js"
+    "perf": "node scripts/analyze-bundle.js",
+    "perf:test": "node scripts/performance-test.js"
   },
   "dependencies": {
     "bufferutil": "^4.0.9",

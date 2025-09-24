@@ -218,8 +218,6 @@
       "createAccount": "CREATE ACCOUNT",
       "signingIn": "Signing In...",
       "creatingAccount": "Creating Account...",
-      "dontHaveAccount": "Don't have an account?",
-      "alreadyHaveAccount": "Already have an account?",
       "signUp": "Sign up",
       "signInLink": "Sign in",
       "forgotPassword": "Forgot your password?",
@@ -371,10 +369,6 @@
     "copyright": {
       "by": "BY",
       "allRightsReserved": "ALL RIGHTS RESERVED"
-    },
-    "preferences": {
-      "theme": "Theme",
-      "language": "Language"
     }
   },
   "admin": {

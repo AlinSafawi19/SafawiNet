@@ -15,12 +15,15 @@ const LanguageToggle = ({ variant }: LanguageToggleProps) => {
       const newLocale = locale === 'en' ? 'ar' : 'en';
       await setLocale(newLocale);
     } catch (error) {
-      // Failed to toggle language
+      console.error('Failed to toggle language:', error);
+      // Revert the language state if the backend call failed
+      setLocale(locale);
     }
   };
 
   return (
     <button
+      type='button'
       onClick={toggleLanguage}
       className={`flex items-center space-x-2 hover:text-purple-500 transition-colors ${
         variant === 'mobile'
