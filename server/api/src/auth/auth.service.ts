@@ -34,8 +34,6 @@ import {
 } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { Request, Response } from 'express';
-import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
-import { OfflineMessageService } from '../common/services/offline-message.service';
 
 export interface AuthTokens {
   accessToken: string;
@@ -74,8 +72,6 @@ export class AuthService {
     private readonly simpleTwoFactorService: SimpleTwoFactorService,
     private readonly sessionsService: SessionsService,
     private readonly notificationsService: NotificationsService,
-    private readonly webSocketGateway: AuthWebSocketGateway,
-    private readonly offlineMessageService: OfflineMessageService,
     private readonly loggerService: LoggerService,
     private readonly sessionCacheService: SessionCacheService,
   ) {}
@@ -234,22 +230,6 @@ export class AuthService {
       },
     });
 
-    // Emit WebSocket event for new user registration
-    try {
-      this.webSocketGateway.emitVerificationSuccess(
-        result.user.id,
-        userWithoutPassword,
-      );
-    } catch (error) {
-      this.loggerService.warn('Failed to emit WebSocket verification event', {
-        userId: result.user.id,
-        source: 'auth',
-        metadata: {
-          operation: 'register',
-          error: error instanceof Error ? error.message : String(error),
-        },
-      });
-    }
 
     return {
       message:
@@ -301,36 +281,6 @@ export class AuthService {
     // Generate tokens for automatic login
     const tokens: AuthTokens = await this.generateTokens(result, undefined);
 
-    // Emit WebSocket event for real-time notification
-    try {
-      // Log current room states before emitting
-      this.webSocketGateway.getRoomStates();
-
-      this.webSocketGateway.emitVerificationSuccess(
-        result.id,
-        this.excludePassword(result),
-      );
-
-      // Log the user data being sent
-      const userData = this.excludePassword(result);
-
-      this.webSocketGateway.emitVerificationSuccessToPendingRoom(
-        result.email,
-        userData,
-        tokens,
-      );
-
-      // Also broadcast login to all devices
-      this.webSocketGateway.broadcastLogin(this.excludePassword(result));
-
-      // Log room states after emitting
-      this.webSocketGateway.getRoomStates();
-    } catch (error) {
-      this.logger.error('Failed to broadcast login or get room states', error, {
-        source: 'auth',
-        userId: result.id,
-      });
-    }
 
     const message: string = 'Email verified successfully';
 
@@ -671,24 +621,6 @@ export class AuthService {
       // Don't fail password reset if email fails
     }
 
-    // Create offline message for logout (no real-time WebSocket needed)
-    try {
-      await this.offlineMessageService.createForceLogoutMessage(
-        result.id,
-        'password_reset',
-        'Your password has been reset. Please log in with your new password.',
-      );
-    } catch (error) {
-      this.logger.warn(
-        'Failed to create offline message for password reset',
-        error,
-        {
-          source: 'auth',
-          userId: result.id,
-        },
-      );
-      // Don't fail the password reset if offline message creation fails
-    }
 
     return {
       message:

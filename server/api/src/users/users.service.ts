@@ -8,7 +8,6 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../common/services/prisma.service';
 import { SecurityUtils } from '../common/security/security.utils';
 import { EmailService } from '../common/services/email.service';
-import { OfflineMessageService } from '../common/services/offline-message.service';
 import { LoggerService } from '../common/services/logger.service';
 import {
   CreateUserDto,
@@ -59,7 +58,6 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
-    private readonly offlineMessageService: OfflineMessageService,
     private readonly logger: LoggerService,
   ) {}
 
@@ -418,26 +416,6 @@ export class UsersService {
         // Don't fail password change if email fails
       }
 
-      // Create offline message for logout (no real-time WebSocket needed)
-      try {
-        await this.offlineMessageService.createForceLogoutMessage(
-          userId,
-          'password_changed',
-          'Your password has been changed. Please log in again.',
-        );
-      } catch (error) {
-        this.logger.warn(
-          'Failed to create offline message for password change',
-          {
-            source: 'api',
-            userId,
-            metadata: {
-              error,
-            },
-          },
-        );
-        // Don't fail the password change if offline message creation fails
-      }
 
       return {
         message: 'Password changed successfully',

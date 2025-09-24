@@ -11,7 +11,6 @@ export interface LogContext {
   url?: string;
   userAgent?: string;
   ipAddress?: string;
-  socketId?: string;
   origin?: string;
   messageType?: string;
   messageSize?: number;

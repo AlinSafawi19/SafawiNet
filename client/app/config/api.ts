@@ -18,8 +18,6 @@ export const API_CONFIG = {
       VERIFY_EMAIL: '/v1/auth/verify-email',
       ENABLE_2FA: '/v1/auth/2fa/enable',
       DISABLE_2FA: '/v1/auth/2fa/disable',
-      OFFLINE_MESSAGES: '/v1/auth/offline-messages',
-      MARK_MESSAGES_PROCESSED: '/v1/auth/offline-messages/mark-processed',
     },
     USERS: {
       ME: '/users/me',
@@ -33,9 +31,6 @@ export const API_CONFIG = {
       ME: '/v1/loyalty/me',
       TRANSACTIONS: '/v1/loyalty/transactions',
     },
-    WEBSOCKET: {
-      AUTH: '/auth',
-    },
   },
 };
 
@@ -44,11 +39,3 @@ export const buildApiUrl = (endpoint: string): string => {
   return `${API_CONFIG.BASE_URL}${endpoint}`;
 };
 
-// Helper function to build WebSocket URLs
-export const buildWebSocketUrl = (endpoint: string): string => {
-  const baseUrl = API_CONFIG.BASE_URL.replace('http://', 'ws://').replace(
-    'https://',
-    'wss://'
-  );
-  return `${baseUrl}${endpoint}`;
-};

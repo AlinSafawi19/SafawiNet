@@ -3,7 +3,6 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
-import { IoAdapter } from '@nestjs/platform-socket.io';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { LoggerService } from './common/services/logger.service';
 
@@ -14,8 +13,6 @@ async function bootstrap() {
   const loggerService = app.get(LoggerService);
   app.useGlobalFilters(new GlobalExceptionFilter(loggerService));
 
-  // Enable WebSockets
-  app.useWebSocketAdapter(new IoAdapter(app));
 
   // Cookie parser middleware for HTTP-only cookies
   app.use(cookieParser());

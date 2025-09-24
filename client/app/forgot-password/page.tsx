@@ -3,14 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import Link from 'next/link';
-import { useSocket } from '../hooks/useSocket';
 import { ParallaxImage } from '../components/ParallaxImage';
 import { useBackendMessageTranslation } from '../hooks/useBackendMessageTranslation';
 import { buildApiUrl, API_CONFIG } from '../config/api';
 
 export default function ForgotPasswordPage() {
   const { t, locale } = useLanguage();
-  const { joinPasswordResetRoom, leavePasswordResetRoom } = useSocket();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
@@ -29,31 +27,6 @@ export default function ForgotPasswordPage() {
     clearMessages: clearForgotMessages,
   } = useBackendMessageTranslation();
 
-  // Join password reset room when email is entered
-  useEffect(() => {
-    const joinRoom = async () => {
-      if (email && email.includes('@') && email.includes('.')) {
-        try {
-          await joinPasswordResetRoom(email);
-        } catch (error) {
-          // Failed to join password reset room
-        }
-      }
-    };
-
-    // Debounce the room joining
-    const timeoutId = setTimeout(joinRoom, 1000);
-    return () => clearTimeout(timeoutId);
-  }, [email, joinPasswordResetRoom]);
-
-  // Cleanup: leave room when component unmounts
-  useEffect(() => {
-    return () => {
-      if (email) {
-        leavePasswordResetRoom(email);
-      }
-    };
-  }, [email, leavePasswordResetRoom]);
 
   // Email validation function
   const validateEmail = (email: string): string => {

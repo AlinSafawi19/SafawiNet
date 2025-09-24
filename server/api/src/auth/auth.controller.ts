@@ -42,7 +42,6 @@ import {
 import { AuthenticatedRequest } from './types/auth.types';
 import { User } from '@prisma/client';
 import { AuthTokens, LoginResult } from './auth.service';
-import { OfflineMessageService } from '../common/services/offline-message.service';
 import { LoggerService } from '../common/services/logger.service';
 
 // Response interfaces for better type safety
@@ -89,7 +88,6 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly simpleTwoFactorService: SimpleTwoFactorService,
-    private readonly offlineMessageService: OfflineMessageService,
     private readonly loggerService: LoggerService,
   ) {}
 
@@ -690,135 +688,4 @@ export class AuthController {
     }
   }
 
-  @Post('offline-messages')
-  @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Get pending offline messages for authenticated user',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Offline messages retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        messages: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              type: { type: 'string' },
-              event: { type: 'string' },
-              payload: { type: 'object' },
-              priority: { type: 'string' },
-              createdAt: { type: 'string', format: 'date-time' },
-            },
-          },
-        },
-        count: { type: 'number' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - Invalid or missing token',
-  })
-  async getOfflineMessages(
-    @Request() req: AuthenticatedRequest,
-  ): Promise<{ messages: any[]; count: number }> {
-    try {
-      const userId = req.user.sub;
-      const messages =
-        await this.offlineMessageService.getUnprocessedMessages(userId);
-
-      return {
-        messages: messages.map((msg) => ({
-          id: msg.id,
-          type: msg.type,
-          event: msg.event,
-          payload: msg.payload,
-          priority: msg.priority,
-          createdAt: msg.createdAt,
-        })),
-        count: messages.length,
-      };
-    } catch (error) {
-      this.loggerService.error(
-        'Failed to fetch offline messages',
-        error as Error,
-        {
-          source: 'auth',
-          metadata: { endpoint: 'getOfflineMessages' },
-        },
-      );
-      throw new BadRequestException('Failed to fetch offline messages');
-    }
-  }
-
-  @Post('offline-messages/mark-processed')
-  @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Mark offline messages as processed' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        messageIds: {
-          type: 'array',
-          items: { type: 'string' },
-          description: 'Array of message IDs to mark as processed',
-        },
-      },
-      required: ['messageIds'],
-    },
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Messages marked as processed successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string' },
-        processedCount: { type: 'number' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Bad request - Invalid message IDs',
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Unauthorized - Invalid or missing token',
-  })
-  async markMessagesAsProcessed(
-    @Request() req: AuthenticatedRequest,
-    @Body() body: { messageIds: string[] },
-  ): Promise<{ message: string; processedCount: number }> {
-    try {
-      if (!body.messageIds || !Array.isArray(body.messageIds)) {
-        throw new BadRequestException('messageIds must be an array');
-      }
-
-      await this.offlineMessageService.markMultipleAsProcessed(body.messageIds);
-
-      return {
-        message: 'Messages marked as processed successfully',
-        processedCount: body.messageIds.length,
-      };
-    } catch (error) {
-      this.loggerService.error(
-        'Failed to mark messages as processed',
-        error as Error,
-        {
-          source: 'auth',
-          metadata: { endpoint: 'markMessagesAsProcessed' },
-        },
-      );
-      throw new BadRequestException('Failed to mark messages as processed');
-    }
-  }
 }

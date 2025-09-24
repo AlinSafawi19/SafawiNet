@@ -75,7 +75,6 @@ interface AuthContextType {
   checkAuthStatus: () => void;
   refreshToken: () => Promise<boolean>;
   authenticatedFetch: (url: string, options?: RequestInit) => Promise<Response>;
-  joinPendingVerificationRoom: (email: string) => Promise<void>;
   updateUser: (updatedUser: User) => void;
   isAdmin: () => boolean;
   isSuperAdmin: () => boolean;
@@ -218,9 +217,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           setUser(finalUserData);
 
-          // Broadcast login to other tabs and devices
-          broadcastAuthChange('login', finalUserData);
-
           return { success: true, message: 'Login successful' };
         } else {
           const errorText = await response.text();
@@ -283,52 +279,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     window.location.href = '/auth';
   }, [logout]);
 
-  // Function to check for offline messages
-  const checkOfflineMessages = useCallback(async () => {
-    try {
-      const response = await fetch(buildApiUrl('/v1/auth/offline-messages'), {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.messages && data.messages.length > 0) {
-          // Process each message
-          for (const message of data.messages) {
-            // Handle different message types
-            switch (message.event) {
-              case 'forceLogout':
-                handleForceLogout();
-                break;
-
-              default:
-                break;
-            }
-          }
-
-          // Mark all messages as processed
-          try {
-            const messageIds = data.messages.map((msg: any) => msg.id);
-            await fetch(
-              buildApiUrl('/v1/auth/offline-messages/mark-processed'),
-              {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ messageIds }),
-              }
-            );
-          } catch (error) {}
-        }
-      }
-    } catch (error) {}
-  }, [handleForceLogout]);
 
   const checkAuthStatus = useCallback(async () => {
     // Prevent multiple calls during initialization to avoid duplicate API calls
@@ -370,10 +320,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         setUser(finalUserData);
 
-        // Check for offline messages after successful authentication - defer to avoid blocking
-        setTimeout(() => {
-          checkOfflineMessages();
-        }, 1000); // Reduced delay for better UX
       } else {
         // Handle any non-200 responses (shouldn't happen with new server format)
         setUser(null);
@@ -391,7 +337,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
       isInitializingRef.current = false; // Reset the ref after initialization
     }
-  }, [hasInitialized, checkOfflineMessages, cachedFetch]);
+  }, [hasInitialized, cachedFetch]);
 
   const login = async (
     email: string,
@@ -449,10 +395,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // User is verified and no 2FA required, set login state
         setUser(userData);
 
-        // Check for offline messages after successful authentication
-        setTimeout(() => {
-          checkOfflineMessages();
-        }, 1000); // Small delay to ensure user state is set
 
         return { success: true, user: userData };
       } else {
@@ -528,13 +470,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           setUser(finalUserData);
 
-          // Check for offline messages after successful authentication
-          setTimeout(() => {
-            checkOfflineMessages();
-          }, 1000); // Small delay to ensure user state is set
-
-          // Broadcast login to other tabs and devices
-          broadcastAuthChange('login', finalUserData);
 
           return { success: true, user: finalUserData };
         } else {
@@ -588,83 +523,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           responseData.message
         );
 
-        // Join pending verification room for cross-browser sync
-        // Import socket service dynamically to avoid SSR issues
-        import('../services/socket.singleton')
-          .then(async ({ socketSingleton }) => {
-            try {
-              // Only connect if not already connected
-              if (!socketSingleton.isSocketConnected()) {
-                await socketSingleton.ensureReady();
-              }
-              await socketSingleton.joinPendingVerificationRoom(
-                email.toLowerCase()
-              );
-
-              // Set up emailVerified listener immediately for this registration
-              socketSingleton.on('emailVerified', async (data: any) => {
-                if (data.success && data.user) {
-                  // Check if we have tokens in the data
-                  if (data.tokens) {
-                    try {
-                      await loginWithTokens(data.tokens);
-                    } catch (error) {}
-                  } else {
-                    // Only set user if they are verified
-                    if (data.user.isVerified) {
-                      setUser(data.user);
-                    } else {
-                      return;
-                    }
-                  }
-
-                  // Check if user was on auth page or verify-email page and redirect based on role
-                  const currentPath = window.location.pathname;
-                  if (
-                    currentPath === '/auth' ||
-                    currentPath.startsWith('/auth/') ||
-                    currentPath === '/verify-email'
-                  ) {
-                    setTimeout(() => {
-                      if (
-                        data.user &&
-                        data.user.isVerified &&
-                        data.user.roles &&
-                        data.user.roles.includes('ADMIN')
-                      ) {
-                        window.location.href = '/admin';
-                      } else if (data.user && data.user.isVerified) {
-                        window.location.href = '/';
-                      }
-                    }, 2000);
-                  }
-                }
-              });
-            } catch (error) {
-              logError(
-                'Socket initialization failed during registration',
-                error instanceof Error ? error : new Error(String(error)),
-                {
-                  component: 'AuthContext',
-                  action: 'register',
-                  userId: user?.id,
-                  metadata: { step: 'socket_init' },
-                }
-              );
-            }
-          })
-          .catch((error) => {
-            logError(
-              'Socket service import failed during registration',
-              error instanceof Error ? error : new Error(String(error)),
-              {
-                component: 'AuthContext',
-                action: 'register',
-                userId: user?.id,
-                metadata: { step: 'socket_import' },
-              }
-            );
-          });
 
         return {
           success: true,
@@ -790,27 +648,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     [autoRefreshToken, cachedFetch, invalidateCache]
   );
 
-  // Utility function to join pending verification room for cross-browser sync
-  const joinPendingVerificationRoom = async (email: string) => {
-    try {
-      const { socketSingleton } = await import('../services/socket.singleton');
-      // Only connect if not already connected
-      if (!socketSingleton.isSocketConnected()) {
-        await socketSingleton.ensureReady();
-      }
-      await socketSingleton.joinPendingVerificationRoom(email.toLowerCase());
-    } catch (error) {}
-  };
 
-  // Helper method to broadcast authentication changes
-  const broadcastAuthChange = (type: 'login', user?: any) => {
-    try {
-      // Notify other devices via WebSocket (if connected)
-      // This will be handled by the WebSocket service
-    } catch (error) {
-      // Failed to broadcast auth change
-    }
-  };
 
   useEffect(() => {
     let isMounted = true;
@@ -820,17 +658,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return;
     }
 
-    // Handle rate limiting errors from WebSocket
-    const handleRateLimitError = (event: CustomEvent) => {
-      const { type, message } = event.detail;
-      // You can add specific handling here if needed
-      // For now, we'll just log it - the error will be handled by the backend message translation
-      logWarning('Rate limit exceeded', {
-        component: 'AuthContext',
-        action: 'handleRateLimitError',
-        metadata: { type, message },
-      });
-    };
 
     const initializeAuth = async () => {
       if (isMounted && !hasInitialized) {
@@ -856,167 +683,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Add event listeners
 
-    // Initialize socket service for auth events - use singleton to avoid duplicate connections
-    const initializeAuthSocketEvents = async () => {
-      try {
-        const { socketSingleton } = await import(
-          '../services/socket.singleton'
-        );
-
-        // Only ensure connection if user is authenticated
-        if (user) {
-          await socketSingleton.ensureReady();
-        }
-
-        // Listen for email verification events in pending rooms
-        socketSingleton.on('emailVerified', async (data: any) => {
-          if (data.success && data.user) {
-            // Check if we have tokens in the data
-            if (data.tokens) {
-              try {
-                const loginResult = await loginWithTokens(data.tokens);
-
-                if (loginResult.success) {
-                  // Successfully logged in with tokens
-                } else {
-                  // Fallback to setting user directly
-                  if (data.user.isVerified) {
-                    setUser(data.user);
-                  }
-                }
-              } catch (error) {
-                // Fallback to setting user directly
-                if (data.user.isVerified) {
-                  setUser(data.user);
-                }
-              }
-            } else {
-              // Only set user if they are verified
-              if (data.user.isVerified) {
-                setUser(data.user);
-              } else {
-                return;
-              }
-            }
-
-            // Check if user was on auth page or verify-email page and redirect based on role
-            const currentPath = window.location.pathname;
-            if (
-              currentPath === '/auth' ||
-              currentPath.startsWith('/auth/') ||
-              currentPath === '/verify-email'
-            ) {
-              setTimeout(() => {
-                if (
-                  data.user &&
-                  data.user.isVerified &&
-                  data.user.roles &&
-                  data.user.roles.includes('ADMIN')
-                ) {
-                  window.location.href = '/admin';
-                } else if (data.user && data.user.isVerified) {
-                  window.location.href = '/';
-                }
-                // If user is not verified, stay on current page
-              }, 2000);
-            }
-          }
-        });
-
-        // Auto-join pending verification rooms for users on auth page
-        const currentPath = window.location.pathname;
-        if (currentPath === '/auth' || currentPath.startsWith('/auth/')) {
-          // Listen for email input changes to auto-join pending verification rooms
-          const setupEmailListener = () => {
-            const emailInputs = document.querySelectorAll(
-              'input[type="text"][name="email"]'
-            );
-            emailInputs.forEach((input) => {
-              const emailInput = input as HTMLInputElement;
-              if (emailInput && !emailInput.dataset.pendingRoomListener) {
-                emailInput.dataset.pendingRoomListener = 'true';
-
-                const handleEmailChange = async () => {
-                  const email = emailInput.value?.trim().toLowerCase();
-                  if (email && email.includes('@') && email.includes('.')) {
-                    try {
-                      await socketSingleton.joinPendingVerificationRoom(email);
-                    } catch (error) {
-                      // Failed to join pending verification room
-                    }
-                  }
-                };
-
-                // Join room on input change (with debounce)
-                let timeoutId: NodeJS.Timeout;
-                emailInput.addEventListener('input', () => {
-                  clearTimeout(timeoutId);
-                  timeoutId = setTimeout(handleEmailChange, 1000); // 1 second debounce
-                });
-
-                // Also join immediately if email is already filled
-                if (emailInput.value?.trim()) {
-                  handleEmailChange();
-                }
-              }
-            });
-          };
-
-          // Set up listener immediately and also on DOM changes
-          setupEmailListener();
-
-          // Use MutationObserver to catch dynamically added email inputs
-          const observer = new MutationObserver(() => {
-            setupEmailListener();
-          });
-
-          observer.observe(document.body, {
-            childList: true,
-            subtree: true,
-          });
-        }
-
-        // Listen for force logout events (password change/reset)
-        socketSingleton.on('forceLogout', async (data: any) => {
-          // Use existing logout function
-          await logout();
-
-          // Redirect to login page
-          window.location.href = '/auth';
-        });
-
-        // Also listen for custom force logout events (for timing issues)
-        window.addEventListener('forceLogout', handleForceLogout);
-
-        // Add rate limiting error listener
-        window.addEventListener(
-          'rateLimitExceeded',
-          handleRateLimitError as EventListener
-        );
-
-        // Add a general event listener for socket events
-        socketSingleton.on('connect', () => {
-          // Socket connected
-        });
-      } catch (error) {
-        // Failed to initialize socket service
-      }
-    };
-
-    // Initialize socket service asynchronously
-    initializeAuthSocketEvents();
 
     // Return cleanup function
     return () => {
       isMounted = false;
-      // Clean up the custom event listeners
-      window.removeEventListener('forceLogout', handleForceLogout);
-      window.removeEventListener(
-        'rateLimitExceeded',
-        handleRateLimitError as EventListener
-      );
     };
-  }, [checkAuthStatus, loginWithTokens, handleForceLogout, logout, hasInitialized]);
+  }, [checkAuthStatus, hasInitialized]);
 
   // Set up automatic token refresh timer
   useEffect(() => {
@@ -1070,7 +742,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuthStatus,
     refreshToken,
     authenticatedFetch,
-    joinPendingVerificationRoom,
     updateUser,
     isAdmin,
     isSuperAdmin,
@@ -1086,7 +757,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuthStatus,
     refreshToken,
     authenticatedFetch,
-    joinPendingVerificationRoom,
     updateUser,
     isAdmin,
     isSuperAdmin,

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useSocket } from '../hooks/useSocket';
 import { ParallaxImage } from '../components/ParallaxImage';
 import { LoadingPage } from '../components/LoadingPage';
 import { useBackendMessageTranslation } from '../hooks/useBackendMessageTranslation';
@@ -19,8 +18,6 @@ export default function ResetPasswordPage() {
   const { t, locale } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { connect, joinPasswordResetRoom, leavePasswordResetRoom } =
-    useSocket();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -58,26 +55,6 @@ export default function ResetPasswordPage() {
     }
   }, [searchParams, router]);
 
-  // Join password reset room when component mounts
-  useEffect(() => {
-    const joinRoom = async () => {
-      // Connect to socket anonymously first
-      try {
-        await connect();
-      } catch (error) {
-        // Failed to connect to socket
-      }
-    };
-
-    joinRoom();
-
-    // Cleanup function to leave room when component unmounts
-    return () => {
-      if (userEmail) {
-        leavePasswordResetRoom(userEmail);
-      }
-    };
-  }, [connect, leavePasswordResetRoom, userEmail]);
 
   // Real-time validation
   useEffect(() => {
@@ -172,18 +149,6 @@ export default function ResetPasswordPage() {
           setResetSuccessKey('auth.messages.passwordResetSuccess');
         }
 
-        // Join password reset room using email from response BEFORE logout emission
-        if (data.email) {
-          setUserEmail(data.email);
-          try {
-            await joinPasswordResetRoom(data.email);
-
-            // Small delay to ensure room joining is complete before logout emission
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          } catch (error) {
-            // Failed to join password reset room
-          }
-        }
 
         // Clear form
         setPassword('');

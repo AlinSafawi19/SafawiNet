@@ -7,7 +7,6 @@ import {
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { QueueService } from './queue.service';
 import { PrismaService } from './prisma.service';
-import { OfflineMessageService } from './offline-message.service';
 
 @Injectable()
 export class CronService implements OnModuleInit, OnModuleDestroy {
@@ -16,7 +15,6 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private queueService: QueueService,
     private prisma: PrismaService,
-    private offlineMessageService: OfflineMessageService,
   ) {}
 
   onModuleInit() {}
@@ -185,25 +183,4 @@ export class CronService implements OnModuleInit, OnModuleDestroy {
     return result.count;
   }
 
-  // Clean up expired offline messages every hour
-  @Cron(CronExpression.EVERY_HOUR)
-  async cleanupExpiredOfflineMessages() {
-    await this.offlineMessageService.cleanupExpiredMessages();
-  }
-
-  // Clean up old processed offline messages daily at 3 AM
-  @Cron(CronExpression.EVERY_DAY_AT_3AM)
-  async cleanupOldProcessedOfflineMessages() {
-    await this.offlineMessageService.cleanupOldProcessedMessages();
-  }
-
-  // Manual cleanup methods for offline messages
-  async manualOfflineMessageCleanup() {
-    const expiredCount =
-      await this.offlineMessageService.cleanupExpiredMessages();
-    const oldCount =
-      await this.offlineMessageService.cleanupOldProcessedMessages();
-
-    return { expiredCount, oldCount };
-  }
 }

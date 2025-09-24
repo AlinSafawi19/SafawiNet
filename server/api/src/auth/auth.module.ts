@@ -19,11 +19,7 @@ import { RedisService } from '../common/services/redis.service';
 import { EmailService } from '../common/services/email.service';
 import { SentryService } from '../common/services/sentry.service';
 import { SecurityUtils } from '../common/security/security.utils';
-import { AuthWebSocketGateway } from '../websocket/websocket.gateway';
-import { OfflineMessageService } from '../common/services/offline-message.service';
 import { LoggerService } from '../common/services/logger.service';
-import { WebSocketRateLimitService } from '../common/services/websocket-rate-limit.service';
-import { WebSocketMonitoringService } from '../common/services/websocket-monitoring.service';
 import { SessionCacheService } from '../common/services/session-cache.service';
 import { UsersModule } from '../users/users.module';
 
@@ -62,11 +58,7 @@ import { UsersModule } from '../users/users.module';
     EmailService,
     SentryService,
     SecurityUtils,
-    AuthWebSocketGateway,
-    OfflineMessageService,
     LoggerService,
-    WebSocketRateLimitService,
-    WebSocketMonitoringService,
     SessionCacheService,
   ],
   exports: [
@@ -76,7 +68,6 @@ import { UsersModule } from '../users/users.module';
     JwtModule,
     JwtStrategy,
     RolesGuard,
-    AuthWebSocketGateway,
   ],
 })
 export class AuthModule {}
