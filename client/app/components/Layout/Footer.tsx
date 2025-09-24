@@ -8,55 +8,61 @@ const Footer = React.memo(() => {
   const { t, locale } = useLanguage();
 
   // Create footer sections with conditional ordering for RTL support - memoize to prevent re-creation
-  const footerSections = useMemo(() => [
-    {
-      key: 'quickLinks',
-      title: t('footer.sections.quickLinks'),
-      links: [
-        { href: '/', text: t('footer.links.home') },
-        { href: '/products', text: t('footer.links.allProducts') },
-        { href: '/categories', text: t('footer.links.categories') },
-        { href: '/deals', text: t('footer.links.dealsOffers') },
-        { href: '/compatibility', text: t('footer.links.compatibilityCheck') },
-      ],
-    },
-    {
-      key: 'customerSupport',
-      title: t('footer.sections.customerSupport'),
-      links: [
-        { href: '/help', text: t('footer.links.helpCenter') },
-        { href: '/contact', text: t('footer.links.contactUs') },
-        { href: '/shipping', text: t('footer.links.shippingInfo') },
-        { href: '/returns', text: t('footer.links.returnsExchanges') },
-        { href: '/warranty', text: t('footer.links.warrantyInfo') },
-      ],
-    },
-    {
-      key: 'myAccount',
-      title: t('footer.sections.myAccount'),
-      links: [
-        { href: '/account', text: t('footer.links.myAccount') },
-        { href: '/orders', text: t('footer.links.orderHistory') },
-        { href: '/wishlist', text: t('footer.links.wishlist') },
-        { href: '/reviews', text: t('footer.links.myReviews') },
-        { href: '/downloads', text: t('footer.links.downloads') },
-      ],
-    },
-    {
-      key: 'company',
-      title: t('footer.sections.company'),
-      links: [
-        { href: '/about', text: t('footer.links.aboutUs') },
-        { href: '/privacy', text: t('footer.links.privacyPolicy') },
-        { href: '/terms', text: t('footer.links.termsOfService') },
-        { href: '/sitemap', text: t('footer.links.sitemap') },
-      ],
-    },
-  ], [t]);
+  const footerSections = useMemo(
+    () => [
+      {
+        key: 'quickLinks',
+        title: t('footer.sections.quickLinks'),
+        links: [
+          { href: '/', text: t('footer.links.home') },
+          { href: '/products', text: t('footer.links.allProducts') },
+          { href: '/categories', text: t('footer.links.categories') },
+          { href: '/deals', text: t('footer.links.dealsOffers') },
+          {
+            href: '/compatibility',
+            text: t('footer.links.compatibilityCheck'),
+          },
+        ],
+      },
+      {
+        key: 'customerSupport',
+        title: t('footer.sections.customerSupport'),
+        links: [
+          { href: '/help', text: t('footer.links.helpCenter') },
+          { href: '/contact', text: t('footer.links.contactUs') },
+          { href: '/shipping', text: t('footer.links.shippingInfo') },
+          { href: '/returns', text: t('footer.links.returnsExchanges') },
+          { href: '/warranty', text: t('footer.links.warrantyInfo') },
+        ],
+      },
+      {
+        key: 'myAccount',
+        title: t('footer.sections.myAccount'),
+        links: [
+          { href: '/account', text: t('footer.links.myAccount') },
+          { href: '/orders', text: t('footer.links.orderHistory') },
+          { href: '/wishlist', text: t('footer.links.wishlist') },
+          { href: '/reviews', text: t('footer.links.myReviews') },
+          { href: '/downloads', text: t('footer.links.downloads') },
+        ],
+      },
+      {
+        key: 'company',
+        title: t('footer.sections.company'),
+        links: [
+          { href: '/about', text: t('footer.links.aboutUs') },
+          { href: '/privacy', text: t('footer.links.privacyPolicy') },
+          { href: '/terms', text: t('footer.links.termsOfService') },
+          { href: '/sitemap', text: t('footer.links.sitemap') },
+        ],
+      },
+    ],
+    [t]
+  );
 
   // Reverse the order for Arabic (RTL) - memoize to prevent re-creation
-  const orderedSections = useMemo(() =>
-    locale === 'ar' ? [...footerSections].reverse() : footerSections,
+  const orderedSections = useMemo(
+    () => (locale === 'ar' ? [...footerSections].reverse() : footerSections),
     [locale, footerSections]
   );
 
@@ -97,14 +103,16 @@ const Footer = React.memo(() => {
       {/* Enhanced Footer Content */}
       <div className="mx-auto px-4 sm:px-6 md:px-8 lg:px-14 py-6 sm:py-8">
         <div
-          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto ${locale === 'ar' ? 'text-right' : ''
-            }`}
+          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto ${
+            locale === 'ar' ? 'text-right' : ''
+          }`}
         >
           {orderedSections.map((section) => (
             <div
               key={section.key}
-              className={`text-center sm:text-left ${locale === 'ar' ? 'sm:text-right' : ''
-                }`}
+              className={`text-center sm:text-left ${
+                locale === 'ar' ? 'sm:text-right' : ''
+              }`}
             >
               <h3 className="font-bold text-base sm:text-lg mb-3 sm:mb-4 text-black">
                 {section.title}

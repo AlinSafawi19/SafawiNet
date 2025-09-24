@@ -3,9 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useBackendMessageTranslation } from '../../hooks/useBackendMessageTranslation';
-import { buildApiUrl, API_CONFIG } from '../../config/api';
-import { logInfo, logError } from '../../utils/errorLogger';
-import { api } from '../../services/api.service';
+import { API_CONFIG, buildApiUrl } from '../../config/api';
 
 interface AdminUser {
   name: string;
@@ -26,7 +24,6 @@ export default function AdminCreationForm({
     error,
     success,
     errorKey,
-    successKey,
     setBackendError,
     setBackendSuccess,
     clearMessages,
@@ -239,22 +236,15 @@ export default function AdminCreationForm({
   const getInputClass = (fieldName: keyof typeof validationErrors) => {
     const hasError = touched[fieldName] && validationErrors[fieldName];
 
-      return hasError
-        ? 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-red-500 rounded-lg text-gray-900 placeholder-gray-500 focus:border-red-500 focus:bg-white transition-all duration-300 text-sm sm:text-base'
-        : 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-600 focus:bg-white transition-all duration-300 text-sm sm:text-base';
+    return hasError
+      ? 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-red-500 rounded-lg text-gray-900 placeholder-gray-500 focus:border-red-500 focus:bg-white transition-all duration-300 text-sm sm:text-base'
+      : 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-600 focus:bg-white transition-all duration-300 text-sm sm:text-base';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     clearMessages();
-
-    // Log form submission attempt
-    logInfo('Admin creation form submission', {
-      component: 'AdminCreationForm',
-      action: 'handleSubmit',
-      metadata: { email: formData.email },
-    });
 
     // Mark all fields as touched
     setTouched({
@@ -284,41 +274,28 @@ export default function AdminCreationForm({
 
     // Check if there are any validation errors
     if (Object.values(errors).some((error) => error)) {
-      logInfo('Admin creation form validation failed', {
-        component: 'AdminCreationForm',
-        action: 'handleSubmit',
-        metadata: { errors },
-      });
       setIsLoading(false);
       return;
     }
 
     try {
-      const response = await api.post(
-        API_CONFIG.ENDPOINTS.USERS.CREATE_USER,
-        formData,
+      const response = await fetch(
+        buildApiUrl(API_CONFIG.ENDPOINTS.USERS.CREATE_USER),
         {
-          component: 'AdminCreationForm',
-          action: 'createAdmin',
-          metadata: { email: formData.email },
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify(formData),
         }
       );
 
-      if (response.success && response.data) {
-        // Use setBackendSuccess which automatically maps to translation keys
-        setBackendSuccess(
-          response.data.message || 'Admin user created successfully!'
-        );
+      const data = await response.json();
 
-        // Log successful admin creation
-        logInfo('Admin user created successfully', {
-          component: 'AdminCreationForm',
-          action: 'createAdmin',
-          metadata: {
-            email: formData.email,
-            adminId: response.data.user?.id,
-          },
-        });
+      if (response.ok && data) {
+        // Use setBackendSuccess which automatically maps to translation keys
+        setBackendSuccess(data.message || 'Admin user created successfully!');
 
         // Reset form
         setFormData({ name: '', email: '', password: '', confirmPassword: '' });
@@ -340,30 +317,10 @@ export default function AdminCreationForm({
         }, 3000);
       } else {
         // Use setBackendError which automatically maps to translation keys
-        setBackendError(response.error || 'Server error');
-
-        // Log admin creation failure
-        logError(
-          'Admin user creation failed',
-          new Error(response.error || 'Unknown error'),
-          {
-            component: 'AdminCreationForm',
-            action: 'createAdmin',
-            metadata: { email: formData.email },
-          }
-        );
+        setBackendError(data.error || data.message || 'Server error');
       }
     } catch (error) {
       // Use setBackendError for network errors - it will map to appropriate translation key
-      logError(
-        'Admin creation form submission failed',
-        error instanceof Error ? error : new Error(String(error)),
-        {
-          component: 'AdminCreationForm',
-          action: 'handleSubmit',
-          metadata: { email: formData.email },
-        }
-      );
       setBackendError('Network error. Please try again.');
     } finally {
       setIsLoading(false);
@@ -380,9 +337,7 @@ export default function AdminCreationForm({
           >
             {t('auth.admin.createAdminUser')}
           </h1>
-          <p
-            className={`text-xs sm:text-sm md:text-base text-gray-600`}
-          >
+          <p className={`text-xs sm:text-sm md:text-base text-gray-600`}>
             {t('auth.admin.fullSystemAccess')}
           </p>
         </div>
@@ -392,15 +347,13 @@ export default function AdminCreationForm({
           <div
             className={`${
               success
-               ? 'bg-green-50 border border-green-300'
+                ? 'bg-green-50 border border-green-300'
                 : 'bg-red-50 border border-red-300'
             } rounded-lg p-2 sm:p-3 mb-3 sm:mb-4`}
           >
             <p
               className={`${
-                success
-                  ? 'text-green-600'
-                  : 'text-red-600'
+                success ? 'text-green-600' : 'text-red-600'
               } text-xs sm:text-sm ${locale === 'ar' ? 'text-right' : ''}`}
             >
               {success || error}
@@ -416,7 +369,9 @@ export default function AdminCreationForm({
           <div>
             <label
               htmlFor="name"
-              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${locale === 'ar' ? 'text-right' : ''}`}
+              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${
+                locale === 'ar' ? 'text-right' : ''
+              }`}
             >
               {t('auth.admin.fullName')}
             </label>
@@ -435,7 +390,9 @@ export default function AdminCreationForm({
             />
             {touched.name && validationErrors.name && (
               <p
-                className={`text-xs mt-1 text-red-600 ${locale === 'ar' ? 'text-right' : ''}`}
+                className={`text-xs mt-1 text-red-600 ${
+                  locale === 'ar' ? 'text-right' : ''
+                }`}
               >
                 {validationErrors.name}
               </p>
@@ -445,7 +402,9 @@ export default function AdminCreationForm({
           <div>
             <label
               htmlFor="email"
-              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${locale === 'ar' ? 'text-right' : ''}`}
+              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${
+                locale === 'ar' ? 'text-right' : ''
+              }`}
             >
               {t('auth.admin.emailAddress')}
             </label>
@@ -464,7 +423,9 @@ export default function AdminCreationForm({
             />
             {touched.email && validationErrors.email && (
               <p
-                className={`text-xs mt-1 text-red-600 ${locale === 'ar' ? 'text-right' : ''}`}
+                className={`text-xs mt-1 text-red-600 ${
+                  locale === 'ar' ? 'text-right' : ''
+                }`}
               >
                 {validationErrors.email}
               </p>
@@ -474,7 +435,9 @@ export default function AdminCreationForm({
           <div>
             <label
               htmlFor="password"
-              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${locale === 'ar' ? 'text-right' : ''}`}
+              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${
+                locale === 'ar' ? 'text-right' : ''
+              }`}
             >
               {t('auth.admin.password')}
             </label>
@@ -493,13 +456,17 @@ export default function AdminCreationForm({
             />
             {touched.password && validationErrors.password && (
               <p
-                className={`text-xs mt-1 text-red-600 ${locale === 'ar' ? 'text-right' : ''}`}
+                className={`text-xs mt-1 text-red-600 ${
+                  locale === 'ar' ? 'text-right' : ''
+                }`}
               >
                 {validationErrors.password}
               </p>
             )}
             <p
-              className={`text-xs mt-1 text-gray-500 ${locale === 'ar' ? 'text-right' : ''}`}
+              className={`text-xs mt-1 text-gray-500 ${
+                locale === 'ar' ? 'text-right' : ''
+              }`}
             >
               {t('auth.admin.passwordRequirement')}
             </p>
@@ -508,7 +475,9 @@ export default function AdminCreationForm({
           <div>
             <label
               htmlFor="confirmPassword"
-              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${locale === 'ar' ? 'text-right' : ''}`}
+              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${
+                locale === 'ar' ? 'text-right' : ''
+              }`}
             >
               {t('auth.admin.confirmPassword')}
             </label>
@@ -527,7 +496,9 @@ export default function AdminCreationForm({
             />
             {touched.confirmPassword && validationErrors.confirmPassword && (
               <p
-                className={`text-xs mt-1 text-red-600 ${locale === 'ar' ? 'text-right' : ''}`}
+                className={`text-xs mt-1 text-red-600 ${
+                  locale === 'ar' ? 'text-right' : ''
+                }`}
               >
                 {validationErrors.confirmPassword}
               </p>

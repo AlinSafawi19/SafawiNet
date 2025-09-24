@@ -9,13 +9,13 @@ interface ContextProviderProps {
   children: React.ReactNode;
 }
 
-export const ContextProvider: React.FC<
-  ContextProviderProps
-> = ({ children }) => {
+export const ContextProvider: React.FC<ContextProviderProps> = ({
+  children,
+}) => {
   return (
     <ErrorBoundary>
       <AuthProvider>
-          <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>{children}</LanguageProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

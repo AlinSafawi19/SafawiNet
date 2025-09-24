@@ -6,17 +6,11 @@ import { LoadingPage } from './LoadingPage';
 
 interface LoadingWrapperProps {
   children: React.ReactNode;
-  showSkeleton?: boolean;
-  skeletonLines?: number;
   minLoadingTime?: number; // Minimum loading time to prevent flash
 }
 
-export const LoadingWrapper: React.FC<
-  LoadingWrapperProps
-> = ({
+export const LoadingWrapper: React.FC<LoadingWrapperProps> = ({
   children,
-  showSkeleton = false,
-  skeletonLines = 3,
   minLoadingTime = 200,
 }) => {
   const { isLoading } = useAuth();
@@ -36,17 +30,7 @@ export const LoadingWrapper: React.FC<
     }
   }, [isLoading, startTime, minLoadingTime]);
 
-  const loadingContent = useMemo(() => {
-    if (showSkeleton) {
-      return (
-        <div className="p-4 space-y-4">
-          <LoadingPage/>
-        </div>
-      );
-    }
-
-    return <LoadingPage />;
-  }, [showSkeleton, skeletonLines]);
+  const loadingContent = <LoadingPage />;
 
   if (isLoading || !showContent) {
     return loadingContent;

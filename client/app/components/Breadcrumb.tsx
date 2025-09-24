@@ -50,11 +50,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
               <svg
                 className={`w-3 h-3 sm:w-4 sm:h-4 mx-1 sm:mx-2 ${
                   isRTL ? 'rotate-180' : ''
-                } ${
-                  isAccountPage
-                    ? 'text-gray-400'
-                    : 'text-gray-400'
-                }`}
+                } ${isAccountPage ? 'text-gray-400' : 'text-gray-400'}`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 xmlns="http://www.w3.org/2000/svg"

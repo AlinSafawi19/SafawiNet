@@ -27,49 +27,53 @@ const Header = React.memo(() => {
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Admin navigation items - memoize to prevent re-creation
-  const adminNavigationItems = useMemo(() => [
-    {
-      name: 'Dashboard',
-      href: '/admin',
-      icon: HiHome,
-      label: 'admin.sidebar.dashboard',
-    },
-    // Admins section - only for superadmin users
-    ...(isSuperAdmin()
-      ? [
-          {
-            name: 'Admins',
-            href: '/admin/admins',
-            icon: HiUsers,
-            label: 'admin.sidebar.admins',
-          },
-        ]
-      : []),
-    {
-      name: 'Customers',
-      href: '/admin/customers',
-      icon: HiUsers,
-      label: 'admin.sidebar.customers',
-    },
-    {
-      name: 'Products',
-      href: '/admin/products',
-      icon: HiCube,
-      label: 'admin.sidebar.products',
-    },
-    {
-      name: 'Orders',
-      href: '/admin/orders',
-      icon: HiOrders,
-      label: 'admin.sidebar.orders',
-    },
-    {
-      name: 'Analytics',
-      href: '/admin/analytics',
-      icon: HiChartBar,
-      label: 'admin.sidebar.analytics',
-    },
-  ] as const, [isSuperAdmin]);
+  const adminNavigationItems = useMemo(
+    () =>
+      [
+        {
+          name: 'Dashboard',
+          href: '/admin',
+          icon: HiHome,
+          label: 'admin.sidebar.dashboard',
+        },
+        // Admins section - only for superadmin users
+        ...(isSuperAdmin()
+          ? [
+              {
+                name: 'Admins',
+                href: '/admin/admins',
+                icon: HiUsers,
+                label: 'admin.sidebar.admins',
+              },
+            ]
+          : []),
+        {
+          name: 'Customers',
+          href: '/admin/customers',
+          icon: HiUsers,
+          label: 'admin.sidebar.customers',
+        },
+        {
+          name: 'Products',
+          href: '/admin/products',
+          icon: HiCube,
+          label: 'admin.sidebar.products',
+        },
+        {
+          name: 'Orders',
+          href: '/admin/orders',
+          icon: HiOrders,
+          label: 'admin.sidebar.orders',
+        },
+        {
+          name: 'Analytics',
+          href: '/admin/analytics',
+          icon: HiChartBar,
+          label: 'admin.sidebar.analytics',
+        },
+      ] as const,
+    [isSuperAdmin]
+  );
 
   const toggleMobileMenu = useCallback(() => {
     if (!isAnimating) {
@@ -114,7 +118,7 @@ const Header = React.memo(() => {
   // Scroll detection with throttling for better performance
   useEffect(() => {
     let ticking = false;
-    
+
     const handleScroll = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
@@ -136,8 +140,8 @@ const Header = React.memo(() => {
   }, [isScrolled]);
 
   // Check if user is admin - memoize to prevent re-renders
-  const isAdmin = useMemo(() => 
-    user && user.roles && user.roles.includes('ADMIN'), 
+  const isAdmin = useMemo(
+    () => user && user.roles && user.roles.includes('ADMIN'),
     [user]
   );
 
@@ -145,9 +149,7 @@ const Header = React.memo(() => {
     <>
       <header
         className={`fixed top-0 left-0 right-0 h-header z-40 w-full bg-white shadow-sm transition-all duration-300 ease-in-out ${
-          isScrolled
-            ? 'shadow-lg bg-white/95 backdrop-blur-sm'
-            : 'shadow-sm'
+          isScrolled ? 'shadow-lg bg-white/95 backdrop-blur-sm' : 'shadow-sm'
         }`}
       >
         <div className="flex justify-between px-4 sm:px-6 lg:px-14 h-header items-center">
@@ -202,7 +204,7 @@ const Header = React.memo(() => {
             {/* Desktop Navigation */}
             <nav className="hidden lg-tablet:flex items-center space-x-4 xl:space-x-6">
               <button
-                type='button'
+                type="button"
                 className="hover:text-purple-500 transition-colors"
                 aria-label={t('header.actions.notifications')}
               >
@@ -268,7 +270,7 @@ const Header = React.memo(() => {
             {/* Mobile Menu Button */}
             <button
               onClick={toggleMobileMenu}
-              type='button'
+              type="button"
               className="lg-tablet:hidden p-2 hover:text-purple-500 transition-colors"
               aria-label={t('accessibility.toggleMobileMenu')}
             >
@@ -308,7 +310,7 @@ const Header = React.memo(() => {
           {/* Close Button */}
           <button
             onClick={closeMobileMenu}
-            type='button'
+            type="button"
             className={`absolute top-6 text-white hover:text-purple-500 transition-all duration-300 z-[10000] right-6 ${
               isMobileMenuOpen
                 ? 'opacity-100 translate-x-0'
@@ -488,7 +490,10 @@ const Header = React.memo(() => {
                       </span>
                     </Link>
                   )}
-                  <button type='button' className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group">
+                  <button
+                    type="button"
+                    className="flex flex-col items-center space-y-2 p-3 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 group"
+                  >
                     <div className="text-white group-hover:text-purple-400 transition-colors">
                       {HiBell({ className: 'w-7 h-7' })}
                     </div>
@@ -524,7 +529,7 @@ const Header = React.memo(() => {
                         </span>
                       </div>
                       <button
-                        type='button'
+                        type="button"
                         onClick={() => {
                           logout();
                           closeMobileMenu();

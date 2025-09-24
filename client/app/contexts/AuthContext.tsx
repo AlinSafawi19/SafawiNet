@@ -6,7 +6,6 @@
  * Key Features:
  * - Silent authentication checks (no console errors for new visitors)
  * - Prevents duplicate API calls for better performance
- * - Development-only logging for debugging
  * - Graceful handling of 401/400 responses (normal for unauthenticated users)
  * - Cookie-first approach to avoid unnecessary API calls and console errors
  */
@@ -22,7 +21,6 @@ import React, {
   useMemo,
 } from 'react';
 import { buildApiUrl, API_CONFIG } from '../config/api';
-import { logError, logWarning } from '../utils/errorLogger';
 
 interface User {
   id: string;
@@ -169,11 +167,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           return false;
         }
       } else {
-        // Only log actual errors (shouldn't happen with new server format)
         return false;
       }
     } catch (error) {
-      // Only log actual network/technical errors
       // Don't set user to null immediately - let the next auth check handle it
       return false;
     } finally {
@@ -279,7 +275,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     window.location.href = '/auth';
   }, [logout]);
 
-
   const checkAuthStatus = useCallback(async () => {
     // Prevent multiple calls during initialization to avoid duplicate API calls
     // This fixes the performance issue where /users/me and /v1/auth/refresh were called twice
@@ -292,7 +287,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Always check the backend for authentication status
       // HTTP-only cookies can't be read by JavaScript, so we rely on the backend
-      
+
       const response = await cachedFetch(
         buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
         {
@@ -319,13 +314,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
 
         setUser(finalUserData);
-
       } else {
         // Handle any non-200 responses (shouldn't happen with new server format)
         setUser(null);
       }
     } catch (error) {
-      // Only log actual network/technical errors
       setUser(null);
     } finally {
       // Set loading to false after auth check is complete
@@ -339,215 +332,221 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [hasInitialized, cachedFetch]);
 
-  const login = async (
-    email: string,
-    password: string
-  ): Promise<{
-    success: boolean;
-    message?: string;
-    messageKey?: string;
-    user?: User;
-  }> => {
-    const response = await cachedFetch(
-      buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN),
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      }
-    );
-
-    if (response.ok) {
-      const responseData = await response.json();
-
-      // Handle the actual response structure from the backend
-      if (responseData.user) {
-        const {
-          user: userData,
-          requiresTwoFactor,
-          requiresVerification,
-        } = responseData;
-
-        // Check if user is verified before setting login state
-        if (requiresVerification) {
-          // User is not verified, don't set login state
-          return {
-            success: false,
-            messageKey: 'auth.messages.emailVerificationRequired',
-            user: userData, // Still return user data for the form to check
-          };
-        }
-
-        // Check if 2FA is required
-        if (requiresTwoFactor) {
-          // User needs to enter 2FA code
-          return {
-            success: false,
-            messageKey: 'auth.messages.twoFactorRequired',
-            user: userData, // Return user data for 2FA form
-            requiresTwoFactor: true,
-          } as any;
-        }
-
-        // User is verified and no 2FA required, set login state
-        setUser(userData);
-
-
-        return { success: true, user: userData };
-      } else {
-        // Map server error messages to translation keys
-        const messageKey = responseData.message
-          ? mapServerErrorToTranslationKey(responseData.message)
-          : null;
-        return {
-          success: false,
-          message: messageKey ? undefined : responseData.message,
-          messageKey: messageKey || undefined,
-        };
-      }
-    } else {
-      // Handle network error
-      return {
-        success: false,
-        message: 'Network error',
-        messageKey: 'auth.networkError',
-      };
-    }
-  };
-
-  const loginWith2FA = async (
-    userId: string,
-    code: string
-  ): Promise<{
-    success: boolean;
-    message?: string;
-    messageKey?: string;
-    user?: User;
-  }> => {
-    try {
-      const response = await fetch(
-        buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.TWO_FACTOR_LOGIN),
+  const login = useCallback(
+    async (
+      email: string,
+      password: string
+    ): Promise<{
+      success: boolean;
+      message?: string;
+      messageKey?: string;
+      user?: User;
+    }> => {
+      const response = await cachedFetch(
+        buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN),
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           credentials: 'include',
-          body: JSON.stringify({ userId, code }),
+          body: JSON.stringify({ email, password }),
         }
       );
 
       if (response.ok) {
-        const data = await response.json();
-        const { user: userData } = data;
+        const responseData = await response.json();
 
-        // Fetch user data to set the user state (tokens are set as cookies by the server)
-        const userResponse = await fetch(
-          buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
-          {
-            method: 'GET',
-            credentials: 'include',
-          }
-        );
-
-        if (userResponse.ok) {
-          const userDataResponse = await userResponse.json();
-
-          // Check if user is authenticated based on new response format
-          if (!userDataResponse.authenticated || !userDataResponse.user) {
-            return { success: false, message: 'Authentication failed' };
-          }
-
-          const finalUserData = userDataResponse.user;
+        // Handle the actual response structure from the backend
+        if (responseData.user) {
+          const {
+            user: userData,
+            requiresTwoFactor,
+            requiresVerification,
+          } = responseData;
 
           // Check if user is verified before setting login state
-          if (!finalUserData.isVerified) {
-            return { success: false, message: 'Email verification required' };
+          if (requiresVerification) {
+            // User is not verified, don't set login state
+            return {
+              success: false,
+              messageKey: 'auth.messages.emailVerificationRequired',
+              user: userData, // Still return user data for the form to check
+            };
           }
 
-          setUser(finalUserData);
+          // Check if 2FA is required
+          if (requiresTwoFactor) {
+            // User needs to enter 2FA code
+            return {
+              success: false,
+              messageKey: 'auth.messages.twoFactorRequired',
+              user: userData, // Return user data for 2FA form
+              requiresTwoFactor: true,
+            } as any;
+          }
 
+          // User is verified and no 2FA required, set login state
+          setUser(userData);
 
-          return { success: true, user: finalUserData };
+          return { success: true, user: userData };
         } else {
-          const errorText = await userResponse.text();
-          throw new Error(
-            `Failed to fetch user data: ${userResponse.status} ${errorText}`
-          );
+          // Map server error messages to translation keys
+          const messageKey = responseData.message
+            ? mapServerErrorToTranslationKey(responseData.message)
+            : null;
+          return {
+            success: false,
+            message: messageKey ? undefined : responseData.message,
+            messageKey: messageKey || undefined,
+          };
         }
       } else {
-        const errorData = await response.json();
-        const messageKey = errorData.message
-          ? mapServerErrorToTranslationKey(errorData.message)
-          : null;
+        // Handle network error
         return {
           success: false,
-          message: messageKey ? undefined : errorData.message,
-          messageKey: messageKey || undefined,
+          message: 'Network error',
+          messageKey: 'auth.networkError',
         };
       }
-    } catch (error) {
-      return {
-        success: false,
-        messageKey: 'auth.messages.generalError',
-      };
-    }
-  };
+    },
+    [cachedFetch]
+  );
 
-  const register = async (
-    name: string,
-    email: string,
-    password: string
-  ): Promise<{ success: boolean; message?: string; messageKey?: string }> => {
-    try {
-      const response = await fetch(
-        buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.REGISTER),
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include', // Include cookies for session management
-          body: JSON.stringify({ name, email, password }),
-        }
-      );
-
-      if (response.ok) {
-        // Get the success message from the server response
-        const responseData = await response.json();
-        // Map server success messages to translation keys
-        const messageKey = mapServerMessageToTranslationKey(
-          responseData.message
+  const loginWith2FA = useCallback(
+    async (
+      userId: string,
+      code: string
+    ): Promise<{
+      success: boolean;
+      message?: string;
+      messageKey?: string;
+      user?: User;
+    }> => {
+      try {
+        const response = await fetch(
+          buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.TWO_FACTOR_LOGIN),
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ userId, code }),
+          }
         );
 
+        if (response.ok) {
+          const data = await response.json();
+          const { user: userData } = data;
 
-        return {
-          success: true,
-          message: messageKey ? undefined : responseData.message,
-          messageKey: messageKey || undefined,
-        };
-      } else {
-        const errorData = await response.json();
-        // Map server error messages to translation keys
-        const messageKey = errorData.message
-          ? mapServerErrorToTranslationKey(errorData.message)
-          : null;
+          // Fetch user data to set the user state (tokens are set as cookies by the server)
+          const userResponse = await fetch(
+            buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
+            {
+              method: 'GET',
+              credentials: 'include',
+            }
+          );
+
+          if (userResponse.ok) {
+            const userDataResponse = await userResponse.json();
+
+            // Check if user is authenticated based on new response format
+            if (!userDataResponse.authenticated || !userDataResponse.user) {
+              return { success: false, message: 'Authentication failed' };
+            }
+
+            const finalUserData = userDataResponse.user;
+
+            // Check if user is verified before setting login state
+            if (!finalUserData.isVerified) {
+              return { success: false, message: 'Email verification required' };
+            }
+
+            setUser(finalUserData);
+
+            return { success: true, user: finalUserData };
+          } else {
+            const errorText = await userResponse.text();
+            throw new Error(
+              `Failed to fetch user data: ${userResponse.status} ${errorText}`
+            );
+          }
+        } else {
+          const errorData = await response.json();
+          const messageKey = errorData.message
+            ? mapServerErrorToTranslationKey(errorData.message)
+            : null;
+          return {
+            success: false,
+            message: messageKey ? undefined : errorData.message,
+            messageKey: messageKey || undefined,
+          };
+        }
+      } catch (error) {
         return {
           success: false,
-          message: messageKey ? undefined : errorData.message,
-          messageKey: messageKey || undefined,
+          messageKey: 'auth.messages.generalError',
         };
       }
-    } catch (error) {
-      return {
-        success: false,
-        messageKey: 'auth.messages.generalError',
-      };
-    }
-  };
+    },
+    []
+  );
+
+  const register = useCallback(
+    async (
+      name: string,
+      email: string,
+      password: string
+    ): Promise<{ success: boolean; message?: string; messageKey?: string }> => {
+      try {
+        const response = await fetch(
+          buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.REGISTER),
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include', // Include cookies for session management
+            body: JSON.stringify({ name, email, password }),
+          }
+        );
+
+        if (response.ok) {
+          // Get the success message from the server response
+          const responseData = await response.json();
+          // Map server success messages to translation keys
+          const messageKey = mapServerMessageToTranslationKey(
+            responseData.message
+          );
+
+          return {
+            success: true,
+            message: messageKey ? undefined : responseData.message,
+            messageKey: messageKey || undefined,
+          };
+        } else {
+          const errorData = await response.json();
+          // Map server error messages to translation keys
+          const messageKey = errorData.message
+            ? mapServerErrorToTranslationKey(errorData.message)
+            : null;
+          return {
+            success: false,
+            message: messageKey ? undefined : errorData.message,
+            messageKey: messageKey || undefined,
+          };
+        }
+      } catch (error) {
+        return {
+          success: false,
+          messageKey: 'auth.messages.generalError',
+        };
+      }
+    },
+    []
+  );
 
   // Helper function to map server error messages to translation keys
   const mapServerErrorToTranslationKey = (
@@ -648,8 +647,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     [autoRefreshToken, cachedFetch, invalidateCache]
   );
 
-
-
   useEffect(() => {
     let isMounted = true;
 
@@ -657,7 +654,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (hasInitialized) {
       return;
     }
-
 
     const initializeAuth = async () => {
       if (isMounted && !hasInitialized) {
@@ -682,7 +678,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
 
     // Add event listeners
-
 
     // Return cleanup function
     return () => {
@@ -731,37 +726,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     [user]
   );
 
-  const value: AuthContextType = useMemo(() => ({
-    user,
-    isLoading,
-    login,
-    loginWith2FA,
-    loginWithTokens,
-    register,
-    logout,
-    checkAuthStatus,
-    refreshToken,
-    authenticatedFetch,
-    updateUser,
-    isAdmin,
-    isSuperAdmin,
-    hasRole,
-  }), [
-    user,
-    isLoading,
-    login,
-    loginWith2FA,
-    loginWithTokens,
-    register,
-    logout,
-    checkAuthStatus,
-    refreshToken,
-    authenticatedFetch,
-    updateUser,
-    isAdmin,
-    isSuperAdmin,
-    hasRole,
-  ]);
+  const value: AuthContextType = useMemo(
+    () => ({
+      user,
+      isLoading,
+      login,
+      loginWith2FA,
+      loginWithTokens,
+      register,
+      logout,
+      checkAuthStatus,
+      refreshToken,
+      authenticatedFetch,
+      updateUser,
+      isAdmin,
+      isSuperAdmin,
+      hasRole,
+    }),
+    [
+      user,
+      isLoading,
+      login,
+      loginWith2FA,
+      loginWithTokens,
+      register,
+      logout,
+      checkAuthStatus,
+      refreshToken,
+      authenticatedFetch,
+      updateUser,
+      isAdmin,
+      isSuperAdmin,
+      hasRole,
+    ]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

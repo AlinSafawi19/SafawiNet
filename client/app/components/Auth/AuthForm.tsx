@@ -37,7 +37,6 @@ const AuthForm = memo(function AuthForm() {
     setSuccessKey,
     setBackendError,
     setBackendSuccess,
-    clearMessages,
     clearError,
   } = useBackendMessageTranslation();
   const [formData, setFormData] = useState({
@@ -59,7 +58,8 @@ const AuthForm = memo(function AuthForm() {
     password: '',
     confirmPassword: '',
   });
-  const [registerValidationErrors, setRegisterValidationErrors] = useState<RegisterValidationErrors>({});
+  const [registerValidationErrors, setRegisterValidationErrors] =
+    useState<RegisterValidationErrors>({});
   const [registerTouched, setRegisterTouched] = useState({
     name: false,
     email: false,
@@ -77,47 +77,8 @@ const AuthForm = memo(function AuthForm() {
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
-  // Component initialization logging - only once (reduced logging for performance)
-  const hasInitialized = useRef(false);
-  useEffect(() => {
-    if (!hasInitialized.current && process.env.NODE_ENV === 'development') {
-      hasInitialized.current = true;
-    }
-  }, []);
-
-  // State change logging - only log significant state changes
-  const prevState = useRef({
-    isFormLoading,
-    isRedirecting,
-    show2FAForm,
-    hasUser: !!user,
-    isLoading,
-    hasError: !!(error || errorKey),
-    hasSuccess: !!(successMessage || successKey)
-  });
-
-  useEffect(() => {
-    const currentState = {
-      isFormLoading,
-      isRedirecting,
-      show2FAForm,
-      hasUser: !!user,
-      isLoading,
-      hasError: !!(error || errorKey),
-      hasSuccess: !!(successMessage || successKey)
-    };
-
-    const hasSignificantStateChange = Object.keys(currentState).some(
-      key => prevState.current[key as keyof typeof currentState] !== currentState[key as keyof typeof currentState]
-    );
-
-    if (hasSignificantStateChange) {
-      prevState.current = currentState;
-    }
-  }, [isFormLoading, isRedirecting, show2FAForm, user, isLoading, error, errorKey, successMessage, successKey]);
-
   // Redirect logged-in users
-  useEffect(() => {    
+  useEffect(() => {
     if (!isLoading && user) {
       // Check if user has admin role
       const isAdmin = user.roles && user.roles.includes('ADMIN');
@@ -199,7 +160,10 @@ const AuthForm = memo(function AuthForm() {
     return undefined;
   };
 
-  const validateConfirmPassword = (confirmPassword: string, password: string): string | undefined => {
+  const validateConfirmPassword = (
+    confirmPassword: string,
+    password: string
+  ): string | undefined => {
     if (!confirmPassword.trim()) {
       return 'auth.validation.confirmPasswordRequired';
     }
@@ -224,7 +188,7 @@ const AuthForm = memo(function AuthForm() {
   };
 
   // Validate single field
-  const validateField = (name: string, value: string) => {
+  const validateField = useCallback((name: string, value: string) => {
     let error: string | undefined;
 
     switch (name) {
@@ -240,7 +204,7 @@ const AuthForm = memo(function AuthForm() {
       ...prev,
       [name]: error,
     }));
-  };
+  }, []);
 
   // Register form validation
   const validateRegisterForm = (): boolean => {
@@ -255,7 +219,10 @@ const AuthForm = memo(function AuthForm() {
     const passwordError = validateRegisterPassword(registerData.password);
     if (passwordError) errors.password = passwordError;
 
-    const confirmPasswordError = validateConfirmPassword(registerData.confirmPassword, registerData.password);
+    const confirmPasswordError = validateConfirmPassword(
+      registerData.confirmPassword,
+      registerData.password
+    );
     if (confirmPasswordError) errors.confirmPassword = confirmPasswordError;
 
     setRegisterValidationErrors(errors);
@@ -263,34 +230,36 @@ const AuthForm = memo(function AuthForm() {
   };
 
   // Validate single register field
-  const validateRegisterField = (name: string, value: string) => {
-    let error: string | undefined;
+  const validateRegisterField = useCallback(
+    (name: string, value: string) => {
+      let error: string | undefined;
 
-    switch (name) {
-      case 'name':
-        error = validateName(value);
-        break;
-      case 'email':
-        error = validateRegisterEmail(value);
-        break;
-      case 'password':
-        error = validateRegisterPassword(value);
-        break;
-      case 'confirmPassword':
-        error = validateConfirmPassword(value, registerData.password);
-        break;
-    }
+      switch (name) {
+        case 'name':
+          error = validateName(value);
+          break;
+        case 'email':
+          error = validateRegisterEmail(value);
+          break;
+        case 'password':
+          error = validateRegisterPassword(value);
+          break;
+        case 'confirmPassword':
+          error = validateConfirmPassword(value, registerData.password);
+          break;
+      }
 
-    setRegisterValidationErrors((prev) => ({
-      ...prev,
-      [name]: error,
-    }));
-  };
-
+      setRegisterValidationErrors((prev) => ({
+        ...prev,
+        [name]: error,
+      }));
+    },
+    [registerData.password]
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     clearError();
     setIsFormLoading(true);
 
@@ -308,62 +277,62 @@ const AuthForm = memo(function AuthForm() {
 
     try {
       const result = await login(formData.email, formData.password);
-        if (result.success) {
-          // User is verified, check role and redirect accordingly
-          const currentUser = result.user;
+      if (result.success) {
+        // User is verified, check role and redirect accordingly
+        const currentUser = result.user;
 
-          // More robust role checking - handle different possible role field structures
-          const roles =
-            currentUser?.roles ||
-            (currentUser as any)?.role ||
-            (currentUser as any)?.userRoles ||
-            (currentUser as any)?.userRole;
+        // More robust role checking - handle different possible role field structures
+        const roles =
+          currentUser?.roles ||
+          (currentUser as any)?.role ||
+          (currentUser as any)?.userRoles ||
+          (currentUser as any)?.userRole;
 
-          const hasAdminRole =
-            currentUser &&
-            roles &&
-            (Array.isArray(roles)
-              ? roles.includes('ADMIN')
-              : typeof roles === 'string'
-              ? roles === 'ADMIN'
-              : false);
+        const hasAdminRole =
+          currentUser &&
+          roles &&
+          (Array.isArray(roles)
+            ? roles.includes('ADMIN')
+            : typeof roles === 'string'
+            ? roles === 'ADMIN'
+            : false);
 
-          if (hasAdminRole) {
-            try {
-              router.push('/admin');
-            } catch (error) {
-              window.location.href = '/admin';
-            }
-          } else {
-            // Try router.push first, fallback to window.location if needed
-            try {
-              router.push('/');
-            } catch (error) {
+        if (hasAdminRole) {
+          try {
+            router.push('/admin');
+          } catch (error) {
+            window.location.href = '/admin';
+          }
+        } else {
+          // Try router.push first, fallback to window.location if needed
+          try {
+            router.push('/');
+          } catch (error) {
+            window.location.href = '/';
+          }
+
+          // Fallback redirect after a short delay
+          setTimeout(() => {
+            if (window.location.pathname === '/auth') {
               window.location.href = '/';
             }
-
-            // Fallback redirect after a short delay
-            setTimeout(() => {
-              if (window.location.pathname === '/auth') {
-                window.location.href = '/';
-              }
-            }, 1000);
-          }
-        } else if (result.requiresTwoFactor) {
-          // Show 2FA form
-          setTwoFactorUserId(result.user?.id || '');
-          setShow2FAForm(true);
-          clearError();
-        } else {
-          // Handle other login errors
-          if (result.messageKey) {
-            setErrorKey(result.messageKey);
-          } else if (result.message) {
-            setBackendError(result.message);
-          } else {
-            setErrorKey('auth.messages.invalidCredentials');
-          }
+          }, 1000);
         }
+      } else if (result.requiresTwoFactor) {
+        // Show 2FA form
+        setTwoFactorUserId(result.user?.id || '');
+        setShow2FAForm(true);
+        clearError();
+      } else {
+        // Handle other login errors
+        if (result.messageKey) {
+          setErrorKey(result.messageKey);
+        } else if (result.message) {
+          setBackendError(result.message);
+        } else {
+          setErrorKey('auth.messages.invalidCredentials');
+        }
+      }
     } catch (error) {
       setErrorKey('auth.messages.generalError');
     } finally {
@@ -374,7 +343,7 @@ const AuthForm = memo(function AuthForm() {
   // Handle 2FA form submission
   const handle2FASubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     clearError();
     setIs2FALoading(true);
 
@@ -426,81 +395,100 @@ const AuthForm = memo(function AuthForm() {
   };
 
   // Handle form data changes - optimized to reduce re-renders
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
 
-    // Clear error when user starts typing (only if there's an error)
-    if (validationErrors[name as keyof ValidationErrors]) {
-      setValidationErrors((prev) => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: undefined,
+        [name]: value,
       }));
-    }
-  }, [validationErrors]);
+
+      // Clear error when user starts typing (only if there's an error)
+      if (validationErrors[name as keyof ValidationErrors]) {
+        setValidationErrors((prev) => ({
+          ...prev,
+          [name]: undefined,
+        }));
+      }
+    },
+    [validationErrors]
+  );
 
   // Handle register form data changes
-  const handleRegisterInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    setRegisterData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleRegisterInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
 
-    // Clear error when user starts typing (only if there's an error)
-    if (registerValidationErrors[name as keyof RegisterValidationErrors]) {
-      setRegisterValidationErrors((prev) => ({
+      setRegisterData((prev) => ({
         ...prev,
-        [name]: undefined,
+        [name]: value,
       }));
-    }
-  }, [registerValidationErrors]);
+
+      // Clear error when user starts typing (only if there's an error)
+      if (registerValidationErrors[name as keyof RegisterValidationErrors]) {
+        setRegisterValidationErrors((prev) => ({
+          ...prev,
+          [name]: undefined,
+        }));
+      }
+    },
+    [registerValidationErrors]
+  );
 
   // Handle field blur for validation - memoized
-  const handleBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    setTouched((prev) => ({
-      ...prev,
-      [name]: true,
-    }));
-    validateField(name, value);
-  }, []);
+  const handleBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+
+      setTouched((prev) => ({
+        ...prev,
+        [name]: true,
+      }));
+      validateField(name, value);
+    },
+    [validateField]
+  );
 
   // Handle register field blur for validation - memoized
-  const handleRegisterBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    setRegisterTouched((prev) => ({
-      ...prev,
-      [name]: true,
-    }));
-    validateRegisterField(name, value);
-  }, [registerData.password]);
+  const handleRegisterBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+
+      setRegisterTouched((prev) => ({
+        ...prev,
+        [name]: true,
+      }));
+      validateRegisterField(name, value);
+    },
+    [validateRegisterField]
+  );
 
   // Get input class based on validation state - memoized
-  const getInputClass = useCallback((fieldName: keyof ValidationErrors) => {
-    const hasError = touched[fieldName] && validationErrors[fieldName];
-    return hasError ? errorInputClassName : inputClassName;
-  }, [touched, validationErrors, errorInputClassName, inputClassName]);
+  const getInputClass = useCallback(
+    (fieldName: keyof ValidationErrors) => {
+      const hasError = touched[fieldName] && validationErrors[fieldName];
+      return hasError ? errorInputClassName : inputClassName;
+    },
+    [touched, validationErrors, errorInputClassName, inputClassName]
+  );
 
   // Get register input class based on validation state - memoized
-  const getRegisterInputClass = useCallback((fieldName: keyof RegisterValidationErrors) => {
-    const hasError = registerTouched[fieldName] && registerValidationErrors[fieldName];
-    return hasError 
-      ? 'w-full px-4 py-3 bg-white border border-red-500 rounded-lg text-gray-900 placeholder-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all duration-300 text-sm'
-      : 'w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm';
-  }, [registerTouched, registerValidationErrors]);
+  const getRegisterInputClass = useCallback(
+    (fieldName: keyof RegisterValidationErrors) => {
+      const hasError =
+        registerTouched[fieldName] && registerValidationErrors[fieldName];
+      return hasError
+        ? 'w-full px-4 py-3 bg-white border border-red-500 rounded-lg text-gray-900 placeholder-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all duration-300 text-sm'
+        : 'w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm';
+    },
+    [registerTouched, registerValidationErrors]
+  );
 
   // Handle register form submission
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     clearError();
     setIsRegisterLoading(true);
 
@@ -535,7 +523,7 @@ const AuthForm = memo(function AuthForm() {
         } else {
           setSuccessKey('auth.messages.registrationSuccess');
         }
-        
+
         // Reset form
         setRegisterData({
           name: '',
@@ -574,7 +562,7 @@ const AuthForm = memo(function AuthForm() {
     isFormLoading,
     is2FALoading,
     hasError: !!(error || errorKey),
-    hasSuccess: !!(successMessage || successKey)
+    hasSuccess: !!(successMessage || successKey),
   });
 
   useEffect(() => {
@@ -584,11 +572,13 @@ const AuthForm = memo(function AuthForm() {
       isFormLoading,
       is2FALoading,
       hasError: !!(error || errorKey),
-      hasSuccess: !!(successMessage || successKey)
+      hasSuccess: !!(successMessage || successKey),
     };
 
     const hasSignificantChange = Object.keys(currentState).some(
-      key => prevRenderState.current[key as keyof typeof currentState] !== currentState[key as keyof typeof currentState]
+      (key) =>
+        prevRenderState.current[key as keyof typeof currentState] !==
+        currentState[key as keyof typeof currentState]
     );
 
     if (hasSignificantChange) {
@@ -608,7 +598,11 @@ const AuthForm = memo(function AuthForm() {
       }`}
     >
       {/* Left side - Form */}
-      <div className={`flex-1 ${show2FAForm ? 'lg:basis-full' : 'lg:basis-1/2'} flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-3 sm:py-4 md:py-6 lg:py-8 xl:py-10`}>
+      <div
+        className={`flex-1 ${
+          show2FAForm ? 'lg:basis-full' : 'lg:basis-1/2'
+        } flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-3 sm:py-4 md:py-6 lg:py-8 xl:py-10`}
+      >
         <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
           {/* Header */}
           <div className="auth-screen text-center mb-4 sm:mb-6 md:mb-8">
@@ -699,7 +693,6 @@ const AuthForm = memo(function AuthForm() {
               onSubmit={handleSubmit}
               className="space-y-3 sm:space-y-4 md:space-y-6"
             >
-
               <div>
                 <label
                   htmlFor="email"
@@ -752,32 +745,28 @@ const AuthForm = memo(function AuthForm() {
 
               {/* Forgot Password Link */}
               <div className="flex justify-end items-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      router.push('/forgot-password');
-                    }}
-                    className="text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200 min-h-[32px] px-2 py-1 rounded hover:underline"
-                  >
-                    {t('auth.form.forgotPassword')}
-                  </button>
-                </div>
-
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push('/forgot-password');
+                  }}
+                  className="text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200 min-h-[32px] px-2 py-1 rounded hover:underline"
+                >
+                  {t('auth.form.forgotPassword')}
+                </button>
+              </div>
 
               <button
                 type="submit"
                 disabled={isFormLoading}
                 className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] flex items-center justify-center"
               >
-                {isFormLoading ? (
-                  t('auth.form.signingIn')
-                ) : (
-                  t('auth.form.signIn')
-                )}
+                {isFormLoading
+                  ? t('auth.form.signingIn')
+                  : t('auth.form.signIn')}
               </button>
             </form>
           )}
-
         </div>
       </div>
 
@@ -786,112 +775,128 @@ const AuthForm = memo(function AuthForm() {
         <div className="flex-1 lg:basis-1/2 bg-site min-h-[300px] sm:min-h-[400px] md:min-h-[500px] lg:min-h-[600px] flex items-center justify-center p-6">
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
-            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 mb-2">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 mb-2">
                 {t('auth.form.joinUs')}
               </h1>
               <p className="text-sm sm:text-base text-gray-700">
                 {t('auth.form.createAccountSubtitle')}
               </p>
             </div>
-          
-          <form onSubmit={handleRegisterSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="signup-name" className="block text-sm font-medium text-gray-800 mb-2">
-                {t('auth.form.fullName')}
-              </label>
-              <input
-                id="signup-name"
-                name="name"
-                type="text"
-                value={registerData.name}
-                onChange={handleRegisterInputChange}
-                onBlur={handleRegisterBlur}
-                className={getRegisterInputClass('name')}
-                placeholder={t('auth.form.fullNamePlaceholder')}
+
+            <form onSubmit={handleRegisterSubmit} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="signup-name"
+                  className="block text-sm font-medium text-gray-800 mb-2"
+                >
+                  {t('auth.form.fullName')}
+                </label>
+                <input
+                  id="signup-name"
+                  name="name"
+                  type="text"
+                  value={registerData.name}
+                  onChange={handleRegisterInputChange}
+                  onBlur={handleRegisterBlur}
+                  className={getRegisterInputClass('name')}
+                  placeholder={t('auth.form.fullNamePlaceholder')}
+                  disabled={isRegisterLoading}
+                />
+                {registerTouched.name && registerValidationErrors.name && (
+                  <p className="text-red-700 text-xs mt-1">
+                    {t(registerValidationErrors.name)}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="signup-email"
+                  className="block text-sm font-medium text-gray-800 mb-2"
+                >
+                  {t('auth.form.emailAddress')}
+                </label>
+                <input
+                  id="signup-email"
+                  name="email"
+                  type="email"
+                  value={registerData.email}
+                  onChange={handleRegisterInputChange}
+                  onBlur={handleRegisterBlur}
+                  className={getRegisterInputClass('email')}
+                  placeholder={t('auth.form.emailPlaceholder')}
+                  disabled={isRegisterLoading}
+                />
+                {registerTouched.email && registerValidationErrors.email && (
+                  <p className="text-red-700 text-xs mt-1">
+                    {t(registerValidationErrors.email)}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="signup-password"
+                  className="block text-sm font-medium text-gray-800 mb-2"
+                >
+                  {t('auth.form.password')}
+                </label>
+                <input
+                  id="signup-password"
+                  name="password"
+                  type="password"
+                  value={registerData.password}
+                  onChange={handleRegisterInputChange}
+                  onBlur={handleRegisterBlur}
+                  className={getRegisterInputClass('password')}
+                  placeholder={t('auth.form.passwordPlaceholder')}
+                  disabled={isRegisterLoading}
+                />
+                {registerTouched.password &&
+                  registerValidationErrors.password && (
+                    <p className="text-red-700 text-xs mt-1">
+                      {t(registerValidationErrors.password)}
+                    </p>
+                  )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="signup-confirm-password"
+                  className="block text-sm font-medium text-gray-800 mb-2"
+                >
+                  {t('auth.form.confirmPassword')}
+                </label>
+                <input
+                  id="signup-confirm-password"
+                  name="confirmPassword"
+                  type="password"
+                  value={registerData.confirmPassword}
+                  onChange={handleRegisterInputChange}
+                  onBlur={handleRegisterBlur}
+                  className={getRegisterInputClass('confirmPassword')}
+                  placeholder={t('auth.form.confirmPasswordPlaceholder')}
+                  disabled={isRegisterLoading}
+                />
+                {registerTouched.confirmPassword &&
+                  registerValidationErrors.confirmPassword && (
+                    <p className="text-red-700 text-xs mt-1">
+                      {t(registerValidationErrors.confirmPassword)}
+                    </p>
+                  )}
+              </div>
+
+              <button
+                type="submit"
                 disabled={isRegisterLoading}
-              />
-              {registerTouched.name && registerValidationErrors.name && (
-                <p className="text-red-700 text-xs mt-1">
-                  {t(registerValidationErrors.name)}
-                </p>
-              )}
-            </div>
-            
-            <div>
-              <label htmlFor="signup-email" className="block text-sm font-medium text-gray-800 mb-2">
-                {t('auth.form.emailAddress')}
-              </label>
-              <input
-                id="signup-email"
-                name="email"
-                type="email"
-                value={registerData.email}
-                onChange={handleRegisterInputChange}
-                onBlur={handleRegisterBlur}
-                className={getRegisterInputClass('email')}
-                placeholder={t('auth.form.emailPlaceholder')}
-                disabled={isRegisterLoading}
-              />
-              {registerTouched.email && registerValidationErrors.email && (
-                <p className="text-red-700 text-xs mt-1">
-                  {t(registerValidationErrors.email)}
-                </p>
-              )}
-            </div>
-            
-            <div>
-              <label htmlFor="signup-password" className="block text-sm font-medium text-gray-800 mb-2">
-                {t('auth.form.password')}
-              </label>
-              <input
-                id="signup-password"
-                name="password"
-                type="password"
-                value={registerData.password}
-                onChange={handleRegisterInputChange}
-                onBlur={handleRegisterBlur}
-                className={getRegisterInputClass('password')}
-                placeholder={t('auth.form.passwordPlaceholder')}
-                disabled={isRegisterLoading}
-              />
-              {registerTouched.password && registerValidationErrors.password && (
-                <p className="text-red-700 text-xs mt-1">
-                  {t(registerValidationErrors.password)}
-                </p>
-              )}
-            </div>
-            
-            <div>
-              <label htmlFor="signup-confirm-password" className="block text-sm font-medium text-gray-800 mb-2">
-                {t('auth.form.confirmPassword')}
-              </label>
-              <input
-                id="signup-confirm-password"
-                name="confirmPassword"
-                type="password"
-                value={registerData.confirmPassword}
-                onChange={handleRegisterInputChange}
-                onBlur={handleRegisterBlur}
-                className={getRegisterInputClass('confirmPassword')}
-                placeholder={t('auth.form.confirmPasswordPlaceholder')}
-                disabled={isRegisterLoading}
-              />
-              {registerTouched.confirmPassword && registerValidationErrors.confirmPassword && (
-                <p className="text-red-700 text-xs mt-1">
-                  {t(registerValidationErrors.confirmPassword)}
-                </p>
-              )}
-            </div>
-            
-            <button
-              type="submit"
-              disabled={isRegisterLoading}
-              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent"
-            >
-              {isRegisterLoading ? t('auth.form.creatingAccount') : t('auth.form.signUp')}
-            </button>
-          </form>
-        </div>
+                className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent"
+              >
+                {isRegisterLoading
+                  ? t('auth.form.creatingAccount')
+                  : t('auth.form.signUp')}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>

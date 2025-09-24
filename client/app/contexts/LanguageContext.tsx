@@ -5,7 +5,7 @@ import React, {
   useContext,
   useState,
   useEffect,
-  ReactNode
+  ReactNode,
 } from 'react';
 import { useAuth } from './AuthContext';
 import { buildApiUrl, API_CONFIG } from '../config/api';
@@ -60,8 +60,12 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
         const cachedMessages = localStorage.getItem(cacheKey);
 
         // If we have cached messages and they're recent (within 1 hour), use them
-        const oneHourAgo = Date.now() - (60 * 60 * 1000);
-        if (cachedMessages && cachedVersion && parseInt(cachedVersion) > oneHourAgo) {
+        const oneHourAgo = Date.now() - 60 * 60 * 1000;
+        if (
+          cachedMessages &&
+          cachedVersion &&
+          parseInt(cachedVersion) > oneHourAgo
+        ) {
           const messages = JSON.parse(cachedMessages);
 
           setMessages(messages);
@@ -72,19 +76,28 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
         const messages = await import(`../../messages/${locale}.json`);
 
         // Cache the messages with version for future use
-        localStorage.setItem(cacheKey, JSON.stringify(messages.default || messages));
+        localStorage.setItem(
+          cacheKey,
+          JSON.stringify(messages.default || messages)
+        );
         localStorage.setItem(cacheVersionKey, currentVersion);
 
         setMessages(messages.default || messages);
-      } catch (error) {        
+      } catch (error) {
         try {
           // Fallback to English messages
           const fallbackMessages = await import(`../../messages/en.json`);
-          
+
           // Cache the fallback messages
-          localStorage.setItem(`messages-${locale}`, JSON.stringify(fallbackMessages.default || fallbackMessages));
-          localStorage.setItem(`messages-${locale}-version`, Date.now().toString());
-          
+          localStorage.setItem(
+            `messages-${locale}`,
+            JSON.stringify(fallbackMessages.default || fallbackMessages)
+          );
+          localStorage.setItem(
+            `messages-${locale}-version`,
+            Date.now().toString()
+          );
+
           setMessages(fallbackMessages.default || fallbackMessages);
         } catch (fallbackError) {
           // Use empty messages object as last resort
@@ -98,7 +111,6 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
 
   // Initialize locale from user preferences or localStorage
   useEffect(() => {
-
     const savedLocale = localStorage.getItem('locale') as Locale;
 
     if (user?.preferences?.language) {
@@ -115,7 +127,6 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
     if (Object.keys(messages).length > 0) {
       setIsLoading(false);
       setIsInitialized(true);
-      
     }
   }, [messages]);
 
@@ -161,7 +172,6 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
 
   // Set locale and update backend preferences
   const setLocale = async (newLocale: Locale) => {
-
     // Update local state immediately for responsive UI
     setLocaleState(newLocale);
 
@@ -170,16 +180,16 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
 
     // Update user preferences in database if user is logged in
     if (user) {
-        await authenticatedFetch(
-          buildApiUrl(API_CONFIG.ENDPOINTS.USERS.PREFERENCES),
-          {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ language: newLocale }),
-          }
-        );
+      await authenticatedFetch(
+        buildApiUrl(API_CONFIG.ENDPOINTS.USERS.PREFERENCES),
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ language: newLocale }),
+        }
+      );
     }
   };
 

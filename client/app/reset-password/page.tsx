@@ -55,7 +55,6 @@ export default function ResetPasswordPage() {
     }
   }, [searchParams, router]);
 
-
   // Real-time validation
   useEffect(() => {
     const errors: ValidationErrors = {};
@@ -148,7 +147,6 @@ export default function ResetPasswordPage() {
         } else {
           setResetSuccessKey('auth.messages.passwordResetSuccess');
         }
-
 
         // Clear form
         setPassword('');

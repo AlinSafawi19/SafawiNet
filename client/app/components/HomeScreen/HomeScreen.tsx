@@ -15,8 +15,8 @@ export const HomeScreen = React.memo(() => {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Memoize admin check to prevent unnecessary re-renders
-  const isAdmin = useMemo(() => 
-    user && user.roles && user.roles.includes('ADMIN'), 
+  const isAdmin = useMemo(
+    () => user && user.roles && user.roles.includes('ADMIN'),
     [user]
   );
 
@@ -32,7 +32,7 @@ export const HomeScreen = React.memo(() => {
   if (isRedirecting) {
     return <LoadingPage />;
   }
-  
+
   return (
     <div className="home-screen mx-auto relative">
       <div className="relative">
@@ -74,7 +74,10 @@ export const HomeScreen = React.memo(() => {
                   locale === 'ar' ? 'sm:justify-end' : ''
                 }`}
               >
-                <button type="button" className="bg-black text-white font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base">
+                <button
+                  type="button"
+                  className="bg-black text-white font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base"
+                >
                   {t('home.hero.cta')}
                 </button>
               </div>

@@ -12,7 +12,7 @@ const LanguageToggle = ({ variant }: LanguageToggleProps) => {
 
   const toggleLanguage = async () => {
     if (isLoading) return;
-    
+
     try {
       const newLocale = locale === 'en' ? 'ar' : 'en';
       await setLocale(newLocale);
@@ -24,7 +24,7 @@ const LanguageToggle = ({ variant }: LanguageToggleProps) => {
 
   return (
     <button
-      type='button'
+      type="button"
       onClick={toggleLanguage}
       disabled={isLoading}
       className={`flex items-center space-x-2 hover:text-purple-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -35,7 +35,7 @@ const LanguageToggle = ({ variant }: LanguageToggleProps) => {
       aria-label={t('header.actions.toggleLanguage')}
     >
       <span className="text-sm font-medium">
-        {isLoading ? '...' : (locale === 'en' ? 'AR' : 'EN')}
+        {isLoading ? '...' : locale === 'en' ? 'AR' : 'EN'}
       </span>
     </button>
   );

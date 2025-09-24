@@ -5,7 +5,6 @@ import { ContextProvider } from './components/ContextProvider';
 import DynamicLangAttribute from './components/DynamicLangAttribute';
 import { AppInitializer } from './components/AppInitializer';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { GlobalErrorHandler } from './components/GlobalErrorHandler';
 // Fonts are now handled via globals.css only
 
 /**
@@ -19,7 +18,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   return (
     <html lang="en">
       <head>
@@ -33,20 +31,16 @@ export default function RootLayout({
         <link rel="preconnect" href="https://static.wixstatic.com" />
         <link rel="dns-prefetch" href="https://static.wixstatic.com" />
       </head>
-      <body
-        className="text-black bg-site transition-colors duration-200"
-      >
+      <body className="text-black bg-site transition-colors duration-200">
         <ErrorBoundary>
-          <GlobalErrorHandler>
-            <ContextProvider>
-              <AppInitializer>
-                <DynamicLangAttribute />
-                <Header />
-                <main className="bg-site">{children}</main>
-                <FooterWrapper />
-              </AppInitializer>
-            </ContextProvider>
-          </GlobalErrorHandler>
+          <ContextProvider>
+            <AppInitializer>
+              <DynamicLangAttribute />
+              <Header />
+              <main className="bg-site">{children}</main>
+              <FooterWrapper />
+            </AppInitializer>
+          </ContextProvider>
         </ErrorBoundary>
       </body>
     </html>

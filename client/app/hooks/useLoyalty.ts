@@ -237,7 +237,7 @@ export const useLoyalty = () => {
         callback(globalLoyaltyState);
       });
     }
-  }, [user]);
+  }, [user, authenticatedFetch]);
 
   const fetchTransactions = useCallback(
     async (

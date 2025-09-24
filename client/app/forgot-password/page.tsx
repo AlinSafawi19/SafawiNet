@@ -27,7 +27,6 @@ export default function ForgotPasswordPage() {
     clearMessages: clearForgotMessages,
   } = useBackendMessageTranslation();
 
-
   // Email validation function
   const validateEmail = (email: string): string => {
     if (!email.trim()) {
