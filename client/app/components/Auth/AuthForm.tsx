@@ -12,8 +12,15 @@ interface ValidationErrors {
   password?: string; // Translation key
 }
 
+interface RegisterValidationErrors {
+  name?: string; // Translation key
+  email?: string; // Translation key
+  password?: string; // Translation key
+  confirmPassword?: string; // Translation key
+}
+
 const AuthForm = memo(function AuthForm() {
-  const { login, loginWith2FA, user, isLoading } = useAuth();
+  const { login, loginWith2FA, register, user, isLoading } = useAuth();
   const { t, locale } = useLanguage();
   const router = useRouter();
   const [isFormLoading, setIsFormLoading] = useState(false);
@@ -44,6 +51,22 @@ const AuthForm = memo(function AuthForm() {
     email: false,
     password: false,
   });
+
+  // Register form state
+  const [registerData, setRegisterData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [registerValidationErrors, setRegisterValidationErrors] = useState<RegisterValidationErrors>({});
+  const [registerTouched, setRegisterTouched] = useState({
+    name: false,
+    email: false,
+    password: false,
+    confirmPassword: false,
+  });
+  const [isRegisterLoading, setIsRegisterLoading] = useState(false);
 
   // 2FA state
   const [show2FAForm, setShow2FAForm] = useState(false);
@@ -141,7 +164,50 @@ const AuthForm = memo(function AuthForm() {
     return undefined;
   };
 
+  // Register form validation functions
+  const validateName = (name: string): string | undefined => {
+    if (!name.trim()) {
+      return 'auth.validation.nameRequired';
+    }
+    if (name.trim().length < 1) {
+      return 'auth.validation.nameRequired';
+    }
+    if (name.trim().length > 100) {
+      return 'auth.validation.nameTooLong';
+    }
+    return undefined;
+  };
 
+  const validateRegisterEmail = (email: string): string | undefined => {
+    if (!email.trim()) {
+      return 'auth.validation.emailRequired';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'auth.validation.emailInvalid';
+    }
+    return undefined;
+  };
+
+  const validateRegisterPassword = (password: string): string | undefined => {
+    if (!password.trim()) {
+      return 'auth.validation.passwordRequired';
+    }
+    if (password.length < 8) {
+      return 'auth.validation.passwordTooShort';
+    }
+    return undefined;
+  };
+
+  const validateConfirmPassword = (confirmPassword: string, password: string): string | undefined => {
+    if (!confirmPassword.trim()) {
+      return 'auth.validation.confirmPasswordRequired';
+    }
+    if (confirmPassword !== password) {
+      return 'auth.validation.passwordsDoNotMatch';
+    }
+    return undefined;
+  };
 
   // Validate all fields
   const validateForm = (): boolean => {
@@ -171,6 +237,51 @@ const AuthForm = memo(function AuthForm() {
     }
 
     setValidationErrors((prev) => ({
+      ...prev,
+      [name]: error,
+    }));
+  };
+
+  // Register form validation
+  const validateRegisterForm = (): boolean => {
+    const errors: RegisterValidationErrors = {};
+
+    const nameError = validateName(registerData.name);
+    if (nameError) errors.name = nameError;
+
+    const emailError = validateRegisterEmail(registerData.email);
+    if (emailError) errors.email = emailError;
+
+    const passwordError = validateRegisterPassword(registerData.password);
+    if (passwordError) errors.password = passwordError;
+
+    const confirmPasswordError = validateConfirmPassword(registerData.confirmPassword, registerData.password);
+    if (confirmPasswordError) errors.confirmPassword = confirmPasswordError;
+
+    setRegisterValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Validate single register field
+  const validateRegisterField = (name: string, value: string) => {
+    let error: string | undefined;
+
+    switch (name) {
+      case 'name':
+        error = validateName(value);
+        break;
+      case 'email':
+        error = validateRegisterEmail(value);
+        break;
+      case 'password':
+        error = validateRegisterPassword(value);
+        break;
+      case 'confirmPassword':
+        error = validateConfirmPassword(value, registerData.password);
+        break;
+    }
+
+    setRegisterValidationErrors((prev) => ({
       ...prev,
       [name]: error,
     }));
@@ -332,6 +443,24 @@ const AuthForm = memo(function AuthForm() {
     }
   }, [validationErrors]);
 
+  // Handle register form data changes
+  const handleRegisterInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    
+    setRegisterData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Clear error when user starts typing (only if there's an error)
+    if (registerValidationErrors[name as keyof RegisterValidationErrors]) {
+      setRegisterValidationErrors((prev) => ({
+        ...prev,
+        [name]: undefined,
+      }));
+    }
+  }, [registerValidationErrors]);
+
   // Handle field blur for validation - memoized
   const handleBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -343,11 +472,100 @@ const AuthForm = memo(function AuthForm() {
     validateField(name, value);
   }, []);
 
+  // Handle register field blur for validation - memoized
+  const handleRegisterBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    
+    setRegisterTouched((prev) => ({
+      ...prev,
+      [name]: true,
+    }));
+    validateRegisterField(name, value);
+  }, [registerData.password]);
+
   // Get input class based on validation state - memoized
   const getInputClass = useCallback((fieldName: keyof ValidationErrors) => {
     const hasError = touched[fieldName] && validationErrors[fieldName];
     return hasError ? errorInputClassName : inputClassName;
   }, [touched, validationErrors, errorInputClassName, inputClassName]);
+
+  // Get register input class based on validation state - memoized
+  const getRegisterInputClass = useCallback((fieldName: keyof RegisterValidationErrors) => {
+    const hasError = registerTouched[fieldName] && registerValidationErrors[fieldName];
+    return hasError 
+      ? 'w-full px-4 py-3 bg-white border border-red-500 rounded-lg text-gray-900 placeholder-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all duration-300 text-sm'
+      : 'w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm';
+  }, [registerTouched, registerValidationErrors]);
+
+  // Handle register form submission
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    clearError();
+    setIsRegisterLoading(true);
+
+    // Mark all fields as touched
+    setRegisterTouched({
+      name: true,
+      email: true,
+      password: true,
+      confirmPassword: true,
+    });
+
+    // Validate form before submission
+    if (!validateRegisterForm()) {
+      setIsRegisterLoading(false);
+      return;
+    }
+
+    try {
+      // Call the registration API
+      const result = await register(
+        registerData.name,
+        registerData.email,
+        registerData.password
+      );
+
+      if (result.success) {
+        // Show success message
+        if (result.messageKey) {
+          setSuccessKey(result.messageKey);
+        } else if (result.message) {
+          setBackendSuccess(result.message);
+        } else {
+          setSuccessKey('auth.messages.registrationSuccess');
+        }
+        
+        // Reset form
+        setRegisterData({
+          name: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+        });
+        setRegisterTouched({
+          name: false,
+          email: false,
+          password: false,
+          confirmPassword: false,
+        });
+        setRegisterValidationErrors({});
+      } else {
+        // Handle registration errors
+        if (result.messageKey) {
+          setErrorKey(result.messageKey);
+        } else if (result.message) {
+          setBackendError(result.message);
+        } else {
+          setErrorKey('auth.messages.registrationFailed');
+        }
+      }
+    } catch (error) {
+      setErrorKey('auth.messages.generalError');
+    } finally {
+      setIsRegisterLoading(false);
+    }
+  };
 
   // Render tracking - only log significant changes
   const prevRenderState = useRef({
@@ -390,7 +608,7 @@ const AuthForm = memo(function AuthForm() {
       }`}
     >
       {/* Left side - Form */}
-      <div className="flex-1 lg:basis-1/2 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-3 sm:py-4 md:py-6 lg:py-8 xl:py-10">
+      <div className={`flex-1 ${show2FAForm ? 'lg:basis-full' : 'lg:basis-1/2'} flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-3 sm:py-4 md:py-6 lg:py-8 xl:py-10`}>
         <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
           {/* Header */}
           <div className="auth-screen text-center mb-4 sm:mb-6 md:mb-8">
@@ -564,7 +782,8 @@ const AuthForm = memo(function AuthForm() {
       </div>
 
       {/* Right side - Register Form */}
-      <div className="flex-1 lg:basis-1/2 bg-site min-h-[300px] sm:min-h-[400px] md:min-h-[500px] lg:min-h-[600px] flex items-center justify-center p-6">
+      {!show2FAForm && (
+        <div className="flex-1 lg:basis-1/2 bg-site min-h-[300px] sm:min-h-[400px] md:min-h-[500px] lg:min-h-[600px] flex items-center justify-center p-6">
           <div className="w-full max-w-md">
             <div className="text-center mb-8">
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 mb-2">
@@ -575,17 +794,27 @@ const AuthForm = memo(function AuthForm() {
               </p>
             </div>
           
-          <form className="space-y-4">
+          <form onSubmit={handleRegisterSubmit} className="space-y-4">
             <div>
               <label htmlFor="signup-name" className="block text-sm font-medium text-gray-800 mb-2">
                 {t('auth.form.fullName')}
               </label>
               <input
                 id="signup-name"
+                name="name"
                 type="text"
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm"
+                value={registerData.name}
+                onChange={handleRegisterInputChange}
+                onBlur={handleRegisterBlur}
+                className={getRegisterInputClass('name')}
                 placeholder={t('auth.form.fullNamePlaceholder')}
+                disabled={isRegisterLoading}
               />
+              {registerTouched.name && registerValidationErrors.name && (
+                <p className="text-red-700 text-xs mt-1">
+                  {t(registerValidationErrors.name)}
+                </p>
+              )}
             </div>
             
             <div>
@@ -594,10 +823,20 @@ const AuthForm = memo(function AuthForm() {
               </label>
               <input
                 id="signup-email"
+                name="email"
                 type="email"
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm"
+                value={registerData.email}
+                onChange={handleRegisterInputChange}
+                onBlur={handleRegisterBlur}
+                className={getRegisterInputClass('email')}
                 placeholder={t('auth.form.emailPlaceholder')}
+                disabled={isRegisterLoading}
               />
+              {registerTouched.email && registerValidationErrors.email && (
+                <p className="text-red-700 text-xs mt-1">
+                  {t(registerValidationErrors.email)}
+                </p>
+              )}
             </div>
             
             <div>
@@ -606,10 +845,20 @@ const AuthForm = memo(function AuthForm() {
               </label>
               <input
                 id="signup-password"
+                name="password"
                 type="password"
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm"
+                value={registerData.password}
+                onChange={handleRegisterInputChange}
+                onBlur={handleRegisterBlur}
+                className={getRegisterInputClass('password')}
                 placeholder={t('auth.form.passwordPlaceholder')}
+                disabled={isRegisterLoading}
               />
+              {registerTouched.password && registerValidationErrors.password && (
+                <p className="text-red-700 text-xs mt-1">
+                  {t(registerValidationErrors.password)}
+                </p>
+              )}
             </div>
             
             <div>
@@ -618,21 +867,33 @@ const AuthForm = memo(function AuthForm() {
               </label>
               <input
                 id="signup-confirm-password"
+                name="confirmPassword"
                 type="password"
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm"
+                value={registerData.confirmPassword}
+                onChange={handleRegisterInputChange}
+                onBlur={handleRegisterBlur}
+                className={getRegisterInputClass('confirmPassword')}
                 placeholder={t('auth.form.confirmPasswordPlaceholder')}
+                disabled={isRegisterLoading}
               />
+              {registerTouched.confirmPassword && registerValidationErrors.confirmPassword && (
+                <p className="text-red-700 text-xs mt-1">
+                  {t(registerValidationErrors.confirmPassword)}
+                </p>
+              )}
             </div>
             
             <button
               type="submit"
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent"
+              disabled={isRegisterLoading}
+              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent"
             >
-              {t('auth.form.signUp')}
+              {isRegisterLoading ? t('auth.form.creatingAccount') : t('auth.form.signUp')}
             </button>
           </form>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 });
