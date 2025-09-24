@@ -610,6 +610,27 @@ export class AuthService {
         const deviceInfo = this.sessionsService.extractDeviceInfo(req);
         await this.sessionsService.createSession(user.id, tokenId, deviceInfo);
 
+        // Cache the session for performance
+        try {
+          const userSession = await this.prisma.userSession.findFirst({
+            where: {
+              userId: user.id,
+              refreshTokenId: tokenId,
+              isCurrent: true,
+            },
+          });
+          if (userSession) {
+            await this.sessionCacheService.cacheSession(userSession);
+          }
+        } catch (cacheError) {
+          console.warn('Failed to cache session after creation', cacheError, {
+            source: 'auth',
+            userId: user.id,
+            tokenId,
+          });
+          // Don't fail login if caching fails
+        }
+
         // Create login notification
         void this.notificationsService.createAccountUpdate(
           user.id,
@@ -727,10 +748,10 @@ export class AuthService {
       });
 
       // Also deactivate any associated user sessions
-      const session: { tokenId: string } | null =
+      const session: { tokenId: string; userId: string } | null =
         await this.prisma.refreshSession.findFirst({
           where: { refreshHash },
-          select: { tokenId: true },
+          select: { tokenId: true, userId: true },
         });
 
       if (session) {
@@ -738,6 +759,21 @@ export class AuthService {
           where: { refreshTokenId: session.tokenId },
           data: { isCurrent: false },
         });
+
+        // Invalidate session from cache
+        try {
+          await this.sessionCacheService.invalidateSession(
+            session.userId,
+            session.tokenId,
+          );
+        } catch (cacheError) {
+          console.warn('Failed to invalidate session from cache', cacheError, {
+            source: 'auth',
+            userId: session.userId,
+            tokenId: session.tokenId,
+          });
+          // Don't fail logout if cache invalidation fails
+        }
       }
     } catch (error) {
       // Don't throw error as logout should succeed even if token invalidation fails

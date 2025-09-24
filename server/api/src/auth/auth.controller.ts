@@ -7,7 +7,6 @@ import {
   UsePipes,
   UseGuards,
   Request,
-  BadRequestException,
   Res,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';

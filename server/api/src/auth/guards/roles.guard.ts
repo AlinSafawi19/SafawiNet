@@ -12,7 +12,7 @@ export const ROLES_KEY = 'roles';
 export const Roles = (...roles: Role[]) => {
   return (
     target: unknown,
-    key?: string | symbol,
+    _key?: string | symbol,
     descriptor?: PropertyDescriptor,
   ): any => {
     if (descriptor) {

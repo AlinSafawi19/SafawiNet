@@ -6,7 +6,7 @@ import { ConfigService } from '@nestjs/config';
 export class SecurityMiddleware implements NestMiddleware {
   constructor(private configService: ConfigService) {}
 
-  use(req: Request, res: Response, next: NextFunction) {
+  use(_req: Request, res: Response, next: NextFunction) {
     // Content Security Policy
     const cspDirectives = this.configService.get<string>(
       'CSP_DIRECTIVES',

@@ -104,11 +104,29 @@ export class PerformanceService implements OnModuleInit {
   // Record performance metrics
   recordMetrics(metrics: PerformanceMetrics) {
     try {
-      // Store in Redis for performance analysis
-      void this.storeMetricsInRedis(metrics);
+      // Create telemetry span for performance tracking
+      const span = this.telemetry.createSpan('performance.record_metrics', {
+        'route': metrics.route,
+        'method': metrics.method,
+        'duration': metrics.duration,
+        'status_code': metrics.statusCode,
+        'user_id': metrics.userId || 'anonymous',
+      });
 
-      // Check performance budget violations
-      void this.checkPerformanceBudget(metrics);
+      try {
+        // Store in Redis for performance analysis
+        void this.storeMetricsInRedis(metrics);
+
+        // Check performance budget violations
+        void this.checkPerformanceBudget(metrics);
+
+        span.setAttributes({
+          'performance.recorded': true,
+          'performance.timestamp': metrics.timestamp,
+        });
+      } finally {
+        span.end();
+      }
     } catch (error) {
       console.error('Failed to record performance metrics', error, {
         source: 'performance',
@@ -167,24 +185,53 @@ export class PerformanceService implements OnModuleInit {
     const budget = this.performanceBudgets.get(metrics.route);
     if (!budget) return;
 
-    // Check P99 threshold
-    if (metrics.duration > budget.p99Threshold) {
-      // TODO: Implement P99 threshold violation handling
-      // This could include alerting, logging, or triggering performance optimizations
-    }
+    const span = this.telemetry.createSpan('performance.check_budget', {
+      'route': metrics.route,
+      'method': metrics.method,
+      'duration': metrics.duration,
+      'p99_threshold': budget.p99Threshold,
+      'burst_limit': budget.burstLimit,
+    });
 
-    // Check burst rate (simplified - in practice you'd use a sliding window)
-    const burstKey = `burst:${metrics.route}:${metrics.method}`;
-    const currentBurst = await this.redis.getClient().incr(burstKey);
+    try {
+      // Check P99 threshold
+      if (metrics.duration > budget.p99Threshold) {
+        span.setAttributes({
+          'performance.violation': 'p99_threshold',
+          'performance.violation_value': metrics.duration,
+          'performance.threshold_value': budget.p99Threshold,
+        });
+        
+        // TODO: Implement P99 threshold violation handling
+        // This could include alerting, logging, or triggering performance optimizations
+      }
 
-    if (currentBurst === 1) {
-      // Set expiry for burst counting window (1 second)
-      await this.redis.getClient().expire(burstKey, 1);
-    }
+      // Check burst rate (simplified - in practice you'd use a sliding window)
+      const burstKey = `burst:${metrics.route}:${metrics.method}`;
+      const currentBurst = await this.redis.getClient().incr(burstKey);
 
-    if (currentBurst > budget.burstLimit) {
-      // TODO: Implement burst limit violation handling
-      // This could include rate limiting, alerting, or circuit breaker activation
+      if (currentBurst === 1) {
+        // Set expiry for burst counting window (1 second)
+        await this.redis.getClient().expire(burstKey, 1);
+      }
+
+      if (currentBurst > budget.burstLimit) {
+        span.setAttributes({
+          'performance.violation': 'burst_limit',
+          'performance.violation_value': currentBurst,
+          'performance.threshold_value': budget.burstLimit,
+        });
+        
+        // TODO: Implement burst limit violation handling
+        // This could include rate limiting, alerting, or circuit breaker activation
+      }
+
+      span.setAttributes({
+        'performance.burst_count': currentBurst,
+        'performance.within_budget': metrics.duration <= budget.p99Threshold && currentBurst <= budget.burstLimit,
+      });
+    } finally {
+      span.end();
     }
   }
 

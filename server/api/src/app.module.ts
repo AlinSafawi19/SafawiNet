@@ -24,7 +24,6 @@ import { IdempotencyMiddleware } from './common/middleware/idempotency.middlewar
 import { SecurityMiddleware } from './common/middleware/security.middleware';
 import { PerformanceMiddleware } from './common/middleware/performance.middleware';
 import { BasicAuthMiddleware } from './common/middleware/basic-auth.middleware';
-import { RequestLoggingMiddleware } from './common/middleware/request-logging.middleware';
 import { PerformanceController } from './common/controllers/performance.controller';
 
 @Module({
@@ -65,8 +64,6 @@ export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(RequestIdMiddleware)
-      .forRoutes('*')
-      .apply(RequestLoggingMiddleware)
       .forRoutes('*')
       .apply(SecurityMiddleware)
       .forRoutes('*')
