@@ -75,7 +75,7 @@ const Footer = () => {
   }, [locale]);
 
   return (
-    <footer className="w-full min-h-56 bg-turquoise-100 dark:bg-dark-surface leading-7 transition-colors duration-200">
+    <footer className="w-full min-h-56 bg-turquoise-100 leading-7 transition-colors duration-200">
       {/* Header Section */}
       <div className="bg-black text-white text-center py-4 sm:py-6 px-4">
         <h1 className="font-bold">{t('footer.getInTouch')}</h1>
@@ -97,12 +97,12 @@ const Footer = () => {
       </div>
 
       {/* Logo Section */}
-      <div className="bg-turquoise-100 dark:bg-dark-surface text-black dark:text-white text-center py-6 sm:py-8 px-4">
+      <div className="bg-turquoise-100 text-black text-center py-6 sm:py-8 px-4">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-wider">
             SAFAWI NET
           </h2>
-          <p className="text-xs sm:text-sm md:text-base mt-2 text-gray-700 dark:text-gray-300 px-4 max-w-2xl mx-auto">
+          <p className="text-xs sm:text-sm md:text-base mt-2 text-gray-700 px-4 max-w-2xl mx-auto">
             {t('footer.tagline')}
           </p>
         </div>
@@ -120,7 +120,7 @@ const Footer = () => {
               className={`text-center sm:text-left ${locale === 'ar' ? 'sm:text-right' : ''
                 }`}
             >
-              <h3 className="font-bold text-base sm:text-lg mb-3 sm:mb-4 text-black dark:text-white">
+              <h3 className="font-bold text-base sm:text-lg mb-3 sm:mb-4 text-black">
                 {section.title}
               </h3>
               <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
@@ -128,7 +128,7 @@ const Footer = () => {
                   <li key={index}>
                     <Link
                       href={link.href}
-                      className="text-black dark:text-gray-300 hover:underline transition-colors"
+                      className="text-black hover:underline transition-colors"
                     >
                       {link.text}
                     </Link>
@@ -141,7 +141,7 @@ const Footer = () => {
       </div>
 
       {/* Copyright Section */}
-      <div className="mx-auto text-center pt-4 sm:pt-6 lg:pt-11 pb-2 sm:pb-4 lg:pb-6 px-4 sm:px-6 lg:px-14">
+      <div className="flex flex-col items-center mx-auto text-center pt-4 sm:pt-6 lg:pt-11 pb-2 sm:pb-4 lg:pb-6 px-4 sm:px-6 lg:px-14">
         <p className="font-default text-md sm:text-lg">
           {locale === 'ar' ? (
             <>
@@ -155,14 +155,10 @@ const Footer = () => {
             </>
           )}
         </p>
-      </div>
-
-      {/* Follow Us Section */}
-      <div className="bg-black text-white text-center">
         <div className="flex justify-center space-x-4 sm:space-x-6 mt-4 sm:mt-6">
           <a
             href="#"
-            className="text-white hover:text-blue-500 transition-colors"
+            className="text-black hover:text-blue-500 transition-colors"
           >
             <span className="sr-only">Facebook</span>
             <svg
@@ -175,7 +171,7 @@ const Footer = () => {
           </a>
           <a
             href="#"
-            className="text-white hover:text-pink-500 transition-all duration-300"
+            className="text-black hover:text-pink-500 transition-all duration-300"
           >
             <span className="sr-only">Instagram</span>
             <svg
@@ -188,7 +184,7 @@ const Footer = () => {
           </a>
           <a
             href="#"
-            className="text-white hover:text-green-500 transition-colors"
+            className="text-black hover:text-green-500 transition-colors"
           >
             <span className="sr-only">WhatsApp</span>
             <svg

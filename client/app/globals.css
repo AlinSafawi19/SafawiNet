@@ -48,33 +48,6 @@
     @apply py-2;
   }
 
-  .account-bg {
-    @apply bg-site dark:bg-dark-bg;
-    background-image: url('https://static.wixstatic.com/media/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg/v1/fill/w_918,h_585,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    position: relative;
-  }
-
-  .account-bg::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(26, 26, 26, 0.85);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .account-bg > * {
-    position: relative;
-    z-index: 1;
-  }
-
   .btn-main[disabled] {
     @apply hover:text-white;
     @apply bg-gray-400;
@@ -268,7 +241,7 @@ body {
   margin: 0;
   font: normal normal normal 18px/1.4em avenir-lt-w01_35-light1475496,
     sans-serif;
-  @apply text-black dark:text-white;
+  @apply text-black;
   @apply font-helvetica;
   overflow-x: hidden;
   transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
@@ -578,29 +551,6 @@ div::-moz-selection {
 .dropdown-menu {
   top: 100%;
   margin-top: 0;
-}
-
-/* Dark mode utility classes */
-@layer utilities {
-  .dark-mode-transition {
-    @apply transition-all duration-200 ease-in-out;
-  }
-
-  .dark-mode-text {
-    @apply text-black dark:text-white;
-  }
-
-  .dark-mode-bg {
-    @apply bg-white dark:bg-dark-bg;
-  }
-
-  .dark-mode-border {
-    @apply border-gray-200 dark:border-dark-border;
-  }
-
-  .dark-mode-input {
-    @apply bg-white dark:bg-dark-surface text-black dark:text-white border-gray-300 dark:border-dark-border;
-  }
 }
 
 .dropdown-container {

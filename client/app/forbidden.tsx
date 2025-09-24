@@ -6,14 +6,14 @@ export default function Forbidden() {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-site dark:bg-dark-bg">
+    <div className="min-h-screen flex items-center justify-center bg-site">
       <div className="flex items-center">
-        <h2 className="text-lg md:text-xl font-bold text-black dark:text-white">
+        <h2 className="text-lg md:text-xl font-bold text-black">
           {t('errors.403.title')}
         </h2>
         {/* divider */}
         <div className="w-px h-8 bg-gray-400 mx-4"></div>
-        <h2 className="text-lg md:text-xl font-bold text-black dark:text-white">
+        <h2 className="text-lg md:text-xl font-bold text-black">
           {t('errors.403.message')}
         </h2>
       </div>

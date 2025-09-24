@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { useTheme } from '../../contexts/ThemeContext';
 import { useBackendMessageTranslation } from '../../hooks/useBackendMessageTranslation';
 import { buildApiUrl, API_CONFIG } from '../../config/api';
 import { logInfo, logError } from '../../utils/errorLogger';
@@ -23,7 +22,6 @@ export default function AdminCreationForm({
   onSuccess,
 }: AdminCreationFormProps) {
   const { t, locale } = useLanguage();
-  const { isDark } = useTheme();
   const {
     error,
     success,
@@ -237,19 +235,13 @@ export default function AdminCreationForm({
     validateField(name, value);
   };
 
-  // Get input class based on validation state and theme
+  // Get input class based on validation state
   const getInputClass = (fieldName: keyof typeof validationErrors) => {
     const hasError = touched[fieldName] && validationErrors[fieldName];
 
-    if (isDark) {
-      return hasError
-        ? 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-red-400 rounded-lg text-white placeholder-white/50 focus:border-red-400 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base'
-        : 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-purple-400 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
-    } else {
       return hasError
         ? 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-red-500 rounded-lg text-gray-900 placeholder-gray-500 focus:border-red-500 focus:bg-white transition-all duration-300 text-sm sm:text-base'
         : 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-600 focus:bg-white transition-all duration-300 text-sm sm:text-base';
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -384,16 +376,12 @@ export default function AdminCreationForm({
         {/* Header */}
         <div className="text-center mb-4 sm:mb-6 md:mb-8">
           <h1
-            className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 ${
-              isDark ? 'text-white' : 'text-gray-900'
-            }`}
+            className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl text-gray-900 font-bold mb-2`}
           >
             {t('auth.admin.createAdminUser')}
           </h1>
           <p
-            className={`text-xs sm:text-sm md:text-base ${
-              isDark ? 'text-white/70' : 'text-gray-600'
-            }`}
+            className={`text-xs sm:text-sm md:text-base text-gray-600`}
           >
             {t('auth.admin.fullSystemAccess')}
           </p>
@@ -404,22 +392,14 @@ export default function AdminCreationForm({
           <div
             className={`${
               success
-                ? isDark
-                  ? 'bg-green-500/10 border border-green-400/30'
-                  : 'bg-green-50 border border-green-300'
-                : isDark
-                ? 'bg-red-500/10 border border-red-400/30'
+               ? 'bg-green-50 border border-green-300'
                 : 'bg-red-50 border border-red-300'
             } rounded-lg p-2 sm:p-3 mb-3 sm:mb-4`}
           >
             <p
               className={`${
                 success
-                  ? isDark
-                    ? 'text-green-400'
-                    : 'text-green-600'
-                  : isDark
-                  ? 'text-red-400'
+                  ? 'text-green-600'
                   : 'text-red-600'
               } text-xs sm:text-sm ${locale === 'ar' ? 'text-right' : ''}`}
             >
@@ -436,9 +416,7 @@ export default function AdminCreationForm({
           <div>
             <label
               htmlFor="name"
-              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${
-                isDark ? 'text-white/80' : 'text-gray-700'
-              } ${locale === 'ar' ? 'text-right' : ''}`}
+              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${locale === 'ar' ? 'text-right' : ''}`}
             >
               {t('auth.admin.fullName')}
             </label>
@@ -457,9 +435,7 @@ export default function AdminCreationForm({
             />
             {touched.name && validationErrors.name && (
               <p
-                className={`text-xs mt-1 ${
-                  isDark ? 'text-red-400' : 'text-red-600'
-                } ${locale === 'ar' ? 'text-right' : ''}`}
+                className={`text-xs mt-1 text-red-600 ${locale === 'ar' ? 'text-right' : ''}`}
               >
                 {validationErrors.name}
               </p>
@@ -469,9 +445,7 @@ export default function AdminCreationForm({
           <div>
             <label
               htmlFor="email"
-              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${
-                isDark ? 'text-white/80' : 'text-gray-700'
-              } ${locale === 'ar' ? 'text-right' : ''}`}
+              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${locale === 'ar' ? 'text-right' : ''}`}
             >
               {t('auth.admin.emailAddress')}
             </label>
@@ -490,9 +464,7 @@ export default function AdminCreationForm({
             />
             {touched.email && validationErrors.email && (
               <p
-                className={`text-xs mt-1 ${
-                  isDark ? 'text-red-400' : 'text-red-600'
-                } ${locale === 'ar' ? 'text-right' : ''}`}
+                className={`text-xs mt-1 text-red-600 ${locale === 'ar' ? 'text-right' : ''}`}
               >
                 {validationErrors.email}
               </p>
@@ -502,9 +474,7 @@ export default function AdminCreationForm({
           <div>
             <label
               htmlFor="password"
-              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${
-                isDark ? 'text-white/80' : 'text-gray-700'
-              } ${locale === 'ar' ? 'text-right' : ''}`}
+              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${locale === 'ar' ? 'text-right' : ''}`}
             >
               {t('auth.admin.password')}
             </label>
@@ -523,17 +493,13 @@ export default function AdminCreationForm({
             />
             {touched.password && validationErrors.password && (
               <p
-                className={`text-xs mt-1 ${
-                  isDark ? 'text-red-400' : 'text-red-600'
-                } ${locale === 'ar' ? 'text-right' : ''}`}
+                className={`text-xs mt-1 text-red-600 ${locale === 'ar' ? 'text-right' : ''}`}
               >
                 {validationErrors.password}
               </p>
             )}
             <p
-              className={`text-xs mt-1 ${
-                isDark ? 'text-white/50' : 'text-gray-500'
-              } ${locale === 'ar' ? 'text-right' : ''}`}
+              className={`text-xs mt-1 text-gray-500 ${locale === 'ar' ? 'text-right' : ''}`}
             >
               {t('auth.admin.passwordRequirement')}
             </p>
@@ -542,9 +508,7 @@ export default function AdminCreationForm({
           <div>
             <label
               htmlFor="confirmPassword"
-              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${
-                isDark ? 'text-white/80' : 'text-gray-700'
-              } ${locale === 'ar' ? 'text-right' : ''}`}
+              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${locale === 'ar' ? 'text-right' : ''}`}
             >
               {t('auth.admin.confirmPassword')}
             </label>
@@ -563,9 +527,7 @@ export default function AdminCreationForm({
             />
             {touched.confirmPassword && validationErrors.confirmPassword && (
               <p
-                className={`text-xs mt-1 ${
-                  isDark ? 'text-red-400' : 'text-red-600'
-                } ${locale === 'ar' ? 'text-right' : ''}`}
+                className={`text-xs mt-1 text-red-600 ${locale === 'ar' ? 'text-right' : ''}`}
               >
                 {validationErrors.confirmPassword}
               </p>
@@ -575,11 +537,7 @@ export default function AdminCreationForm({
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[44px] sm:min-h-[48px] flex items-center justify-center ${
-              isDark
-                ? 'bg-purple-600 hover:bg-purple-700 disabled:bg-purple-500 text-white hover:shadow-lg hover:shadow-purple-500/25'
-                : 'bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white hover:shadow-lg hover:shadow-purple-500/25'
-            }`}
+            className={`w-full font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[44px] sm:min-h-[48px] flex items-center justify-center bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white hover:shadow-lg hover:shadow-purple-500/25`}
           >
             {isLoading ? (
               <>{t('auth.admin.creatingAdmin')}</>

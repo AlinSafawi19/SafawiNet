@@ -146,9 +146,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
       {/* Sidebar - Hidden on mobile, visible on desktop */}
       <div
         className={`
-        fixed top-14 min-h-[calc(100vh-3rem)] bg-white dark:bg-dark-surface text-black dark:text-white transition-transform duration-300 ease-in-out
+        fixed top-14 min-h-[calc(100vh-3rem)] bg-white text-black transition-transform duration-300 ease-in-out
         hidden lg:block
-        w-72 border-r border-gray-200 dark:border-zinc-700
+        w-72 border-r border-gray-200
         ${locale === 'ar' ? 'right-0' : 'left-0'}
       `}
       >
@@ -170,8 +170,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                         flex items-center space-x-3 px-6 py-3 mx-2 rounded-lg transition-all duration-200 font-medium group
                         ${
                           active
-                            ? 'bg-black dark:bg-white text-white dark:text-black'
-                            : 'text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100'
+                            ? 'bg-black text-white'
+                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                         }
                         ${
                           locale === 'ar'
@@ -188,8 +188,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                         flex items-center justify-center w-6 h-6 transition-colors duration-200
                         ${
                           active
-                            ? 'text-white dark:text-black'
-                            : 'text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200'
+                            ? 'text-white'
+                            : 'text-gray-500 group-hover:text-gray-700'
                         }
                       `}
                       >
@@ -205,7 +205,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
 
               {/* Separator after standalone items */}
               <div className="mx-6 mt-4 mb-2">
-                <div className="h-px bg-gray-200 dark:bg-zinc-700"></div>
+                <div className="h-px bg-gray-200"></div>
               </div>
             </div>
           )}
@@ -217,7 +217,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                 {/* Category Label */}
                 <div className="px-6 mb-3">
                   <h3
-                    className={`text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider ${
+                    className={`text-xs font-semibold text-gray-500 uppercase tracking-wider ${
                       locale === 'ar' ? 'text-right' : 'text-left'
                     }`}
                   >
@@ -242,7 +242,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                             onClick={() => toggleSection(item.expandableKey!)}
                             className={`
                             w-full flex items-center justify-between px-6 py-3 rounded-lg transition-all duration-200 font-medium group
-                            text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100
+                            text-gray-600 hover:bg-gray-100 hover:text-gray-900
                             ${locale === 'ar' ? 'flex-row-reverse' : ''}
                           `}
                           >
@@ -253,14 +253,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                                   : ''
                               }`}
                             >
-                              <div className="flex items-center justify-center w-6 h-6 transition-colors duration-200 text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200">
+                              <div className="flex items-center justify-center w-6 h-6 transition-colors duration-200 text-gray-500 group-hover:text-gray-700">
                                 <Icon className="w-5 h-5" />
                               </div>
                               <span className="font-medium text-sm">
                                 {t(item.label) || item.name}
                               </span>
                             </div>
-                            <div className="flex items-center justify-center w-4 h-4 transition-colors duration-200 text-gray-400 dark:text-zinc-500 group-hover:text-gray-600 dark:group-hover:text-zinc-300">
+                            <div className="flex items-center justify-center w-4 h-4 transition-colors duration-200 text-gray-400 group-hover:text-gray-600">
                               {isExpanded &&
                                 React.createElement(HiChevronDown as any, {
                                   className: 'w-4 h-4',
@@ -287,8 +287,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                                     flex items-center space-x-3 px-6 py-2 rounded-lg transition-all duration-200 font-medium group
                                     ${
                                       subActive
-                                        ? 'bg-black dark:bg-white text-white dark:text-black'
-                                        : 'text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100'
+                                        ? 'bg-black text-white'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                     }
                                     ${
                                       locale === 'ar'
@@ -302,8 +302,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                                     flex items-center justify-center w-5 h-5 transition-colors duration-200
                                     ${
                                       subActive
-                                        ? 'text-white dark:text-black'
-                                        : 'text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200'
+                                        ? 'text-white'
+                                        : 'text-gray-500 group-hover:text-gray-700'
                                     }
                                   `}
                                     >
@@ -330,8 +330,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                         flex items-center space-x-3 px-6 py-3 mx-2 rounded-lg transition-all duration-200 font-medium group
                         ${
                           active
-                            ? 'bg-black dark:bg-white text-white dark:text-black'
-                            : 'text-gray-600 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-zinc-100'
+                            ? 'bg-black text-white'
+                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                         }
                         ${
                           locale === 'ar'
@@ -348,8 +348,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                         flex items-center justify-center w-6 h-6 transition-colors duration-200
                         ${
                           active
-                            ? 'text-white dark:text-black'
-                            : 'text-gray-500 dark:text-zinc-400 group-hover:text-gray-700 dark:group-hover:text-zinc-200'
+                            ? 'text-white'
+                            : 'text-gray-500 group-hover:text-gray-700'
                         }
                       `}
                         >
@@ -366,7 +366,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                 {/* Separator */}
                 {categoryIndex < Object.keys(groupedItems).length - 1 && (
                   <div className="mx-6 mt-4 mb-2">
-                    <div className="h-px bg-gray-200 dark:bg-zinc-700"></div>
+                    <div className="h-px bg-gray-200"></div>
                   </div>
                 )}
               </div>

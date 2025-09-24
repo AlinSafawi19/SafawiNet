@@ -107,12 +107,12 @@ export const PerformanceDashboard: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-xl p-4 w-96 max-h-96 overflow-y-auto z-50">
+    <div className="fixed bottom-4 right-4 bg-white border border-gray-300 rounded-lg shadow-xl p-4 w-96 max-h-96 overflow-y-auto z-50">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-bold text-gray-800 dark:text-white">Performance Dashboard</h3>
+        <h3 className="text-lg font-bold text-gray-800">Performance Dashboard</h3>
         <button
           onClick={() => setIsVisible(false)}
-          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="text-gray-500 hover:text-gray-700"
         >
           ✕
         </button>
@@ -121,7 +121,7 @@ export const PerformanceDashboard: React.FC = () => {
       <div className="space-y-4">
         {/* Web Vitals */}
         <div>
-          <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Web Vitals</h4>
+          <h4 className="font-semibold text-gray-700 mb-2">Web Vitals</h4>
           <div className="text-sm space-y-1">
             <div>FCP: {webVitals.fcp ? `${webVitals.fcp.toFixed(2)}ms` : 'N/A'}</div>
             <div>LCP: {webVitals.lcp ? `${webVitals.lcp.toFixed(2)}ms` : 'N/A'}</div>
@@ -132,7 +132,7 @@ export const PerformanceDashboard: React.FC = () => {
         {/* Memory Usage */}
         {memoryUsage && (
           <div>
-            <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Memory Usage</h4>
+            <h4 className="font-semibold text-gray-700 mb-2">Memory Usage</h4>
             <div className="text-sm space-y-1">
               <div>Used: {memoryUsage.usedJSHeapSize}</div>
               <div>Total: {memoryUsage.totalJSHeapSize}</div>
@@ -143,7 +143,7 @@ export const PerformanceDashboard: React.FC = () => {
 
         {/* Render Counts */}
         <div>
-          <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Render Counts</h4>
+          <h4 className="font-semibold text-gray-700 mb-2">Render Counts</h4>
           <div className="text-sm space-y-1 max-h-20 overflow-y-auto">
             {Object.entries(renderCounts).map(([component, count]) => (
               <div key={component} className={count > 10 ? 'text-red-500' : ''}>
@@ -155,7 +155,7 @@ export const PerformanceDashboard: React.FC = () => {
 
         {/* API Calls */}
         <div>
-          <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Recent API Calls</h4>
+          <h4 className="font-semibold text-gray-700 mb-2">Recent API Calls</h4>
           <div className="text-sm space-y-1 max-h-20 overflow-y-auto">
             {apiCalls.slice(-5).map((call, index) => (
               <div key={index} className={call.status >= 400 ? 'text-red-500' : ''}>
@@ -167,7 +167,7 @@ export const PerformanceDashboard: React.FC = () => {
 
         {/* Custom Metrics */}
         <div>
-          <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Custom Metrics</h4>
+          <h4 className="font-semibold text-gray-700 mb-2">Custom Metrics</h4>
           <div className="text-sm space-y-1 max-h-20 overflow-y-auto">
             {Object.entries(metrics).map(([key, value]) => (
               <div key={key}>

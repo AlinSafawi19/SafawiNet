@@ -27,7 +27,6 @@ import { AuthenticatedRequest } from './types/auth.types';
 
 // Type definitions for user preferences and notification preferences
 interface UserPreferences {
-  theme: 'light' | 'dark';
   language: string;
   timezone: string;
   dateFormat: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD';

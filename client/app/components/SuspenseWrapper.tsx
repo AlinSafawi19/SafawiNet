@@ -45,7 +45,7 @@ export const SkeletonLoader: React.FC<{
         return (
           <div
             key={index}
-            className={`h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2 ${randomWidth}`}
+            className={`h-4 bg-gray-200 rounded mb-2 ${randomWidth}`}
           />
         );
       })}

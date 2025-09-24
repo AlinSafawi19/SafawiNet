@@ -38,7 +38,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body
-        className="text-black bg-site dark:text-white dark:bg-dark-bg transition-colors duration-200"
+        className="text-black bg-site transition-colors duration-200"
       >
                 <ErrorBoundary>
                   <GlobalErrorHandler>
@@ -48,7 +48,7 @@ export default function RootLayout({
                         <AppInitializer>
                           <DynamicLangAttribute />
                           <Header />
-                          <main className="bg-site dark:bg-dark-bg">{children}</main>
+                          <main className="bg-site">{children}</main>
                           <FooterWrapper />
                           <PerformanceDashboard />
                         </AppInitializer>

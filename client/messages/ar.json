@@ -44,7 +44,7 @@
     "mobile": {
       "navigation": "التنقل",
       "quickActions": "الإجراءات السريعة",
-      "languageTheme": "اللغة والمظهر"
+      "language": "اللغة"
     }
   },
   "home": {
@@ -403,8 +403,7 @@
     "breadcrumb": "مسار التنقل",
     "toggleMobileMenu": "تبديل القائمة المحمولة",
     "closeMobileMenu": "إغلاق القائمة المحمولة",
-    "userMenu": "قائمة المستخدم",
-    "toggleTheme": "تبديل المظهر"
+    "userMenu": "قائمة المستخدم"
   },
   "securityAlerts": {
     "events": {

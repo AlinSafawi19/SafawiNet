@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { OptimizedLoadingWrapper } from './OptimizedLoadingWrapper';
 
@@ -12,7 +11,6 @@ interface AppInitializerProps {
 
 export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
   const { isLoading: isAuthLoading } = useAuth();
-  const { isLoading: isThemeLoading } = useTheme();
   const { isLoading: isLanguageLoading } = useLanguage();
   const [isInitialRender, setIsInitialRender] = useState(true);
 
@@ -48,8 +46,8 @@ export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
 
   // Only wait for critical contexts on initial load, not on every context update
   const isCriticalLoading = useMemo(() => 
-    isInitialRender && (isAuthLoading || isThemeLoading || isLanguageLoading),
-    [isInitialRender, isAuthLoading, isThemeLoading, isLanguageLoading]
+    isInitialRender && (isAuthLoading || isLanguageLoading),
+    [isInitialRender, isAuthLoading, isLanguageLoading]
   );
 
   // For auth and account pages, only show loading if auth is still loading
@@ -59,9 +57,9 @@ export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
   );
 
   // Only log when values change significantly - reduce logging frequency
-  const prevState = useRef({ isAuthLoading, isThemeLoading, isLanguageLoading, isInitialRender });
+  const prevState = useRef({ isAuthLoading, isLanguageLoading, isInitialRender });
   useEffect(() => {
-    const currentState = { isAuthLoading, isThemeLoading, isLanguageLoading, isInitialRender };
+    const currentState = { isAuthLoading, isLanguageLoading, isInitialRender };
     const hasChanged = Object.keys(currentState).some(key => 
       prevState.current[key as keyof typeof currentState] !== currentState[key as keyof typeof currentState]
     );
@@ -71,7 +69,6 @@ export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
         isAuthPage, 
         isAccountPage,
         isAuthLoading, 
-        isThemeLoading, 
         isLanguageLoading, 
         isInitialRender,
         isCriticalLoading,
@@ -79,7 +76,7 @@ export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
       });
       prevState.current = currentState;
     }
-  }, [isAuthPage, isAccountPage, isAuthLoading, isThemeLoading, isLanguageLoading, isInitialRender, isCriticalLoading, shouldShowLoading]);
+  }, [isAuthPage, isAccountPage, isAuthLoading, isLanguageLoading, isInitialRender, isCriticalLoading, shouldShowLoading]);
 
   if (shouldShowLoading) {
     appLog('Showing loading wrapper', { 

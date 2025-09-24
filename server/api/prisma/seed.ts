@@ -107,7 +107,6 @@ async function main() {
     
     // Default preferences for superadmin
     const defaultPreferences = {
-      theme: 'light',
       language: 'en',
       timezone: 'Asia/Beirut',
       dateFormat: 'MM/DD/YYYY',

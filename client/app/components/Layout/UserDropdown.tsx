@@ -106,16 +106,16 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
         }`}
       >
         {/* Dropdown Content - seamless extension of header */}
-        <div className="bg-white dark:bg-dark-surface py-1">
-          <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700 text-center">
+        <div className="bg-white py-1">
+          <div className="px-4 py-2 border-b border-gray-200 text-center">
             <p
-              className="text-sm font-medium text-gray-900 dark:text-white truncate"
+              className="text-sm font-medium text-gray-900 truncate"
               title={user.name}
             >
               {user.name}
             </p>
             <p
-              className="text-sm text-gray-500 dark:text-gray-400 truncate"
+              className="text-sm text-gray-500 truncate"
               title={user.email}
             >
               {user.email}
@@ -124,7 +124,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
 
           {/* Loyalty Section - Only show for customers */}
           {isCustomer && (
-            <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+            <div className="px-4 py-2 border-b border-gray-200">
               <div
                 className={`flex items-center mb-2 ${
                   isRTL ? 'text-right justify-end' : 'text-left'
@@ -133,7 +133,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                 {isRTL ? (
                   <>
                     <span
-                      className="text-sm font-medium text-gray-900 dark:text-white truncate"
+                      className="text-sm font-medium text-gray-900 truncate"
                       title={t('header.loyalty.title')}
                     >
                       {t('header.loyalty.title')}
@@ -148,7 +148,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                       className: 'w-4 h-4 text-purple-500 mr-2 flex-shrink-0',
                     })}
                     <span
-                      className="text-sm font-medium text-gray-900 dark:text-white truncate"
+                      className="text-sm font-medium text-gray-900 truncate"
                       title={t('header.loyalty.title')}
                     >
                       {t('header.loyalty.title')}
@@ -158,7 +158,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
               </div>
 
               {loyaltyLoading ? (
-                <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="text-xs text-gray-500">
                   {t('header.loyalty.loading')}
                 </div>
               ) : loyaltyAccount ? (
@@ -167,24 +167,24 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                     {isRTL ? (
                       <>
                         <span
-                          className="font-medium text-gray-900 dark:text-white text-right truncate"
+                          className="font-medium text-gray-900 text-right truncate"
                           title={translateTierName(
                             loyaltyAccount.currentTier.name
                           )}
                         >
                           {translateTierName(loyaltyAccount.currentTier.name)}
                         </span>
-                        <span className="text-gray-600 dark:text-gray-400 text-right flex-shrink-0">
+                        <span className="text-gray-600 text-right flex-shrink-0">
                           :{t('header.loyalty.currentTier')}
                         </span>
                       </>
                     ) : (
                       <>
-                        <span className="text-gray-600 dark:text-gray-400 text-left flex-shrink-0">
+                        <span className="text-gray-600 text-left flex-shrink-0">
                           {t('header.loyalty.currentTier')}:
                         </span>
                         <span
-                          className="font-medium text-gray-900 dark:text-white text-right truncate"
+                          className="font-medium text-gray-900 text-right truncate"
                           title={translateTierName(
                             loyaltyAccount.currentTier.name
                           )}
@@ -198,22 +198,22 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                     {isRTL ? (
                       <>
                         <span
-                          className="font-medium text-purple-600 dark:text-purple-400 text-right truncate"
+                          className="font-medium text-purple-600 text-right truncate"
                           title={loyaltyAccount.currentPoints.toLocaleString()}
                         >
                           {loyaltyAccount.currentPoints.toLocaleString()}
                         </span>
-                        <span className="text-gray-600 dark:text-gray-400 text-right flex-shrink-0">
+                        <span className="text-gray-600 text-right flex-shrink-0">
                           :{t('header.loyalty.points')}
                         </span>
                       </>
                     ) : (
                       <>
-                        <span className="text-gray-600 dark:text-gray-400 text-left flex-shrink-0">
+                        <span className="text-gray-600 text-left flex-shrink-0">
                           {t('header.loyalty.points')}:
                         </span>
                         <span
-                          className="font-medium text-purple-600 dark:text-purple-400 text-right truncate"
+                          className="font-medium text-purple-600 text-right truncate"
                           title={loyaltyAccount.currentPoints.toLocaleString()}
                         >
                           {loyaltyAccount.currentPoints.toLocaleString()}
@@ -226,7 +226,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                       {isRTL ? (
                         <>
                           <span
-                            className="text-gray-900 dark:text-white font-medium text-left truncate"
+                            className="text-gray-900 font-medium text-left truncate"
                             title={`${loyaltyAccount.nextTier.pointsNeeded} ${t(
                               'header.loyalty.pointsNeeded'
                             )}`}
@@ -234,17 +234,17 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                             {loyaltyAccount.nextTier.pointsNeeded}{' '}
                             {t('header.loyalty.pointsNeeded')}
                           </span>
-                          <span className="text-gray-600 dark:text-gray-400 text-right flex-shrink-0">
+                          <span className="text-gray-600 text-right flex-shrink-0">
                             :{t('header.loyalty.nextTier')}
                           </span>
                         </>
                       ) : (
                         <>
-                          <span className="text-gray-600 dark:text-gray-400 text-left flex-shrink-0">
+                          <span className="text-gray-600 text-left flex-shrink-0">
                             {t('header.loyalty.nextTier')}:
                           </span>
                           <span
-                            className="text-gray-900 dark:text-white font-medium text-right truncate"
+                            className="text-gray-900 font-medium text-right truncate"
                             title={`${loyaltyAccount.nextTier.pointsNeeded} ${t(
                               'header.loyalty.pointsNeeded'
                             )}`}
@@ -258,7 +258,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
                   )}
                 </div>
               ) : (
-                <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                <div className="text-xs text-gray-500 text-center">
                   {t('header.loyalty.noAccount')}
                 </div>
               )}
@@ -268,7 +268,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
           <button
             type='button'
             onClick={handleMyAccount}
-            className={`flex items-center hover:text-purple-500 transition-colors text-sm font-medium space-x-2 w-full px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+            className={`flex items-center hover:text-purple-500 transition-colors text-sm font-medium space-x-2 w-full px-4 py-2 text-gray-700 hover:bg-gray-100 ${
               isRTL ? 'text-right justify-end' : 'text-left'
             }`}
           >
@@ -292,7 +292,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ user }) => {
           <button
             type='button'
             onClick={handleLogout}
-            className={`flex items-center hover:text-purple-500 transition-colors text-sm font-medium space-x-2 w-full px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+            className={`flex items-center hover:text-purple-500 transition-colors text-sm font-medium space-x-2 w-full px-4 py-2 text-gray-700 hover:bg-gray-100 ${
               isRTL ? 'text-right justify-end' : 'text-left'
             }`}
           >

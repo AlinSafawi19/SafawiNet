@@ -113,7 +113,6 @@ export class AuthService {
 
     // Default preferences
     const defaultPreferences = {
-      theme: 'light',
       language: 'en',
       timezone: 'Asia/Beirut',
       dateFormat: 'MM/DD/YYYY',

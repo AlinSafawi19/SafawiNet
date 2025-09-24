@@ -17,7 +17,6 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import UserDropdown from './UserDropdown';
-import ThemeToggle from '../ThemeToggle';
 import LanguageToggle from './LanguageToggle';
 
 const Header = () => {
@@ -159,10 +158,10 @@ const Header = () => {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 h-header z-40 w-full bg-white dark:bg-dark-surface shadow-sm dark:shadow-gray-900/20 transition-all duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 right-0 h-header z-40 w-full bg-white shadow-sm transition-all duration-300 ease-in-out ${
           isScrolled
-            ? 'shadow-lg dark:shadow-gray-900/40 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-sm'
-            : 'shadow-sm dark:shadow-gray-900/20'
+            ? 'shadow-lg bg-white/95 backdrop-blur-sm'
+            : 'shadow-sm'
         }`}
       >
         <div className="flex justify-between px-4 sm:px-6 lg:px-14 h-header items-center">
@@ -187,25 +186,25 @@ const Header = () => {
             >
               <Link
                 href="/"
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
+                className="text-gray-700 hover:text-purple-500 transition-colors font-medium text-lg"
               >
                 {t('header.navigation.home')}
               </Link>
               <Link
                 href="/products"
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
+                className="text-gray-700 hover:text-purple-500 transition-colors font-medium text-lg"
               >
                 {t('header.navigation.products')}
               </Link>
               <Link
                 href="/deals"
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
+                className="text-gray-700 hover:text-purple-500 transition-colors font-medium text-lg"
               >
                 {t('header.navigation.deals')}
               </Link>
               <Link
                 href="/about"
-                className="text-gray-700 dark:text-gray-300 hover:text-purple-500 transition-colors font-medium text-lg"
+                className="text-gray-700 hover:text-purple-500 transition-colors font-medium text-lg"
               >
                 {t('header.navigation.about')}
               </Link>
@@ -244,15 +243,12 @@ const Header = () => {
                 </Link>
               )}
 
-              {/* Theme Toggle Button */}
-              <ThemeToggle />
-
               {/* Language Toggle Button - Always Visible */}
               <LanguageToggle />
 
               {/* Login/Register or User Dropdown - Now inside the nav with proper spacing */}
               {isAuthLoading ? (
-                <div className="w-20 h-6 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
+                <div className="w-20 h-6 bg-gray-300 rounded animate-pulse"></div>
               ) : user ? (
                 <UserDropdown user={user} />
               ) : (
@@ -269,7 +265,7 @@ const Header = () => {
             {/* Mobile Auth Section - Show Login/Register or User Dropdown next to menu button */}
             <div className="lg-tablet:hidden flex items-center space-x-2">
               {isAuthLoading ? (
-                <div className="w-16 h-6 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
+                <div className="w-16 h-6 bg-gray-300 rounded animate-pulse"></div>
               ) : user ? (
                 <UserDropdown user={user} />
               ) : (
@@ -562,16 +558,13 @@ const Header = () => {
                     </Link>
                   )}
 
-                  {/* Language & Theme Section */}
+                  {/* Language Section */}
                   <div className="flex flex-col items-center space-y-3">
                     <h4 className="text-white/60 text-sm font-medium uppercase tracking-wider">
-                      {t('header.mobile.languageTheme')}
+                      {t('header.mobile.language')}
                     </h4>
                     <div className="flex space-x-3">
                       <LanguageToggle variant="mobile" />
-
-                      {/* Theme Toggle for Mobile */}
-                      <ThemeToggle variant="mobile" />
                     </div>
                   </div>
                 </div>

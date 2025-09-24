@@ -395,7 +395,6 @@ export class UsersController {
       updatePreferences: {
         summary: 'Update user preferences',
         value: {
-          theme: 'dark',
           language: 'en',
           timezone: 'America/New_York',
           dateFormat: 'MM/DD/YYYY',

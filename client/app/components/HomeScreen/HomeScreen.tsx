@@ -46,15 +46,15 @@ export function HomeScreen() {
   return (
     <div className="home-screen mx-auto relative">
       <div className="relative">
-        <div className="flex sm:flex-row flex-col bg-zinc-900 dark:bg-dark-bg">
+        <div className="flex sm:flex-row flex-col bg-zinc-900">
           <div
             className={`basis-1/2 text-center sm:text-left relative ${
               locale === 'ar' ? 'sm:text-right' : ''
             }`}
           >
-            <div className="px-6 sm:px-10 lg:px-14 py-6 bg-site dark:bg-dark-surface">
+            <div className="px-6 sm:px-10 lg:px-14 py-6 bg-site">
               <h1
-                className={`text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none animate-fade-in font-bold text-black dark:text-white ${
+                className={`text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none animate-fade-in font-bold text-black${
                   locale === 'ar' ? 'text-right' : ''
                 }`}
               >
@@ -63,7 +63,7 @@ export function HomeScreen() {
                 <span className="block">{t('home.hero.title.line3')}</span>
               </h1>
               <h3
-                className={`text-sm sm:text-base lg:text-2xl py-4 sm:py-6 text-black dark:text-white ${
+                className={`text-sm sm:text-base lg:text-2xl py-4 sm:py-6 text-black ${
                   locale === 'ar' ? 'text-right' : ''
                 }`}
               >
@@ -84,12 +84,12 @@ export function HomeScreen() {
                   locale === 'ar' ? 'sm:justify-end' : ''
                 }`}
               >
-                <button type="button" className="bg-black dark:bg-white text-white dark:text-black font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base">
+                <button type="button" className="bg-black text-white font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base">
                   {t('home.hero.cta')}
                 </button>
               </div>
             </div>
-            <div className="bg-zinc-900 dark:bg-dark-bg h-[75px] w-full"></div>
+            <div className="bg-zinc-900 h-[75px] w-full"></div>
           </div>
           <div className="basis-1/2">
             <Image
@@ -119,10 +119,10 @@ export function HomeScreen() {
       </div>
 
       {/* about me */}
-      <div className="bg-zinc-900 dark:bg-dark-bg text-site dark:text-white pt-16 sm:p-20">
+      <div className="bg-zinc-900 text-site pt-16 sm:p-20">
         <div className="max-w-4xl mx-auto text-center">
           <div
-            className={`text-lg sm:text-xl text-white/90 dark:text-gray-300 font-default tracking-wide leading-relaxed px-6 sm:px-8 ${
+            className={`text-lg sm:text-xl text-white/90 font-default tracking-wide leading-relaxed px-6 sm:px-8 ${
               locale === 'ar' ? 'text-right' : ''
             }`}
           ></div>

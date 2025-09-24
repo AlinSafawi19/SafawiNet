@@ -52,8 +52,8 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
                   isRTL ? 'rotate-180' : ''
                 } ${
                   isAccountPage
-                    ? 'text-gray-400 dark:text-gray-400'
-                    : 'text-gray-400 dark:text-gray-400'
+                    ? 'text-gray-400'
+                    : 'text-gray-400'
                 }`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
@@ -71,8 +71,8 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
                 href={item.href}
                 className={`transition-colors duration-200 whitespace-nowrap ${
                   isAccountPage
-                    ? 'text-gray-400 dark:text-gray-400 hover:text-black dark:hover:text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
+                    ? 'text-gray-400 hover:text-black'
+                    : 'text-gray-600 hover:text-black'
                 }`}
               >
                 {item.label}
@@ -82,11 +82,11 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
                 className={`whitespace-nowrap ${
                   item.isActive
                     ? isAccountPage
-                      ? 'text-black dark:text-white font-medium'
-                      : 'text-black dark:text-white font-medium'
+                      ? 'text-black font-medium'
+                      : 'text-black font-medium'
                     : isAccountPage
-                    ? 'text-gray-400 dark:text-gray-400'
-                    : 'text-gray-600 dark:text-gray-400'
+                    ? 'text-gray-400'
+                    : 'text-gray-600'
                 }`}
               >
                 {item.label}

@@ -33,7 +33,6 @@ interface User {
   twoFactorEnabled: boolean;
   notificationPreferences: any | null;
   preferences: {
-    theme: string;
     language: string;
   } | null;
   roles: string[];
@@ -276,7 +275,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(null);
 
       // Clear user-specific localStorage data
-      localStorage.removeItem('theme');
       localStorage.removeItem('locale');
 
       // Clear all cached data on logout

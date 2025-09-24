@@ -21,7 +21,6 @@ import { User, Role, Prisma } from '@prisma/client';
 
 // Type definitions for user preferences and notification preferences
 interface UserPreferences {
-  theme: 'light' | 'dark';
   language: string;
   timezone: string;
   dateFormat: 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD';
@@ -83,7 +82,6 @@ export class UsersService {
 
     // Default preferences
     const defaultPreferences: UserPreferences = {
-      theme: 'light',
       language: 'en',
       timezone: 'Asia/Beirut',
       dateFormat: 'MM/DD/YYYY',
@@ -199,7 +197,6 @@ export class UsersService {
 
     // Provide default values for preferences and notificationPreferences if they are null
     const defaultPreferences: UserPreferences = {
-      theme: 'light',
       language: 'en',
       timezone: 'UTC',
       dateFormat: 'MM/DD/YYYY',

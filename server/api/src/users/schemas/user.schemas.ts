@@ -61,7 +61,6 @@ export const UpdateProfileSchema = z.object({
 });
 
 export const UpdatePreferencesSchema = z.object({
-  theme: z.enum(['light', 'dark']).optional(),
   language: z
     .string()
     .min(2, { message: 'Language code must be at least 2 characters' })
@@ -198,7 +197,6 @@ export class UpdatePreferencesDto extends createZodDto(
     updatePreferences: {
       summary: 'Update user preferences',
       value: {
-        theme: 'dark',
         language: 'en',
         timezone: 'America/New_York',
         dateFormat: 'MM/DD/YYYY',

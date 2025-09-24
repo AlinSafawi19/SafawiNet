@@ -43,8 +43,7 @@
     },
     "mobile": {
       "navigation": "Navigation",
-      "quickActions": "Quick Actions",
-      "languageTheme": "Language & Theme"
+      "quickActions": "Quick Actions"
     }
   },
   "home": {
@@ -403,8 +402,7 @@
     "breadcrumb": "Breadcrumb",
     "toggleMobileMenu": "Toggle mobile menu",
     "closeMobileMenu": "Close mobile menu",
-    "userMenu": "User menu",
-    "toggleTheme": "Toggle theme"
+    "userMenu": "User menu"
   },
   "securityAlerts": {
     "events": {
