@@ -22,8 +22,8 @@ import LanguageToggle from './LanguageToggle';
 const Header = React.memo(() => {
   const { user, logout, isLoading: isAuthLoading, isSuperAdmin } = useAuth();
   const { locale, t, isLoading: isLanguageLoading } = useLanguage();
+  const isArabic = locale === 'ar';
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Admin navigation items - memoize to prevent re-creation
@@ -76,19 +76,12 @@ const Header = React.memo(() => {
   );
 
   const toggleMobileMenu = useCallback(() => {
-    if (!isAnimating) {
-      setIsMobileMenuOpen(!isMobileMenuOpen);
-    }
-  }, [isAnimating, isMobileMenuOpen]);
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  }, [isMobileMenuOpen]);
 
   const closeMobileMenu = useCallback(() => {
-    if (!isAnimating) {
-      setIsAnimating(true);
-      setIsMobileMenuOpen(false);
-      // Reset animation state after animation completes
-      setTimeout(() => setIsAnimating(false), 300);
-    }
-  }, [isAnimating]);
+    setIsMobileMenuOpen(false);
+  }, []);
 
   // Close menu on escape key
   useEffect(() => {
@@ -205,44 +198,55 @@ const Header = React.memo(() => {
             <nav className="hidden lg-tablet:flex items-center space-x-4 xl:space-x-6">
               <button
                 type="button"
-                className="hover:text-purple-500 transition-colors"
+                className="flex flex-col items-center space-y-1 hover:text-purple-500 transition-colors group"
                 aria-label={t('header.actions.notifications')}
               >
-                {HiBell({ className: 'w-6 h-6' })}
+                {HiBell({ className: 'w-4 h-4' })}
+                <span className="text-xs text-gray-600 group-hover:text-purple-500 transition-colors">
+                  {t('header.actions.notifications')}
+                </span>
               </button>
               {/* Wishlist - Hidden for admin users */}
               {!isAdmin && (
                 <Link
                   href="/wishlist"
-                  className="hover:text-purple-500 transition-colors"
+                  className="flex flex-col items-center space-y-1 hover:text-purple-500 transition-colors group"
                   aria-label={t('header.actions.wishlist')}
                 >
-                  {HiHeart({ className: 'w-6 h-6' })}
+                  {HiHeart({ className: 'w-4 h-4' })}
+                  <span className="text-xs text-gray-600 group-hover:text-purple-500 transition-colors">
+                    {t('header.actions.wishlist')}
+                  </span>
                 </Link>
               )}
               {/* Cart - Hidden for admin users */}
               {!isAdmin && (
                 <Link
                   href="/cart"
-                  className="hover:text-purple-500 transition-colors"
+                  className="flex flex-col items-center space-y-1 hover:text-purple-500 transition-colors group"
                   aria-label={t('header.actions.cart')}
                 >
-                  {HiOutlineShoppingCart({ className: 'w-6 h-6' })}
+                  {HiOutlineShoppingCart({ className: 'w-4 h-4' })}
+                  <span className="text-xs text-gray-600 group-hover:text-purple-500 transition-colors">
+                    {t('header.actions.cart')}
+                  </span>
                 </Link>
               )}
 
               {/* Language Toggle Button - Always Visible */}
               <LanguageToggle />
 
-              {/* Login/Register or User Dropdown - Now inside the nav with proper spacing */}
+              {/* Login/Register or User Dropdown - Desktop version */}
               {isAuthLoading ? (
                 <div className="w-20 h-6 bg-gray-300 rounded animate-pulse"></div>
               ) : user ? (
-                <UserDropdown user={user} />
+                <UserDropdown key="desktop-dropdown" user={user} />
               ) : (
                 <Link
                   href="/auth"
-                  className="hover:text-purple-500 transition-colors text-base max-w-32 sm:max-w-40 truncate"
+                  className={`hover:text-purple-500 transition-colors text-base max-w-32 sm:max-w-40 ${
+                    isArabic ? 'nav-text-ar' : 'truncate'
+                  }`}
                   title={t('header.auth.loginRegister')}
                 >
                   {t('header.auth.loginRegister')}
@@ -255,11 +259,13 @@ const Header = React.memo(() => {
               {isAuthLoading ? (
                 <div className="w-16 h-6 bg-gray-300 rounded animate-pulse"></div>
               ) : user ? (
-                <UserDropdown user={user} />
+                <UserDropdown key="mobile-dropdown" user={user} />
               ) : (
                 <Link
                   href="/auth"
-                  className="hover:text-purple-500 transition-colors text-sm font-medium px-3 py-1 rounded-md transition-all duration-200 max-w-24 sm:max-w-32 truncate"
+                  className={`hover:text-purple-500 transition-colors text-sm font-medium px-3 py-1 rounded-md transition-all duration-200 max-w-24 sm:max-w-32 ${
+                    isArabic ? 'btn-text-ar' : 'truncate'
+                  }`}
                   title={t('header.auth.loginRegister')}
                 >
                   {t('header.auth.loginRegister')}
@@ -271,16 +277,16 @@ const Header = React.memo(() => {
             <button
               onClick={toggleMobileMenu}
               type="button"
-              className="lg-tablet:hidden p-2 hover:text-purple-500 transition-colors"
+              className="lg-tablet:hidden p-2 hover:text-purple-500 transition-colors group"
               aria-label={t('accessibility.toggleMobileMenu')}
             >
-              <div className="relative w-8 h-8">
+              <div className="relative w-8 h-8 overflow-hidden">
                 {/* Hamburger Icon */}
                 <div
                   className={`absolute inset-0 transition-all duration-300 ease-in-out ${
                     isMobileMenuOpen
-                      ? 'opacity-0 rotate-90 scale-75'
-                      : 'opacity-100 rotate-0 scale-100'
+                      ? 'opacity-0 rotate-180 scale-50 translate-y-2'
+                      : 'opacity-100 rotate-0 scale-100 translate-y-0'
                   }`}
                 >
                   {HiBars3({ className: 'w-8 h-8' })}
@@ -290,8 +296,8 @@ const Header = React.memo(() => {
                 <div
                   className={`absolute inset-0 transition-all duration-300 ease-in-out ${
                     isMobileMenuOpen
-                      ? 'opacity-100 rotate-0 scale-100'
-                      : 'opacity-0 -rotate-90 scale-75'
+                      ? 'opacity-100 rotate-0 scale-100 translate-y-0'
+                      : 'opacity-0 -rotate-180 scale-50 -translate-y-2'
                   }`}
                 >
                   {HiXMark({ className: 'w-8 h-8' })}
@@ -380,7 +386,9 @@ const Header = React.memo(() => {
                               'w-5 h-5 text-white group-hover:text-purple-400 transition-colors mb-1',
                           })}
                           <span
-                            className="text-xs font-medium text-center leading-tight truncate max-w-full"
+                            className={`text-xs font-medium text-center leading-tight max-w-full ${
+                              isArabic ? 'text-truncate-ar' : 'truncate'
+                            }`}
                             title={t(item.label) || item.name}
                           >
                             {t(item.label) || item.name}
@@ -404,7 +412,7 @@ const Header = React.memo(() => {
                       onClick={closeMobileMenu}
                       title={t('header.navigation.home')}
                     >
-                      <span className="truncate">
+                      <span className={isArabic ? 'text-truncate-ar' : 'truncate'}>
                         {t('header.navigation.home')}
                       </span>
                     </Link>
@@ -414,7 +422,7 @@ const Header = React.memo(() => {
                       onClick={closeMobileMenu}
                       title={t('header.navigation.products')}
                     >
-                      <span className="truncate">
+                      <span className={isArabic ? 'text-truncate-ar' : 'truncate'}>
                         {t('header.navigation.products')}
                       </span>
                     </Link>
@@ -424,7 +432,7 @@ const Header = React.memo(() => {
                       onClick={closeMobileMenu}
                       title={t('header.navigation.deals')}
                     >
-                      <span className="truncate">
+                      <span className={isArabic ? 'text-truncate-ar' : 'truncate'}>
                         {t('header.navigation.deals')}
                       </span>
                     </Link>
@@ -434,7 +442,7 @@ const Header = React.memo(() => {
                       onClick={closeMobileMenu}
                       title={t('header.navigation.about')}
                     >
-                      <span className="truncate">
+                      <span className={isArabic ? 'text-truncate-ar' : 'truncate'}>
                         {t('header.navigation.about')}
                       </span>
                     </Link>
@@ -465,7 +473,9 @@ const Header = React.memo(() => {
                         {HiHeart({ className: 'w-7 h-7' })}
                       </div>
                       <span
-                        className="text-sm text-white/80 group-hover:text-white truncate"
+                        className={`text-sm text-white/80 group-hover:text-white ${
+                          isArabic ? 'text-truncate-ar' : 'truncate'
+                        }`}
                         title={t('header.actions.wishlist')}
                       >
                         {t('header.actions.wishlist')}
@@ -483,7 +493,9 @@ const Header = React.memo(() => {
                         {HiOutlineShoppingCart({ className: 'w-7 h-7' })}
                       </div>
                       <span
-                        className="text-sm text-white/80 group-hover:text-white truncate"
+                        className={`text-sm text-white/80 group-hover:text-white ${
+                          isArabic ? 'text-truncate-ar' : 'truncate'
+                        }`}
                         title={t('header.actions.cart')}
                       >
                         {t('header.actions.cart')}
@@ -498,10 +510,12 @@ const Header = React.memo(() => {
                       {HiBell({ className: 'w-7 h-7' })}
                     </div>
                     <span
-                      className="text-sm text-white/80 group-hover:text-white truncate"
-                      title={t('header.actions.alerts')}
+                      className={`text-sm text-white/80 group-hover:text-white ${
+                        isArabic ? 'text-truncate-ar' : 'truncate'
+                      }`}
+                      title={t('header.actions.notifications')}
                     >
-                      {t('header.actions.alerts')}
+                      {t('header.actions.notifications')}
                     </span>
                   </button>
                 </div>
@@ -522,7 +536,9 @@ const Header = React.memo(() => {
                     <div className="flex flex-col items-center space-y-3">
                       <div className="flex items-center text-white max-w-xs">
                         <span
-                          className="text-white font-medium truncate"
+                          className={`text-white font-medium ${
+                            isArabic ? 'text-truncate-ar' : 'truncate'
+                          }`}
                           title={user.name}
                         >
                           {user.name}

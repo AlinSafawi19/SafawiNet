@@ -217,6 +217,100 @@
     margin-right: 0.5rem;
   }
 
+  /* Arabic text truncation utilities */
+  .text-truncate-ar {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    direction: rtl;
+    text-align: right;
+  }
+
+  .text-truncate-ar-multiline {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    direction: rtl;
+    text-align: right;
+  }
+
+  .text-truncate-ar-multiline-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    direction: rtl;
+    text-align: right;
+  }
+
+  /* Arabic responsive text sizing */
+  .text-ar-responsive {
+    font-size: clamp(0.75rem, 2.5vw, 1rem);
+  }
+
+  .text-ar-responsive-sm {
+    font-size: clamp(0.875rem, 3vw, 1.125rem);
+  }
+
+  .text-ar-responsive-lg {
+    font-size: clamp(1rem, 3.5vw, 1.25rem);
+  }
+
+  /* Arabic navigation text handling */
+  .nav-text-ar {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    direction: rtl;
+    text-align: right;
+  }
+
+  @media (min-width: 640px) {
+    .nav-text-ar {
+      max-width: 160px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .nav-text-ar {
+      max-width: 200px;
+    }
+  }
+
+  /* Arabic button text handling */
+  .btn-text-ar {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    direction: rtl;
+    text-align: right;
+  }
+
+  @media (min-width: 640px) {
+    .btn-text-ar {
+      max-width: 140px;
+    }
+  }
+
+  /* Arabic dropdown text handling */
+  .dropdown-text-ar {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    direction: rtl;
+    text-align: right;
+  }
+
+  @media (min-width: 640px) {
+    .dropdown-text-ar {
+      max-width: 250px;
+    }
+  }
+
   h2 {
     @apply font-default;
     @apply text-base;
