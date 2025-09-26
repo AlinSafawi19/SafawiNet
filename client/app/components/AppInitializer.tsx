@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LoadingWrapper } from './LoadingWrapper';
@@ -9,22 +10,39 @@ interface AppInitializerProps {
   children: React.ReactNode;
 }
 
-export const AppInitializer: React.FC<AppInitializerProps> = React.memo(
-  ({ children }) => {
+export const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
+    
+    // Use Next.js usePathname hook to get reactive pathname
+    const pathname = usePathname();
     const { isLoading: isAuthLoading } = useAuth();
     const { isLoading: isLanguageLoading } = useLanguage();
-
-    // Memoize page type checks to prevent re-renders
+    
+    // Track route changes to show loader for navigation
+    const [isNavigating, setIsNavigating] = useState(false);
+    const [previousPathname, setPreviousPathname] = useState(pathname);
+    
+    useEffect(() => {
+      if (pathname !== previousPathname) {
+        setIsNavigating(true);
+        setPreviousPathname(pathname);
+        
+        // Reset navigation state after minimum time
+        const timer = setTimeout(() => {
+          setIsNavigating(false);
+        }, 200); // Minimum 200ms for smooth navigation
+        
+        return () => clearTimeout(timer);
+      }
+    }, [pathname, previousPathname]);
+    
+    // Memoize page type checks based on current pathname
     const isAuthPage = useMemo(
-      () =>
-        typeof window !== 'undefined' && window.location.pathname === '/auth',
-      []
+      () => pathname === '/auth',
+      [pathname]
     );
     const isAccountPage = useMemo(
-      () =>
-        typeof window !== 'undefined' &&
-        window.location.pathname.startsWith('/account'),
-      []
+      () => pathname.startsWith('/account'),
+      [pathname]
     );
 
     // Only wait for critical contexts on initial load, not on every context update
@@ -33,10 +51,22 @@ export const AppInitializer: React.FC<AppInitializerProps> = React.memo(
       [isAuthLoading, isLanguageLoading]
     );
 
-    // For auth and account pages, only show loading if auth is still loading
+    // Show loading for smooth navigation experience
+    // This ensures consistent UX during route changes
     const shouldShowLoading = useMemo(
-      () => (isAuthPage || isAccountPage ? isAuthLoading : isCriticalLoading),
-      [isAuthPage, isAccountPage, isAuthLoading, isCriticalLoading]
+      () => {
+        // Show loading if we're navigating between routes
+        if (isNavigating) {
+          return true;
+        }
+        // Show loading for auth/account pages or when contexts are loading
+        if (isAuthPage || isAccountPage) {
+          return true;
+        }
+        // For other pages, show loading if contexts are still loading
+        return isCriticalLoading;
+      },
+      [isNavigating, isAuthPage, isAccountPage, isCriticalLoading]
     );
 
     if (shouldShowLoading) {
@@ -44,11 +74,6 @@ export const AppInitializer: React.FC<AppInitializerProps> = React.memo(
     }
 
     return <>{children}</>;
-  },
-  (prevProps, nextProps) => {
-    // Custom comparison: only re-render if children actually change
-    return prevProps.children === nextProps.children;
-  }
-);
+  };
 
 AppInitializer.displayName = 'AppInitializer';

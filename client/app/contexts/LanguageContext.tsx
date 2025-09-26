@@ -40,6 +40,7 @@ interface LanguageProviderProps {
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   children,
 }) => {
+  
   const { user, authenticatedFetch } = useAuth();
   const [locale, setLocaleState] = useState<Locale>('en');
   const [messages, setMessages] = useState<any>({});
@@ -50,7 +51,6 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   useEffect(() => {
     const loadMessages = async () => {
       try {
-        const loadStartTime = Date.now();
 
         // Check if we have a cached version and if it's still valid
         const cacheKey = `messages-${locale}`;
@@ -84,6 +84,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
 
         setMessages(messages.default || messages);
       } catch (error) {
+        console.warn('⚠️ LanguageContext: Failed to load messages, using fallback', { error });
         try {
           // Fallback to English messages
           const fallbackMessages = await import(`../../messages/en.json`);
@@ -97,12 +98,17 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
             `messages-${locale}-version`,
             Date.now().toString()
           );
+          
 
           setMessages(fallbackMessages.default || fallbackMessages);
         } catch (fallbackError) {
+          console.error('💥 LanguageContext: Fallback failed, using empty messages', fallbackError);
           // Use empty messages object as last resort
           setMessages({});
         }
+      } finally {
+        setIsLoading(false);
+        setIsInitialized(true);
       }
     };
 
@@ -132,11 +138,15 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
 
   // Translation function with better error handling
   const t = (key: string): string => {
+    const translationStartTime = performance.now();
+    
     if (!key || typeof key !== 'string') {
+      console.warn('⚠️ LanguageContext: Invalid translation key', { key });
       return key || '';
     }
 
     if (Object.keys(messages).length === 0) {
+      console.warn('⚠️ LanguageContext: No messages loaded for translation', { key });
       return key;
     }
 
@@ -147,11 +157,22 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
       } else {
+        console.warn('⚠️ LanguageContext: Translation not found', { key, missingKey: k });
         return key; // Return key if translation not found
       }
     }
 
-    return typeof value === 'string' ? value : key;
+    const translationEndTime = performance.now();
+    const result = typeof value === 'string' ? value : key;
+    
+    if (translationEndTime - translationStartTime > 1) {
+      console.warn('⚠️ LanguageContext: Slow translation', {
+        key,
+        duration: `${(translationEndTime - translationStartTime).toFixed(2)}ms`
+      });
+    }
+
+    return result;
   };
 
   // Clear translation cache

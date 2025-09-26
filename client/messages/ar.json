@@ -291,6 +291,7 @@
       "emailVerified": "تم التحقق من البريد الإلكتروني بنجاح",
       "verificationEmailSent": "تم إرسال بريد التحقق بنجاح",
       "emailVerificationRequired": "يرجى التحقق من بريدك الإلكتروني قبل تسجيل الدخول",
+      "loginSuccess": "تم تسجيل الدخول بنجاح",
       "twoFactorRequired": "المصادقة الثنائية مطلوبة",
       "invalidRefreshToken": "رمز التحديث غير صحيح",
       "userNotFound": "المستخدم غير موجود",

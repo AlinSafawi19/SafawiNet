@@ -291,6 +291,7 @@
       "emailVerified": "Email verified successfully",
       "verificationEmailSent": "Verification email sent successfully",
       "emailVerificationRequired": "Please verify your email before signing in",
+      "loginSuccess": "Login successful",
       "twoFactorRequired": "Two-factor authentication required",
       "invalidRefreshToken": "Invalid refresh token",
       "userNotFound": "User not found",

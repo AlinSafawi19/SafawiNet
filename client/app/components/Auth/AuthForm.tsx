@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, memo } from 'react';
+import { useState, useEffect, useRef, useCallback, memo, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
@@ -20,29 +20,38 @@ interface RegisterValidationErrors {
 }
 
 const AuthForm = memo(function AuthForm() {
+  
   const { login, loginWith2FA, register, user, isLoading } = useAuth();
   const { t, locale } = useLanguage();
   const router = useRouter();
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-
-  // Use the new backend message translation hook
+  
+  // Use the new backend message translation hook for login
   const {
-    error,
-    success: successMessage,
-    errorKey,
-    successKey,
-    setError,
-    setErrorKey,
-    setSuccessKey,
-    setBackendError,
-    setBackendSuccess,
-    clearError,
+    error: loginError,
+    success: loginSuccessMessage,
+    errorKey: loginErrorKey,
+    successKey: loginSuccessKey,
+    setError: setLoginError,
+    setErrorKey: setLoginErrorKey,
+    setBackendError: setLoginBackendError,
+    clearError: clearLoginError,
   } = useBackendMessageTranslation();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+
+  // Use the new backend message translation hook for registration
+  const {
+    error: registerError,
+    success: registerSuccessMessage,
+    errorKey: registerErrorKey,
+    successKey: registerSuccessKey,
+    setErrorKey: setRegisterErrorKey,
+    setSuccessKey: setRegisterSuccessKey,
+    setBackendError: setRegisterBackendError,
+    setBackendSuccess: setRegisterBackendSuccess,
+    clearError: clearRegisterError,
+  } = useBackendMessageTranslation();
+  
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {}
   );
@@ -51,13 +60,6 @@ const AuthForm = memo(function AuthForm() {
     password: false,
   });
 
-  // Register form state
-  const [registerData, setRegisterData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
   const [registerValidationErrors, setRegisterValidationErrors] =
     useState<RegisterValidationErrors>({});
   const [registerTouched, setRegisterTouched] = useState({
@@ -76,9 +78,23 @@ const AuthForm = memo(function AuthForm() {
 
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+  
+  // Use refs for input values to prevent re-renders on every keystroke
+  const formDataRef = useRef({
+    email: '',
+    password: '',
+  });
+  
+  const registerDataRef = useRef({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
 
   // Redirect logged-in users
   useEffect(() => {
+
     if (!isLoading && user) {
       // Check if user has admin role
       const isAdmin = user.roles && user.roles.includes('ADMIN');
@@ -95,13 +111,6 @@ const AuthForm = memo(function AuthForm() {
     }
   }, [user, isLoading, router]);
 
-  // Consistent input styling for all form fields
-  const inputClassName =
-    'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-purple-500 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
-
-  // Error input styling
-  const errorInputClassName =
-    'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-red-500/50 rounded-lg text-white placeholder-white/50 focus:border-red-500 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
 
   // Validation functions
   const validateEmail = (email: string): string | undefined => {
@@ -177,10 +186,10 @@ const AuthForm = memo(function AuthForm() {
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
 
-    const emailError = validateEmail(formData.email);
+    const emailError = validateEmail(formDataRef.current.email);
     if (emailError) errors.email = emailError;
 
-    const passwordError = validatePassword(formData.password);
+    const passwordError = validatePassword(formDataRef.current.password);
     if (passwordError) errors.password = passwordError;
 
     setValidationErrors(errors);
@@ -210,18 +219,18 @@ const AuthForm = memo(function AuthForm() {
   const validateRegisterForm = (): boolean => {
     const errors: RegisterValidationErrors = {};
 
-    const nameError = validateName(registerData.name);
+    const nameError = validateName(registerDataRef.current.name);
     if (nameError) errors.name = nameError;
 
-    const emailError = validateRegisterEmail(registerData.email);
+    const emailError = validateRegisterEmail(registerDataRef.current.email);
     if (emailError) errors.email = emailError;
 
-    const passwordError = validateRegisterPassword(registerData.password);
+    const passwordError = validateRegisterPassword(registerDataRef.current.password);
     if (passwordError) errors.password = passwordError;
 
     const confirmPasswordError = validateConfirmPassword(
-      registerData.confirmPassword,
-      registerData.password
+      registerDataRef.current.confirmPassword,
+      registerDataRef.current.password
     );
     if (confirmPasswordError) errors.confirmPassword = confirmPasswordError;
 
@@ -245,7 +254,7 @@ const AuthForm = memo(function AuthForm() {
           error = validateRegisterPassword(value);
           break;
         case 'confirmPassword':
-          error = validateConfirmPassword(value, registerData.password);
+          error = validateConfirmPassword(value, registerDataRef.current.password);
           break;
       }
 
@@ -254,13 +263,13 @@ const AuthForm = memo(function AuthForm() {
         [name]: error,
       }));
     },
-    [registerData.password]
+    [] // No dependencies needed since we use refs
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    clearError();
+    clearLoginError();
     setIsFormLoading(true);
 
     // Mark all fields as touched
@@ -271,12 +280,14 @@ const AuthForm = memo(function AuthForm() {
 
     // Validate form before submission
     if (!validateForm()) {
+      console.warn('⚠️ AuthForm: Form validation failed');
       setIsFormLoading(false);
       return;
     }
-
+    
     try {
-      const result = await login(formData.email, formData.password);
+      const result = await login(formDataRef.current.email, formDataRef.current.password);
+      
       if (result.success) {
         // User is verified, check role and redirect accordingly
         const currentUser = result.user;
@@ -308,6 +319,7 @@ const AuthForm = memo(function AuthForm() {
           try {
             router.push('/');
           } catch (error) {
+            console.warn('⚠️ AuthForm: Router.push failed, using window.location', error);
             window.location.href = '/';
           }
 
@@ -322,19 +334,24 @@ const AuthForm = memo(function AuthForm() {
         // Show 2FA form
         setTwoFactorUserId(result.user?.id || '');
         setShow2FAForm(true);
-        clearError();
+        clearLoginError();
       } else {
+        console.warn('❌ AuthForm: Login failed', {
+          messageKey: result.messageKey,
+          message: result.message
+        });
         // Handle other login errors
         if (result.messageKey) {
-          setErrorKey(result.messageKey);
+          setLoginErrorKey(result.messageKey);
         } else if (result.message) {
-          setBackendError(result.message);
+          setLoginBackendError(result.message);
         } else {
-          setErrorKey('auth.messages.invalidCredentials');
+          setLoginErrorKey('auth.messages.invalidCredentials');
         }
       }
     } catch (error) {
-      setErrorKey('auth.messages.generalError');
+      console.error('💥 AuthForm: Login error caught', error);
+      setLoginErrorKey('auth.messages.generalError');
     } finally {
       setIsFormLoading(false);
     }
@@ -344,11 +361,12 @@ const AuthForm = memo(function AuthForm() {
   const handle2FASubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    clearError();
+    clearLoginError();
     setIs2FALoading(true);
 
     if (!twoFactorCode.trim()) {
-      setErrorKey('auth.twoFactor.codeRequired');
+      console.warn('⚠️ AuthForm: 2FA code is empty');
+      setLoginErrorKey('auth.twoFactor.codeRequired');
       setIs2FALoading(false);
       return;
     }
@@ -379,16 +397,21 @@ const AuthForm = memo(function AuthForm() {
           router.push('/');
         }
       } else {
+        console.warn('❌ AuthForm: 2FA failed', {
+          messageKey: result.messageKey,
+          message: result.message
+        });
         if (result.messageKey) {
-          setErrorKey(result.messageKey);
+          setLoginErrorKey(result.messageKey);
         } else if (result.message) {
-          setBackendError(result.message);
+          setLoginBackendError(result.message);
         } else {
-          setErrorKey('auth.messages.invalidTwoFactorCode');
+          setLoginErrorKey('auth.messages.invalidTwoFactorCode');
         }
       }
     } catch (error) {
-      setErrorKey('auth.messages.generalError');
+      console.error('💥 AuthForm: 2FA error caught', error);
+      setLoginErrorKey('auth.messages.generalError');
     } finally {
       setIs2FALoading(false);
     }
@@ -399,20 +422,16 @@ const AuthForm = memo(function AuthForm() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
 
-      setFormData((prev) => ({
-        ...prev,
+      // Update ref instead of state to prevent re-renders
+      formDataRef.current = {
+        ...formDataRef.current,
         [name]: value,
-      }));
+      };
 
-      // Clear error when user starts typing (only if there's an error)
-      if (validationErrors[name as keyof ValidationErrors]) {
-        setValidationErrors((prev) => ({
-          ...prev,
-          [name]: undefined,
-        }));
-      }
+      // Don't update validation errors on input change to prevent re-renders
+      // Validation will happen on blur or form submission
     },
-    [validationErrors]
+    [] // No dependencies needed
   );
 
   // Handle register form data changes
@@ -420,20 +439,16 @@ const AuthForm = memo(function AuthForm() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
 
-      setRegisterData((prev) => ({
-        ...prev,
+      // Update ref instead of state to prevent re-renders
+      registerDataRef.current = {
+        ...registerDataRef.current,
         [name]: value,
-      }));
+      };
 
-      // Clear error when user starts typing (only if there's an error)
-      if (registerValidationErrors[name as keyof RegisterValidationErrors]) {
-        setRegisterValidationErrors((prev) => ({
-          ...prev,
-          [name]: undefined,
-        }));
-      }
+      // Don't update validation errors on input change to prevent re-renders
+      // Validation will happen on blur or form submission
     },
-    [registerValidationErrors]
+    [] // No dependencies needed
   );
 
   // Handle field blur for validation - memoized
@@ -464,6 +479,27 @@ const AuthForm = memo(function AuthForm() {
     [validateRegisterField]
   );
 
+  // Memoize input class names to prevent recreation on every render
+  const inputClassName = useMemo(() => 
+    'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-purple-500 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base',
+    []
+  );
+
+  const errorInputClassName = useMemo(() => 
+    'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-red-500/50 rounded-lg text-white placeholder-white/50 focus:border-red-500 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base',
+    []
+  );
+
+  const registerInputClassName = useMemo(() => 
+    'w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm',
+    []
+  );
+
+  const registerErrorInputClassName = useMemo(() => 
+    'w-full px-4 py-3 bg-white border border-red-500 rounded-lg text-gray-900 placeholder-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all duration-300 text-sm',
+    []
+  );
+
   // Get input class based on validation state - memoized
   const getInputClass = useCallback(
     (fieldName: keyof ValidationErrors) => {
@@ -478,18 +514,16 @@ const AuthForm = memo(function AuthForm() {
     (fieldName: keyof RegisterValidationErrors) => {
       const hasError =
         registerTouched[fieldName] && registerValidationErrors[fieldName];
-      return hasError
-        ? 'w-full px-4 py-3 bg-white border border-red-500 rounded-lg text-gray-900 placeholder-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all duration-300 text-sm'
-        : 'w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all duration-300 text-sm';
+      return hasError ? registerErrorInputClassName : registerInputClassName;
     },
-    [registerTouched, registerValidationErrors]
+    [registerTouched, registerValidationErrors, registerErrorInputClassName, registerInputClassName]
   );
 
   // Handle register form submission
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    clearError();
+    clearRegisterError();
     setIsRegisterLoading(true);
 
     // Mark all fields as touched
@@ -502,35 +536,43 @@ const AuthForm = memo(function AuthForm() {
 
     // Validate form before submission
     if (!validateRegisterForm()) {
+      console.warn('⚠️ AuthForm: Register form validation failed');
       setIsRegisterLoading(false);
       return;
     }
-
+    
     try {
+      
+      // Validate that we have all required data
+      if (!registerDataRef.current.name || !registerDataRef.current.email || !registerDataRef.current.password) {
+        console.error('❌ AuthForm: Missing registration data', {
+          hasName: !!registerDataRef.current.name,
+          hasEmail: !!registerDataRef.current.email,
+          hasPassword: !!registerDataRef.current.password
+        });
+        setRegisterErrorKey('auth.messages.generalError');
+        setIsRegisterLoading(false);
+        return;
+      }
+      
       // Call the registration API
       const result = await register(
-        registerData.name,
-        registerData.email,
-        registerData.password
+        registerDataRef.current.name,
+        registerDataRef.current.email,
+        registerDataRef.current.password
       );
-
+      
       if (result.success) {
         // Show success message
         if (result.messageKey) {
-          setSuccessKey(result.messageKey);
+          setRegisterSuccessKey(result.messageKey);
         } else if (result.message) {
-          setBackendSuccess(result.message);
+          setRegisterBackendSuccess(result.message);
         } else {
-          setSuccessKey('auth.messages.registrationSuccess');
+          setRegisterSuccessKey('auth.messages.registrationSuccess');
         }
 
         // Reset form
-        setRegisterData({
-          name: '',
-          email: '',
-          password: '',
-          confirmPassword: '',
-        });
         setRegisterTouched({
           name: false,
           email: false,
@@ -538,53 +580,38 @@ const AuthForm = memo(function AuthForm() {
           confirmPassword: false,
         });
         setRegisterValidationErrors({});
+        
+        // Clear form inputs by resetting their values
+        const nameInput = document.getElementById('signup-name') as HTMLInputElement;
+        const emailInput = document.getElementById('signup-email') as HTMLInputElement;
+        const passwordInput = document.getElementById('signup-password') as HTMLInputElement;
+        const confirmPasswordInput = document.getElementById('signup-confirm-password') as HTMLInputElement;
+        
+        if (nameInput) nameInput.value = '';
+        if (emailInput) emailInput.value = '';
+        if (passwordInput) passwordInput.value = '';
+        if (confirmPasswordInput) confirmPasswordInput.value = '';
       } else {
+        console.warn('❌ AuthForm: Registration failed', {
+          messageKey: result.messageKey,
+          message: result.message
+        });
         // Handle registration errors
         if (result.messageKey) {
-          setErrorKey(result.messageKey);
+          setRegisterErrorKey(result.messageKey);
         } else if (result.message) {
-          setBackendError(result.message);
+          setRegisterBackendError(result.message);
         } else {
-          setErrorKey('auth.messages.registrationFailed');
+          setRegisterErrorKey('auth.messages.registrationFailed');
         }
       }
     } catch (error) {
-      setErrorKey('auth.messages.generalError');
+      console.error('💥 AuthForm: Registration error caught', error);
+      setRegisterErrorKey('auth.messages.generalError');
     } finally {
       setIsRegisterLoading(false);
     }
   };
-
-  // Render tracking - only log significant changes
-  const prevRenderState = useRef({
-    isRedirecting,
-    show2FAForm,
-    isFormLoading,
-    is2FALoading,
-    hasError: !!(error || errorKey),
-    hasSuccess: !!(successMessage || successKey),
-  });
-
-  useEffect(() => {
-    const currentState = {
-      isRedirecting,
-      show2FAForm,
-      isFormLoading,
-      is2FALoading,
-      hasError: !!(error || errorKey),
-      hasSuccess: !!(successMessage || successKey),
-    };
-
-    const hasSignificantChange = Object.keys(currentState).some(
-      (key) =>
-        prevRenderState.current[key as keyof typeof currentState] !==
-        currentState[key as keyof typeof currentState]
-    );
-
-    if (hasSignificantChange) {
-      prevRenderState.current = currentState;
-    }
-  });
 
   // Show loading page while redirecting
   if (isRedirecting) {
@@ -618,23 +645,6 @@ const AuthForm = memo(function AuthForm() {
             </p>
           </div>
 
-          {/* Error Message */}
-          {(error || errorKey) && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
-              <p className="text-red-400 text-xs sm:text-sm">
-                {error || (errorKey ? t(errorKey) : '')}
-              </p>
-            </div>
-          )}
-
-          {/* Success Message */}
-          {(successMessage || successKey) && (
-            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
-              <p className="text-green-400 text-xs sm:text-sm">
-                {successMessage || (successKey ? t(successKey) : '')}
-              </p>
-            </div>
-          )}
 
           {/* 2FA Form */}
           {show2FAForm && (
@@ -677,8 +687,8 @@ const AuthForm = memo(function AuthForm() {
                 onClick={() => {
                   setShow2FAForm(false);
                   setTwoFactorCode('');
-                  setError('');
-                  setErrorKey('');
+                  setLoginError('');
+                  setLoginErrorKey('');
                 }}
                 className="w-full bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-2 px-4 rounded-md transition-colors"
               >
@@ -693,6 +703,23 @@ const AuthForm = memo(function AuthForm() {
               onSubmit={handleSubmit}
               className="space-y-3 sm:space-y-4 md:space-y-6"
             >
+              {/* Login Error Message */}
+              {(loginError || loginErrorKey) && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
+                  <p className="text-red-400 text-xs sm:text-sm">
+                    {loginError || (loginErrorKey ? t(loginErrorKey) : '')}
+                  </p>
+                </div>
+              )}
+
+              {/* Login Success Message */}
+              {(loginSuccessMessage || loginSuccessKey) && (
+                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
+                  <p className="text-green-400 text-xs sm:text-sm">
+                    {loginSuccessMessage || (loginSuccessKey ? t(loginSuccessKey) : '')}
+                  </p>
+                </div>
+              )}
               <div>
                 <label
                   htmlFor="email"
@@ -705,7 +732,7 @@ const AuthForm = memo(function AuthForm() {
                   type="text"
                   id="email"
                   name="email"
-                  value={formData.email}
+                  defaultValue=""
                   onChange={handleInputChange}
                   onBlur={handleBlur}
                   className={getInputClass('email')}
@@ -730,7 +757,7 @@ const AuthForm = memo(function AuthForm() {
                   type="password"
                   id="password"
                   name="password"
-                  value={formData.password}
+                  defaultValue=""
                   onChange={handleInputChange}
                   onBlur={handleBlur}
                   className={getInputClass('password')}
@@ -784,6 +811,24 @@ const AuthForm = memo(function AuthForm() {
             </div>
 
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
+              {/* Registration Error Message */}
+              {(registerError || registerErrorKey) && (
+                <div className="bg-red-100 border border-red-300 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
+                  <p className="text-red-800 text-xs sm:text-sm">
+                    {registerError || (registerErrorKey ? t(registerErrorKey) : '')}
+                  </p>
+                </div>
+              )}
+
+              {/* Registration Success Message */}
+              {(registerSuccessMessage || registerSuccessKey) && (
+                <div className="bg-green-100 border border-green-300 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
+                  <p className="text-green-800 text-xs sm:text-sm">
+                    {registerSuccessMessage || (registerSuccessKey ? t(registerSuccessKey) : '')}
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label
                   htmlFor="signup-name"
@@ -795,7 +840,7 @@ const AuthForm = memo(function AuthForm() {
                   id="signup-name"
                   name="name"
                   type="text"
-                  value={registerData.name}
+                  defaultValue=""
                   onChange={handleRegisterInputChange}
                   onBlur={handleRegisterBlur}
                   className={getRegisterInputClass('name')}
@@ -820,7 +865,7 @@ const AuthForm = memo(function AuthForm() {
                   id="signup-email"
                   name="email"
                   type="email"
-                  value={registerData.email}
+                  defaultValue=""
                   onChange={handleRegisterInputChange}
                   onBlur={handleRegisterBlur}
                   className={getRegisterInputClass('email')}
@@ -845,7 +890,7 @@ const AuthForm = memo(function AuthForm() {
                   id="signup-password"
                   name="password"
                   type="password"
-                  value={registerData.password}
+                  defaultValue=""
                   onChange={handleRegisterInputChange}
                   onBlur={handleRegisterBlur}
                   className={getRegisterInputClass('password')}
@@ -871,7 +916,7 @@ const AuthForm = memo(function AuthForm() {
                   id="signup-confirm-password"
                   name="confirmPassword"
                   type="password"
-                  value={registerData.confirmPassword}
+                  defaultValue=""
                   onChange={handleRegisterInputChange}
                   onBlur={handleRegisterBlur}
                   className={getRegisterInputClass('confirmPassword')}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingPage } from './LoadingPage';
 
@@ -13,22 +13,24 @@ export const LoadingWrapper: React.FC<LoadingWrapperProps> = ({
   children,
   minLoadingTime = 200,
 }) => {
+  
   const { isLoading } = useAuth();
   const [showContent, setShowContent] = useState(false);
   const [startTime] = useState(Date.now());
 
   useEffect(() => {
-    if (!isLoading) {
-      const elapsed = Date.now() - startTime;
-      const remainingTime = Math.max(0, minLoadingTime - elapsed);
+    // Always ensure minimum loading time for smooth navigation
+    const elapsed = Date.now() - startTime;
+    const remainingTime = Math.max(0, minLoadingTime - elapsed);
 
-      const timer = setTimeout(() => {
-        setShowContent(true);
-      }, remainingTime);
+    const timer = setTimeout(() => {
+      setShowContent(true);
+    }, remainingTime);
 
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, startTime, minLoadingTime]);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [startTime, minLoadingTime]);
 
   const loadingContent = <LoadingPage />;
 

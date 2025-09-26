@@ -63,7 +63,7 @@ interface AuthContextType {
     accessToken: string;
     refreshToken: string;
     expiresIn: number;
-  }) => Promise<{ success: boolean; message?: string }>;
+  }) => Promise<{ success: boolean; message?: string; messageKey?: string }>;
   register: (
     name: string,
     email: string,
@@ -94,6 +94,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  
   const [user, setUser] = useState<User | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -121,6 +122,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         });
       }
 
+
       // Make the actual request
       const response = await fetch(url, options);
 
@@ -136,6 +138,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 
   const refreshToken = useCallback(async (): Promise<boolean> => {
+    
     // Prevent multiple simultaneous refresh attempts
     if (isRefreshing) {
       return false;
@@ -143,6 +146,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       setIsRefreshing(true);
+      
       const response = await fetch(
         buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.REFRESH),
         {
@@ -153,6 +157,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           credentials: 'include', // Include cookies for session management
         }
       );
+      
 
       if (response.ok) {
         const refreshData = await response.json();
@@ -163,13 +168,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // will use the refreshed token automatically
           return true;
         } else {
+          console.warn('❌ AuthContext: Token refresh failed but server returned 200 OK');
           // Refresh failed but server returned 200 OK
           return false;
         }
       } else {
+        console.warn('❌ AuthContext: Token refresh failed with non-200 status', {
+          status: response.status
+        });
         return false;
       }
     } catch (error) {
+      console.error('💥 AuthContext: Token refresh error caught', error);
       // Don't set user to null immediately - let the next auth check handle it
       return false;
     } finally {
@@ -178,11 +188,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [isRefreshing]);
 
   const loginWithTokens = useCallback(
-    async (tokens: {
+    async (_tokens: {
       accessToken: string;
       refreshToken: string;
       expiresIn: number;
-    }): Promise<{ success: boolean; message?: string }> => {
+    }): Promise<{ success: boolean; message?: string; messageKey?: string }> => {
       try {
         // Note: Server should have already set HTTP-only cookies
         // We just need to fetch user data to verify the login worked
@@ -201,19 +211,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           // Check if user is authenticated based on new response format
           if (!userData.authenticated || !userData.user) {
-            return { success: false, message: 'Authentication failed' };
+            return { success: false, messageKey: 'auth.messages.userNotFound' };
           }
 
           const finalUserData = userData.user;
 
           // Check if user is verified before setting login state
           if (!finalUserData.isVerified) {
-            return { success: false, message: 'Email verification required' };
+            return { success: false, messageKey: 'auth.messages.emailVerificationRequired' };
           }
 
           setUser(finalUserData);
 
-          return { success: true, message: 'Login successful' };
+          return { success: true, messageKey: 'auth.messages.loginSuccess' };
         } else {
           const errorText = await response.text();
           throw new Error(
@@ -221,11 +231,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           );
         }
       } catch (error) {
-        return { success: false, message: 'Failed to login with tokens' };
+        return { success: false, messageKey: 'auth.messages.generalError' };
       }
     },
     []
   );
+
 
   // Cache invalidation function
   const invalidateCache = useCallback((pattern?: string) => {
@@ -266,14 +277,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [invalidateCache]);
 
-  // Define force logout handler before useEffect to avoid scope issues
-  const handleForceLogout = useCallback(async () => {
-    // Use existing logout function
-    await logout();
 
-    // Redirect to login page
-    window.location.href = '/auth';
-  }, [logout]);
 
   const checkAuthStatus = useCallback(async () => {
     // Prevent multiple calls during initialization to avoid duplicate API calls
@@ -342,6 +346,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       messageKey?: string;
       user?: User;
     }> => {
+      
       const response = await cachedFetch(
         buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.LOGIN),
         {
@@ -353,6 +358,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           body: JSON.stringify({ email, password }),
         }
       );
+      
 
       if (response.ok) {
         const responseData = await response.json();
@@ -391,23 +397,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           return { success: true, user: userData };
         } else {
-          // Map server error messages to translation keys
-          const messageKey = responseData.message
-            ? mapServerErrorToTranslationKey(responseData.message)
-            : null;
+          console.warn('❌ AuthContext: Login failed - no user data in response', {
+            responseData
+          });
+
           return {
             success: false,
-            message: messageKey ? undefined : responseData.message,
-            messageKey: messageKey || undefined,
+            message: responseData.message,
+            messageKey: 'auth.messages.generalError',
           };
         }
       } else {
-        // Handle network error
-        return {
-          success: false,
-          message: 'Network error',
-          messageKey: 'auth.networkError',
-        };
+        console.warn('❌ AuthContext: Login failed with non-200 status', {
+          status: response.status
+        });
+        
+        // Parse the actual error response from the server
+        try {
+          const errorData = await response.json();
+          
+          return {
+            success: false,
+            message: errorData.message || 'Login failed',
+            messageKey: errorData.message ? undefined : 'auth.messages.generalError',
+          };
+        } catch (parseError) {
+          console.error('💥 AuthContext: Failed to parse error response', parseError);
+          return {
+            success: false,
+            message: 'Network error',
+            messageKey: 'auth.networkError',
+          };
+        }
       }
     },
     [cachedFetch]
@@ -436,9 +457,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
         );
 
+
         if (response.ok) {
           const data = await response.json();
-          const { user: userData } = data;
+          const { user: _userData } = data;
 
           // Fetch user data to set the user state (tokens are set as cookies by the server)
           const userResponse = await fetch(
@@ -454,18 +476,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
             // Check if user is authenticated based on new response format
             if (!userDataResponse.authenticated || !userDataResponse.user) {
-              return { success: false, message: 'Authentication failed' };
+              return { success: false, messageKey: 'auth.messages.userNotFound' };
             }
 
             const finalUserData = userDataResponse.user;
 
             // Check if user is verified before setting login state
             if (!finalUserData.isVerified) {
-              return { success: false, message: 'Email verification required' };
+              return { success: false, messageKey: 'auth.messages.emailVerificationRequired' };
             }
 
             setUser(finalUserData);
-
             return { success: true, user: finalUserData };
           } else {
             const errorText = await userResponse.text();
@@ -475,13 +496,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
         } else {
           const errorData = await response.json();
-          const messageKey = errorData.message
-            ? mapServerErrorToTranslationKey(errorData.message)
-            : null;
           return {
             success: false,
-            message: messageKey ? undefined : errorData.message,
-            messageKey: messageKey || undefined,
+            message: errorData.message,
+            messageKey: 'auth.messages.generalError',
           };
         }
       } catch (error) {
@@ -494,12 +512,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     []
   );
 
+
   const register = useCallback(
     async (
       name: string,
       email: string,
       password: string
     ): Promise<{ success: boolean; message?: string; messageKey?: string }> => {
+      
+      const requestData = { name, email, password };
+      
       try {
         const response = await fetch(
           buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.REGISTER),
@@ -509,36 +531,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               'Content-Type': 'application/json',
             },
             credentials: 'include', // Include cookies for session management
-            body: JSON.stringify({ name, email, password }),
+            body: JSON.stringify(requestData),
           }
         );
 
         if (response.ok) {
           // Get the success message from the server response
           const responseData = await response.json();
-          // Map server success messages to translation keys
-          const messageKey = mapServerMessageToTranslationKey(
-            responseData.message
-          );
 
           return {
             success: true,
-            message: messageKey ? undefined : responseData.message,
-            messageKey: messageKey || undefined,
+            message: responseData.message,
+            messageKey: 'auth.messages.registrationSuccess',
           };
         } else {
+          console.warn('❌ AuthContext: Registration failed with non-200 status', {
+            status: response.status
+          });
           const errorData = await response.json();
-          // Map server error messages to translation keys
-          const messageKey = errorData.message
-            ? mapServerErrorToTranslationKey(errorData.message)
-            : null;
           return {
             success: false,
-            message: messageKey ? undefined : errorData.message,
-            messageKey: messageKey || undefined,
+            message: errorData.message,
+            messageKey: 'auth.messages.registrationFailed',
           };
         }
       } catch (error) {
+        console.error('💥 AuthContext: Registration error caught', error);
         return {
           success: false,
           messageKey: 'auth.messages.generalError',
@@ -548,65 +566,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     []
   );
 
-  // Helper function to map server error messages to translation keys
-  const mapServerErrorToTranslationKey = (
-    serverMessage: string
-  ): string | null => {
-    const errorMapping: { [key: string]: string } = {
-      'User with this email already exists': 'auth.messages.userAlreadyExists',
-      'Account temporarily locked due to too many failed attempts':
-        'auth.messages.accountLocked',
-      'Invalid credentials': 'auth.messages.invalidCredentials',
-      'Invalid or expired verification token':
-        'auth.messages.invalidVerificationToken',
-      'Invalid 2FA code': 'auth.messages.invalidTwoFactorCode',
-      'Invalid or expired password reset token':
-        'auth.messages.invalidPasswordResetToken',
-      'Invalid refresh token': 'auth.messages.invalidRefreshToken',
-      'User not found': 'auth.messages.userNotFound',
-      '2FA is already enabled': 'auth.messages.twoFactorAlreadyEnabled',
-      '2FA setup not found. Please run setup first.':
-        'auth.messages.twoFactorSetupNotFound',
-      'Invalid TOTP code': 'auth.messages.invalidTOTPCode',
-      '2FA is not enabled': 'auth.messages.twoFactorNotEnabled',
-      'Invalid code': 'auth.messages.invalidCode',
-      'Email address is already in use by another account':
-        'auth.messages.emailAlreadyInUse',
-      'No refresh token provided': 'auth.messages.noRefreshTokenProvided',
-      'User is already verified': 'auth.messages.userAlreadyVerified',
-      'Session not found': 'auth.messages.sessionNotFound',
-      'Cannot delete current session':
-        'auth.messages.cannotDeleteCurrentSession',
-      'Notification not found': 'auth.messages.notificationNotFound',
-    };
 
-    return errorMapping[serverMessage] || null;
-  };
-
-  // Helper function to map server success messages to translation keys
-  const mapServerMessageToTranslationKey = (
-    serverMessage: string
-  ): string | null => {
-    const messageMapping: { [key: string]: string } = {
-      'User registered successfully. Please check your email to verify your account.':
-        'auth.messages.registrationSuccess',
-      'If an account with this email exists, a password reset link has been sent.':
-        'auth.messages.passwordResetEmailSent',
-      'Password reset successfully. Please log in with your new password.':
-        'auth.messages.passwordResetSuccess',
-      'Email verified successfully': 'auth.messages.emailVerified',
-      'Verification email sent successfully':
-        'auth.messages.verificationEmailSent',
-      'Two-factor authentication enabled successfully':
-        'auth.messages.twoFactorEnabled',
-      'Two-factor authentication disabled successfully':
-        'auth.messages.twoFactorDisabled',
-      'Token refreshed successfully': 'auth.messages.tokenRefreshed',
-      'Logged out successfully': 'auth.messages.loggedOut',
-    };
-
-    return messageMapping[serverMessage] || null;
-  };
 
   // Enhanced refresh token function that can be called automatically
   const autoRefreshToken = useCallback(async (): Promise<boolean> => {
@@ -619,6 +579,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
     return await refreshToken();
   }, [isRefreshing, refreshToken, user]);
+
 
   // Utility function for making authenticated API calls with automatic token refresh and caching
   const authenticatedFetch = useCallback(
