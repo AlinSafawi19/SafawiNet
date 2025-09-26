@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback, memo, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useRouter } from 'next/navigation';
-import { LoadingPage } from '../LoadingPage';
 import { useBackendMessageTranslation } from '../../hooks/useBackendMessageTranslation';
 
 interface ValidationErrors {
@@ -25,7 +24,6 @@ const AuthForm = memo(function AuthForm() {
   const { t, locale } = useLanguage();
   const router = useRouter();
   const [isFormLoading, setIsFormLoading] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
   
   // Use the new backend message translation hook for login
   const {
@@ -101,11 +99,9 @@ const AuthForm = memo(function AuthForm() {
 
       if (isAdmin) {
         // Redirect admin users to admin dashboard
-        setIsRedirecting(true);
         router.push('/admin');
       } else {
         // Redirect customer users to home page
-        setIsRedirecting(true);
         router.push('/');
       }
     }
@@ -612,11 +608,6 @@ const AuthForm = memo(function AuthForm() {
       setIsRegisterLoading(false);
     }
   };
-
-  // Show loading page while redirecting
-  if (isRedirecting) {
-    return <LoadingPage />;
-  }
 
   return (
     <div

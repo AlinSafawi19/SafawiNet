@@ -1,68 +1,22 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import React from 'react';
+import { useGlobalLoading } from '../contexts/GlobalLoadingContext';
 import { LoadingPage } from './LoadingPage';
 
 interface LoadingWrapperProps {
   children: React.ReactNode;
-  minLoadingTime?: number; // Minimum loading time to prevent flash
 }
 
 export const LoadingWrapper: React.FC<LoadingWrapperProps> = ({
   children,
-  minLoadingTime = 200,
 }) => {
-  
-  const { isLoading } = useAuth();
-  const [showContent, setShowContent] = useState(false);
-  const [startTime] = useState(Date.now());
+  const { isAnyLoading } = useGlobalLoading();
 
-  useEffect(() => {
-    // Always ensure minimum loading time for smooth navigation
-    const elapsed = Date.now() - startTime;
-    const remainingTime = Math.max(0, minLoadingTime - elapsed);
-
-    const timer = setTimeout(() => {
-      setShowContent(true);
-    }, remainingTime);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [startTime, minLoadingTime]);
-
-  const loadingContent = <LoadingPage />;
-
-  if (isLoading || !showContent) {
-    return loadingContent;
+  if (isAnyLoading) {
+    return <LoadingPage />;
   }
 
   return <>{children}</>;
 };
 
-// Hook for managing loading states with better UX
-export const useOptimizedLoading = (
-  isLoading: boolean,
-  minTime: number = 300
-) => {
-  const [showContent, setShowContent] = useState(!isLoading);
-  const [startTime] = useState(Date.now());
-
-  useEffect(() => {
-    if (!isLoading) {
-      const elapsed = Date.now() - startTime;
-      const remainingTime = Math.max(0, minTime - elapsed);
-
-      const timer = setTimeout(() => {
-        setShowContent(true);
-      }, remainingTime);
-
-      return () => clearTimeout(timer);
-    } else {
-      setShowContent(false);
-    }
-  }, [isLoading, startTime, minTime]);
-
-  return { showContent, isLoading: isLoading || !showContent };
-};

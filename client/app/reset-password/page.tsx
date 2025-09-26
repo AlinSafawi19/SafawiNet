@@ -5,7 +5,6 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ParallaxImage } from '../components/ParallaxImage';
-import { LoadingPage } from '../components/LoadingPage';
 import { useBackendMessageTranslation } from '../hooks/useBackendMessageTranslation';
 import { buildApiUrl, API_CONFIG } from '../config/api';
 
@@ -179,10 +178,6 @@ export default function ResetPasswordPage() {
       Object.keys(validationErrors).length === 0
     );
   };
-
-  if (!token) {
-    return <LoadingPage />;
-  }
 
   return (
     <div

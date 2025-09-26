@@ -3,7 +3,6 @@
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import AdminCreationForm from '../../components/Admin/AdminCreationForm';
-import { LoadingPage } from '@app/components/LoadingPage';
 import { useEffect } from 'react';
 
 export default function AddAdminPage() {
@@ -16,11 +15,6 @@ export default function AddAdminPage() {
       router.push('/admin');
     }
   }, [isLoading, isSuperAdmin, router]);
-
-  // Show loading while checking auth
-  if (isLoading) {
-    return <LoadingPage />;
-  }
 
   // Don't render anything if not superadmin (redirect will happen in useEffect)
   if (!isSuperAdmin()) {

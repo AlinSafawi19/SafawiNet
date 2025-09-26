@@ -4,7 +4,6 @@ import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { LoadingPage } from '../components/LoadingPage';
 import { useLanguage } from '../contexts/LanguageContext';
 import Link from 'next/link';
 import { ParallaxImage } from '../components/ParallaxImage';
@@ -34,11 +33,6 @@ export default function MyAccountPage() {
     }
   }, [user, isLoading, router]);
 
-  // Show loading page only briefly while checking authentication
-  if (isLoading) {
-    return <LoadingPage />;
-  }
-
   // Don't render anything if user is not authenticated (will redirect)
   if (!user) {
     return null;
@@ -62,7 +56,6 @@ export default function MyAccountPage() {
               router.prefetch('/account/login-security');
             }}
             onClick={(e) => {
-              const startTime = performance.now();
 
               // Add immediate visual feedback
               const element = e.currentTarget as HTMLElement;

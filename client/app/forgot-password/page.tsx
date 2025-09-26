@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import Link from 'next/link';
 import { ParallaxImage } from '../components/ParallaxImage';
@@ -28,19 +28,21 @@ export default function ForgotPasswordPage() {
   } = useBackendMessageTranslation();
 
   // Email validation function
-  const validateEmail = (email: string): string => {
+  const validateEmail = useCallback((email: string): string => {
     if (!email.trim()) {
       return 'auth.validation.emailRequired';
     }
+    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return 'auth.validation.emailInvalid';
     }
+    
     return '';
-  };
+  }, []);
 
   // Handle email input change
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setEmail(value);
 
@@ -48,24 +50,25 @@ export default function ForgotPasswordPage() {
     if (emailError) {
       setEmailError('');
     }
-  };
+  }, [emailError]);
 
   // Handle email field blur for validation
-  const handleEmailBlur = () => {
+  const handleEmailBlur = useCallback(() => {
     setTouched((prev) => ({ ...prev, email: true }));
     const error = validateEmail(email);
     setEmailError(error);
-  };
+  }, [email, validateEmail]);
 
-  // Get input class based on validation state
-  const getInputClass = () => {
+  // Get input class based on validation state - memoized for performance
+  const inputClass = useMemo(() => {
     const hasError = touched.email && emailError;
+    
     return hasError
       ? 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-red-500/50 rounded-lg text-white placeholder-white/50 focus:border-red-500 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base'
       : 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-purple-500 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base';
-  };
+  }, [touched.email, emailError]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Mark email as touched and validate
@@ -80,18 +83,17 @@ export default function ForgotPasswordPage() {
 
     setIsLoading(true);
     clearForgotMessages();
+    
+    const apiUrl = buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.FORGOT_PASSWORD);
 
     try {
-      const response = await fetch(
-        buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.FORGOT_PASSWORD),
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email }),
-        }
-      );
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
 
       const data = await response.json();
 
@@ -117,7 +119,8 @@ export default function ForgotPasswordPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [email, validateEmail, clearForgotMessages, setForgotBackendSuccess, setForgotSuccessKey, setForgotBackendError, setForgotErrorKey]);
+
 
   return (
     <div
@@ -182,7 +185,7 @@ export default function ForgotPasswordPage() {
                 value={email}
                 onChange={handleEmailChange}
                 onBlur={handleEmailBlur}
-                className={getInputClass()}
+                className={inputClass}
                 placeholder={t('auth.form.emailPlaceholder')}
               />
               {touched.email && emailError && (

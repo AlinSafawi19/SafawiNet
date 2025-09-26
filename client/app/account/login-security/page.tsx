@@ -10,7 +10,6 @@ import React, {
 } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
-import { LoadingPage } from '../../components/LoadingPage';
 import { useLanguage } from '../../contexts/LanguageContext';
 import {
   Breadcrumb,
@@ -104,7 +103,6 @@ export default function LoginSecurityPage() {
   >('text');
   const [currentPasswordValue, setCurrentPasswordValue] = useState('');
   const [disablePasswordValue, setDisablePasswordValue] = useState('');
-  const [isPageLoading, setIsPageLoading] = useState(true);
 
   const currentPasswordRef = useRef<HTMLInputElement>(null);
   const disablePasswordRef = useRef<HTMLInputElement>(null);
@@ -121,7 +119,6 @@ export default function LoginSecurityPage() {
       });
       setOriginalName(userName);
       // Page is ready to render
-      setIsPageLoading(false);
     }
   }, [user, isLoading, router]);
 
@@ -444,11 +441,6 @@ export default function LoginSecurityPage() {
     ],
     [t]
   );
-
-  // Show loading page while checking authentication or page is loading
-  if (isLoading || isPageLoading) {
-    return <LoadingPage />;
-  }
 
   // Don't render anything if user is not authenticated (will redirect)
   if (!user) {

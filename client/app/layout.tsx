@@ -3,8 +3,8 @@ import FooterWrapper from '@app/components/Layout/FooterWrapper';
 import Header from '@app/components/Layout/Header';
 import { ContextProvider } from './components/ContextProvider';
 import DynamicLangAttribute from './components/DynamicLangAttribute';
-import { AppInitializer } from './components/AppInitializer';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { LoadingWrapper } from './components/LoadingWrapper';
 // Fonts are now handled via globals.css only
 
 /**
@@ -34,12 +34,12 @@ export default function RootLayout({
       <body className="text-black bg-site transition-colors duration-200">
         <ErrorBoundary>
           <ContextProvider>
-            <AppInitializer>
+            <LoadingWrapper>
               <DynamicLangAttribute />
               <Header />
               <main className="bg-site">{children}</main>
               <FooterWrapper />
-            </AppInitializer>
+            </LoadingWrapper>
           </ContextProvider>
         </ErrorBoundary>
       </body>

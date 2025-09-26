@@ -6,13 +6,11 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
-import { LoadingPage } from '../LoadingPage';
 
 export const HomeScreen = React.memo(() => {
   const { t, locale } = useLanguage();
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Memoize admin check to prevent unnecessary re-renders
   const isAdmin = useMemo(
@@ -23,15 +21,9 @@ export const HomeScreen = React.memo(() => {
   useEffect(() => {
     // Redirect admin users to admin dashboard
     if (!isLoading && isAdmin) {
-      setIsRedirecting(true);
       router.push('/admin');
     }
   }, [user, isLoading, router, isAdmin]);
-
-  // Show loading page while redirecting
-  if (isRedirecting) {
-    return <LoadingPage />;
-  }
 
   return (
     <div className="home-screen mx-auto relative">

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import AdminSidebar from '../components/Admin/AdminSidebar';
 import { useLanguage } from '../contexts/LanguageContext';
-import { LoadingPage } from '../components/LoadingPage';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -25,11 +24,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       router.push('/');
     }
   }, [user, isLoading, router]);
-
-  // Show loading page while checking authentication
-  if (isLoading) {
-    return <LoadingPage />;
-  }
 
   return (
     <div className="min-h-screen flex">

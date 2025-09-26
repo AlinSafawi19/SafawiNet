@@ -115,18 +115,23 @@ export const useBackendMessageTranslation = (): BackendMessageState &
     return (messageMap as Record<string, string>)[message] || 'auth.messages.generalError';
   }, [messageMap]);
 
-  // Update translated messages when language changes
-  useEffect(() => {
-    if (errorKey) {
-      setError(t(errorKey));
-    }
+  // Update translated messages when language changes - memoized to prevent unnecessary re-renders
+  const translatedError = useMemo(() => {
+    return errorKey ? t(errorKey) : '';
   }, [errorKey, t]);
 
-  useEffect(() => {
-    if (successKey) {
-      setSuccess(t(successKey));
-    }
+  const translatedSuccess = useMemo(() => {
+    return successKey ? t(successKey) : '';
   }, [successKey, t]);
+
+  // Update error and success when translations change
+  useEffect(() => {
+    setError(translatedError);
+  }, [translatedError]);
+
+  useEffect(() => {
+    setSuccess(translatedSuccess);
+  }, [translatedSuccess]);
 
   const setBackendError = useCallback((message: string) => {
     const key = mapBackendMessageToKey(message);
