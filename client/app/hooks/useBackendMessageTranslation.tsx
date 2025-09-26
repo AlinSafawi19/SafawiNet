@@ -113,7 +113,7 @@ export const useBackendMessageTranslation = (): BackendMessageState &
   // Memoized mapBackendMessageToKey function
   const mapBackendMessageToKey = useCallback((message: string): string => {
     return (messageMap as Record<string, string>)[message] || 'auth.messages.generalError';
-  }, [messageMap]);
+  }, []);
 
   // Update translated messages when language changes - memoized to prevent unnecessary re-renders
   const translatedError = useMemo(() => {

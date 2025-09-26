@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -21,7 +21,6 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [token, setToken] = useState('');
-  const [userEmail, setUserEmail] = useState('');
 
   // Use the backend message translation hook
   const {
@@ -79,11 +78,11 @@ export default function ResetPasswordPage() {
     setValidationErrors(errors);
   }, [password, confirmPassword, touched, t]);
 
-  const handleBlur = (field: 'password' | 'confirmPassword') => {
+  const handleBlur = useCallback((field: 'password' | 'confirmPassword') => {
     setTouched((prev) => ({ ...prev, [field]: true }));
-  };
+  }, []);
 
-  const validateForm = (): boolean => {
+  const validateForm = useCallback((): boolean => {
     const errors: ValidationErrors = {};
 
     // Password validation
@@ -110,7 +109,7 @@ export default function ResetPasswordPage() {
     setTouched({ password: true, confirmPassword: true });
 
     return Object.keys(errors).length === 0;
-  };
+  }, [password, confirmPassword, token, t, setResetErrorKey]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,14 +169,70 @@ export default function ResetPasswordPage() {
     }
   };
 
-  const isFormValid = () => {
-    return (
-      password.trim().length >= 8 &&
-      confirmPassword.trim().length > 0 &&
-      password === confirmPassword &&
-      Object.keys(validationErrors).length === 0
-    );
-  };
+  // Memoized form validation to prevent unnecessary recalculations
+  const isFormValid = useMemo(() => (
+    password.trim().length >= 8 &&
+    confirmPassword.trim().length > 0 &&
+    password === confirmPassword &&
+    Object.keys(validationErrors).length === 0
+  ), [password, confirmPassword, validationErrors]);
+
+  // Memoized message display logic
+  const hasMessage = useMemo(() => 
+    !!(resetSuccess || resetSuccessKey || resetError || resetErrorKey),
+    [resetSuccess, resetSuccessKey, resetError, resetErrorKey]
+  );
+
+  const isSuccessMessage = useMemo(() => 
+    !!(resetSuccess || resetSuccessKey),
+    [resetSuccess, resetSuccessKey]
+  );
+
+  const messageContent = useMemo(() => 
+    resetSuccess || (resetSuccessKey ? t(resetSuccessKey) : '') ||
+    resetError || (resetErrorKey ? t(resetErrorKey) : ''),
+    [resetSuccess, resetSuccessKey, resetError, resetErrorKey, t]
+  );
+
+  const messageClasses = useMemo(() => 
+    `border rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 ${
+      isSuccessMessage
+        ? 'bg-green-500/10 border-green-500/20'
+        : 'bg-red-500/10 border-red-500/20'
+    }`,
+    [isSuccessMessage]
+  );
+
+  const messageTextClasses = useMemo(() => 
+    `text-xs sm:text-sm ${
+      isSuccessMessage ? 'text-green-400' : 'text-red-400'
+    }`,
+    [isSuccessMessage]
+  );
+
+  // Memoized input classes to prevent recreation on every render
+  const passwordInputClasses = useMemo(() => 
+    `w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border rounded-lg text-white placeholder-white/50 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base ${
+      validationErrors.password
+        ? 'border-red-400 focus:border-red-400'
+        : 'border-white/20 focus:border-purple-500'
+    }`,
+    [validationErrors.password]
+  );
+
+  const confirmPasswordInputClasses = useMemo(() => 
+    `w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border rounded-lg text-white placeholder-white/50 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base ${
+      validationErrors.confirmPassword
+        ? 'border-red-400 focus:border-red-400'
+        : 'border-white/20 focus:border-purple-500'
+    }`,
+    [validationErrors.confirmPassword]
+  );
+
+  const submitButtonClasses = useMemo(() => 
+    "w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] flex items-center justify-center",
+    []
+  );
 
   return (
     <div
@@ -224,23 +279,10 @@ export default function ResetPasswordPage() {
           </div>
 
           {/* Message Display */}
-          {(resetSuccess || resetSuccessKey || resetError || resetErrorKey) && (
-            <div
-              className={`border rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 ${
-                resetSuccess || resetSuccessKey
-                  ? 'bg-green-500/10 border-green-500/20'
-                  : 'bg-red-500/10 border-red-500/20'
-              }`}
-            >
-              <p
-                className={`text-xs sm:text-sm ${
-                  resetSuccess || resetSuccessKey
-                    ? 'text-green-400'
-                    : 'text-red-400'
-                }`}
-              >
-                {resetSuccess || (resetSuccessKey ? t(resetSuccessKey) : '')}
-                {resetError || (resetErrorKey ? t(resetErrorKey) : '')}
+          {hasMessage && (
+            <div className={messageClasses}>
+              <p className={messageTextClasses}>
+                {messageContent}
               </p>
             </div>
           )}
@@ -265,11 +307,7 @@ export default function ResetPasswordPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onBlur={() => handleBlur('password')}
-                className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border rounded-lg text-white placeholder-white/50 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base ${
-                  validationErrors.password
-                    ? 'border-red-400 focus:border-red-400'
-                    : 'border-white/20 focus:border-purple-500'
-                }`}
+                className={passwordInputClasses}
                 placeholder={t('auth.form.passwordPlaceholder')}
                 aria-describedby={
                   validationErrors.password ? 'password-error' : 'password-help'
@@ -300,11 +338,7 @@ export default function ResetPasswordPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 onBlur={() => handleBlur('confirmPassword')}
-                className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border rounded-lg text-white placeholder-white/50 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base ${
-                  validationErrors.confirmPassword
-                    ? 'border-red-400 focus:border-red-400'
-                    : 'border-white/20 focus:border-purple-500'
-                }`}
+                className={confirmPasswordInputClasses}
                 placeholder={t('auth.form.confirmPasswordPlaceholder')}
                 aria-describedby={
                   validationErrors.confirmPassword
@@ -324,8 +358,8 @@ export default function ResetPasswordPage() {
 
             <button
               type="submit"
-              disabled={isLoading || !isFormValid()}
-              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] flex items-center justify-center"
+              disabled={isLoading || !isFormValid}
+              className={submitButtonClasses}
             >
               {isLoading ? (
                 <>{t('resetPassword.resettingPassword')}</>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo, memo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   HiCheckCircle,
@@ -13,16 +13,37 @@ import Link from 'next/link';
 import { useBackendMessageTranslation } from '../hooks/useBackendMessageTranslation';
 import { buildApiUrl, API_CONFIG } from '../config/api';
 
+// Performance monitoring utilities
+let renderCount = 0;
+
 interface VerificationState {
   status: 'verifying' | 'success' | 'error' | 'invalid';
   message?: string;
 }
 
-export default function VerifyEmailPage() {
+const VerifyEmailPage = memo(function VerifyEmailPage() {
+  // Component rerender tracking
+  renderCount++;
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const { t } = useLanguage();
-  const { loginWithTokens, user, isLoading, updateUser } = useAuth();
+  const { user, isLoading, updateUser } = useAuth();
+
+  // Memoize context values to prevent unnecessary rerenders
+  const contextValues = useMemo(() => ({
+    user: user ? { id: user.id, email: user.email, roles: user.roles } : null,
+    isLoading,
+    searchParams: Object.fromEntries(searchParams.entries())
+  }), [user, isLoading, searchParams]);
+
+  // Log context values changes only when they actually change
+  const prevContextValues = useRef(contextValues);
+  useEffect(() => {
+    if (JSON.stringify(prevContextValues.current) !== JSON.stringify(contextValues)) {
+      prevContextValues.current = contextValues;
+    }
+  }, [contextValues]);
 
   // Use the backend message translation hook
   const {
@@ -42,19 +63,43 @@ export default function VerifyEmailPage() {
     }
   );
 
+  // State change tracking
+  const prevVerificationState = useRef(verificationState);
+  useEffect(() => {
+    if (prevVerificationState.current !== verificationState) {
+      prevVerificationState.current = verificationState;
+    }
+  }, [verificationState]);
+
   // Use useRef to prevent multiple API calls
   const hasVerifiedRef = useRef(false);
+  const hasEffectRunRef = useRef(false);
 
-  // Update initial message when language context is ready
+  // Update initial message when language context is ready - only run once
   useEffect(() => {
     setVerificationSuccessKey('verifyEmail.verifyingMessage');
-  }, [setVerificationSuccessKey]);
+  }, []); // Remove setVerificationSuccessKey from dependencies to prevent multiple executions
+
+  // Memoize the token to prevent unnecessary effect runs
+  const token = useMemo(() => {
+    const tokenValue = searchParams.get('token');
+    return tokenValue;
+  }, [searchParams]);
 
   useEffect(() => {
+
+    // Prevent multiple effect executions
+    if (hasEffectRunRef.current) {
+      return;
+    }
+
     // Prevent multiple verifications
     if (hasVerifiedRef.current) {
       return;
     }
+
+    // Mark effect as run
+    hasEffectRunRef.current = true;
 
     // If user is already logged in via AuthContext, show success and redirect
     if (!isLoading && user) {
@@ -78,7 +123,6 @@ export default function VerifyEmailPage() {
     }
 
     const verifyEmail = async () => {
-      const token = searchParams.get('token');
 
       if (!token) {
         setVerificationState({
@@ -92,17 +136,16 @@ export default function VerifyEmailPage() {
         // Mark as attempting verification to prevent multiple calls
         hasVerifiedRef.current = true;
 
-        const response = await fetch(
-          buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.VERIFY_EMAIL),
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({ token }),
-          }
-        );
+        const apiUrl = buildApiUrl(API_CONFIG.ENDPOINTS.AUTH.VERIFY_EMAIL);
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ token }),
+        });
 
         if (response.ok) {
           const successData = await response.json();
@@ -121,13 +164,13 @@ export default function VerifyEmailPage() {
           // by making a request to /users/me endpoint
 
           try {
-            const userResponse = await fetch(
-              buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME),
-              {
-                method: 'GET',
-                credentials: 'include',
-              }
-            );
+            const userApiUrl = buildApiUrl(API_CONFIG.ENDPOINTS.USERS.ME);
+
+            const userResponse = await fetch(userApiUrl, {
+              method: 'GET',
+              credentials: 'include',
+            });
+
 
             if (userResponse.ok) {
               const userData = await userResponse.json();
@@ -180,21 +223,15 @@ export default function VerifyEmailPage() {
     };
 
     verifyEmail();
+
   }, [
-    loginWithTokens,
-    router,
-    searchParams,
-    t,
-    user,
-    isLoading,
-    updateUser,
-    setVerificationBackendError,
-    setVerificationBackendSuccess,
-    setVerificationErrorKey,
-    setVerificationSuccessKey,
+    // Minimal dependencies - only include what actually triggers verification
+    token, // Only run when token changes
+    user, // Only run when user changes
+    isLoading, // Only run when loading state changes
   ]);
 
-  const getStatusIcon = () => {
+  const getStatusIcon = useCallback(() => {
     switch (verificationState.status) {
       case 'verifying':
         return (
@@ -212,27 +249,30 @@ export default function VerifyEmailPage() {
       default:
         return null;
     }
-  };
+  }, [verificationState.status]);
+
+  // Memoized loading component to prevent unnecessary rerenders
+  const LoadingComponent = useMemo(() => (
+    <div className="flex items-center justify-center px-4 pt-10">
+      <div className="max-w-md w-full text-center">
+        <div className="flex justify-center mb-6">
+          {HiExclamationTriangle({
+            className: 'w-16 h-16 text-yellow-500 animate-pulse',
+          })}
+        </div>
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          {t('verifyEmail.verifying')}
+        </h1>
+        <p className="text-gray-600 mb-8">
+          {t('verifyEmail.verifyingMessage')}
+        </p>
+      </div>
+    </div>
+  ), [t]);
 
   // Show loading while AuthContext is loading
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center px-4 pt-10">
-        <div className="max-w-md w-full text-center">
-          <div className="flex justify-center mb-6">
-            {HiExclamationTriangle({
-              className: 'w-16 h-16 text-yellow-500 animate-pulse',
-            })}
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            {t('verifyEmail.verifying')}
-          </h1>
-          <p className="text-gray-600 mb-8">
-            {t('verifyEmail.verifyingMessage')}
-          </p>
-        </div>
-      </div>
-    );
+    return LoadingComponent;
   }
 
   return (
@@ -264,7 +304,10 @@ export default function VerifyEmailPage() {
 
         {verificationState.status === 'error' && (
           <button
-            onClick={() => window.location.reload()}
+            type='button'
+            onClick={() => {
+              window.location.reload();
+            }}
             className="bg-black text-white font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base"
           >
             {t('verifyEmail.tryAgain')}
@@ -286,4 +329,6 @@ export default function VerifyEmailPage() {
       </div>
     </div>
   );
-}
+});
+
+export default VerifyEmailPage;
