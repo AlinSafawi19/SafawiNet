@@ -96,7 +96,6 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
             Date.now().toString()
           );
           
-
           setMessages(fallbackMessages.default || fallbackMessages);
         } catch (fallbackError) {
           console.error('💥 LanguageContext: Fallback failed, using empty messages', fallbackError);

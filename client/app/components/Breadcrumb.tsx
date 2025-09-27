@@ -78,8 +78,8 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
                 className={`whitespace-nowrap ${
                   item.isActive
                     ? isAccountPage
-                      ? 'text-black font-medium'
-                      : 'text-black font-medium'
+                      ? 'text-black font-bold'
+                      : 'text-black font-bold'
                     : isAccountPage
                     ? 'text-gray-400'
                     : 'text-gray-600'
@@ -124,6 +124,15 @@ export const generateBreadcrumbItems = (
         break;
       case 'login-security':
         label = t('breadcrumb.loginSecurity');
+        break;
+      case 'password':
+        label = t('breadcrumb.password');
+        break;
+      case '2fa':
+        label = t('breadcrumb.twoFactor');
+        break;
+      case 'name':
+        label = t('breadcrumb.name');
         break;
       default:
         // Capitalize first letter and replace hyphens with spaces

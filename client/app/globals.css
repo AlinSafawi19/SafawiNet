@@ -110,22 +110,12 @@
     @apply group-hover:opacity-100;
   }
 
-  .tile-security,
-  .tile-profile,
-  .tile-loyalty,
-  .tile-addresses,
-  .tile-orders,
-  .tile-payment {
+  .tile {
     @apply bg-black/20;
     @apply hover:bg-black/30;
   }
 
-  .tile-security::before,
-  .tile-profile::before,
-  .tile-loyalty::before,
-  .tile-addresses::before,
-  .tile-orders::before,
-  .tile-payment::before {
+  .tile::before {
     @apply bg-gradient-to-br from-white/5 to-transparent;
   }
 
@@ -145,12 +135,7 @@
     @apply group-hover:rotate-3;
   }
 
-  .tile-security .tile-icon,
-  .tile-profile .tile-icon,
-  .tile-loyalty .tile-icon,
-  .tile-addresses .tile-icon,
-  .tile-orders .tile-icon,
-  .tile-payment .tile-icon {
+  .tile .tile-icon {
     @apply bg-white/10;
     @apply text-white/80;
     @apply group-hover:bg-white/15;

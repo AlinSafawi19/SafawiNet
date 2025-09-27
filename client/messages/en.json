@@ -81,7 +81,10 @@
     "home": "Home",
     "account": "My Account",
     "profileSettings": "Profile Settings",
-    "loginSecurity": "Login & Security"
+    "loginSecurity": "Login & Security",
+    "password": "Password",
+    "twoFactor": "Two-Factor Authentication",
+    "name": "Name"
   },
   "account": {
     "title": "MY ACCOUNT",
@@ -116,7 +119,6 @@
     },
     "loginSecurity": {
       "title": "Login & Security",
-      "subtitle": "Manage your account security settings",
       "tabs": {
         "profile": "Profile",
         "profileShort": "Profile",
@@ -181,6 +183,20 @@
           "passwordRequired": "Current password is required",
           "disableFailed": "Failed to disable 2FA",
           "disableError": "An error occurred while disabling 2FA"
+        }
+      },
+      "questions": {
+        "password": {
+          "question": "Want to change your password?",
+          "action": "Click here to change your password"
+        },
+        "2fa": {
+          "question": "Want to manage 2FA settings?",
+          "action": "Click here to manage 2FA"
+        },
+        "name": {
+          "question": "Want to change your name?",
+          "action": "Click here to change your name"
         }
       }
     }
@@ -414,5 +430,8 @@
       "passwordChanged": "Your password has been successfully changed. If you did not make this change, please contact support immediately",
       "twoFactorDisabled": "Two-factor authentication has been disabled for your account. If you did not make this change, please contact support immediately"
     }
+  },
+  "common": {
+    "clickHere": "Click Here"
   }
 }

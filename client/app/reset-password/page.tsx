@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ParallaxImage } from '../components/ParallaxImage';
+import Image from 'next/image';
 import { useBackendMessageTranslation } from '../hooks/useBackendMessageTranslation';
 import { buildApiUrl, API_CONFIG } from '../config/api';
 
@@ -384,13 +384,28 @@ export default function ResetPasswordPage() {
         </div>
       </div>
 
-      {/* Right side - Image with Parallax */}
-      <ParallaxImage
-        src="https://static.wixstatic.com/media/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg/v1/fill/w_918,h_585,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg"
-        alt={t('auth.hero.imageAlt')}
-        title={t('resetPassword.imageTitle')}
-        subtitle={t('resetPassword.imageSubtitle')}
-      />
+      {/* Right side - Image */}
+      <div className="flex-1 lg:basis-1/2 relative bg-zinc-900 overflow-hidden min-h-[300px] sm:min-h-[400px] md:min-h-[500px] lg:min-h-[600px]">
+        <Image
+          src="https://static.wixstatic.com/media/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg/v1/fill/w_918,h_585,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg"
+          alt={t('auth.hero.imageAlt')}
+          className="w-full h-full object-cover"
+          width={1000}
+          height={800}
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 to-pink-900/80 z-10"></div>
+        <div className="absolute inset-0 z-20 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8">
+          <div className="text-center text-white">
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 md:mb-4">
+              {t('resetPassword.imageTitle')}
+            </h1>
+            <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/80 max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md">
+              {t('resetPassword.imageSubtitle')}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
