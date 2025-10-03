@@ -1,21 +1,31 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
+import { ApiProperty } from '@nestjs/swagger';
 
-export const RegisterSchema = z.object({
-  email: z
-    .string()
-    .email({ message: 'Invalid email format' })
-    .describe('User email address'),
-  password: z
-    .string()
-    .min(8, { message: 'Password must be at least 8 characters' })
-    .describe('User password (minimum 8 characters)'),
-  name: z
-    .string()
-    .min(1, { message: 'Name is required' })
-    .max(100, { message: 'Name too long' })
-    .describe('User full name'),
-});
+export const RegisterSchema = z
+  .object({
+    email: z
+      .string()
+      .email({ message: 'Invalid email format' })
+      .describe('User email address'),
+    password: z
+      .string()
+      .min(8, { message: 'Password must be at least 8 characters' })
+      .describe('User password (minimum 8 characters)'),
+    confirmPassword: z
+      .string()
+      .min(1, { message: 'Password confirmation is required' })
+      .describe('Confirm password'),
+    name: z
+      .string()
+      .min(1, { message: 'Name is required' })
+      .max(100, { message: 'Name too long' })
+      .describe('User full name'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Password and confirmation password don't match",
+    path: ['confirmPassword'],
+  });
 
 export const VerifyEmailSchema = z.object({
   token: z
@@ -71,12 +81,50 @@ export const ResetPasswordSchema = z
 
 // DTOs for Swagger documentation
 export class RegisterDto extends createZodDto(RegisterSchema) {
+  @ApiProperty({
+    description: 'User email address',
+    example: 'user@safawinet.com',
+    format: 'email',
+    required: true,
+    minLength: 1,
+    maxLength: 255,
+  })
+  email?: string;
+
+  @ApiProperty({
+    description: 'User password (minimum 8 characters)',
+    example: 'user123456',
+    required: true,
+    minLength: 8,
+    maxLength: 128,
+  })
+  password?: string;
+
+  @ApiProperty({
+    description: 'Confirm password (must match password)',
+    example: 'user123456',
+    required: true,
+    minLength: 1,
+    maxLength: 128,
+  })
+  confirmPassword?: string;
+
+  @ApiProperty({
+    description: 'User full name',
+    example: 'Test User',
+    required: true,
+    minLength: 1,
+    maxLength: 100,
+  })
+  name?: string;
+
   static examples = {
     register: {
       summary: 'Register a new user',
       value: {
         email: 'user@safawinet.com',
         password: 'user123456',
+        confirmPassword: 'user123456',
         name: 'Test User',
       },
     },
@@ -370,51 +418,7 @@ export class SessionRevokeAllDto extends createZodDto(SessionRevokeAllSchema) {
   };
 }
 
-// Batch session operation DTOs
-export class SessionBatchUpdateDto extends createZodDto(
-  SessionBatchUpdateSchema,
-) {
-  static examples = {
-    batchUpdate: {
-      summary: 'Update multiple sessions',
-      value: {
-        sessionIds: ['session1', 'session2', 'session3'],
-        updates: {
-          isCurrent: false,
-          lastActiveAt: '2024-01-15T10:30:00Z',
-        },
-      },
-    },
-  };
-}
-
-export class SessionBatchDeleteDto extends createZodDto(
-  SessionBatchDeleteSchema,
-) {
-  static examples = {
-    batchDelete: {
-      summary: 'Delete multiple sessions',
-      value: {
-        sessionIds: ['session1', 'session2', 'session3'],
-        reason: 'Security cleanup',
-      },
-    },
-  };
-}
-
-export class SessionBatchRevokeDto extends createZodDto(
-  SessionBatchRevokeSchema,
-) {
-  static examples = {
-    batchRevoke: {
-      summary: 'Revoke multiple sessions',
-      value: {
-        sessionIds: ['session1', 'session2', 'session3'],
-        reason: 'Suspicious activity detected',
-      },
-    },
-  };
-}
+// Batch session operation DTOs - using inline types instead of classes
 
 export class SessionBatchStatusUpdateDto extends createZodDto(
   SessionBatchStatusUpdateSchema,
@@ -460,55 +464,37 @@ export class NotificationMarkReadDto extends createZodDto(
   };
 }
 
-// Response DTOs for better type safety
-export class NotificationResponseDto {
-  id!: string;
-  type!: string;
-  title!: string;
-  message!: string;
-  isRead!: boolean;
-  readAt?: Date | null;
-  metadata?: Record<string, unknown> | null;
-  priority!: string;
-  expiresAt?: Date | null;
-  createdAt!: Date;
-  updatedAt!: Date;
-}
-
-export class NotificationListResponseDto {
-  notifications!: NotificationResponseDto[];
-  nextCursor?: string | null;
-  hasMore!: boolean;
-}
-
-export class UnreadCountResponseDto {
-  count!: number;
-}
+// Response DTOs - using inline types instead of classes
 
 // Batch operation response DTOs
 export class BatchOperationResultDto {
+  @ApiProperty({ description: 'Whether the operation was successful', example: true })
   success!: boolean;
+
+  @ApiProperty({ description: 'Number of items processed successfully', example: 3 })
   processedCount!: number;
+
+  @ApiProperty({ description: 'Number of items that failed', example: 0 })
   failedCount!: number;
+
+  @ApiProperty({ 
+    description: 'Array of errors for failed items', 
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        sessionId: { type: 'string', example: 'session123' },
+        error: { type: 'string', example: 'Session not found' }
+      }
+    },
+    required: false 
+  })
   errors?: Array<{
     sessionId: string;
     error: string;
   }>;
 }
 
-export class SessionBatchUpdateResponseDto extends BatchOperationResultDto {
-  updatedSessions!: string[];
-}
+// Response DTOs removed - using inline schemas in controllers
 
-export class SessionBatchDeleteResponseDto extends BatchOperationResultDto {
-  deletedSessions!: string[];
-}
-
-export class SessionBatchRevokeResponseDto extends BatchOperationResultDto {
-  revokedSessions!: string[];
-}
-
-export class SessionBatchStatusUpdateResponseDto extends BatchOperationResultDto {
-  updatedSessions!: string[];
-  newStatus!: string;
-}
+// SessionBatchStatusUpdateResponseDto removed - using inline schemas

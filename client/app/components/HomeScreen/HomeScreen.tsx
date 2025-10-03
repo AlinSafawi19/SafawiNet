@@ -2,13 +2,11 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 export const HomeScreen = React.memo(() => {
-  const { t, locale } = useLanguage();
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
@@ -29,48 +27,25 @@ export const HomeScreen = React.memo(() => {
     <div className="home-screen mx-auto relative">
       <div className="relative">
         <div className="flex sm:flex-row flex-col bg-zinc-900">
-          <div
-            className={`basis-1/2 text-center sm:text-left relative ${
-              locale === 'ar' ? 'sm:text-right' : ''
-            }`}
-          >
+          <div className="basis-1/2 text-center sm:text-left relative">
             <div className="px-6 sm:px-10 lg:px-14 py-6 bg-site">
               <h1
-                className={`text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none animate-fade-in font-bold text-black${
-                  locale === 'ar' ? 'text-right' : ''
-                }`}
+                className={`text-4xl sm:text-6xl lg:text-[120px] leading-tight sm:leading-none animate-fade-in font-bold text-black`}
               >
-                <span className="block">{t('home.hero.title.line1')}</span>
-                <span className="block">{t('home.hero.title.line2')}</span>
-                <span className="block">{t('home.hero.title.line3')}</span>
+                <span className="block">NETWORKING</span>
+                <span className="block">MADE</span>
+                <span className="block">SIMPLE</span>
               </h1>
-              <h3
-                className={`text-sm sm:text-base lg:text-2xl py-4 sm:py-6 text-black ${
-                  locale === 'ar' ? 'text-right' : ''
-                }`}
-              >
-                {locale === 'ar' ? (
-                  <>
-                    <span className="text-purple-500">SAFAWI NET</span>{' '}
-                    {t('home.hero.subtitle')}
-                  </>
-                ) : (
-                  <>
-                    {t('home.hero.subtitle')}{' '}
-                    <span className="text-purple-500">SAFAWI NET</span>
-                  </>
-                )}
+              <h3 className="text-sm sm:text-base lg:text-2xl py-4 sm:py-6 text-black">
+                PREMIUM NETWORKING SOLUTIONS BY{' '}
+                <span className="text-purple-500">SAFAWI NET</span>
               </h3>
-              <div
-                className={`flex justify-center sm:justify-start mt-2 ${
-                  locale === 'ar' ? 'sm:justify-end' : ''
-                }`}
-              >
+              <div className="flex justify-center sm:justify-start mt-2">
                 <button
                   type="button"
                   className="bg-black text-white font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base"
                 >
-                  {t('home.hero.cta')}
+                  DISCOVER SOLUTIONS
                 </button>
               </div>
             </div>
@@ -106,11 +81,7 @@ export const HomeScreen = React.memo(() => {
       {/* about me */}
       <div className="bg-zinc-900 text-site pt-16 sm:p-20">
         <div className="max-w-4xl mx-auto text-center">
-          <div
-            className={`text-lg sm:text-xl text-white/90 font-default tracking-wide leading-relaxed px-6 sm:px-8 ${
-              locale === 'ar' ? 'text-right' : ''
-            }`}
-          ></div>
+          <div className="text-lg sm:text-xl text-white/90 font-default tracking-wide leading-relaxed px-6 sm:px-8"></div>
         </div>
       </div>
     </div>

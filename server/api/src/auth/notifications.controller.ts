@@ -24,8 +24,6 @@ import { NotificationsService } from './notifications.service';
 import {
   NotificationListDto,
   NotificationMarkReadDto,
-  NotificationListResponseDto,
-  UnreadCountResponseDto,
 } from './schemas/auth.schemas';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { NotificationListSchema } from './schemas/auth.schemas';
@@ -71,7 +69,32 @@ export class NotificationsController {
   @ApiResponse({
     status: 200,
     description: 'Notifications retrieved successfully',
-    type: NotificationListResponseDto,
+    schema: {
+      type: 'object',
+      properties: {
+        notifications: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', example: 'cuidsession123456789' },
+              type: { type: 'string', example: 'security_alert' },
+              title: { type: 'string', example: 'Security Alert' },
+              message: { type: 'string', example: 'Suspicious activity detected' },
+              isRead: { type: 'boolean', example: false },
+              readAt: { type: 'string', format: 'date-time', nullable: true, example: '2024-01-15T10:30:00Z' },
+              metadata: { type: 'object', nullable: true, example: { userId: 'user123' } },
+              priority: { type: 'string', example: 'high' },
+              expiresAt: { type: 'string', format: 'date-time', nullable: true, example: '2024-01-20T10:30:00Z' },
+              createdAt: { type: 'string', format: 'date-time', example: '2024-01-15T10:30:00Z' },
+              updatedAt: { type: 'string', format: 'date-time', example: '2024-01-15T10:30:00Z' },
+            },
+          },
+        },
+        nextCursor: { type: 'string', nullable: true, example: 'eyJpZCI6InNlc3Npb24xMjMifQ==' },
+        hasMore: { type: 'boolean', example: true },
+      },
+    },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UsePipes(new ZodValidationPipe(NotificationListSchema))
@@ -111,7 +134,12 @@ export class NotificationsController {
   @ApiResponse({
     status: 200,
     description: 'Unread count retrieved successfully',
-    type: UnreadCountResponseDto,
+    schema: {
+      type: 'object',
+      properties: {
+        count: { type: 'number', example: 5 },
+      },
+    },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getUnreadCount(

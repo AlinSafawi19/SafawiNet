@@ -2,75 +2,66 @@
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { useLanguage } from '../../contexts/LanguageContext';
 
 const Footer = React.memo(() => {
-  const { t, locale } = useLanguage();
-
   // Create footer sections with conditional ordering for RTL support - memoize to prevent re-creation
   const footerSections = useMemo(
     () => [
       {
         key: 'quickLinks',
-        title: t('footer.sections.quickLinks'),
+        title: 'Quick Links',
         links: [
-          { href: '/', text: t('footer.links.home') },
-          { href: '/products', text: t('footer.links.allProducts') },
-          { href: '/categories', text: t('footer.links.categories') },
-          { href: '/deals', text: t('footer.links.dealsOffers') },
+          { href: '/', text: 'Home' },
+          { href: '/products', text: 'All Products' },
+          { href: '/categories', text: 'Categories' },
+          { href: '/deals', text: 'Deals & Offers' },
           {
             href: '/compatibility',
-            text: t('footer.links.compatibilityCheck'),
+            text: 'Compatibility Check',
           },
         ],
       },
       {
         key: 'customerSupport',
-        title: t('footer.sections.customerSupport'),
+        title: 'Customer Support',
         links: [
-          { href: '/help', text: t('footer.links.helpCenter') },
-          { href: '/contact', text: t('footer.links.contactUs') },
-          { href: '/shipping', text: t('footer.links.shippingInfo') },
-          { href: '/returns', text: t('footer.links.returnsExchanges') },
-          { href: '/warranty', text: t('footer.links.warrantyInfo') },
+          { href: '/help', text: 'Help Center' },
+          { href: '/contact', text: 'Contact Us' },
+          { href: '/shipping', text: 'Shipping Info' },
+          { href: '/returns', text: 'Returns & Exchanges' },
+          { href: '/warranty', text: 'Warranty Info' },
         ],
       },
       {
         key: 'myAccount',
-        title: t('footer.sections.myAccount'),
+        title: 'My Account',
         links: [
-          { href: '/account', text: t('footer.links.myAccount') },
-          { href: '/orders', text: t('footer.links.orderHistory') },
-          { href: '/wishlist', text: t('footer.links.wishlist') },
-          { href: '/reviews', text: t('footer.links.myReviews') },
-          { href: '/downloads', text: t('footer.links.downloads') },
+          { href: '/account', text: 'My Account' },
+          { href: '/orders', text: 'Order History' },
+          { href: '/wishlist', text: 'Wishlist' },
+          { href: '/reviews', text: 'My Reviews' },
+          { href: '/downloads', text: 'Downloads' },
         ],
       },
       {
         key: 'company',
-        title: t('footer.sections.company'),
+        title: 'Company',
         links: [
-          { href: '/about', text: t('footer.links.aboutUs') },
-          { href: '/privacy', text: t('footer.links.privacyPolicy') },
-          { href: '/terms', text: t('footer.links.termsOfService') },
-          { href: '/sitemap', text: t('footer.links.sitemap') },
+          { href: '/about', text: 'About Us' },
+          { href: '/privacy', text: 'Privacy Policy' },
+          { href: '/terms', text: 'Terms of Service' },
+          { href: '/sitemap', text: 'Sitemap' },
         ],
       },
     ],
-    [t]
-  );
-
-  // Reverse the order for Arabic (RTL) - memoize to prevent re-creation
-  const orderedSections = useMemo(
-    () => (locale === 'ar' ? [...footerSections].reverse() : footerSections),
-    [locale, footerSections]
+    []
   );
 
   return (
     <footer className="w-full min-h-56 bg-turquoise-100 leading-7 transition-colors duration-200">
       {/* Header Section */}
       <div className="bg-black text-white text-center py-4 sm:py-6 px-4">
-        <h1 className="font-bold">{t('footer.getInTouch')}</h1>
+        <h1 className="font-bold">{'Get In Touch'}</h1>
         <p className="mt-4 sm:mt-6 md:mt-10 text-xs sm:text-sm md:text-base px-2">
           <a
             href="mailto:INFO@MYSITE.COM"
@@ -83,7 +74,7 @@ const Footer = React.memo(() => {
             href="tel:123-456-7890"
             className="hover:underline transition-colors"
           >
-            {t('footer.phone')} 123-456-7890
+            {'Phone'} 123-456-7890
           </a>
         </p>
       </div>
@@ -95,25 +86,16 @@ const Footer = React.memo(() => {
             SAFAWI NET
           </h2>
           <p className="text-xs sm:text-sm md:text-base mt-2 text-gray-700 px-4 max-w-2xl mx-auto">
-            {t('footer.tagline')}
+            {'Your Trusted Source for Computers & Network Accessories'}
           </p>
         </div>
       </div>
 
       {/* Enhanced Footer Content */}
       <div className="mx-auto px-4 sm:px-6 md:px-8 lg:px-14 py-6 sm:py-8">
-        <div
-          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto ${
-            locale === 'ar' ? 'text-right' : ''
-          }`}
-        >
-          {orderedSections.map((section) => (
-            <div
-              key={section.key}
-              className={`text-center sm:text-left ${
-                locale === 'ar' ? 'sm:text-right' : ''
-              }`}
-            >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 max-w-7xl mx-auto">
+          {footerSections.map((section) => (
+            <div key={section.key} className="text-center sm:text-left">
               <h3 className="font-bold text-base sm:text-lg mb-3 sm:mb-4 text-black">
                 {section.title}
               </h3>
@@ -137,17 +119,7 @@ const Footer = React.memo(() => {
       {/* Copyright Section */}
       <div className="flex flex-col items-center mx-auto text-center pt-4 sm:pt-6 lg:pt-11 pb-2 sm:pb-4 lg:pb-6 px-4 sm:px-6 lg:px-14">
         <p className="font-default text-md sm:text-lg">
-          {locale === 'ar' ? (
-            <>
-              © 2025 SAFAWI NET {t('footer.copyright.allRightsReserved')}{' '}
-              {t('footer.copyright.by')}
-            </>
-          ) : (
-            <>
-              © 2025 {t('footer.copyright.by')} SAFAWI NET{' '}
-              {t('footer.copyright.allRightsReserved')}
-            </>
-          )}
+          © 2025 {'By'} SAFAWI NET {'All Rights Reserved'}
         </p>
         <div className="flex justify-center space-x-4 sm:space-x-6 mt-4 sm:mt-6">
           <a

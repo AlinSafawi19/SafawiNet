@@ -2,7 +2,6 @@
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { useLanguage } from '../contexts/LanguageContext';
 import { usePathname } from 'next/navigation';
 
 interface BreadcrumbItem {
@@ -20,37 +19,29 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
   items,
   className = '',
 }) => {
-  const { locale, t } = useLanguage();
   const pathname = usePathname();
 
   // Memoize expensive calculations
-  const { isRTL, isAccountPage } = useMemo(
+  const { isAccountPage } = useMemo(
     () => ({
-      isRTL: locale === 'ar',
       isAccountPage: pathname.startsWith('/account'),
     }),
-    [locale, pathname]
+    [pathname]
   );
 
   return (
     <nav
-      className={`flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${
-        isRTL ? 'space-x-reverse' : ''
-      } ${className}`}
-      aria-label={t('accessibility.breadcrumb')}
+      className={`flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm ${className}`}
+      aria-label={'Breadcrumb'}
     >
-      <ol
-        className={`flex items-center space-x-1 sm:space-x-2 ${
-          isRTL ? 'space-x-reverse' : ''
-        } overflow-x-auto scrollbar-hide`}
-      >
+      <ol className="flex items-center space-x-1 sm:space-x-2 overflow-x-auto scrollbar-hide">
         {items.map((item, index) => (
           <li key={index} className="flex items-center flex-shrink-0">
             {index > 0 && (
               <svg
                 className={`w-3 h-3 sm:w-4 sm:h-4 mx-1 sm:mx-2 ${
-                  isRTL ? 'rotate-180' : ''
-                } ${isAccountPage ? 'text-gray-400' : 'text-gray-400'}`}
+                  isAccountPage ? 'text-gray-400' : 'text-gray-400'
+                }`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 xmlns="http://www.w3.org/2000/svg"
@@ -96,11 +87,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({
 };
 
 // Helper function to generate breadcrumb items based on pathname
-export const generateBreadcrumbItems = (
-  pathname: string,
-  t: (key: string) => string,
-  locale?: string
-): BreadcrumbItem[] => {
+export const generateBreadcrumbItems = (pathname: string): BreadcrumbItem[] => {
   const segments = pathname.split('/').filter(Boolean);
   const items: BreadcrumbItem[] = [];
 
@@ -111,28 +98,28 @@ export const generateBreadcrumbItems = (
     currentPath += `/${segment}`;
     const isLast = index === segments.length - 1;
 
-    // Map segments to translation keys
+    // Map segments to display labels
     let label = '';
     let href = isLast ? undefined : currentPath;
 
     switch (segment) {
       case 'account':
-        label = t('breadcrumb.account');
+        label = 'My Account';
         break;
       case 'profile-settings':
-        label = t('breadcrumb.profileSettings');
+        label = 'Profile Settings';
         break;
       case 'login-security':
-        label = t('breadcrumb.loginSecurity');
+        label = 'Login & Security';
         break;
       case 'password':
-        label = t('breadcrumb.password');
+        label = 'Password';
         break;
       case '2fa':
-        label = t('breadcrumb.twoFactor');
+        label = 'Two-Factor Authentication';
         break;
       case 'name':
-        label = t('breadcrumb.name');
+        label = 'Name';
         break;
       default:
         // Capitalize first letter and replace hyphens with spaces
@@ -147,22 +134,10 @@ export const generateBreadcrumbItems = (
     });
   });
 
-  // Reverse the items for Arabic (RTL) to show the correct reading order
-  if (locale === 'ar') {
-    return items.reverse();
-  }
-
   return items;
 };
 
 // Memoized version for better performance
-export const useBreadcrumbItems = (
-  pathname: string,
-  t: (key: string) => string,
-  locale?: string
-) => {
-  return useMemo(
-    () => generateBreadcrumbItems(pathname, t, locale),
-    [pathname, t, locale]
-  );
+export const useBreadcrumbItems = (pathname: string) => {
+  return useMemo(() => generateBreadcrumbItems(pathname), [pathname]);
 };

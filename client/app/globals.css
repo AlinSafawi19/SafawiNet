@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Arabic Calligraphy Font Import - Font loaded via HTML head */
 
 @font-face {
   font-display: block;
@@ -170,130 +169,6 @@
     @apply opacity-0;
     @apply transition-all duration-300 ease-out;
     @apply group-hover:opacity-100;
-  }
-
-  /* RTL Support for Auth Form */
-  .rtl {
-    direction: rtl;
-    text-align: right;
-  }
-
-  .rtl .text-center {
-    text-align: center;
-  }
-
-  .rtl input,
-  .rtl label {
-    text-align: right;
-  }
-
-  .rtl .ml-1 {
-    margin-left: 0;
-    margin-right: 0.25rem;
-  }
-
-  .rtl .ml-2 {
-    margin-left: 0;
-    margin-right: 0.5rem;
-  }
-
-  .rtl .sm\:ml-2 {
-    margin-left: 0;
-    margin-right: 0.5rem;
-  }
-
-  /* Arabic text truncation utilities */
-  .text-truncate-ar {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    direction: rtl;
-    text-align: right;
-  }
-
-  .text-truncate-ar-multiline {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    direction: rtl;
-    text-align: right;
-  }
-
-  .text-truncate-ar-multiline-3 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    direction: rtl;
-    text-align: right;
-  }
-
-  /* Arabic responsive text sizing */
-  .text-ar-responsive {
-    font-size: clamp(0.75rem, 2.5vw, 1rem);
-  }
-
-  .text-ar-responsive-sm {
-    font-size: clamp(0.875rem, 3vw, 1.125rem);
-  }
-
-  .text-ar-responsive-lg {
-    font-size: clamp(1rem, 3.5vw, 1.25rem);
-  }
-
-  /* Arabic navigation text handling */
-  .nav-text-ar {
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    direction: rtl;
-    text-align: right;
-  }
-
-  @media (min-width: 640px) {
-    .nav-text-ar {
-      max-width: 160px;
-    }
-  }
-
-  @media (min-width: 768px) {
-    .nav-text-ar {
-      max-width: 200px;
-    }
-  }
-
-  /* Arabic button text handling */
-  .btn-text-ar {
-    max-width: 100px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    direction: rtl;
-    text-align: right;
-  }
-
-  @media (min-width: 640px) {
-    .btn-text-ar {
-      max-width: 140px;
-    }
-  }
-
-  /* Arabic dropdown text handling */
-  .dropdown-text-ar {
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    direction: rtl;
-    text-align: right;
-  }
-
-  @media (min-width: 640px) {
-    .dropdown-text-ar {
-      max-width: 250px;
-    }
   }
 
   h2 {
@@ -578,38 +453,6 @@ div::-moz-selection {
   background-color: #9333ea;
   /* Purple-600 */
   color: #ffffff;
-}
-
-@layer components {
-  .footer-form-field {
-    @apply my-1;
-  }
-
-  .footer-form-label {
-    @apply text-sm;
-    @apply mb-3;
-    @apply inline-block;
-  }
-
-  .footer-form-label[aria-required]::after {
-    content: ' *';
-  }
-
-  .footer-form-input {
-    @apply block;
-    @apply w-full;
-    @apply px-3;
-    @apply py-1;
-    @apply text-black;
-    @apply border;
-    @apply border-2;
-    @apply border-black;
-    @apply rounded-none;
-    @apply bg-transparent;
-    @apply focus:border-black;
-    @apply focus:ring-black text-xs;
-    @apply leading-5;
-  }
 }
 
 @keyframes dropdownOpen {

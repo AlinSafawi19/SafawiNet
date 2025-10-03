@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { useBackendMessageTranslation } from '../../hooks/useBackendMessageTranslation';
+import { useState, useCallback, useMemo } from 'react';
 import { API_CONFIG, buildApiUrl } from '../../config/api';
+import MessageDisplay from '../MessageDisplay';
 
 interface AdminUser {
   name: string;
@@ -19,18 +18,6 @@ interface AdminCreationFormProps {
 export default function AdminCreationForm({
   onSuccess,
 }: AdminCreationFormProps) {
-  const { t, locale } = useLanguage();
-  const {
-    error,
-    success,
-    errorKey,
-    setBackendError,
-    setBackendSuccess,
-    clearMessages,
-    clearError,
-    clearSuccess,
-  } = useBackendMessageTranslation();
-
   const [formData, setFormData] = useState<AdminUser>({
     name: '',
     email: '',
@@ -38,76 +25,104 @@ export default function AdminCreationForm({
     confirmPassword: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  const [adminCreationSuccessMessage, setAdminCreationSuccessMessage] =
+    useState<string | undefined>(undefined);
+  const [adminCreationErrorMessage, setAdminCreationErrorMessage] = useState<
+    string | undefined
+  >(undefined);
+
+  // Validation state for admin creation form
   const [validationErrors, setValidationErrors] = useState<{
     name?: string;
     email?: string;
     password?: string;
     confirmPassword?: string;
   }>({});
-  const [touched, setTouched] = useState({
-    name: false,
-    email: false,
-    password: false,
-    confirmPassword: false,
-  });
 
-  // Validation functions
-  const validateEmail = useCallback(
-    (email: string): string | undefined => {
-      if (!email.trim()) {
-        return t('auth.admin.validation.emailRequired');
+  // Validation functions (same as AuthForm)
+  const validateName = (name: string): string | undefined => {
+    if (!name || name.trim().length === 0) {
+      return 'Name is required';
+    }
+      if (name.length < 1) {
+      return 'Name must be 1 character or more';
+    }
+    if (name.length > 100) {
+      return 'Name must be 100 characters or less';
+    }
+    return undefined;
+  };
+
+  const validateEmail = (email: string): string | undefined => {
+    if (!email || email.trim().length === 0) {
+      return 'Email is required';
+    }
+    if (email.length > 255) {
+      return 'Email must be 255 characters or less';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'Invalid email format';
+    }
+    return undefined;
+  };
+
+  const validatePassword = (password: string): string | undefined => {
+    if (!password || password.trim().length === 0) {
+      return 'Password is required';
+    }
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters';
+    }
+    if (password.length > 128) {
+      return 'Password must be 128 characters or less';
+    }
+    return undefined;
+  };
+
+  const validateConfirmPassword = (password: string, confirmPassword: string): string | undefined => {
+    if (!confirmPassword || confirmPassword.trim().length === 0) {
+      return 'Password confirmation is required';
+    }
+    if (confirmPassword.length > 128) {
+      return 'Password confirmation must be 128 characters or less';
+    }
+    if (password !== confirmPassword) {
+      return "Password and confirmation password don't match";
+    }
+    return undefined;
+  };
+
+  // Handle input changes with validation clearing
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+
+      // Clear messages when user starts typing
+      setAdminCreationErrorMessage(undefined);
+      setAdminCreationSuccessMessage(undefined);
+
+      // Clear validation error for this field
+      const fieldName = name as keyof typeof validationErrors;
+      if (validationErrors[fieldName]) {
+        setValidationErrors(prev => ({
+          ...prev,
+          [fieldName]: undefined
+        }));
       }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return t('auth.admin.validation.emailInvalid');
-      }
-      return undefined;
     },
-    [t]
+    [validationErrors]
   );
 
-  const validatePassword = useCallback(
-    (password: string): string | undefined => {
-      if (!password.trim()) {
-        return t('auth.admin.validation.passwordRequired');
-      }
-      if (password.length < 8) {
-        return t('auth.admin.validation.passwordTooShort');
-      }
-      return undefined;
-    },
-    [t]
-  );
-
-  const validateName = useCallback(
-    (name: string): string | undefined => {
-      if (!name.trim()) {
-        return t('auth.admin.validation.nameRequired');
-      }
-      if (name.length > 100) {
-        return t('auth.admin.validation.nameTooLong');
-      }
-      return undefined;
-    },
-    [t]
-  );
-
-  const validateConfirmPassword = useCallback(
-    (password: string, confirmPassword: string): string | undefined => {
-      if (!confirmPassword.trim()) {
-        return t('auth.admin.validation.confirmPasswordRequired');
-      }
-      if (password !== confirmPassword) {
-        return t('auth.admin.validation.passwordsDoNotMatch');
-      }
-      return undefined;
-    },
-    [t]
-  );
-
-  // Validate single field
-  const validateField = useCallback(
-    (name: string, value: string) => {
+  // Handle validation on blur
+  const handleBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
       let error: string | undefined;
 
       switch (name) {
@@ -119,142 +134,47 @@ export default function AdminCreationForm({
           break;
         case 'password':
           error = validatePassword(value);
+          // Also re-validate confirmPassword if it has a value
+          if (formData.confirmPassword) {
+            const confirmPasswordError = validateConfirmPassword(
+              value,
+              formData.confirmPassword
+            );
+            setValidationErrors(prev => ({
+              ...prev,
+              confirmPassword: confirmPasswordError
+            }));
+          }
           break;
         case 'confirmPassword':
-          error = validateConfirmPassword(formData.password, value);
+          error = validateConfirmPassword(
+            formData.password,
+            value
+          );
           break;
       }
 
-      setValidationErrors((prev) => ({
-        ...prev,
-        [name]: error,
-      }));
+      if (error) {
+        setValidationErrors(prev => ({
+          ...prev,
+          [name]: error
+        }));
+      }
     },
-    [
-      validateName,
-      validateEmail,
-      validatePassword,
-      validateConfirmPassword,
-      formData.password,
-    ]
+    [formData.password, formData.confirmPassword]
   );
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // Clear validation error when user starts typing
-    if (validationErrors[name as keyof typeof validationErrors]) {
-      setValidationErrors((prev) => ({
-        ...prev,
-        [name]: undefined,
-      }));
-    }
-
-    // Clear backend error when user starts typing
-    if (error) {
-      clearError();
-    }
-  };
-
-  // Re-validate all fields with current language
-  const revalidateAllFields = useCallback(() => {
-    const nameError = validateName(formData.name);
-    const emailError = validateEmail(formData.email);
-    const passwordError = validatePassword(formData.password);
-    const confirmPasswordError = validateConfirmPassword(
-      formData.password,
-      formData.confirmPassword
-    );
-
-    setValidationErrors({
-      name: nameError,
-      email: emailError,
-      password: passwordError,
-      confirmPassword: confirmPasswordError,
-    });
-  }, [
-    formData.name,
-    formData.email,
-    formData.password,
-    formData.confirmPassword,
-    validateName,
-    validateEmail,
-    validatePassword,
-    validateConfirmPassword,
-  ]);
-
-  // Re-validate errors when language changes
-  useEffect(() => {
-    // Re-validate all fields with new language instead of clearing errors
-    if (Object.keys(validationErrors).length > 0) {
-      // Small delay to ensure translation context is fully updated
-      const timeoutId = setTimeout(() => {
-        revalidateAllFields();
-      }, 100);
-
-      return () => clearTimeout(timeoutId);
-    }
-    // Keep touched state and message, only re-validate errors
-  }, [locale, t, revalidateAllFields, validationErrors]);
-
-  // Handle specific error types based on errorKey
-  useEffect(() => {
-    if (errorKey) {
-      // Handle specific error types that might require special UI treatment
-      switch (errorKey) {
-        case 'auth.messages.userAlreadyExists':
-          // Could highlight the email field or show additional context
-          break;
-        case 'auth.admin.validation.insufficientPermissions':
-          // Could show a different message or redirect
-          break;
-        case 'auth.admin.networkError':
-          // Could show retry button or different styling
-          break;
-        default:
-          // Handle other error types
-          break;
-      }
-    }
-  }, [errorKey]);
-
-  // Handle field blur for validation
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setTouched((prev) => ({
-      ...prev,
-      [name]: true,
-    }));
-    validateField(name, value);
-  };
-
-  // Get input class based on validation state
-  const getInputClass = (fieldName: keyof typeof validationErrors) => {
-    const hasError = touched[fieldName] && validationErrors[fieldName];
-
-    return hasError
-      ? 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-red-500 rounded-lg text-gray-900 placeholder-gray-500 focus:border-red-500 focus:bg-white transition-all duration-300 text-sm sm:text-base'
-      : 'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-600 focus:bg-white transition-all duration-300 text-sm sm:text-base';
-  };
+  // Memoize input class to prevent recreation on every render
+  const inputClassName = useMemo(
+    () =>
+      'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-purple-600 focus:bg-white transition-all duration-300 text-sm sm:text-base',
+    []
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    clearMessages();
 
-    // Mark all fields as touched
-    setTouched({
-      name: true,
-      email: true,
-      password: true,
-      confirmPassword: true,
-    });
-
-    // Validate all fields
+    // Validate all fields before submission
     const nameError = validateName(formData.name);
     const emailError = validateEmail(formData.email);
     const passwordError = validatePassword(formData.password);
@@ -263,20 +183,21 @@ export default function AdminCreationForm({
       formData.confirmPassword
     );
 
-    const errors = {
+    const validationErrors = {
       name: nameError,
       email: emailError,
       password: passwordError,
       confirmPassword: confirmPasswordError,
     };
 
-    setValidationErrors(errors);
+    setValidationErrors(validationErrors);
 
-    // Check if there are any validation errors
-    if (Object.values(errors).some((error) => error)) {
-      setIsLoading(false);
+    // If there are any validation errors, don't submit
+    if (nameError || emailError || passwordError || confirmPasswordError) {
       return;
     }
+
+    setIsLoading(true);
 
     try {
       const response = await fetch(
@@ -294,34 +215,40 @@ export default function AdminCreationForm({
       const data = await response.json();
 
       if (response.ok && data) {
-        // Use setBackendSuccess which automatically maps to translation keys
-        setBackendSuccess(data.message || 'Admin user created successfully!');
+        console.log('✅ AdminCreationForm: Admin created successfully', {
+          message: data.message,
+        });
+        setAdminCreationSuccessMessage(
+          data.message || 'Admin user created successfully'
+        );
 
         // Reset form
         setFormData({ name: '', email: '', password: '', confirmPassword: '' });
-        setValidationErrors({});
-        setTouched({
-          name: false,
-          email: false,
-          password: false,
-          confirmPassword: false,
-        });
 
         // Clear success message after a delay to show it briefly
         setTimeout(() => {
-          clearSuccess();
           // Call onSuccess callback if provided
           if (onSuccess) {
             onSuccess();
           }
         }, 3000);
       } else {
-        // Use setBackendError which automatically maps to translation keys
-        setBackendError(data.error || data.message || 'Server error');
+        console.warn('❌ AdminCreationForm: Admin creation failed', {
+          message: data.error || data.message,
+        });
+        setAdminCreationErrorMessage(
+          data.error ||
+            data.message ||
+            'Failed to create admin user. Please try again.'
+        );
       }
     } catch (error) {
-      // Use setBackendError for network errors - it will map to appropriate translation key
-      setBackendError('Network error. Please try again.');
+      console.error('💥 AdminCreationForm: Admin creation error caught', error);
+      setAdminCreationErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'An unexpected error occurred. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -332,34 +259,20 @@ export default function AdminCreationForm({
       <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
         {/* Header */}
         <div className="text-center mb-4 sm:mb-6 md:mb-8">
-          <h1
-            className={`text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl text-gray-900 font-bold mb-2`}
-          >
-            {t('auth.admin.createAdminUser')}
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl text-gray-900 font-bold mb-2">
+            Create Admin User
           </h1>
-          <p className={`text-xs sm:text-sm md:text-base text-gray-600`}>
-            {t('auth.admin.fullSystemAccess')}
+          <p className="text-xs sm:text-sm md:text-base text-gray-600">
+            Full system access
           </p>
         </div>
 
-        {/* Message */}
-        {(error || success) && (
-          <div
-            className={`${
-              success
-                ? 'bg-green-50 border border-green-300'
-                : 'bg-red-50 border border-red-300'
-            } rounded-lg p-2 sm:p-3 mb-3 sm:mb-4`}
-          >
-            <p
-              className={`${
-                success ? 'text-green-600' : 'text-red-600'
-              } text-xs sm:text-sm ${locale === 'ar' ? 'text-right' : ''}`}
-            >
-              {success || error}
-            </p>
-          </div>
-        )}
+        {/* Messages */}
+        <MessageDisplay
+          successMessage={adminCreationSuccessMessage}
+          errorMessage={adminCreationErrorMessage}
+          className="mb-4"
+        />
 
         {/* Admin Creation Form */}
         <form
@@ -369,11 +282,9 @@ export default function AdminCreationForm({
           <div>
             <label
               htmlFor="name"
-              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${
-                locale === 'ar' ? 'text-right' : ''
-              }`}
+              className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700"
             >
-              {t('auth.admin.fullName')}
+              Full Name
             </label>
             <input
               type="text"
@@ -382,18 +293,17 @@ export default function AdminCreationForm({
               value={formData.name}
               onChange={handleInputChange}
               onBlur={handleBlur}
-              className={`${getInputClass('name')} ${
-                locale === 'ar' ? 'text-right' : ''
+              className={`${inputClassName} ${
+                validationErrors.name
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                  : ''
               }`}
-              placeholder={t('auth.admin.fullNamePlaceholder')}
+              placeholder={'Full Name'}
               autoComplete="off"
+              disabled={isLoading}
             />
-            {touched.name && validationErrors.name && (
-              <p
-                className={`text-xs mt-1 text-red-600 ${
-                  locale === 'ar' ? 'text-right' : ''
-                }`}
-              >
+            {validationErrors.name && (
+              <p className="mt-1 text-sm text-red-600">
                 {validationErrors.name}
               </p>
             )}
@@ -402,11 +312,9 @@ export default function AdminCreationForm({
           <div>
             <label
               htmlFor="email"
-              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${
-                locale === 'ar' ? 'text-right' : ''
-              }`}
+              className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700"
             >
-              {t('auth.admin.emailAddress')}
+              Email Address
             </label>
             <input
               type="text"
@@ -415,18 +323,17 @@ export default function AdminCreationForm({
               value={formData.email}
               onChange={handleInputChange}
               onBlur={handleBlur}
-              className={`${getInputClass('email')} ${
-                locale === 'ar' ? 'text-right' : ''
+              className={`${inputClassName} ${
+                validationErrors.email
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                  : ''
               }`}
-              placeholder={t('auth.admin.emailPlaceholder')}
+              placeholder={'Email Address'}
               autoComplete="off"
+              disabled={isLoading}
             />
-            {touched.email && validationErrors.email && (
-              <p
-                className={`text-xs mt-1 text-red-600 ${
-                  locale === 'ar' ? 'text-right' : ''
-                }`}
-              >
+            {validationErrors.email && (
+              <p className="mt-1 text-sm text-red-600">
                 {validationErrors.email}
               </p>
             )}
@@ -435,11 +342,9 @@ export default function AdminCreationForm({
           <div>
             <label
               htmlFor="password"
-              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${
-                locale === 'ar' ? 'text-right' : ''
-              }`}
+              className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700"
             >
-              {t('auth.admin.password')}
+              Password
             </label>
             <input
               type="password"
@@ -448,38 +353,28 @@ export default function AdminCreationForm({
               value={formData.password}
               onChange={handleInputChange}
               onBlur={handleBlur}
-              className={`${getInputClass('password')} ${
-                locale === 'ar' ? 'text-right' : ''
+              className={`${inputClassName} ${
+                validationErrors.password
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                  : ''
               }`}
-              placeholder={t('auth.admin.passwordPlaceholder')}
+              placeholder={'Password (minimum 8 characters)'}
               autoComplete="new-password"
+              disabled={isLoading}
             />
-            {touched.password && validationErrors.password && (
-              <p
-                className={`text-xs mt-1 text-red-600 ${
-                  locale === 'ar' ? 'text-right' : ''
-                }`}
-              >
+            {validationErrors.password && (
+              <p className="mt-1 text-sm text-red-600">
                 {validationErrors.password}
               </p>
             )}
-            <p
-              className={`text-xs mt-1 text-gray-500 ${
-                locale === 'ar' ? 'text-right' : ''
-              }`}
-            >
-              {t('auth.admin.passwordRequirement')}
-            </p>
           </div>
 
           <div>
             <label
               htmlFor="confirmPassword"
-              className={`block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700 ${
-                locale === 'ar' ? 'text-right' : ''
-              }`}
+              className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2 text-gray-700"
             >
-              {t('auth.admin.confirmPassword')}
+              Confirm Password
             </label>
             <input
               type="password"
@@ -488,18 +383,17 @@ export default function AdminCreationForm({
               value={formData.confirmPassword}
               onChange={handleInputChange}
               onBlur={handleBlur}
-              className={`${getInputClass('confirmPassword')} ${
-                locale === 'ar' ? 'text-right' : ''
+              className={`${inputClassName} ${
+                validationErrors.confirmPassword
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                  : ''
               }`}
-              placeholder={t('auth.admin.confirmPasswordPlaceholder')}
+              placeholder={'Confirm Password'}
               autoComplete="new-password"
+              disabled={isLoading}
             />
-            {touched.confirmPassword && validationErrors.confirmPassword && (
-              <p
-                className={`text-xs mt-1 text-red-600 ${
-                  locale === 'ar' ? 'text-right' : ''
-                }`}
-              >
+            {validationErrors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-600">
                 {validationErrors.confirmPassword}
               </p>
             )}
@@ -508,13 +402,9 @@ export default function AdminCreationForm({
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[44px] sm:min-h-[48px] flex items-center justify-center bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white hover:shadow-lg hover:shadow-purple-500/25`}
+            className="w-full font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg transition-all duration-300 text-sm sm:text-base disabled:cursor-not-allowed min-h-[44px] sm:min-h-[48px] flex items-center justify-center bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white hover:shadow-lg hover:shadow-purple-500/25"
           >
-            {isLoading ? (
-              <>{t('auth.admin.creatingAdmin')}</>
-            ) : (
-              t('auth.admin.createAdminUser')
-            )}
+            {isLoading ? 'Creating Admin...' : 'Create Admin User'}
           </button>
         </form>
       </div>

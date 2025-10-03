@@ -1,6 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from 'react';
 import { usePathname } from 'next/navigation';
 
 interface GlobalLoadingContextType {
@@ -11,12 +18,16 @@ interface GlobalLoadingContextType {
   setRouteTransitioning: (loading: boolean) => void;
 }
 
-const GlobalLoadingContext = createContext<GlobalLoadingContextType | undefined>(undefined);
+const GlobalLoadingContext = createContext<
+  GlobalLoadingContextType | undefined
+>(undefined);
 
 export const useGlobalLoading = () => {
   const context = useContext(GlobalLoadingContext);
   if (context === undefined) {
-    throw new Error('useGlobalLoading must be used within a GlobalLoadingProvider');
+    throw new Error(
+      'useGlobalLoading must be used within a GlobalLoadingProvider'
+    );
   }
   return context;
 };
@@ -25,7 +36,9 @@ interface GlobalLoadingProviderProps {
   children: ReactNode;
 }
 
-export const GlobalLoadingProvider: React.FC<GlobalLoadingProviderProps> = ({ children }) => {
+export const GlobalLoadingProvider: React.FC<GlobalLoadingProviderProps> = ({
+  children,
+}) => {
   const [isAppInitializing, setIsAppInitializing] = useState(true);
   const [isRouteTransitioning, setIsRouteTransitioning] = useState(false);
   const pathname = usePathname();
@@ -41,7 +54,7 @@ export const GlobalLoadingProvider: React.FC<GlobalLoadingProviderProps> = ({ ch
     if (previousPathname && previousPathname !== pathname) {
       // Route change detected
       setIsRouteTransitioning(true);
-      
+
       // Set a minimum transition time for smooth UX
       const transitionTimer = setTimeout(() => {
         setIsRouteTransitioning(false);
@@ -49,7 +62,7 @@ export const GlobalLoadingProvider: React.FC<GlobalLoadingProviderProps> = ({ ch
 
       return () => clearTimeout(transitionTimer);
     }
-    
+
     setPreviousPathname(pathname);
   }, [pathname, previousPathname]);
 

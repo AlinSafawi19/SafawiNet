@@ -6,29 +6,6 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { name } = body;
 
-    // Basic validation
-    if (!name) {
-      return NextResponse.json(
-        { message: 'Name is required' },
-        { status: 400 }
-      );
-    }
-
-    // Name validation
-    if (name && (typeof name !== 'string' || name.trim().length === 0)) {
-      return NextResponse.json(
-        { message: 'Name must be a non-empty string' },
-        { status: 400 }
-      );
-    }
-
-    if (name && name.length > 100) {
-      return NextResponse.json(
-        { message: 'Name must be less than 100 characters' },
-        { status: 400 }
-      );
-    }
-
     // Forward cookies from the request to the backend
     const cookieHeader = request.headers.get('cookie');
     if (!cookieHeader) {
@@ -79,30 +56,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, email, password } = body;
-
-    // Basic validation
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { message: 'Name, email, and password are required' },
-        { status: 400 }
-      );
-    }
-
-    if (password.length < 8) {
-      return NextResponse.json(
-        { message: 'Password must be at least 8 characters long' },
-        { status: 400 }
-      );
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { message: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
 
     // Make request to your backend API
     const backendResponse = await fetch(buildApiUrl('/users'), {

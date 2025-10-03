@@ -82,9 +82,15 @@ async function bootstrap() {
       .setDescription('The Safawinet API description')
       .setVersion('1.0')
       .addBearerAuth()
+      .addTag('Authentication', 'User authentication and authorization')
+      .addTag('Sessions', 'User session management')
+      .addTag('Notifications', 'User notification management')
+      .addTag('Admin', 'Administrative operations')
       .build();
 
-    const document = SwaggerModule.createDocument(app, config);
+    const document = SwaggerModule.createDocument(app, config, {
+      operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
+    });
     SwaggerModule.setup('docs', app, document);
   }
 

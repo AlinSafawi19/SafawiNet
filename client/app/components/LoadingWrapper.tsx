@@ -8,9 +8,7 @@ interface LoadingWrapperProps {
   children: React.ReactNode;
 }
 
-export const LoadingWrapper: React.FC<LoadingWrapperProps> = ({
-  children,
-}) => {
+export const LoadingWrapper: React.FC<LoadingWrapperProps> = ({ children }) => {
   const { isAnyLoading } = useGlobalLoading();
 
   if (isAnyLoading) {
@@ -19,4 +17,3 @@ export const LoadingWrapper: React.FC<LoadingWrapperProps> = ({
 
   return <>{children}</>;
 };
-

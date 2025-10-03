@@ -7,10 +7,8 @@ import {
   HiXCircle,
   HiExclamationTriangle,
 } from 'react-icons/hi2';
-import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import Link from 'next/link';
-import { useBackendMessageTranslation } from '../hooks/useBackendMessageTranslation';
 import { buildApiUrl, API_CONFIG } from '../config/api';
 
 // Performance monitoring utilities
@@ -27,40 +25,37 @@ const VerifyEmailPage = memo(function VerifyEmailPage() {
 
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { t } = useLanguage();
   const { user, isLoading, updateUser } = useAuth();
 
   // Memoize context values to prevent unnecessary rerenders
-  const contextValues = useMemo(() => ({
-    user: user ? { id: user.id, email: user.email, roles: user.roles } : null,
-    isLoading,
-    searchParams: Object.fromEntries(searchParams.entries())
-  }), [user, isLoading, searchParams]);
+  const contextValues = useMemo(
+    () => ({
+      user: user ? { id: user.id, email: user.email, roles: user.roles } : null,
+      isLoading,
+      searchParams: Object.fromEntries(searchParams.entries()),
+    }),
+    [user, isLoading, searchParams]
+  );
 
   // Log context values changes only when they actually change
   const prevContextValues = useRef(contextValues);
   useEffect(() => {
-    if (JSON.stringify(prevContextValues.current) !== JSON.stringify(contextValues)) {
+    if (
+      JSON.stringify(prevContextValues.current) !==
+      JSON.stringify(contextValues)
+    ) {
       prevContextValues.current = contextValues;
     }
   }, [contextValues]);
-
-  // Use the backend message translation hook
-  const {
-    error: verificationError,
-    success: verificationSuccess,
-    errorKey: verificationErrorKey,
-    successKey: verificationSuccessKey,
-    setBackendError: setVerificationBackendError,
-    setBackendSuccess: setVerificationBackendSuccess,
-    setErrorKey: setVerificationErrorKey,
-    setSuccessKey: setVerificationSuccessKey,
-  } = useBackendMessageTranslation();
 
   const [verificationState, setVerificationState] = useState<VerificationState>(
     {
       status: 'verifying',
     }
+  );
+
+  const [verificationMessage, setVerificationMessage] = useState<string>(
+    'Verifying your email...'
   );
 
   // State change tracking
@@ -75,11 +70,6 @@ const VerifyEmailPage = memo(function VerifyEmailPage() {
   const hasVerifiedRef = useRef(false);
   const hasEffectRunRef = useRef(false);
 
-  // Update initial message when language context is ready - only run once
-  useEffect(() => {
-    setVerificationSuccessKey('verifyEmail.verifyingMessage');
-  }, []); // Remove setVerificationSuccessKey from dependencies to prevent multiple executions
-
   // Memoize the token to prevent unnecessary effect runs
   const token = useMemo(() => {
     const tokenValue = searchParams.get('token');
@@ -87,7 +77,6 @@ const VerifyEmailPage = memo(function VerifyEmailPage() {
   }, [searchParams]);
 
   useEffect(() => {
-
     // Prevent multiple effect executions
     if (hasEffectRunRef.current) {
       return;
@@ -108,7 +97,9 @@ const VerifyEmailPage = memo(function VerifyEmailPage() {
       setVerificationState({
         status: 'success',
       });
-      setVerificationSuccessKey('verifyEmail.successMessage');
+      setVerificationMessage(
+        'Email verified successfully! You can now log in to your account'
+      );
 
       // Redirect based on user role
       setTimeout(() => {
@@ -123,12 +114,13 @@ const VerifyEmailPage = memo(function VerifyEmailPage() {
     }
 
     const verifyEmail = async () => {
-
       if (!token) {
         setVerificationState({
           status: 'invalid',
         });
-        setVerificationErrorKey('verifyEmail.invalidLinkMessage');
+        setVerificationMessage(
+          'Invalid verification link. Please check your email and try again'
+        );
         return;
       }
 
@@ -150,12 +142,11 @@ const VerifyEmailPage = memo(function VerifyEmailPage() {
         if (response.ok) {
           const successData = await response.json();
 
-          // Set success state
-          if (successData.message) {
-            setVerificationBackendSuccess(successData.message);
-          } else {
-            setVerificationSuccessKey('verifyEmail.successMessage');
-          }
+          // Set success state with backend message or fallback
+          setVerificationMessage(
+            successData.message || 'Email verified successfully!'
+          );
+
           setVerificationState({
             status: 'success',
           });
@@ -170,7 +161,6 @@ const VerifyEmailPage = memo(function VerifyEmailPage() {
               method: 'GET',
               credentials: 'include',
             });
-
 
             if (userResponse.ok) {
               const userData = await userResponse.json();
@@ -202,14 +192,24 @@ const VerifyEmailPage = memo(function VerifyEmailPage() {
             }, 3000);
           }
         } else {
-          const errorData = await response.json();
+          let errorMessage =
+            'An error occurred during verification. Please try again';
 
-          // Map server error message to translation key
-          if (errorData.message) {
-            setVerificationBackendError(errorData.message);
-          } else {
-            setVerificationErrorKey('verifyEmail.errorMessage');
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch (parseError) {
+            // If response is not JSON, use status-based message
+            if (response.status === 400) {
+              errorMessage = 'Invalid or expired verification token';
+            } else if (response.status === 404) {
+              errorMessage = 'Verification token not found';
+            } else if (response.status >= 500) {
+              errorMessage = 'Server error. Please try again later';
+            }
           }
+
+          setVerificationMessage(errorMessage);
           setVerificationState({
             status: 'error',
           });
@@ -218,17 +218,22 @@ const VerifyEmailPage = memo(function VerifyEmailPage() {
         setVerificationState({
           status: 'error',
         });
-        setVerificationErrorKey('verifyEmail.errorMessage');
+        setVerificationMessage(
+          error instanceof Error
+            ? error.message
+            : 'An error occurred during verification. Please try again'
+        );
       }
     };
 
     verifyEmail();
-
   }, [
     // Minimal dependencies - only include what actually triggers verification
     token, // Only run when token changes
     user, // Only run when user changes
     isLoading, // Only run when loading state changes
+    router, // Include router dependency
+    updateUser, // Include updateUser dependency
   ]);
 
   const getStatusIcon = useCallback(() => {
@@ -252,23 +257,24 @@ const VerifyEmailPage = memo(function VerifyEmailPage() {
   }, [verificationState.status]);
 
   // Memoized loading component to prevent unnecessary rerenders
-  const LoadingComponent = useMemo(() => (
-    <div className="flex items-center justify-center px-4 pt-10">
-      <div className="max-w-md w-full text-center">
-        <div className="flex justify-center mb-6">
-          {HiExclamationTriangle({
-            className: 'w-16 h-16 text-yellow-500 animate-pulse',
-          })}
+  const LoadingComponent = useMemo(
+    () => (
+      <div className="flex items-center justify-center px-4 pt-10">
+        <div className="max-w-md w-full text-center">
+          <div className="flex justify-center mb-6">
+            {HiExclamationTriangle({
+              className: 'w-16 h-16 text-yellow-500 animate-pulse',
+            })}
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Verifying Email...
+          </h1>
+          <p className="text-gray-600 mb-8">Verifying your email...</p>
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          {t('verifyEmail.verifying')}
-        </h1>
-        <p className="text-gray-600 mb-8">
-          {t('verifyEmail.verifyingMessage')}
-        </p>
       </div>
-    </div>
-  ), [t]);
+    ),
+    []
+  );
 
   // Show loading while AuthContext is loading
   if (isLoading) {
@@ -281,36 +287,29 @@ const VerifyEmailPage = memo(function VerifyEmailPage() {
         <div className="flex justify-center mb-6">{getStatusIcon()}</div>
 
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          {verificationState.status === 'verifying' &&
-            t('verifyEmail.verifying')}
-          {verificationState.status === 'success' && t('verifyEmail.success')}
-          {verificationState.status === 'error' && t('verifyEmail.failed')}
-          {verificationState.status === 'invalid' &&
-            t('verifyEmail.invalidLink')}
+          {verificationState.status === 'verifying' && 'Verifying Email...'}
+          {verificationState.status === 'success' && 'Verification Successful!'}
+          {verificationState.status === 'error' && 'Verification Failed'}
+          {verificationState.status === 'invalid' && 'Invalid Link'}
         </h1>
 
-        <p className="text-gray-600 mb-8">
-          {verificationSuccess ||
-            (verificationSuccessKey ? t(verificationSuccessKey) : '')}
-          {verificationError ||
-            (verificationErrorKey ? t(verificationErrorKey) : '')}
-        </p>
+        <p className="text-gray-600 mb-8">{verificationMessage}</p>
 
         {verificationState.status === 'success' && (
           <p className="text-sm text-gray-500">
-            {t('verifyEmail.redirecting')}
+            Redirecting you automatically...
           </p>
         )}
 
         {verificationState.status === 'error' && (
           <button
-            type='button'
+            type="button"
             onClick={() => {
               window.location.reload();
             }}
             className="bg-black text-white font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base"
           >
-            {t('verifyEmail.tryAgain')}
+            Try Again
           </button>
         )}
 
@@ -319,7 +318,7 @@ const VerifyEmailPage = memo(function VerifyEmailPage() {
             href="/auth"
             className="inline-block bg-black text-white font-semibold py-3 px-6 sm:px-8 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base"
           >
-            {t('verifyEmail.goToLogin')}
+            Go to Login
           </Link>
         )}
 

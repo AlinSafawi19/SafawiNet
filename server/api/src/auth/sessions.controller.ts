@@ -31,12 +31,6 @@ import {
   SessionListDto,
   SessionDeleteDto,
   SessionRevokeAllDto,
-  SessionBatchUpdateDto,
-  SessionBatchDeleteDto,
-  SessionBatchRevokeDto,
-  SessionBatchUpdateResponseDto,
-  SessionBatchDeleteResponseDto,
-  SessionBatchRevokeResponseDto,
 } from './schemas/auth.schemas';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import {
@@ -332,11 +326,63 @@ export class SessionsController {
     description:
       'Update multiple user sessions in a single operation. Can update isCurrent status and lastActiveAt timestamp.',
   })
-  @ApiBody({ type: SessionBatchUpdateDto })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        sessionIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array of session IDs to update',
+          example: ['session1', 'session2', 'session3'],
+        },
+        updates: {
+          type: 'object',
+          properties: {
+            isCurrent: {
+              type: 'boolean',
+              description: 'Set as current session',
+              example: false,
+            },
+            lastActiveAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Update last active timestamp',
+              example: '2024-01-15T10:30:00Z',
+            },
+          },
+          description: 'Updates to apply to sessions',
+        },
+      },
+      required: ['sessionIds', 'updates'],
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'Sessions updated successfully',
-    type: SessionBatchUpdateResponseDto,
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        processedCount: { type: 'number', example: 3 },
+        failedCount: { type: 'number', example: 0 },
+        updatedSessions: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['session1', 'session2', 'session3'],
+        },
+        errors: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              sessionId: { type: 'string', example: 'session123' },
+              error: { type: 'string', example: 'Session not found' },
+            },
+          },
+        },
+      },
+    },
   })
   @ApiResponse({ status: 400, description: 'Invalid request data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -344,8 +390,14 @@ export class SessionsController {
   @UsePipes(new ZodValidationPipe(SessionBatchUpdateSchema))
   async batchUpdateSessions(
     @Request() req: AuthenticatedRequest,
-    @Body() body: SessionBatchUpdateDto,
-  ): Promise<SessionBatchUpdateResponseDto> {
+    @Body() body: { sessionIds: string[]; updates: { isCurrent?: boolean; lastActiveAt?: string } },
+  ): Promise<{
+    success: boolean;
+    processedCount: number;
+    failedCount: number;
+    updatedSessions: string[];
+    errors?: Array<{ sessionId: string; error: string }>;
+  }> {
     const result = await this.sessionsService.batchUpdateSessions(
       req.user.sub,
       body.sessionIds,
@@ -377,11 +429,51 @@ export class SessionsController {
     description:
       'Delete multiple user sessions in a single operation. Cannot delete the current session.',
   })
-  @ApiBody({ type: SessionBatchDeleteDto })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        sessionIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array of session IDs to delete',
+          example: ['session1', 'session2', 'session3'],
+        },
+        reason: {
+          type: 'string',
+          description: 'Reason for deletion (for audit logs)',
+          example: 'Security cleanup',
+        },
+      },
+      required: ['sessionIds'],
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'Sessions deleted successfully',
-    type: SessionBatchDeleteResponseDto,
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        processedCount: { type: 'number', example: 3 },
+        failedCount: { type: 'number', example: 0 },
+        deletedSessions: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['session1', 'session2', 'session3'],
+        },
+        errors: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              sessionId: { type: 'string', example: 'session123' },
+              error: { type: 'string', example: 'Session not found' },
+            },
+          },
+        },
+      },
+    },
   })
   @ApiResponse({ status: 400, description: 'Invalid request data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -389,8 +481,14 @@ export class SessionsController {
   @UsePipes(new ZodValidationPipe(SessionBatchDeleteSchema))
   async batchDeleteSessions(
     @Request() req: AuthenticatedRequest,
-    @Body() body: SessionBatchDeleteDto,
-  ): Promise<SessionBatchDeleteResponseDto> {
+    @Body() body: { sessionIds: string[]; reason?: string },
+  ): Promise<{
+    success: boolean;
+    processedCount: number;
+    failedCount: number;
+    deletedSessions: string[];
+    errors?: Array<{ sessionId: string; error: string }>;
+  }> {
     const result = await this.sessionsService.batchDeleteSessions(
       req.user.sub,
       body.sessionIds,
@@ -423,11 +521,51 @@ export class SessionsController {
     description:
       'Revoke multiple user sessions in a single operation. This will invalidate refresh tokens and delete sessions.',
   })
-  @ApiBody({ type: SessionBatchRevokeDto })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        sessionIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array of session IDs to revoke',
+          example: ['session1', 'session2', 'session3'],
+        },
+        reason: {
+          type: 'string',
+          description: 'Reason for revocation (for audit logs)',
+          example: 'Suspicious activity detected',
+        },
+      },
+      required: ['sessionIds'],
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'Sessions revoked successfully',
-    type: SessionBatchRevokeResponseDto,
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: true },
+        processedCount: { type: 'number', example: 3 },
+        failedCount: { type: 'number', example: 0 },
+        revokedSessions: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['session1', 'session2', 'session3'],
+        },
+        errors: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              sessionId: { type: 'string', example: 'session123' },
+              error: { type: 'string', example: 'Session not found' },
+            },
+          },
+        },
+      },
+    },
   })
   @ApiResponse({ status: 400, description: 'Invalid request data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -435,8 +573,14 @@ export class SessionsController {
   @UsePipes(new ZodValidationPipe(SessionBatchRevokeSchema))
   async batchRevokeSessions(
     @Request() req: AuthenticatedRequest,
-    @Body() body: SessionBatchRevokeDto,
-  ): Promise<SessionBatchRevokeResponseDto> {
+    @Body() body: { sessionIds: string[]; reason?: string },
+  ): Promise<{
+    success: boolean;
+    processedCount: number;
+    failedCount: number;
+    revokedSessions: string[];
+    errors?: Array<{ sessionId: string; error: string }>;
+  }> {
     const result = await this.sessionsService.batchRevokeSessions(
       req.user.sub,
       body.sessionIds,

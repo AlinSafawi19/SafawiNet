@@ -1,20 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useBackendMessageTranslation } from '../hooks/useBackendMessageTranslation';
 import { buildApiUrl, API_CONFIG } from '../config/api';
-
-interface ValidationErrors {
-  password?: string;
-  confirmPassword?: string;
-}
+import MessageDisplay from '../components/MessageDisplay';
 
 export default function ResetPasswordPage() {
-  const { t, locale } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState('');
@@ -22,25 +15,10 @@ export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [token, setToken] = useState('');
 
-  // Use the backend message translation hook
-  const {
-    error: resetError,
-    success: resetSuccess,
-    errorKey: resetErrorKey,
-    successKey: resetSuccessKey,
-    setBackendError: setResetBackendError,
-    setBackendSuccess: setResetBackendSuccess,
-    setErrorKey: setResetErrorKey,
-    setSuccessKey: setResetSuccessKey,
-    clearMessages: clearResetMessages,
-  } = useBackendMessageTranslation();
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
-    {}
-  );
-  const [touched, setTouched] = useState({
-    password: false,
-    confirmPassword: false,
-  });
+  const [resetSuccessMessage, setResetSuccessMessage] = useState('');
+  const [resetErrorMessage, setResetErrorMessage] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
   useEffect(() => {
     // Get token from URL query parameter
@@ -53,73 +31,82 @@ export default function ResetPasswordPage() {
     }
   }, [searchParams, router]);
 
-  // Real-time validation
-  useEffect(() => {
-    const errors: ValidationErrors = {};
-
-    // Password validation
-    if (touched.password) {
-      if (!password.trim()) {
-        errors.password = t('auth.validation.passwordRequired');
-      } else if (password.length < 8) {
-        errors.password = t('auth.validation.passwordTooShort');
-      }
+  const validatePassword = (password: string): string | undefined => {
+    if (!password || password.trim().length === 0) {
+      return 'Password is required';
     }
-
-    // Confirm password validation
-    if (touched.confirmPassword) {
-      if (!confirmPassword.trim()) {
-        errors.confirmPassword = t('auth.validation.confirmPasswordRequired');
-      } else if (password && confirmPassword && password !== confirmPassword) {
-        errors.confirmPassword = t('auth.validation.passwordsDoNotMatch');
-      }
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters';
     }
-
-    setValidationErrors(errors);
-  }, [password, confirmPassword, touched, t]);
-
-  const handleBlur = useCallback((field: 'password' | 'confirmPassword') => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-  }, []);
-
-  const validateForm = useCallback((): boolean => {
-    const errors: ValidationErrors = {};
-
-    // Password validation
-    if (!password.trim()) {
-      errors.password = t('auth.validation.passwordRequired');
-    } else if (password.length < 8) {
-      errors.password = t('auth.validation.passwordTooShort');
+    if (password.length > 128) {
+      return 'Password must be 128 characters or less';
     }
+    return undefined;
+  };
 
-    // Confirm password validation
-    if (!confirmPassword.trim()) {
-      errors.confirmPassword = t('auth.validation.confirmPasswordRequired');
-    } else if (password !== confirmPassword) {
-      errors.confirmPassword = t('auth.validation.passwordsDoNotMatch');
+  const validateConfirmPassword = (confirmPassword: string, password: string): string | undefined => {
+    if (!confirmPassword || confirmPassword.trim().length === 0) {
+      return 'Confirm password is required';
     }
-
-    // Token validation
-    if (!token) {
-      setResetErrorKey('auth.messages.invalidPasswordResetToken');
-      return false;
+    if (confirmPassword !== password) {
+      return 'Passwords do not match';
     }
+    return undefined;
+  };
 
-    setValidationErrors(errors);
-    setTouched({ password: true, confirmPassword: true });
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    
+    // Clear password error when user starts typing
+    if (passwordError) {
+      setPasswordError('');
+    }
+    
+    // Re-validate confirm password if it has a value
+    if (confirmPassword) {
+      const confirmError = validateConfirmPassword(confirmPassword, newPassword);
+      setConfirmPasswordError(confirmError || '');
+    }
+  };
 
-    return Object.keys(errors).length === 0;
-  }, [password, confirmPassword, token, t, setResetErrorKey]);
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newConfirmPassword = e.target.value;
+    setConfirmPassword(newConfirmPassword);
+    
+    // Clear confirm password error when user starts typing
+    if (confirmPasswordError) {
+      setConfirmPasswordError('');
+    }
+    
+    // Validate against current password
+    const confirmError = validateConfirmPassword(newConfirmPassword, password);
+    setConfirmPasswordError(confirmError || '');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous errors
+    setPasswordError('');
+    setConfirmPasswordError('');
+    setResetErrorMessage('');
 
-    if (!validateForm()) {
+    // Validate password
+    const passwordValidationError = validatePassword(password);
+    if (passwordValidationError) {
+      setPasswordError(passwordValidationError);
+      return;
+    }
+
+    // Validate confirm password
+    const confirmPasswordValidationError = validateConfirmPassword(confirmPassword, password);
+    if (confirmPasswordValidationError) {
+      setConfirmPasswordError(confirmPasswordValidationError);
       return;
     }
 
     setIsLoading(true);
-    clearResetMessages();
 
     try {
       const response = await fetch(
@@ -140,116 +127,56 @@ export default function ResetPasswordPage() {
       const data = await response.json();
 
       if (response.ok) {
-        if (data.message) {
-          setResetBackendSuccess(data.message);
-        } else {
-          setResetSuccessKey('auth.messages.passwordResetSuccess');
-        }
+        setResetSuccessMessage(data.message);
 
         // Clear form
         setPassword('');
         setConfirmPassword('');
-        setValidationErrors({});
-        setTouched({ password: false, confirmPassword: false });
         // Redirect to login after 3 seconds
         setTimeout(() => {
           router.push('/auth');
         }, 3000);
       } else {
-        if (data.message) {
-          setResetBackendError(data.message);
-        } else {
-          setResetErrorKey('auth.messages.generalError');
-        }
+        setResetErrorMessage(
+          data.message || 'Failed to reset password. Please try again.'
+        );
       }
     } catch (error) {
-      setResetErrorKey('auth.messages.generalError');
+      setResetErrorMessage(
+        error instanceof Error
+          ? error.message
+          : 'An error occurred while resetting your password'
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Memoized form validation to prevent unnecessary recalculations
-  const isFormValid = useMemo(() => (
-    password.trim().length >= 8 &&
-    confirmPassword.trim().length > 0 &&
-    password === confirmPassword &&
-    Object.keys(validationErrors).length === 0
-  ), [password, confirmPassword, validationErrors]);
-
-  // Memoized message display logic
-  const hasMessage = useMemo(() => 
-    !!(resetSuccess || resetSuccessKey || resetError || resetErrorKey),
-    [resetSuccess, resetSuccessKey, resetError, resetErrorKey]
-  );
-
-  const isSuccessMessage = useMemo(() => 
-    !!(resetSuccess || resetSuccessKey),
-    [resetSuccess, resetSuccessKey]
-  );
-
-  const messageContent = useMemo(() => 
-    resetSuccess || (resetSuccessKey ? t(resetSuccessKey) : '') ||
-    resetError || (resetErrorKey ? t(resetErrorKey) : ''),
-    [resetSuccess, resetSuccessKey, resetError, resetErrorKey, t]
-  );
-
-  const messageClasses = useMemo(() => 
-    `border rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 ${
-      isSuccessMessage
-        ? 'bg-green-500/10 border-green-500/20'
-        : 'bg-red-500/10 border-red-500/20'
-    }`,
-    [isSuccessMessage]
-  );
-
-  const messageTextClasses = useMemo(() => 
-    `text-xs sm:text-sm ${
-      isSuccessMessage ? 'text-green-400' : 'text-red-400'
-    }`,
-    [isSuccessMessage]
-  );
-
   // Memoized input classes to prevent recreation on every render
-  const passwordInputClasses = useMemo(() => 
-    `w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border rounded-lg text-white placeholder-white/50 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base ${
-      validationErrors.password
-        ? 'border-red-400 focus:border-red-400'
-        : 'border-white/20 focus:border-purple-500'
-    }`,
-    [validationErrors.password]
+  const inputClasses = useMemo(
+    () =>
+      'w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:bg-white/15 focus:border-purple-500 transition-all duration-300 text-sm sm:text-base',
+    []
   );
 
-  const confirmPasswordInputClasses = useMemo(() => 
-    `w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white/10 border rounded-lg text-white placeholder-white/50 focus:bg-white/15 transition-all duration-300 text-sm sm:text-base ${
-      validationErrors.confirmPassword
-        ? 'border-red-400 focus:border-red-400'
-        : 'border-white/20 focus:border-purple-500'
-    }`,
-    [validationErrors.confirmPassword]
-  );
-
-  const submitButtonClasses = useMemo(() => 
-    "w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] flex items-center justify-center",
+  const submitButtonClasses = useMemo(
+    () =>
+      'w-full bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed disabled:opacity-60 text-white font-semibold py-2.5 sm:py-3 md:py-4 px-4 sm:px-6 rounded-lg hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-300 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] flex items-center justify-center',
     []
   );
 
   return (
-    <div
-      className={`min-h-screen flex flex-col lg:flex-row bg-zinc-900 ${
-        locale === 'ar' ? 'rtl' : 'ltr'
-      }`}
-    >
+    <div className="min-h-screen flex flex-col lg:flex-row bg-zinc-900 ltr">
       {/* Left side - Form */}
       <div className="flex-1 lg:basis-1/2 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 py-3 sm:py-4 md:py-6 lg:py-8 xl:py-10">
         <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
           {/* Header */}
           <div className="auth-screen text-center mb-4 sm:mb-6 md:mb-8">
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-2">
-              {t('auth.form.resetPassword')}
+              Reset Your Password
             </h1>
             <p className="text-white/70 text-xs sm:text-sm md:text-base">
-              {t('resetPassword.subtitle')}
+              Enter your new password below
             </p>
           </div>
 
@@ -269,23 +196,22 @@ export default function ResetPasswordPage() {
               </svg>
               <div>
                 <p className="text-purple-400 text-xs sm:text-sm font-medium mb-1">
-                  {t('auth.form.securityNotice')}
+                  Security Notice
                 </p>
                 <p className="text-purple-300/80 text-xs sm:text-sm">
-                  {t('auth.form.securityNoticeMessage')}
+                  For your security, you will be automatically logged out from
+                  all devices and browsers after resetting your password
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Message Display */}
-          {hasMessage && (
-            <div className={messageClasses}>
-              <p className={messageTextClasses}>
-                {messageContent}
-              </p>
-            </div>
-          )}
+          {/* Messages */}
+          <MessageDisplay
+            successMessage={resetSuccessMessage}
+            errorMessage={resetErrorMessage}
+            className="mb-6"
+          />
 
           {/* Form */}
           <form
@@ -298,28 +224,22 @@ export default function ResetPasswordPage() {
                 htmlFor="password"
                 className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2"
               >
-                {t('auth.form.password')}
+                Password *
               </label>
               <input
                 type="password"
                 id="password"
                 name="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onBlur={() => handleBlur('password')}
-                className={passwordInputClasses}
-                placeholder={t('auth.form.passwordPlaceholder')}
-                aria-describedby={
-                  validationErrors.password ? 'password-error' : 'password-help'
-                }
+                onChange={handlePasswordChange}
+                className={`${inputClasses} ${passwordError ? 'border-red-500 focus:border-red-500' : ''}`}
+                placeholder="Enter your password"
               />
-              {validationErrors.password ? (
-                <p className="text-red-400 text-xs mt-1" id="password-error">
-                  {validationErrors.password}
-                </p>
+              {passwordError ? (
+                <p className="text-red-400 text-xs mt-1">{passwordError}</p>
               ) : (
-                <p className="text-white/50 text-xs mt-1" id="password-help">
-                  {t('auth.form.passwordRequirement')}
+                <p className="text-white/50 text-xs mt-1">
+                  Password must be at least 8 characters long
                 </p>
               )}
             </div>
@@ -329,55 +249,40 @@ export default function ResetPasswordPage() {
                 htmlFor="confirmPassword"
                 className="block text-xs sm:text-sm font-medium text-white/80 mb-1 sm:mb-2"
               >
-                {t('auth.form.confirmPassword')}
+                Confirm Password *
               </label>
               <input
                 type="password"
                 id="confirmPassword"
                 name="confirmPassword"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                onBlur={() => handleBlur('confirmPassword')}
-                className={confirmPasswordInputClasses}
-                placeholder={t('auth.form.confirmPasswordPlaceholder')}
-                aria-describedby={
-                  validationErrors.confirmPassword
-                    ? 'confirmPassword-error'
-                    : undefined
-                }
+                onChange={handleConfirmPasswordChange}
+                className={`${inputClasses} ${confirmPasswordError ? 'border-red-500 focus:border-red-500' : ''}`}
+                placeholder="Confirm your password"
               />
-              {validationErrors.confirmPassword && (
-                <p
-                  className="text-red-400 text-xs mt-1"
-                  id="confirmPassword-error"
-                >
-                  {validationErrors.confirmPassword}
-                </p>
+              {confirmPasswordError && (
+                <p className="text-red-400 text-xs mt-1">{confirmPasswordError}</p>
               )}
             </div>
 
             <button
               type="submit"
-              disabled={isLoading || !isFormValid}
+              disabled={isLoading}
               className={submitButtonClasses}
             >
-              {isLoading ? (
-                <>{t('resetPassword.resettingPassword')}</>
-              ) : (
-                t('resetPassword.resetPasswordButton')
-              )}
+              {isLoading ? 'Resetting Password...' : 'Reset Password'}
             </button>
           </form>
 
           {/* Back to Login */}
           <div className="text-center mt-3 sm:mt-4 md:mb-6">
             <p className="text-white/70 text-xs sm:text-sm">
-              {t('resetPassword.rememberPassword')}
+              Remember your password?
               <Link
                 href="/auth"
                 className="ml-1 sm:ml-2 text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200 hover:underline"
               >
-                {t('resetPassword.backToLogin')}
+                Back to Login
               </Link>
             </p>
           </div>
@@ -388,7 +293,7 @@ export default function ResetPasswordPage() {
       <div className="flex-1 lg:basis-1/2 relative bg-zinc-900 overflow-hidden min-h-[300px] sm:min-h-[400px] md:min-h-[500px] lg:min-h-[600px]">
         <Image
           src="https://static.wixstatic.com/media/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg/v1/fill/w_918,h_585,al_c,q_85,usm_0.66_1.00_0.01,enc_auto/503ea4_ed9a38760ae04aab86b47e82525fdcac~mv2.jpg"
-          alt={t('auth.hero.imageAlt')}
+          alt="Reset Your Password"
           className="w-full h-full object-cover"
           width={1000}
           height={800}
@@ -398,10 +303,10 @@ export default function ResetPasswordPage() {
         <div className="absolute inset-0 z-20 flex items-center justify-center px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="text-center text-white">
             <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 md:mb-4">
-              {t('resetPassword.imageTitle')}
+              Reset Your Password
             </h1>
             <p className="text-xs sm:text-sm md:text-base lg:text-lg text-white/80 max-w-[200px] sm:max-w-xs md:max-w-sm lg:max-w-md">
-              {t('resetPassword.imageSubtitle')}
+              Choose a strong, secure password for your account
             </p>
           </div>
         </div>

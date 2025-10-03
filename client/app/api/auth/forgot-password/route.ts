@@ -5,13 +5,6 @@ export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
 
-    if (!email) {
-      return NextResponse.json(
-        { message: 'Email is required' },
-        { status: 400 }
-      );
-    }
-
     // Forward the request to your backend server
     const response = await fetch(buildApiUrl('/v1/auth/forgot-password'), {
       method: 'POST',

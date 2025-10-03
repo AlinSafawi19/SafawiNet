@@ -6,31 +6,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { currentPassword, newPassword, confirmNewPassword } = body;
 
-    // Basic validation
-    if (!currentPassword || !newPassword || !confirmNewPassword) {
-      return NextResponse.json(
-        {
-          message:
-            'Current password, new password, and confirm password are required',
-        },
-        { status: 400 }
-      );
-    }
-
-    if (newPassword !== confirmNewPassword) {
-      return NextResponse.json(
-        { message: 'New passwords do not match' },
-        { status: 400 }
-      );
-    }
-
-    if (newPassword.length < 8) {
-      return NextResponse.json(
-        { message: 'New password must be at least 8 characters long' },
-        { status: 400 }
-      );
-    }
-
     // Forward cookies from the request to the backend
     const cookieHeader = request.headers.get('cookie');
 
@@ -61,23 +36,9 @@ export async function POST(request: NextRequest) {
     const data = await backendResponse.json();
 
     if (!backendResponse.ok) {
-      let messageKey = null;
-
-      // Handle specific error cases
-      if (backendResponse.status === 401) {
-        messageKey = 'account.loginSecurity.password.currentPasswordIncorrect';
-      } else if (backendResponse.status === 404) {
-        messageKey = 'account.loginSecurity.password.userNotFound';
-      } else if (backendResponse.status >= 500) {
-        messageKey = 'account.loginSecurity.password.internalServerError';
-      } else {
-        messageKey = 'account.loginSecurity.password.passwordChangeFailed';
-      }
-
       return NextResponse.json(
         {
           message: data.message || 'Failed to change password',
-          messageKey: data.messageKey || messageKey,
         },
         { status: backendResponse.status }
       );
@@ -88,7 +49,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         message: 'Internal server error',
-        messageKey: 'account.loginSecurity.password.internalServerError',
       },
       { status: 500 }
     );

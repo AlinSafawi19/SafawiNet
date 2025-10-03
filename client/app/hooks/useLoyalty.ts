@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useLanguage } from '../contexts/LanguageContext';
 import { buildApiUrl, API_CONFIG } from '../config/api';
 
 // Global state to prevent multiple API calls across different hook instances
@@ -65,7 +64,6 @@ export interface PaginatedTransactions {
 
 export const useLoyalty = () => {
   const { authenticatedFetch, user, isLoading: authLoading } = useAuth();
-  const { t } = useLanguage();
   const [loyaltyAccount, setLoyaltyAccount] = useState<LoyaltyAccount | null>(
     globalLoyaltyState.data
   );
@@ -334,24 +332,6 @@ export const useLoyalty = () => {
     }
   }, [user, authLoading, fetchLoyaltyAccount]);
 
-  // Helper function to translate loyalty tier names
-  const translateTierName = (tierName: string): string => {
-    // Convert tier name to lowercase for consistent lookup
-    const normalizedTierName = tierName.toLowerCase();
-
-    // Try to get translation from the messages
-    const translationKey = `header.loyalty.tiers.${normalizedTierName}`;
-    const translatedName = t(translationKey);
-
-    // If translation exists and is different from the key, return it
-    if (translatedName !== translationKey) {
-      return translatedName;
-    }
-
-    // Fallback to original tier name if no translation found
-    return tierName;
-  };
-
   return {
     loyaltyAccount,
     isLoading,
@@ -359,6 +339,5 @@ export const useLoyalty = () => {
     fetchLoyaltyAccount,
     fetchTransactions,
     isCustomer: user?.roles?.includes('CUSTOMER') || false,
-    translateTierName,
   };
 };

@@ -777,61 +777,6 @@ export class AuthService {
     }
   }
 
-  async resendVerificationEmail(email: string): Promise<{ message: string }> {
-    // Find user by email
-    const user: User | null = await this.prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      throw new BadRequestException('User not found');
-    }
-
-    if (user.isVerified) {
-      throw new BadRequestException('User is already verified');
-    }
-
-    // Invalidate any existing verification tokens for this user
-    await this.prisma.oneTimeToken.updateMany({
-      where: {
-        userId: user.id,
-        purpose: 'email_verification',
-        usedAt: null,
-      },
-      data: {
-        usedAt: new Date(),
-      },
-    });
-
-    // Generate new verification token
-    const verificationToken: string = SecurityUtils.generateSecureToken(32);
-    const tokenHash: string = SecurityUtils.hashToken(verificationToken);
-    const expiresAt: Date = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
-
-    // Store new verification token
-    await this.prisma.oneTimeToken.create({
-      data: {
-        purpose: 'email_verification',
-        hash: tokenHash,
-        userId: user.id,
-        expiresAt,
-      },
-    });
-
-    // Send verification email
-    const frontendDomain: string = this.configService.get<string>(
-      'FRONTEND_DOMAIN',
-      'localhost:3001',
-    );
-    const verificationUrl = `http://${frontendDomain}/verify-email?token=${verificationToken}`;
-    await this.emailService.sendEmailVerification(user.email, {
-      name: user.name || 'User',
-      verificationUrl,
-    });
-
-    return { message: 'Verification email sent successfully' };
-  }
-
   private async resendVerificationEmailInternal(user: User): Promise<void> {
     try {
       // Invalidate any existing verification tokens for this user

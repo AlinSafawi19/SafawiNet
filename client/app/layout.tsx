@@ -2,7 +2,6 @@ import './globals.css';
 import FooterWrapper from '@app/components/Layout/FooterWrapper';
 import Header from '@app/components/Layout/Header';
 import { ContextProvider } from './components/ContextProvider';
-import DynamicLangAttribute from './components/DynamicLangAttribute';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LoadingWrapper } from './components/LoadingWrapper';
 // Fonts are now handled via globals.css only
@@ -31,11 +30,10 @@ export default function RootLayout({
         <link rel="preconnect" href="https://static.wixstatic.com" />
         <link rel="dns-prefetch" href="https://static.wixstatic.com" />
       </head>
-      <body className="text-black bg-site transition-colors duration-200">
+      <body className="text-black bg-site transition-colors duration-200" suppressHydrationWarning>
         <ErrorBoundary>
           <ContextProvider>
             <LoadingWrapper>
-              <DynamicLangAttribute />
               <Header />
               <main className="bg-site">{children}</main>
               <FooterWrapper />

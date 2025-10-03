@@ -1,21 +1,30 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 
-export const CreateUserSchema = z.object({
-  email: z
-    .string()
-    .email({ message: 'Invalid email format' })
-    .describe('User email address'),
-  password: z
-    .string()
-    .min(8, { message: 'Password must be at least 8 characters' })
-    .describe('User password (minimum 8 characters)'),
-  name: z
-    .string()
-    .min(1, { message: 'Name is required' })
-    .max(100, { message: 'Name too long' })
-    .describe('User full name'),
-});
+export const CreateUserSchema = z
+  .object({
+    email: z
+      .string()
+      .email({ message: 'Invalid email format' })
+      .describe('User email address'),
+    password: z
+      .string()
+      .min(8, { message: 'Password must be at least 8 characters' })
+      .describe('User password (minimum 8 characters)'),
+    confirmPassword: z
+      .string()
+      .min(1, { message: 'Password confirmation is required' })
+      .describe('Confirm password'),
+    name: z
+      .string()
+      .min(1, { message: 'Name is required' })
+      .max(100, { message: 'Name too long' })
+      .describe('User full name'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Password and confirmation password don't match",
+    path: ['confirmPassword'],
+  });
 
 export const VerifyEmailSchema = z.object({
   token: z
@@ -134,6 +143,7 @@ export class CreateUserDto extends createZodDto(CreateUserSchema) {
       value: {
         email: 'admin@safawinet.com',
         password: 'admin123456',
+        confirmPassword: 'admin123456',
         name: 'John Smith',
       },
     },

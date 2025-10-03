@@ -3,7 +3,6 @@
 import React from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
 import { AuthProvider } from '../contexts/AuthContext';
-import { LanguageProvider } from '../contexts/LanguageContext';
 import { GlobalLoadingProvider } from '../contexts/GlobalLoadingContext';
 
 interface ContextProviderProps {
@@ -16,9 +15,7 @@ export const ContextProvider: React.FC<ContextProviderProps> = ({
   return (
     <ErrorBoundary>
       <GlobalLoadingProvider>
-        <AuthProvider>
-          <LanguageProvider>{children}</LanguageProvider>
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </GlobalLoadingProvider>
     </ErrorBoundary>
   );

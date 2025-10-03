@@ -89,6 +89,7 @@ export class UsersController {
         value: {
           email: 'admin@safawinet.com',
           password: 'admin123456',
+          confirmPassword: 'admin123456',
           name: 'John Smith',
         },
       },

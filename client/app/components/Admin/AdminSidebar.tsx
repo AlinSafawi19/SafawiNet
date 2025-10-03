@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   HiHome,
@@ -19,7 +18,6 @@ import {
 interface AdminSidebarProps {}
 
 const AdminSidebar: React.FC<AdminSidebarProps> = () => {
-  const { t, locale } = useLanguage();
   const { isSuperAdmin } = useAuth();
   const pathname = usePathname();
   const [expandedSections, setExpandedSections] = useState<
@@ -137,20 +135,19 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
     }, {} as Record<string, typeof navigationItems>);
 
   const categoryLabels = {
-    management: t('admin.sidebar.categories.management'),
-    insights: t('admin.sidebar.categories.insights'),
+    management: 'Management',
+    insights: 'Insights',
   };
 
   return (
     <>
       {/* Sidebar - Hidden on mobile, visible on desktop */}
       <div
-        className={`
+        className="
         fixed top-14 min-h-[calc(100vh-3rem)] bg-white text-black transition-transform duration-300 ease-in-out
         hidden lg:block
-        w-72 border-r border-gray-200
-        ${locale === 'ar' ? 'right-0' : 'left-0'}
-      `}
+        w-72 border-r border-gray-200 left-0
+      "
       >
         {/* Navigation */}
         <nav className="py-4 h-full overflow-y-auto">
@@ -173,15 +170,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                             ? 'bg-black text-white'
                             : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                         }
-                        ${
-                          locale === 'ar'
-                            ? 'flex-row-reverse space-x-reverse'
-                            : ''
-                        }
                       `}
-                      onClick={() => {
-                        // Navigation link clicked
-                      }}
                     >
                       <div
                         className={`
@@ -196,7 +185,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                         <Icon className="w-5 h-5" />
                       </div>
                       <span className="font-medium text-sm">
-                        {t(item.label) || item.name}
+                        {item.label || item.name}
                       </span>
                     </Link>
                   );
@@ -216,11 +205,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
               <div key={category} className="mb-6">
                 {/* Category Label */}
                 <div className="px-6 mb-3">
-                  <h3
-                    className={`text-xs font-semibold text-gray-500 uppercase tracking-wider ${
-                      locale === 'ar' ? 'text-right' : 'text-left'
-                    }`}
-                  >
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider text-left">
                     {categoryLabels[category as keyof typeof categoryLabels]}
                   </h3>
                 </div>
@@ -240,24 +225,17 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                           {/* Expandable Header */}
                           <button
                             onClick={() => toggleSection(item.expandableKey!)}
-                            className={`
+                            className="
                             w-full flex items-center justify-between px-6 py-3 rounded-lg transition-all duration-200 font-medium group
                             text-gray-600 hover:bg-gray-100 hover:text-gray-900
-                            ${locale === 'ar' ? 'flex-row-reverse' : ''}
-                          `}
+                          "
                           >
-                            <div
-                              className={`flex items-center space-x-3 ${
-                                locale === 'ar'
-                                  ? 'flex-row-reverse space-x-reverse'
-                                  : ''
-                              }`}
-                            >
+                            <div className="flex items-center space-x-3">
                               <div className="flex items-center justify-center w-6 h-6 transition-colors duration-200 text-gray-500 group-hover:text-gray-700">
                                 <Icon className="w-5 h-5" />
                               </div>
                               <span className="font-medium text-sm">
-                                {t(item.label) || item.name}
+                                {item.label || item.name}
                               </span>
                             </div>
                             <div className="flex items-center justify-center w-4 h-4 transition-colors duration-200 text-gray-400 group-hover:text-gray-600">
@@ -290,11 +268,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                                         ? 'bg-black text-white'
                                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                     }
-                                    ${
-                                      locale === 'ar'
-                                        ? 'flex-row-reverse space-x-reverse'
-                                        : ''
-                                    }
                                   `}
                                   >
                                     <div
@@ -310,7 +283,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                                       <SubIcon className="w-4 h-4" />
                                     </div>
                                     <span className="font-medium text-sm">
-                                      {t(subItem.label) || subItem.name}
+                                      {subItem.label || subItem.name}
                                     </span>
                                   </Link>
                                 );
@@ -333,11 +306,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                             ? 'bg-black text-white'
                             : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                         }
-                        ${
-                          locale === 'ar'
-                            ? 'flex-row-reverse space-x-reverse'
-                            : ''
-                        }
                       `}
                         onClick={() => {
                           // Navigation link clicked
@@ -356,7 +324,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = () => {
                           <Icon className="w-5 h-5" />
                         </div>
                         <span className="font-medium text-sm">
-                          {t(item.label) || item.name}
+                          {item.label || item.name}
                         </span>
                       </Link>
                     );

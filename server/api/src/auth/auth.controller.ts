@@ -54,10 +54,6 @@ interface VerifyEmailResponse {
   tokens?: AuthTokens;
 }
 
-interface ResendVerificationResponse {
-  message: string;
-}
-
 interface ForgotPasswordResponse {
   message: string;
 }
@@ -93,6 +89,7 @@ export class AuthController {
   @Throttle({ auth: { limit: 5, ttl: 60000 } }) // 5 registrations per minute
   @ApiOperation({ summary: 'Register a new user' })
   @ApiBody({
+    type: RegisterDto,
     description: 'User registration data',
     examples: {
       register: {
@@ -100,6 +97,7 @@ export class AuthController {
         value: {
           email: 'user@safawinet.com',
           password: 'user123456',
+          confirmPassword: 'user123456',
           name: 'Test User',
         },
       },
@@ -214,45 +212,6 @@ export class AuthController {
     }
 
     return result;
-  }
-
-  @Post('resend-verification')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Resend email verification' })
-  @ApiBody({
-    description: 'Resend verification email data',
-    examples: {
-      resendVerification: {
-        summary: 'Resend verification email',
-        value: {
-          email: 'user@safawinet.com',
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Verification email sent successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid email or user not found',
-  })
-  @ApiResponse({
-    status: 429,
-    description: 'Too many requests',
-  })
-  @UsePipes(new ZodValidationPipe(ForgotPasswordSchema))
-  async resendVerification(
-    @Body() body: ForgotPasswordDto,
-  ): Promise<ResendVerificationResponse> {
-    return this.authService.resendVerificationEmail(body.email as string);
   }
 
   @Post('login')
